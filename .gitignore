@@ -3,3 +3,15 @@
 /build/
 /buildSrc/.gradle/
 /buildSrc/build/
+
+# idea
+/.idea/
+
+# mirai
+/data/
+/plugins/
+/logs/
+/test/
+
+# temp
+/temp/

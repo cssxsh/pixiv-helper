@@ -8,15 +8,15 @@
  */
 
 object Versions {
-    const val new = "+"
+    const val latest = "+"
 
-    const val core = "1.1.3"
-    const val console = "1.0-dev-3"
+    const val core = "1.2.2"
+    const val console = "1.0-M2-1"
     const val consoleGraphical = "0.0.7"
     const val consoleTerminal = "0.1.0"
-    const val consolePure = "1.0-dev-3"
+    const val consolePure = "1.0-M1"
 
-    const val kotlin = "1.4-M2"
+    const val kotlin = "1.4.0"
     const val coroutines = "1.3.7"
     const val serialization = "0.20.0"
     const val ktor = "1.3.2"
@@ -26,4 +26,5 @@ object Versions {
     const val bintray = "1.8.5"
 
     const val shadow = "6.0.0"
+    const val junit = "5.6.2"
 }
