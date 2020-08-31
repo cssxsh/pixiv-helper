@@ -1,39 +1,122 @@
 @file:Suppress("unused")
+
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.contact.Contact
-import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.contact.Group
-import xyz.cssxsh.mirai.plugin.setting.PixivClientSetting
-import xyz.cssxsh.pixiv.client.SimplePixivClient
+import io.ktor.client.features.*
+import kotlinx.atomicfu.locks.withLock
+import kotlinx.coroutines.*
+import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.message.MessageReceipt
+import net.mamoe.mirai.message.data.Message
+import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.message.data.asMessageChain
+import net.mamoe.mirai.utils.MiraiLogger
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.pixiv.client.*
+import xyz.cssxsh.pixiv.client.exception.NotLoginException
+import xyz.cssxsh.pixiv.data.AuthResult
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.coroutines.CoroutineContext
 
-class PixivHelper(val contact: Contact) : SimplePixivClient(proxyUrl = PixivHelperSettings.proxy) {
+/**
+ * 助手实例
+ */
+class PixivHelper(
+    val contact: Contact,
+    parentCoroutineContext: CoroutineContext = PixivHelperPlugin.coroutineContext
+) : CoroutineScope, SimplePixivClient(PixivHelperPluginData[contact].config) {
 
-    val setting: PixivClientSetting
-        get() = when(contact) {
-            is User -> PixivHelperSettings.users.getOrPut(contact.id) { PixivClientSetting() }
-            is Group -> PixivHelperSettings.groups.getOrPut(contact.id) { PixivClientSetting() }
-            else -> throw Exception("未知类型联系人!")
+    init {
+        httpClient.engineConfig.proxy = Tool.getProxyByUrl(PixivHelperSettings.proxy)
+        data.authInfo?.let {
+            httpClient = httpClient.config { defaultRequest { headers["Authorization"] = "Bearer ${it.accessToken}" } }
+        }
+    }
+
+    override fun close() {
+        data = data.copy(config = config {
+            headers = headers + mapOf("Authorization" to "Bearer ${data.authInfo?.accessToken}")
+        })
+        super.close()
+    }
+
+    private val logger: MiraiLogger
+        get() = PixivHelperPlugin.logger
+
+    private var data: PixivClientData
+        get() = PixivHelperPluginData[contact]
+        set(value) {
+            PixivHelperPluginData[contact] = value
         }
 
-    override suspend fun refresh(refreshToken: String) {
-        super.refresh(refreshToken)
-        setting.refreshToken = refreshToken
-        contact.sendMessage("Auth by RefreshToken: $refreshToken")
+    override var authInfo: AuthResult.AuthInfo
+        get() = data.authInfo ?: throw NotLoginException()
+        set(value) {
+            data = data.copy(authInfo = value)
+        }
+
+    override val isLoggedIn: Boolean
+        get() = data.authInfo != null
+
+    override val config: PixivConfig
+        get() = data.config
+
+    override fun config(block: PixivConfig.() -> Unit) =
+        config.apply(block).also { data = data.copy(config = it) }
+
+    override suspend fun refresh(): AuthResult.AuthInfo =
+        super.refresh().also { authInfo = it }
+
+    override suspend fun refresh(token: String): AuthResult.AuthInfo =
+        super.refresh(token).also { logger.info("Auth by RefreshToken: $token") }
+
+    override suspend fun login(): AuthResult.AuthInfo =
+        super.login().also { authInfo = it }
+
+    override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
+        super.login(mailOrPixivID, password).also { logger.info("Auth by Account: $mailOrPixivID") }
+
+
+    /**
+     * 给这个助手的联系人发送消息
+     */
+    @JvmSynthetic
+    suspend fun reply(message: Message): MessageReceipt<Contact> =
+        contact.sendMessage(message.asMessageChain())
+
+    /**
+     * 给这个助手的联系人发送文本消息
+     */
+    @JvmSynthetic
+    suspend fun reply(plain: String): MessageReceipt<Contact> =
+        contact.sendMessage(PlainText(plain))
+
+
+    @Suppress("PropertyName")
+    internal val _intrinsicCoroutineContext: CoroutineContext by lazy {
+        CoroutineName("PixivHelper for $contact")
     }
 
-    suspend fun refresh() {
-        refresh(setting.refreshToken)
+    @JvmField
+    internal val coroutineContextInitializer: () -> CoroutineContext = {
+        parentCoroutineContext.plus(
+            PixivHelperJob(
+                contact.toString(), parentCoroutineContext[Job] ?: PixivHelperPlugin.coroutineContext[Job]!!
+            )
+        )
+            .also {
+                PixivHelperPlugin.coroutineContext[Job]!!.invokeOnCompletion { cancel() }
+            }
+            .plus(_intrinsicCoroutineContext)
     }
 
-    override suspend fun login(mailOrPixivID: String, password: String) {
-        super.login(mailOrPixivID, password)
-        setting.mailOrPixivID = mailOrPixivID
-        setting.password = password
-        contact.sendMessage("Auth by Account: $mailOrPixivID")
-    }
+    private fun refreshCoroutineContext(): CoroutineContext =
+        coroutineContextInitializer().also { _coroutineContext = it }
 
-    suspend fun login() {
-        login(setting.mailOrPixivID, setting.password)
-    }
+    private val contextUpdateLock: ReentrantLock = ReentrantLock()
+
+    private var _coroutineContext: CoroutineContext? = null
+
+    override val coroutineContext: CoroutineContext
+        get() = _coroutineContext ?: contextUpdateLock.withLock { _coroutineContext ?: refreshCoroutineContext() }
 }

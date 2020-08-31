@@ -1,13 +1,12 @@
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.console.plugin.jvm.loadSetting
-import net.mamoe.mirai.console.setting.Setting
-import net.mamoe.mirai.console.setting.getValue
-import net.mamoe.mirai.console.setting.value
-import xyz.cssxsh.mirai.plugin.setting.PixivClientSetting
+import net.mamoe.mirai.console.data.*
 
-object PixivHelperSettings: Setting by PixivHelperMain.loadSetting() {
-    val proxy: String by value("")
-    val groups: MutableMap<Long, PixivClientSetting> by value(hashMapOf())
-    val users: MutableMap<Long, PixivClientSetting> by value(hashMapOf())
+object PixivHelperSettings : AutoSavePluginConfig() {
+    /**
+     * 客户端的默认代理
+     *
+     * TODO：修改时推送到每个客户端
+     */
+    var proxy: String by value("http://127.0.0.1:7890")
 }

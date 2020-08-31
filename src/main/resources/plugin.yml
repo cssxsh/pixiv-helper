@@ -1,6 +1,6 @@
 name: "PixivHelper"
 author: "cssxsh"
 version: "0.1.0"
-main: "xyz.cssxsh.mirai.plugin.PixivHelperMain"
+main: "xyz.cssxsh.mirai.plugin.PixivHelperPlugin"
 info: ""
 depends: []

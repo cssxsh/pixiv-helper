@@ -11,7 +11,7 @@ object Versions {
     const val latest = "+"
 
     const val core = "1.2.2"
-    const val console = "1.0-M2-1"
+    const val console = "1.0-M3-1"
     const val consoleGraphical = "0.0.7"
     const val consoleTerminal = "0.1.0"
     const val consolePure = "1.0-M1"
@@ -27,4 +27,6 @@ object Versions {
 
     const val shadow = "6.0.0"
     const val junit = "5.6.2"
+
+    const val klock = "1.12.0"
 }
