@@ -95,23 +95,19 @@ tasks {
             }
 
 
-            File("build/libs/").walk().filter {
+            File(project.buildDir, "libs/").walk().filter {
                 "-all" in it.name
             }.maxBy {
                 it.lastModified()
-            }?.let {
+            }.let {
+                requireNotNull(it) { "File not found" }
+            }.let {
                 println("Coping ${it.toURI()}")
                 copy {
                     from(it)
                     into("$testConsoleDir/plugins/")
                 }
                 println("Copied ${it.toURI()}")
-                /*
-                File("$testConsoleDir/plugins/${name}").apply {
-                    check(createNewFile())
-                }.let {
-                    inputStream().transferTo(it.outputStream())
-                }*/
             }
         }
     }
