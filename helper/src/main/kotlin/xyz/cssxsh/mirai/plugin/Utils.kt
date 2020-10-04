@@ -77,22 +77,10 @@ suspend fun PixivHelper.getImages(
         }
     } else {
         dir.mkdir()
-        /*
         downloadImage<ByteArray>(illust, { name, _ -> type in name }).mapIndexed { index, result ->
             val name = "${illust.pid}-${type}-${index}.jpg"
             runCatching {
                 result.getOrThrow().also {
-                    File(dir, name).writeBytes(it)
-                }.inputStream().uploadAsImage(contact)
-            }.onFailure {
-                PixivHelperPlugin.logger.warning(it)
-            }.getOrDefault(PlainText("获取图片${name}失败"))
-        }
-         */
-        illust.getPixivCatUrls().mapIndexed { index, url ->
-            val name = "${illust.pid}-${type}-${index}.jpg"
-            runCatching {
-                HttpClient().get<ByteArray>(url).also {
                     File(dir, name).writeBytes(it)
                 }.inputStream().uploadAsImage(contact)
             }.onFailure {
