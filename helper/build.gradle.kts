@@ -92,7 +92,7 @@ tasks {
         doFirst {
             delete {
                 File(testConsoleDir, "plugins/").walk().filter {
-                    "${project.name}-${version}-all" in it.name
+                    project.name in it.name
                 }.forEach {
                     delete(it)
                     println("Deleted ${it.toURI()}")
