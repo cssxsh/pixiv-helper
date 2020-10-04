@@ -89,7 +89,7 @@ tasks {
         dependsOn(testClasses)
 
 
-        doLast {
+        doFirst {
             delete {
                 File(testConsoleDir, "plugins/").walk().filter {
                     "${project.name}-${version}-all" in it.name
@@ -128,7 +128,7 @@ tasks {
         standardInput = System.`in`
 
 
-        doLast {
+        doFirst {
             classpath = sourceSets["test"].runtimeClasspath
             println("WorkingDir: ${workingDir.toURI()}, Args: $args")
         }
