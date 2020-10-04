@@ -21,15 +21,20 @@ object PixivEro : SimpleCommand(
 ) {
     private val historyQueue = ArrayBlockingQueue<Long>(minInterval)
 
-    private fun randomIllust(): IllustInfo = PixivCacheData.illust.filterValues {
-        (it.totalBookmarks ?: 0) >= 5000 && it.pid !in historyQueue
-    }.values.random().also {
-        historyQueue.put(it.pid)
+    private fun randomIllust(): IllustInfo = PixivCacheData.illust.values.random().let { illust ->
+        if ((illust.totalBookmarks ?: 0) >= 5000 && illust.pid !in historyQueue) {
+            illust
+        } else {
+            PixivHelperPlugin.logger.verbose("色图不够色！${illust.pid}, 再来")
+            randomIllust()
+        }
     }
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
-        buildMessage(randomIllust())
+        buildMessage(randomIllust().also {
+            historyQueue.put(it.pid)
+        })
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

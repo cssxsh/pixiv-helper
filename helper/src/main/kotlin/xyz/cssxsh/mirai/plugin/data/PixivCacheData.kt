@@ -10,5 +10,5 @@ object PixivCacheData : AutoSavePluginData() {
      */
     val illust: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
-    fun add(illustInfo: IllustInfo) = illust.set(illustInfo.pid, illustInfo)
+    fun  add(illustInfo: IllustInfo) = illust.set(illustInfo.pid, illustInfo)
 }

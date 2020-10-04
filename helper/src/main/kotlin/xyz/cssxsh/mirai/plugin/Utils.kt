@@ -1,7 +1,5 @@
 package xyz.cssxsh.mirai.plugin
 
-import io.ktor.client.*
-import io.ktor.client.request.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.UserCommandSender
 import net.mamoe.mirai.message.MessageEvent
@@ -11,7 +9,6 @@ import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImage
-import java.io.InputStream
 import java.io.File
 
 /**
@@ -59,13 +56,15 @@ fun getPixivCatUrls(pid: Long, count: Int): List<String> = if (count > 1) {
 
 fun IllustInfo.isR18(): Boolean = tags.any { Regex("""R-?18""") in it.name }
 
-fun IllustInfo.save() = also { PixivCacheData.illust[it.pid] = it }
+fun IllustInfo.save(cover: Boolean = true) = (pid !in PixivCacheData.illust || cover).also {
+    if (it) PixivCacheData.add(this)
+}
 
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     type: String = "origin"
 ) : List<Message> = PixivHelperPlugin.imagesFolder(illust.pid).let { dir ->
-    PixivCacheData.add(illust)
+    illust.save()
     if (dir.exists()) {
         illust.getImageUrls().flatMap { fileUrls ->
             fileUrls.filter { type in it.key }.values
