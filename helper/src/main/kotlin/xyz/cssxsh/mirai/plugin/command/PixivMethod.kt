@@ -6,25 +6,21 @@ import com.soywiz.klock.PatternDateFormat
 import com.soywiz.klock.parseDate
 import com.soywiz.klock.wrapped.WDate
 import com.soywiz.klock.wrapped.wrapped
-import net.mamoe.mirai.console.command.CommandPermission
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.MiraiLogger
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
-import xyz.cssxsh.pixiv.api.app.illustDetail
-import xyz.cssxsh.pixiv.api.app.illustRanking
-import xyz.cssxsh.pixiv.api.app.searchIllust
-import xyz.cssxsh.pixiv.api.app.userIllusts
+import xyz.cssxsh.pixiv.api.app.*
+import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 
-object Method : CompositeCommand(
+object PixivMethod : CompositeCommand(
     PixivHelperPlugin,
     "pixiv",
-    description = "pixiv 基本方法",
-    permission = CommandPermission.Any
+    description = "pixiv 基本方法"
 ) {
 
     private val logger: MiraiLogger get() = PixivHelperPlugin.logger
@@ -65,7 +61,7 @@ object Method : CompositeCommand(
     ) = getHelper().runCatching {
         login(username, password)
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功")
+        quoteReply("${it.user.name} 登陆成功，Token ${it.refreshToken}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -80,7 +76,7 @@ object Method : CompositeCommand(
     ) = getHelper().runCatching {
         refresh(token)
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功")
+        quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -103,7 +99,7 @@ object Method : CompositeCommand(
         })
         val wDate: WDate = PatternDateFormat("y-M-d").parseDate(date).wrapped
 
-        buildMessage(illustRanking(date = wDate, mode = rankMode, offset = index).illusts.first())
+        buildMessage(illustRanking(date = wDate, mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -124,7 +120,7 @@ object Method : CompositeCommand(
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        buildMessage(illustRanking(mode = rankMode, offset = index).illusts.first())
+        buildMessage(illustRanking(mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -148,11 +144,11 @@ object Method : CompositeCommand(
      * 作品详情
      * @param pid 作品ID
      */
-    @SubCommand("detail", "work")
+    @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
         pid: Long
     ) = getHelper().runCatching {
-        buildMessage(illustDetail(pid).illust)
+        buildMessage(illustDetail(pid.positiveLongCheck()).illust)
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -167,7 +163,7 @@ object Method : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(
         uid: Long
     ) = getHelper().runCatching {
-        buildMessage(userIllusts(uid).illusts.first())
+        buildMessage(userIllusts(uid.positiveLongCheck()).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -185,6 +181,44 @@ object Method : CompositeCommand(
     ) = getHelper().runCatching {
         require(index in 1..30) {  "index 的范围在1~30" }
         buildMessage(searchIllust(word).illusts[index - 1])
+    }.onSuccess { list ->
+        list.forEach { quoteReply(it) }
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 关注
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().runCatching {
+        buildMessage(illustFollow().illusts.random())
+    }.onSuccess { list ->
+        list.forEach { quoteReply(it) }
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 监听
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.listen() = getHelper().runCatching {
+        addIllustFollowListener {
+            buildMessage(it).forEach { message -> reply(message) }
+        }
+    }.onSuccess {
+        quoteReply("监听任务添加成功")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 书签
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
+        buildMessage(userBookmarksIllust(uid = authInfo.user.uid).illusts.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

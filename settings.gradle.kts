@@ -25,4 +25,8 @@ pluginManagement {
     }
 }
 
-rootProject.name = "PixivHelper"
+rootProject.name = "pixiv-helper"
+
+//
+include("helper")
+include("client")

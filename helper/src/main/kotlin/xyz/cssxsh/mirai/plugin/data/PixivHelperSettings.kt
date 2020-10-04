@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.*
 
@@ -8,5 +8,5 @@ object PixivHelperSettings : AutoSavePluginConfig() {
      *
      * TODO：修改时推送到每个客户端
      */
-    var proxy: String by value("http://127.0.0.1:7890")
+    var proxy: String? by value()
 }

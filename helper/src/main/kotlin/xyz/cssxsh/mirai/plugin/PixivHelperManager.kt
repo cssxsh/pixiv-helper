@@ -3,8 +3,6 @@ package xyz.cssxsh.mirai.plugin
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.message.MessageReceipt
-import net.mamoe.mirai.message.data.Message
 
 object PixivHelperManager {
     /**
@@ -44,17 +42,7 @@ object PixivHelperManager {
     }
 
     fun closeAll() {
-        users.forEach {
-            it.value.close()
-        }
-        groups.forEach {
-            it.value.close()
-        }
+        users.forEach { it.value.close() }
+        groups.forEach { it.value.close() }
     }
-
-    suspend fun sendMessageToUsers(message: Message): Map<Long, Result<MessageReceipt<Contact>>> =
-        users.mapValues { runCatching { it.value.reply(message) } }
-
-    suspend fun sendMessageToGroups(message: Message): Map<Long, Result<MessageReceipt<Contact>>> =
-        groups.mapValues { runCatching { it.value.reply(message) } }
 }

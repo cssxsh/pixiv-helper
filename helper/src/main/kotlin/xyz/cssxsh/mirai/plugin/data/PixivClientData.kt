@@ -7,8 +7,8 @@ import xyz.cssxsh.pixiv.data.AuthResult
 
 @Serializable
 data class PixivClientData(
-    @SerialName("config")
-    val config: PixivConfig = PixivConfig(),
     @SerialName("auth_info")
-    val authInfo: AuthResult.AuthInfo? = null
+    val authInfo: AuthResult.AuthInfo? = null,
+    @SerialName("config")
+    val config: PixivConfig = PixivConfig(proxy = PixivHelperSettings.proxy)
 )
