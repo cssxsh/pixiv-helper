@@ -51,6 +51,9 @@ kotlin {
             languageSettings.useExperimentalAnnotation("com.soywiz.klock.annotations.KlockExperimental")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
         }
+        test {
+            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.ConsoleFrontEndImplementation")
+        }
     }
 }
 
@@ -77,7 +80,7 @@ tasks {
         kotlinOptions.jvmTarget = "11"
     }
 
-    val testConsoleDir = File(parent?.projectDir ?: rootDir, "test").apply { mkdir() }
+    val testConsoleDir = File(parent?.projectDir ?: projectDir, "test").apply { mkdir() }
 
     create("copyFile") {
         group = "mirai"
@@ -85,29 +88,25 @@ tasks {
         dependsOn(shadowJar)
         dependsOn(testClasses)
 
-        doFirst {
 
-            File(testConsoleDir, "plugins").apply { mkdir() }.walk().forEach {
-                if (project.name in it.name) {
-                    check(it.delete())
-                    println("deleting old files: ${it.name}")
+        doLast {
+            delete {
+                File(testConsoleDir, "plugins/").walk().filter {
+                    "${project.name}-${version}-all" in it.name
+                }.forEach {
+                    delete(it)
+                    println("Deleted ${it.toURI()}")
                 }
             }
-
-
-            File(project.buildDir, "libs/").walk().filter {
-                "-all" in it.name
-            }.maxBy {
-                it.lastModified()
-            }.let {
-                requireNotNull(it) { "File not found" }
-            }.let {
-                println("Coping ${it.toURI()}")
-                copy {
-                    from(it)
-                    into("$testConsoleDir/plugins/")
+            copy {
+                into(File(testConsoleDir, "plugins/"))
+                from(File(project.buildDir, "libs/")) {
+                    include {
+                        "${project.name}-${version}-all" in it.name
+                    }.eachFile {
+                        println("Copy ${file.toURI()}")
+                    }
                 }
-                println("Copied ${it.toURI()}")
             }
         }
     }
@@ -129,7 +128,7 @@ tasks {
         standardInput = System.`in`
 
 
-        doFirst {
+        doLast {
             classpath = sourceSets["test"].runtimeClasspath
             println("WorkingDir: ${workingDir.toURI()}, Args: $args")
         }
