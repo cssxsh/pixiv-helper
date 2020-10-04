@@ -9,4 +9,9 @@ object PixivHelperSettings : AutoSavePluginConfig() {
      * TODO：修改时推送到每个客户端
      */
     var proxy: String? by value()
+
+    /**
+     * 色图间隔
+     */
+    var minInterval: Int by value(16)
 }
