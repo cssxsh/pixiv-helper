@@ -99,7 +99,11 @@ tasks {
                 }
             }
             copy {
-                into(File(testConsoleDir, "plugins/"))
+                into(File(testConsoleDir, "plugins/").walk().maxBy {
+                    it.lastModified()
+                }.let {
+                    requireNotNull(it) { "没有要复制的文件" }
+                })
                 from(File(project.buildDir, "libs/")) {
                     include {
                         "${project.name}-${version}-all" in it.name
