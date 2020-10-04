@@ -34,8 +34,9 @@ dependencies {
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(mirai("core", Versions.core))
     implementation(mirai("console", Versions.console))
-    implementation(group = "com.soywiz.korlibs.klock", name = "klock", version = Versions.klock)
+    implementation(korlibs("klock", Versions.klock))
     // implementation(group = "xzy.cssxsh.pixiv", name = "pixiv-client-jvm", version = "0.7.0-dev-7")
+    implementation(project(":client"))
     // test
     testImplementation(mirai("console-pure", Versions.console))
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
@@ -76,7 +77,7 @@ tasks {
         kotlinOptions.jvmTarget = "11"
     }
 
-    val testConsoleDir = "test"
+    val testConsoleDir = File(parent?.projectDir ?: rootDir, "test").apply { mkdir() }
 
     create("copyFile") {
         group = "mirai"
@@ -85,9 +86,8 @@ tasks {
         dependsOn(testClasses)
 
         doFirst {
-            val workingDir = File(testConsoleDir).apply { mkdir() }
 
-            File(workingDir, "plugins").apply { mkdir() }.walk().forEach {
+            File(testConsoleDir, "plugins").apply { mkdir() }.walk().forEach {
                 if (project.name in it.name) {
                     check(it.delete())
                     println("deleting old files: ${it.name}")
@@ -95,16 +95,17 @@ tasks {
             }
 
 
-            println("Coping $name")
             File("build/libs/").walk().filter {
                 "-all" in it.name
             }.maxBy {
                 it.lastModified()
             }?.let {
+                println("Coping ${it.toURI()}")
                 copy {
                     from(it)
                     into("$testConsoleDir/plugins/")
                 }
+                println("Copied ${it.toURI()}")
                 /*
                 File("$testConsoleDir/plugins/${name}").apply {
                     check(createNewFile())
@@ -112,12 +113,11 @@ tasks {
                     inputStream().transferTo(it.outputStream())
                 }*/
             }
-            println("Copied $name")
         }
     }
 
 
-    create("runMiraiConsole", JavaExec::class.java) {
+    create("runMiraiConsole", JavaExec::class.java) javaExec@ {
         group = "mirai"
 
         dependsOn(named("copyFile"))
@@ -125,13 +125,17 @@ tasks {
         main = "mirai.RunMirai"
 
         // debug = true
+
         defaultCharacterEncoding = "UTF-8"
 
+        workingDir = testConsoleDir
+
+        standardInput = System.`in`
+
+
         doFirst {
-            workingDir = File(rootDir, testConsoleDir)
             classpath = sourceSets["test"].runtimeClasspath
-            standardInput = System.`in`
-            args(Versions.core, Versions.console)
+            println("WorkingDir: ${workingDir.toURI()}, Args: $args")
         }
     }
 }
