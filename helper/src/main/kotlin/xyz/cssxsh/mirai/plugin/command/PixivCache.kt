@@ -5,10 +5,8 @@ import kotlinx.coroutines.awaitAll
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelper
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.getHelper
-import xyz.cssxsh.mirai.plugin.save
+import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
@@ -25,15 +23,17 @@ object PixivCache : SimpleCommand(
     }.awaitAll().flatMap {
         it.illusts
     }.count {
-        it.save(false)
+        it.pid !in PixivCacheData.illust && runCatching { getImages(it) }.isSuccess
     }
 
-    private suspend fun PixivHelper.follow(): Int = illustFollow().illusts.count { it.save(false) }
+    private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count {
+        it.pid !in PixivCacheData.illust && runCatching { getImages(it) }.isSuccess
+    }
 
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
-        cacheRank() + follow()
+        cacheRank() + cacheFollow()
     }.onSuccess {
         quoteReply("缓存完毕共${it}个新作品")
     }.onFailure {

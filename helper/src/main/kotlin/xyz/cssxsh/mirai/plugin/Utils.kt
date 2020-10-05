@@ -40,7 +40,9 @@ suspend fun PixivHelper.buildMessage(
 ): List<Message> = buildList {
     add(illust.getMessage())
     if (!illust.isR18()) {
-        addAll(getImages(illust, type))
+        addAll(getImages(illust, type).map {
+            it.uploadAsImage(contact)
+        })
     } else {
         add(PlainText("R18禁止！"))
     }
@@ -63,30 +65,25 @@ fun IllustInfo.save(cover: Boolean = true) = (pid !in PixivCacheData.illust || c
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     type: String = "origin"
-) : List<Message> = PixivHelperPlugin.imagesFolder(illust.pid).let { dir ->
-    illust.save()
+) : List<File> = PixivHelperPlugin.imagesFolder(illust.pid).let { dir ->
     if (dir.exists()) {
         illust.getImageUrls().flatMap { fileUrls ->
             fileUrls.filter { type in it.key }.values
         }.mapIndexed { index, _ ->
             val name = "${illust.pid}-${type}-${index}.jpg"
-            runCatching {
-                File(dir, name).uploadAsImage(contact)
-            }.getOrDefault(PlainText("获取图片${name}失败"))
+            File(dir, name)
         }
     } else {
         dir.mkdir()
         downloadImage<ByteArray>(illust, { name, _ -> type in name }).mapIndexed { index, result ->
             val name = "${illust.pid}-${type}-${index}.jpg"
-            runCatching {
-                result.getOrThrow().also {
-                    File(dir, name).writeBytes(it)
-                }.inputStream().uploadAsImage(contact)
-            }.onFailure {
-                PixivHelperPlugin.logger.warning(it)
-            }.getOrDefault(PlainText("获取图片${name}失败"))
+            File(dir, name).apply {
+                writeBytes(result.getOrThrow())
+            }
         }
     }
+}.also {
+    illust.save()
 }
 
 
