@@ -58,7 +58,7 @@ fun getPixivCatUrls(pid: Long, count: Int): List<String> = if (count > 1) {
 
 fun IllustInfo.isR18(): Boolean = tags.any { Regex("""R-?18""") in it.name }
 
-fun IllustInfo.save(cover: Boolean = true) = (pid !in PixivCacheData.illust || cover).also {
+fun IllustInfo.save(cover: Boolean = true) = (pid !in PixivCacheData.illusts || cover).also {
     if (it) PixivCacheData.add(this)
 }
 

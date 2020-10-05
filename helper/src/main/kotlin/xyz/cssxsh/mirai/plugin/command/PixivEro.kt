@@ -21,7 +21,7 @@ object PixivEro : SimpleCommand(
 ) {
     private val historyQueue = ArrayBlockingQueue<Long>(minInterval)
 
-    private fun randomIllust(): IllustInfo = PixivCacheData.illust.values.random().let { illust ->
+    private fun randomIllust(): IllustInfo = PixivCacheData.illusts.values.random().let { illust ->
         if ((illust.totalBookmarks ?: 0) >= 5000 && illust.pid !in historyQueue) {
             illust
         } else {
