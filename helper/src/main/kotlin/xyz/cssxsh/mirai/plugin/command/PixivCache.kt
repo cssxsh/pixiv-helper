@@ -8,6 +8,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.command.PixivCache.cacheRank
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
@@ -22,21 +23,19 @@ object PixivCache : CompositeCommand(
     prefixOptional = true
 ) {
 
-    private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map {
-        illustRanking(mode = it)
-    }.flatMap {
-        it.illusts
-    }.count {
-        it.pid !in PixivCacheData.illusts && runCatching { getImages(it) }.isSuccess
-    }
+    private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
+        illustRanking(mode = mode).illusts.count { info ->
+            info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
+        }
+    }.count()
 
-    private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count {
-        it.pid !in PixivCacheData.illusts && runCatching { getImages(it) }.isSuccess
+    private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
+        info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
     }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
-        cacheRank() + cacheFollow()
+        cacheFollow() + cacheRank()
     }.onSuccess {
         quoteReply("缓存完毕共${it}个新作品")
     }.onFailure {

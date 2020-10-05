@@ -25,7 +25,7 @@ object PixivEro : SimpleCommand(
         if ((illust.totalBookmarks ?: 0) >= 5000 && illust.pid !in historyQueue) {
             illust
         } else {
-            PixivHelperPlugin.logger.verbose("色图不够色！${illust.pid}, 再来")
+            PixivHelperPlugin.logger.verbose("色过了！${illust.pid}, 再来")
             randomIllust()
         }
     }
