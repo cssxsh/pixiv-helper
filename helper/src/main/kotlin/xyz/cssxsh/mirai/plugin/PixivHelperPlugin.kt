@@ -25,7 +25,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.reload()
         // Data
         PixivCacheData.reload()
-        PixivAuthInfoData.reload()
+        PixivHelperData.reload()
         // cmd
         PixivMethod.register()
         PixivEro.register()

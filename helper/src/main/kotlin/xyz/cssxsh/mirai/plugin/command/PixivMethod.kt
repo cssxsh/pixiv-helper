@@ -12,6 +12,7 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.MiraiLogger
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.PixivHelperData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
@@ -32,8 +33,8 @@ object PixivMethod : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info(PixivHelperSettings.config.proxy + " -> " +  proxy)
-        PixivHelperSettings.config.proxy = proxy
+        logger.info(PixivHelperData.config.proxy + " -> " +  proxy)
+        PixivHelperData.config.proxy = proxy
     }
 
     /**

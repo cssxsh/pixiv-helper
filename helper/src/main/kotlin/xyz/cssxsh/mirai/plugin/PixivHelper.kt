@@ -17,15 +17,15 @@ import xyz.cssxsh.pixiv.data.AuthResult
  */
 class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
-    config = PixivHelperSettings.config
+    config = PixivHelperData.config
 ) {
 
     init {
-        (config.refreshToken ?: authInfo?.refreshToken)?.let {
+        if (isLoggedIn.not() && config.refreshToken.isNullOrEmpty().not()) {
             runBlocking {
                 runCatching {
-                    authInfo = refresh(it)
-                    config = config.copy(refreshToken = it)
+                    authInfo = refresh(config.refreshToken!!)
+                    config = config.copy(refreshToken = config.refreshToken)
                 }.onSuccess {
                     logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
                 }.onFailure { ree ->
@@ -36,17 +36,17 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     }
 
     override var config: PixivConfig
-        get() = PixivHelperSettings.config
-        set(value) { PixivHelperSettings.config = value }
+        get() = PixivHelperData.config
+        set(value) { PixivHelperData.config = value }
 
     private val logger: MiraiLogger
         get() = PixivHelperPlugin.logger
 
     override var authInfo: AuthResult.AuthInfo?
-        get() = PixivAuthInfoData.findByConfig(config)
+        get() = PixivHelperData.authInfo
         set(value) {
             if (value != null) {
-                PixivAuthInfoData.authData[value.user.uid] = value
+                PixivHelperData.authInfo = value
             }
         }
 
@@ -54,7 +54,7 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
         get() = authInfo != null
 
     override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { PixivHelperSettings.config = it }
+        config.apply(block).also { PixivHelperData.config = it }
 
     override suspend fun refresh(): AuthResult.AuthInfo =
         super.refresh().also { authInfo = it }
