@@ -8,7 +8,7 @@ object PixivHelperSettings : AutoSavePluginConfig() {
      *
      * TODO：修改时推送到每个客户端
      */
-    var proxy: String? by value()
+    var proxy: String? by value(null)
 
     /**
      * 色图间隔
@@ -18,5 +18,5 @@ object PixivHelperSettings : AutoSavePluginConfig() {
     /**
      * 图片缓存位置
      */
-    var cachePath: String? by value()
+    var cachePath: String? by value(null)
 }

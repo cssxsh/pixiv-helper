@@ -40,9 +40,11 @@ object PixivHelperPlugin : KotlinPlugin(
      * 缓存目录
      */
     private val cacheFolder: File by lazy {
-        PixivHelperSettings.cachePath?.let {
-            File(it).apply { mkdir() }
-        } ?: File(dataFolder, "cache").apply { mkdir() }
+        if (PixivHelperSettings.cachePath.isNullOrEmpty()) {
+            File(dataFolder, "cache").apply { mkdir() }
+        } else {
+            File(PixivHelperSettings.cachePath!!).apply { mkdir() }
+        }
     }
 
     /**
