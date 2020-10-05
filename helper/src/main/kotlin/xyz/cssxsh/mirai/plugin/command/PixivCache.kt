@@ -5,9 +5,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
@@ -66,4 +68,14 @@ object PixivCache : CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
+
+
+    /**
+     * 设置缓存目录
+     * @param path 缓存目录
+     */
+    @SubCommand
+    fun ConsoleCommandSender.set(path: String) {
+        PixivHelperSettings.cachePath = path
+    }
 }
