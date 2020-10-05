@@ -2,6 +2,7 @@
 
 package xyz.cssxsh.mirai.plugin
 
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -18,6 +19,20 @@ import xyz.cssxsh.pixiv.data.AuthResult
 class PixivHelper(
     val contact: Contact,
 ) : SimplePixivClient(PixivHelperPlugin.coroutineContext, PixivHelperPluginData[contact].config) {
+
+    init {
+        config.refreshToken?.let {
+            runBlocking {
+                runCatching {
+                    authInfo = refresh(it)
+                }.onSuccess {
+                    logger.info("${contact}的助手自动${authInfo.user.name}登陆成功")
+                }.onFailure {
+                    logger.info("${contact}的助手自动${authInfo.user.name}登陆失败")
+                }
+            }
+        }
+    }
 
     private val logger: MiraiLogger
         get() = PixivHelperPlugin.logger
@@ -50,7 +65,6 @@ class PixivHelper(
 
     override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
         super.login(mailOrPixivID, password).also { logger.info("Auth by Account: $mailOrPixivID") }
-
 
     /**
      * 给这个助手的联系人发送消息
