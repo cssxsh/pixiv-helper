@@ -9,59 +9,61 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.MiraiLogger
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.GrantType
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
 
 /**
  * 助手实例
  */
-class PixivHelper(
-    val contact: Contact,
-) : SimplePixivClient(PixivHelperPlugin.coroutineContext, PixivHelperPluginData[contact].config) {
+class PixivHelper(val contact: Contact, ) : SimplePixivClient(
+    parentCoroutineContext = PixivHelperPlugin.coroutineContext,
+    config = PixivHelperConfigData[contact].copy(proxy = PixivHelperSettings.proxy)
+) {
 
     init {
         (config.refreshToken ?: authInfo?.refreshToken)?.let {
             runBlocking {
                 runCatching {
-                    data.copy(authInfo = refresh(it), config = config.copy(refreshToken = it))
+                    authInfo = refresh(it)
+                    config = config.copy(refreshToken = it)
                 }.onSuccess {
                     logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
-                }.onFailure {
-                    logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆失败")
+                }.onFailure { ree ->
+                    logger.info("${contact}的助手自动登陆失败, ${ree.message}")
                 }
             }
         }
     }
 
+    override var config: PixivConfig
+        get() = PixivHelperConfigData[contact].copy(proxy = PixivHelperSettings.proxy)
+        set(value) { PixivHelperConfigData[contact] = value }
+
     private val logger: MiraiLogger
         get() = PixivHelperPlugin.logger
 
-    private var data: PixivClientData
-        get() = PixivHelperPluginData[contact]
-        set(value) { PixivHelperPluginData[contact] = value }
-
     override var authInfo: AuthResult.AuthInfo?
-        get() = data.authInfo
-        set(value) { data = data.copy(authInfo = value) }
+        get() = PixivAuthInfoData.findByConfig(config)
+        set(value) {
+            if (value != null) {
+                PixivAuthInfoData.authData[value.user.uid] = value
+            }
+        }
 
     val isLoggedIn: Boolean
-        get() = data.authInfo != null
-
-    override val config: PixivConfig
-        get() = data.config
+        get() = authInfo != null
 
     override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { data = data.copy(config = it) }
+        config.apply(block).also { PixivHelperConfigData[contact] = it }
 
-    suspend fun refresh(): AuthResult.AuthInfo =
-        super.auth(GrantType.REFRESH_TOKEN, config).also { authInfo = it }
+    override suspend fun refresh(): AuthResult.AuthInfo =
+        super.refresh().also { authInfo = it }
 
     override suspend fun refresh(token: String): AuthResult.AuthInfo =
         super.refresh(token).also { logger.info("Auth by RefreshToken: $token") }
 
-    suspend fun login(): AuthResult.AuthInfo =
-        super.auth(GrantType.PASSWORD, config).also { authInfo = it }
+    override suspend fun login(): AuthResult.AuthInfo =
+        super.login().also { authInfo = it }
 
     override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
         super.login(mailOrPixivID, password).also { logger.info("Auth by Account: $mailOrPixivID") }

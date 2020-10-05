@@ -21,9 +21,13 @@ object PixivHelperPlugin : KotlinPlugin(
     // login 3337342367 66RKVt^eX&MfE7
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
-        PixivHelperPluginData.reload()
+        // Settings
         PixivHelperSettings.reload()
+        // Data
+        PixivHelperConfigData.reload()
         PixivCacheData.reload()
+        PixivAuthInfoData.reload()
+        // cmd
         PixivMethod.register()
         PixivEro.register()
         PixivCache.register()
@@ -40,10 +44,10 @@ object PixivHelperPlugin : KotlinPlugin(
      * 缓存目录
      */
     private val cacheFolder: File by lazy {
-        if (PixivHelperSettings.cachePath.isNullOrEmpty()) {
+        if (PixivHelperSettings.cachePath.isEmpty()) {
             File(dataFolder, "cache").apply { mkdir() }
         } else {
-            File(PixivHelperSettings.cachePath!!).apply { mkdir() }
+            File(PixivHelperSettings.cachePath).apply { mkdir() }
         }
     }
 
