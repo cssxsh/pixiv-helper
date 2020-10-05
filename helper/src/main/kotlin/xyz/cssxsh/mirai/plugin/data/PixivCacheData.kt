@@ -12,6 +12,6 @@ object PixivCacheData : AutoSavePluginData() {
     val illusts: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
     fun add(illustInfo: IllustInfo) = illusts.set(illustInfo.pid.also {
-        PixivHelperPlugin.logger.verbose("作品${illustInfo.pid}信息将保存, 共${illusts.size}条消息")
+        PixivHelperPlugin.logger.verbose("作品${illustInfo.pid}信息将保存, 目前共${illusts.size}条信息")
     }, illustInfo)
 }

@@ -79,7 +79,7 @@ suspend fun PixivHelper.getImages(
             val name = "${illust.pid}-${type}-${index}.jpg"
             File(dir, name).apply {
                 writeBytes(result.getOrThrow())
-                PixivHelperPlugin.logger.verbose("文件${name}已保存")
+                PixivHelperPlugin.logger.verbose("文件${name}(${this.length() / 1024 / 1024}MB)已保存")
             }
         }
     }
