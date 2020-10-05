@@ -44,5 +44,5 @@ object PixivHelperPlugin : KotlinPlugin(
     /**
      * 图片目录
      */
-    fun imagesFolder(pid: Long): File = File(cacheFolder, pid.toString())
+    fun imagesFolder(pid: Long): File = File(cacheFolder, pid.toString()).apply { mkdir() }
 }

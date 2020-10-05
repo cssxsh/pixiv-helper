@@ -66,7 +66,7 @@ suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     type: String = "origin"
 ) : List<File> = PixivHelperPlugin.imagesFolder(illust.pid).let { dir ->
-    if (dir.exists()) {
+    if (File(dir, "${illust.pid}-${type}-${0}.jpg").canRead()) {
         illust.getImageUrls().flatMap { fileUrls ->
             fileUrls.filter { type in it.key }.values
         }.mapIndexed { index, _ ->
@@ -74,7 +74,6 @@ suspend fun PixivHelper.getImages(
             File(dir, name)
         }
     } else {
-        dir.mkdir()
         downloadImage<ByteArray>(illust, { name, _ -> type in name }).mapIndexed { index, result ->
             val name = "${illust.pid}-${type}-${index}.jpg"
             File(dir, name).apply {
