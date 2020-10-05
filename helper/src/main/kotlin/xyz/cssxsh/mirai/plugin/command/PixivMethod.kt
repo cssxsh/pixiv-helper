@@ -15,6 +15,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
+import xyz.cssxsh.pixiv.client.exception.NotLoginException
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 
 object PixivMethod : CompositeCommand(
@@ -40,7 +41,7 @@ object PixivMethod : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.info() = getHelper().runCatching {
-        authInfo.run {
+        (authInfo ?: throw NotLoginException()).run {
             "账户：${user.account} \nPixivID: ${user.uid} \nToken: $refreshToken"
         }
     }.onSuccess {
@@ -218,7 +219,7 @@ object PixivMethod : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessage(userBookmarksIllust(uid = authInfo.user.uid).illusts.random())
+        buildMessage(userBookmarksIllust(uid = (authInfo ?: throw NotLoginException()).user.uid).illusts.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
