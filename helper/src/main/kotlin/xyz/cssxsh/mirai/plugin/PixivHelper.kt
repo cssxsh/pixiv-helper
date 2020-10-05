@@ -17,7 +17,7 @@ import xyz.cssxsh.pixiv.data.AuthResult
  */
 class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
-    config = PixivHelperConfigData[contact].copy(proxy = PixivHelperSettings.proxy)
+    config = PixivHelperSettings.config
 ) {
 
     init {
@@ -36,8 +36,8 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     }
 
     override var config: PixivConfig
-        get() = PixivHelperConfigData[contact].copy(proxy = PixivHelperSettings.proxy)
-        set(value) { PixivHelperConfigData[contact] = value }
+        get() = PixivHelperSettings.config
+        set(value) { PixivHelperSettings.config = value }
 
     private val logger: MiraiLogger
         get() = PixivHelperPlugin.logger
@@ -54,7 +54,7 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
         get() = authInfo != null
 
     override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { PixivHelperConfigData[contact] = it }
+        config.apply(block).also { PixivHelperSettings.config = it }
 
     override suspend fun refresh(): AuthResult.AuthInfo =
         super.refresh().also { authInfo = it }

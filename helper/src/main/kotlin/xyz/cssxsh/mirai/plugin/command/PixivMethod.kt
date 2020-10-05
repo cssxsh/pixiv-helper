@@ -32,8 +32,8 @@ object PixivMethod : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info(PixivHelperSettings.proxy + " -> " +  proxy)
-        PixivHelperSettings.proxy = proxy
+        logger.info(PixivHelperSettings.config.proxy + " -> " +  proxy)
+        PixivHelperSettings.config.proxy = proxy
     }
 
     /**
