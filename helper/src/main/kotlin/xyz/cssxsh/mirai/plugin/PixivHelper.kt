@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.MiraiLogger
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.pixiv.GrantType
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
 
@@ -20,10 +21,10 @@ class PixivHelper(
 ) : SimplePixivClient(PixivHelperPlugin.coroutineContext, PixivHelperPluginData[contact].config) {
 
     init {
-        config.refreshToken?.let {
+        (config.refreshToken ?: authInfo?.refreshToken)?.let {
             runBlocking {
                 runCatching {
-                    authInfo = refresh(it)
+                    data.copy(authInfo = refresh(it), config = config.copy(refreshToken = it))
                 }.onSuccess {
                     logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
                 }.onFailure {
@@ -53,14 +54,14 @@ class PixivHelper(
     override fun config(block: PixivConfig.() -> Unit) =
         config.apply(block).also { data = data.copy(config = it) }
 
-    override suspend fun refresh(): AuthResult.AuthInfo =
-        super.refresh().also { authInfo = it }
+    suspend fun refresh(): AuthResult.AuthInfo =
+        super.auth(GrantType.REFRESH_TOKEN, config).also { authInfo = it }
 
     override suspend fun refresh(token: String): AuthResult.AuthInfo =
         super.refresh(token).also { logger.info("Auth by RefreshToken: $token") }
 
-    override suspend fun login(): AuthResult.AuthInfo =
-        super.login().also { authInfo = it }
+    suspend fun login(): AuthResult.AuthInfo =
+        super.auth(GrantType.PASSWORD, config).also { authInfo = it }
 
     override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
         super.login(mailOrPixivID, password).also { logger.info("Auth by Account: $mailOrPixivID") }
