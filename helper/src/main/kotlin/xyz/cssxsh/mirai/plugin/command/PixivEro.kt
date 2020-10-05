@@ -8,7 +8,7 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.buildMessage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.util.concurrent.ArrayBlockingQueue
@@ -19,7 +19,7 @@ object PixivEro : SimpleCommand(
     description = "色图指令",
     prefixOptional = true
 ) {
-    private val historyQueue = ArrayBlockingQueue<Long>(minInterval)
+    private val historyQueue = ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
 
     private fun randomIllust(): IllustInfo = PixivCacheData.illusts.values.random().let { illust ->
         if ((illust.totalBookmarks ?: 0) >= 5000 && illust.pid !in historyQueue) {

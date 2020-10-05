@@ -28,7 +28,7 @@ object PixivMethod : CompositeCommand(
     private val logger: MiraiLogger get() = PixivHelperPlugin.logger
 
     /**
-     * 设置代理
+     * 设置代理 pixiv proxy http://10.21.159.95:7890
      * @param proxy 代理URL
      */
     @SubCommand

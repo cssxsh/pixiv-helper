@@ -23,8 +23,8 @@ object PixivCache : CompositeCommand(
 ) {
 
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map {
-        async { illustRanking(mode = it) }
-    }.awaitAll().flatMap {
+        illustRanking(mode = it)
+    }.flatMap {
         it.illusts
     }.count {
         it.pid !in PixivCacheData.illusts && runCatching { getImages(it) }.isSuccess
@@ -71,11 +71,14 @@ object PixivCache : CompositeCommand(
 
 
     /**
-     * 设置缓存目录
+     * 设置缓存目录 cache set /storage/emulated/0/PixivCache
      * @param path 缓存目录
      */
     @SubCommand
     fun ConsoleCommandSender.set(path: String) {
+        runCatching {
+            File(PixivHelperSettings.cachePath).renameTo(File(path))
+        }
         PixivHelperSettings.cachePath = path
     }
 }
