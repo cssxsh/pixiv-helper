@@ -52,7 +52,7 @@ object PixivCache : CompositeCommand(
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"
                     File(dir, name).also {
-                        require(it.canRead()) {
+                        if (it.canRead()) {
                             "${it.name} 不可读， 文件将删除，结果：${it.delete()}"
                         }
                     }
