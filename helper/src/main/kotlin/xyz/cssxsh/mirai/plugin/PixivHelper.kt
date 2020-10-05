@@ -10,7 +10,6 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.MiraiLogger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
-import xyz.cssxsh.pixiv.client.exception.NotLoginException
 import xyz.cssxsh.pixiv.data.AuthResult
 
 /**
@@ -26,9 +25,9 @@ class PixivHelper(
                 runCatching {
                     authInfo = refresh(it)
                 }.onSuccess {
-                    logger.info("${contact}的助手自动${authInfo.user.name}登陆成功")
+                    logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
                 }.onFailure {
-                    logger.info("${contact}的助手自动${authInfo.user.name}登陆失败")
+                    logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆失败")
                 }
             }
         }
@@ -41,11 +40,11 @@ class PixivHelper(
         get() = PixivHelperPluginData[contact]
         set(value) { PixivHelperPluginData[contact] = value }
 
-    override var authInfo: AuthResult.AuthInfo
-        get() = data.authInfo ?: throw NotLoginException()
+    override var authInfo: AuthResult.AuthInfo?
+        get() = data.authInfo
         set(value) { data = data.copy(authInfo = value) }
 
-    override val isLoggedIn: Boolean
+    val isLoggedIn: Boolean
         get() = data.authInfo != null
 
     override val config: PixivConfig
