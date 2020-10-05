@@ -21,11 +21,11 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
 ) {
 
     init {
-        if (isLoggedIn.not() && config.refreshToken.isNullOrEmpty().not()) {
+        (config.refreshToken ?: authInfo?.refreshToken)?.let { token ->
             runBlocking {
                 runCatching {
-                    authInfo = refresh(config.refreshToken!!)
-                    config = config.copy(refreshToken = config.refreshToken)
+                    authInfo = refresh(token)
+                    config = config.copy(refreshToken = token)
                 }.onSuccess {
                     logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
                 }.onFailure { ree ->

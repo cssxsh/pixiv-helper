@@ -1,14 +1,11 @@
 @file:Suppress("unused")
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.command.PixivCache.cacheRank
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
@@ -27,7 +24,7 @@ object PixivCache : CompositeCommand(
         illustRanking(mode = mode).illusts.count { info ->
             info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
         }
-    }.count()
+    }.sum()
 
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
         info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
