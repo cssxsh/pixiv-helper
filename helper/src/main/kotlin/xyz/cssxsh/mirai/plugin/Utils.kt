@@ -79,11 +79,12 @@ suspend fun PixivHelper.getImages(
             val name = "${illust.pid}-${type}-${index}.jpg"
             File(dir, name).apply {
                 writeBytes(result.getOrThrow())
+                PixivHelperPlugin.logger.verbose("文件${name}已保存")
             }
         }
     }
 }.also {
-    illust.save()
+    if (type == "origin") illust.save()
 }
 
 
