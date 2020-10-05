@@ -18,5 +18,5 @@ object PixivHelperSettings : AutoSavePluginConfig() {
     /**
      * 图片缓存位置
      */
-    var pathCache: String? by value()
+    var cachePath: String? by value()
 }
