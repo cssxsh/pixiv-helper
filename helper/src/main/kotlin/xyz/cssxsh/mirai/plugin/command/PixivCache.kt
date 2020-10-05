@@ -11,6 +11,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
+import java.io.File
 
 object PixivCache : CompositeCommand(
     PixivHelperPlugin,
@@ -43,14 +44,20 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.illust.count { (pid, illust) ->
-            getImages(illust).runCatching {
-                forEach {
-                    require(it.canRead()) {
-                        "${it.name} 不可读， 文件将删除，结果：${it.delete()}"
+            val dir = PixivHelperPlugin.imagesFolder(illust.pid)
+            illust.getImageUrls().flatMap { fileUrls ->
+                fileUrls.filter { "origin" in it.key }.values
+            }.runCatching {
+                forEachIndexed { index, _ ->
+                    val name = "${illust.pid}-origin-${index}.jpg"
+                    File(dir, name).also {
+                        require(it.canRead()) {
+                            "${it.name} 不可读， 文件将删除，结果：${it.delete()}"
+                        }
                     }
                 }
             }.onFailure {
-                PixivHelperPlugin.logger.verbose("缓存出错", it)
+                PixivHelperPlugin.logger.verbose("${pid}缓存出错: ${it.message}")
                 PixivCacheData.illust.remove(pid)
             }.isSuccess
         }
