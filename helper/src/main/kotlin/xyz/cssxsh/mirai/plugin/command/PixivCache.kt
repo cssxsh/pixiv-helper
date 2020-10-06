@@ -28,13 +28,21 @@ object PixivCache : CompositeCommand(
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
             delay(delayTime)
-            info.pid !in PixivCacheData && runCatching { getImages(info) }.isSuccess
+            info.pid !in PixivCacheData && runCatching {
+                getImages(info)
+            }.onFailure {
+                logger.verbose("获取图片错误", it)
+            }.isSuccess
         }
     }.sum()
 
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
         delay(delayTime)
-        info.pid !in PixivCacheData && runCatching { getImages(info) }.isSuccess
+        info.pid !in PixivCacheData && runCatching {
+            getImages(info)
+        }.onFailure {
+            logger.verbose("获取图片错误", it)
+        }.isSuccess
     }
 
     @SubCommand
