@@ -22,6 +22,7 @@ object PixivEro : SimpleCommand(
     private fun randomIllust(): IllustInfo = PixivCacheData.values.random().let { illust ->
         if (illust.totalBookmarks ?: 0 >= 10000 &&
             illust.pid !in historyQueue &&
+            illust.sanityLevel > 4 &&
             illust.isR18().not() &&
             illust.pageCount == 1) {
             illust
