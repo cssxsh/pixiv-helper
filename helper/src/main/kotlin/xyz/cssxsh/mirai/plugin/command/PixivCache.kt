@@ -48,7 +48,9 @@ object PixivCache : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.values.filter { illust ->
+        PixivCacheData.values.also { list ->
+            logger.verbose("共有 ${list.size} 个作品需要检查")
+        }.filter { illust ->
             val dir = PixivHelperPlugin.imagesFolder(illust.pid)
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->

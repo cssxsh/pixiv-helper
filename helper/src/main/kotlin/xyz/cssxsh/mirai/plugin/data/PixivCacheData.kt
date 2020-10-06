@@ -13,8 +13,8 @@ object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
      */
     private val illusts: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
-    val values get() = synchronized(illusts) {
-        illusts.values
+    val values: List<IllustInfo> get() = synchronized(illusts) {
+        illusts.values.toList()
     }
 
     operator fun contains(pid: Long) = synchronized(illusts) {
