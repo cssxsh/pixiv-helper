@@ -17,7 +17,9 @@ object PixivEro : SimpleCommand(
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
-    private val historyQueue = ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
+    private val historyQueue by lazy {
+        ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
+    }
 
     private fun randomIllust(): IllustInfo = PixivCacheData.values.random().let { illust ->
         if (illust.totalBookmarks ?: 0 >= 10000 &&
@@ -35,6 +37,7 @@ object PixivEro : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
         buildMessage(randomIllust().also {
+            historyQueue.remove()
             historyQueue.put(it.pid)
         })
     }.onSuccess { list ->
