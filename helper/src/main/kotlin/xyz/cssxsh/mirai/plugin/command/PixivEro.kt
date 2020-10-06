@@ -23,14 +23,14 @@ object PixivEro : SimpleCommand(
 
     private fun randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
         illust.pid !in historyQueue
+    }?.also {
+        if (historyQueue.isEmpty().not()) historyQueue.remove()
+        historyQueue.put(it.pid)
     } ?: randomIllust()
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
-        buildMessage(randomIllust().also {
-            if (historyQueue.isEmpty().not()) historyQueue.remove()
-            historyQueue.put(it.pid)
-        })
+        buildMessage(randomIllust())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
