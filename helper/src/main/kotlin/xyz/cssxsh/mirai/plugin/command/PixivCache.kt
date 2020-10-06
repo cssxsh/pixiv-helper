@@ -41,7 +41,7 @@ object PixivCache : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.illusts.count { (pid, illust) ->
+        PixivCacheData.illusts.filter { (pid, illust) ->
             val dir = PixivHelperPlugin.imagesFolder(illust.pid)
             illust.getImageUrls().flatMap { fileUrls ->
                 fileUrls.filter { "origin" in it.key }.values
@@ -56,11 +56,13 @@ object PixivCache : CompositeCommand(
                 }
             }.onFailure {
                 PixivHelperPlugin.logger.verbose("${pid}缓存出错: ${it.message}")
-                PixivCacheData.illusts.remove(pid)
-            }.isSuccess
+            }.isFailure
         }
     }.onSuccess {
-        quoteReply("检查缓存完毕，完整度: ${it}/${PixivCacheData.illusts.size}")
+        quoteReply("检查缓存完毕，错误率: ${it.size}/${PixivCacheData.illusts.size}")
+        it.forEach { (pid, _) ->
+            PixivCacheData.illusts.remove(pid)
+        }
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
