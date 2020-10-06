@@ -28,7 +28,7 @@ object PixivEro : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
         buildMessage(randomIllust().also {
-            historyQueue.remove()
+            if (historyQueue.isEmpty().not()) historyQueue.remove()
             historyQueue.put(it.pid)
         })
     }.onSuccess { list ->

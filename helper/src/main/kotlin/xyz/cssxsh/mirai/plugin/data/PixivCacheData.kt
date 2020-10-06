@@ -3,9 +3,7 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.PixivHelperManager
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.command.PixivEro
 import xyz.cssxsh.mirai.plugin.isR18
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
@@ -37,7 +35,7 @@ object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
     }
 
     private fun IllustInfo.isEro() =
-        totalBookmarks ?: 0 >= 10000 && sanityLevel > 3 && isR18().not() && pageCount == 1
+        totalBookmarks ?: 0 >= 1000 && sanityLevel > 3 && isR18().not() && pageCount == 1
 
     val ero: MutableList<IllustInfo> by lazy {
         values.filter { it.isEro() }.also {
