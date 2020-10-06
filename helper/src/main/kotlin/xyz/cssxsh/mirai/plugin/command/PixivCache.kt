@@ -55,8 +55,10 @@ object PixivCache : CompositeCommand(
         require(caching.not()) { "正在缓存中..." }
         cacheFollow() + cacheRank()
     }.onSuccess {
+        caching = false
         quoteReply("缓存完毕共${it}个新作品")
     }.onFailure {
+        caching = false
         quoteReply(it.toString())
     }.isSuccess
 
