@@ -22,6 +22,38 @@ object PixivMethod : CompositeCommand(
 ), PixivHelperLogger {
 
     /**
+     * 登录 通过 用户名，密码
+     * @param username 用户名
+     * @param password 密码
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.login(
+        username: String,
+        password: String
+    ) = getHelper().runCatching {
+        login(username, password)
+    }.onSuccess {
+        quoteReply("${it.user.name} 登陆成功，Token ${it.refreshToken}")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 登录 通过 Token
+     * @param token refreshToken
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.refresh(
+        token: String
+    ) = getHelper().runCatching {
+        refresh(token)
+    }.onSuccess {
+        quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
      * 排行榜
      * @param type 模式名 [RankMode]
      * @param date 日期 yyyy-MM-dd

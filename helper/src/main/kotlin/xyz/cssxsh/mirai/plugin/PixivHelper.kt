@@ -51,6 +51,12 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
             }
         }
 
+    var simpleInfo: Boolean
+        get() = PixivHelperData.simpleInfo.getOrPut(contact.id, { true })
+        set(value) {
+            PixivHelperData.simpleInfo[contact.id] = value
+        }
+
     val isLoggedIn: Boolean
         get() = authInfo != null
 

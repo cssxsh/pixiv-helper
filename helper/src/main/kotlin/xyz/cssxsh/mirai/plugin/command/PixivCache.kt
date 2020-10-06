@@ -24,7 +24,9 @@ object PixivCache : CompositeCommand(
     /**
      * timeMillis
       */
-    var delayTime = 1_000L
+    private var delayTime: Long
+        get() = PixivHelperSettings.delayTime
+        set(value) { PixivHelperSettings.delayTime = value }
 
     private var caching = false
 
@@ -51,6 +53,9 @@ object PixivCache : CompositeCommand(
         }.isSuccess
     }
 
+    /**
+     * 缓存排行榜和关注列表最新30个作品
+     */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
         require(caching.not()) { "正在缓存中..." }
@@ -64,6 +69,9 @@ object PixivCache : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
+    /**
+     * 检查当前数据中不可读，并删除图片文件夹
+     */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.values.also { list ->
@@ -95,16 +103,24 @@ object PixivCache : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-
     /**
      * 设置缓存目录 cache set /storage/emulated/0/PixivCache
      * @param path 缓存目录
      */
     @SubCommand
-    fun ConsoleCommandSender.set(path: String) {
+    fun ConsoleCommandSender.path(path: String) {
         runCatching {
             File(PixivHelperSettings.cachePath).renameTo(File(path))
         }
         PixivHelperSettings.cachePath = path
     }
+
+    /**
+     * 设置缓存延迟时间
+     */
+    @SubCommand
+    fun ConsoleCommandSender.delay(timeMillis: Long) {
+        delayTime = timeMillis
+    }
+
 }

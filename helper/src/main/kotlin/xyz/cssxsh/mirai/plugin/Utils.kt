@@ -39,7 +39,7 @@ suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     type: String = "origin"
 ): List<Message> = buildList {
-    if (PixivHelperData.simple.getOrPut(contact.id, { true })) {
+    if (simpleInfo) {
         add(PlainText("作品ID: ${illust.pid}"))
     } else {
         add(illust.getMessage())
