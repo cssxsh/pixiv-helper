@@ -53,6 +53,7 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
         require(caching.not()) { "正在缓存中..." }
+        caching = true
         cacheFollow() + cacheRank()
     }.onSuccess {
         caching = false
@@ -73,7 +74,7 @@ object PixivCache : CompositeCommand(
                     val name = "${illust.pid}-origin-${index}.jpg"
                     File(dir, name).apply {
                         require(canRead()) {
-                            "$name 不可读， 文件将删除，结果：${dir.apply { 
+                            "$name 不可读， 文件将删除，结果：${dir.run { 
                                 listFiles()?.forEach { it.delete() }
                                 delete()
                             }}"
