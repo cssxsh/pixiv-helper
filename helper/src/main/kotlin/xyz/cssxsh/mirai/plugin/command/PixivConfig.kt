@@ -23,17 +23,17 @@ object PixivConfig: CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        PixivHelperData.config.proxy = proxy
         logger.info("${PixivHelperData.config.proxy} -> $proxy")
+        PixivHelperData.config.proxy = proxy
     }
 
     /**
-     * 设置色图间隔
+     * 设置色图更新间隔
      */
     @SubCommand
     fun ConsoleCommandSender.interval(interval: Int) {
-        PixivHelperSettings.minInterval = interval
         logger.info("${PixivHelperSettings.minInterval} -> $interval")
+        PixivHelperSettings.minInterval = interval
     }
 
     /**
@@ -53,5 +53,14 @@ object PixivConfig: CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.simple(isSimple: Boolean) = getHelper().runCatching {
+        "$simpleInfo -> $isSimple".also {
+            simpleInfo = isSimple
+        }
+    }.onSuccess {
+        quoteReply(it)
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
 }
