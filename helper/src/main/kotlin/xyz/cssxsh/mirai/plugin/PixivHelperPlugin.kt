@@ -30,12 +30,14 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivMethod.register()
         PixivEro.register()
         PixivCache.register()
+        PixivConfig.register()
     }
 
     override fun onDisable() {
         PixivMethod.unregister()
         PixivEro.unregister()
         PixivEro.unregister()
+        PixivConfig.unregister()
         PixivHelperManager.closeAll()
     }
 

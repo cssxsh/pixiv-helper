@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivHelperData
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImage
 import java.io.File
@@ -38,7 +39,11 @@ suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     type: String = "origin"
 ): List<Message> = buildList {
-    add(illust.getMessage())
+    if (PixivHelperData.simple.getOrPut(contact.id, { true })) {
+        add(PlainText("作品ID: ${illust.pid}"))
+    } else {
+        add(illust.getMessage())
+    }
     if (!illust.isR18()) {
         addAll(getImages(illust, type).map {
             it.uploadAsImage(contact)

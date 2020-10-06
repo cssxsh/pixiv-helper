@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -11,6 +9,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.util.concurrent.ArrayBlockingQueue
 
+@Suppress("unused")
 object PixivEro : SimpleCommand(
     PixivHelperPlugin,
     "ero", "色图",

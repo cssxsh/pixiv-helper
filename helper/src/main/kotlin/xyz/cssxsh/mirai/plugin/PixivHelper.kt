@@ -20,16 +20,21 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
 ), PixivHelperLogger {
 
     init {
-        (config.refreshToken ?: authInfo?.refreshToken)?.let { token ->
+        if (isLoggedIn.not()) {
             runBlocking {
                 runCatching {
-                    authInfo = refresh(token)
-                    config = config.copy(refreshToken = token)
-                }.onSuccess {
-                    logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
-                }.onFailure { ree ->
-                    logger.info("${contact}的助手自动登陆失败, ${ree.message}")
+                    config.refreshToken?.let { token ->
+                        authInfo = refresh(token)
+                    } ?: config.account?.let { account ->
+                        // XXX login(account)
+                        authInfo = login(account.mailOrUID, account.password)
+                    }
                 }
+            }.onSuccess {
+                config = config.copy(refreshToken = authInfo?.refreshToken)
+                logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
+            }.onFailure {
+                logger.info("${contact}的助手自动登陆失败", it)
             }
         }
     }

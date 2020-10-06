@@ -1,4 +1,3 @@
-@file:Suppress("unused")
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.delay
@@ -14,6 +13,8 @@ import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
 import java.io.File
 
+
+@Suppress("unused")
 object PixivCache : CompositeCommand(
     PixivHelperPlugin,
     "cache",
@@ -82,7 +83,7 @@ object PixivCache : CompositeCommand(
                     }
                 }
             }.onFailure {
-                logger.verbose("${illust.pid}缓存出错: ${it.message}")
+                logger.verbose("${illust.pid}缓存出错", it)
             }.isFailure
         }
     }.onSuccess {

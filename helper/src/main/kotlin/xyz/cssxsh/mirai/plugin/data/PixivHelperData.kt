@@ -10,8 +10,14 @@ object PixivHelperData : AutoSavePluginData() {
      * 用于存储认证消息
      */
     var authInfo: AuthResult.AuthInfo? by value(null)
+
     /**
      * 助手配置
      */
     var config: PixivConfig by value()
+
+    /**
+     * 作品信息是否为简单构造
+     */
+    val simple: MutableMap<Long, Boolean> by value()
 }
