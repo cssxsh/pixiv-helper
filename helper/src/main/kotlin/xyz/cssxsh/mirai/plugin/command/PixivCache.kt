@@ -25,10 +25,13 @@ object PixivCache : CompositeCommand(
       */
     var delayTime = 1_000L
 
+    private var caching = false
+
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
             info.pid !in PixivCacheData && runCatching {
                 getImages(info)
+            }.onSuccess {
                 delay(delayTime)
             }.onFailure {
                 logger.verbose("获取图片${info.pid}错误", it)
@@ -40,6 +43,8 @@ object PixivCache : CompositeCommand(
         info.pid !in PixivCacheData && runCatching {
             getImages(info)
             delay(delayTime)
+        }.onSuccess {
+            delay(delayTime)
         }.onFailure {
             logger.verbose("获取图片错误", it)
         }.isSuccess
@@ -47,6 +52,7 @@ object PixivCache : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
+        require(caching) { "正在缓存中..." }
         cacheFollow() + cacheRank()
     }.onSuccess {
         quoteReply("缓存完毕共${it}个新作品")
@@ -63,9 +69,12 @@ object PixivCache : CompositeCommand(
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"
-                    File(dir, name).also {
-                        require(it.canRead()) {
-                            "${it.name} 不可读， 文件将删除，结果：${dir.delete()}"
+                    File(dir, name).apply {
+                        require(canRead()) {
+                            "$name 不可读， 文件将删除，结果：${dir.apply { 
+                                listFiles()?.forEach { it.delete() }
+                                delete()
+                            }}"
                         }
                     }
                 }
