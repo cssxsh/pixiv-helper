@@ -9,9 +9,23 @@ object PixivCacheData : AutoSavePluginData() {
     /**
      * 缓存
      */
-    val illusts: MutableMap<Long, IllustInfo> by value(mutableMapOf())
+    private val illusts: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
-    fun add(illustInfo: IllustInfo) = illusts.set(illustInfo.pid.also {
+    val values get() = synchronized(illusts) {
+        illusts.values
+    }
+
+    operator fun contains(pid: Long) = synchronized(illusts) {
+        illusts.contains(pid)
+    }
+
+    fun add(illustInfo: IllustInfo) = synchronized(illusts) {
         PixivHelperPlugin.logger.verbose("作品${illustInfo.pid}信息将保存, 目前共${illusts.size}条信息")
-    }, illustInfo)
+        illusts[illustInfo.pid] = illustInfo
+    }
+
+    fun remove(pid: Long) = synchronized(illusts) {
+        PixivHelperPlugin.logger.verbose("作品${pid}信息将移除, 目前共${illusts.size}条信息")
+        illusts.remove(pid)
+    }
 }

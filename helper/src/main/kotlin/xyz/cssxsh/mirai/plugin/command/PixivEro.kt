@@ -22,7 +22,7 @@ object PixivEro : SimpleCommand(
 ) {
     private val historyQueue = ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
 
-    private fun randomIllust(): IllustInfo = PixivCacheData.illusts.values.random().let { illust ->
+    private fun randomIllust(): IllustInfo = PixivCacheData.values.random().let { illust ->
         if (illust.totalBookmarks ?: 0 >= 10000 &&
             illust.pid !in historyQueue &&
             illust.isR18().not() &&

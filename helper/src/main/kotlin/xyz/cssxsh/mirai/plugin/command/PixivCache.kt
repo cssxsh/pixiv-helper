@@ -28,13 +28,13 @@ object PixivCache : CompositeCommand(
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
             delay(delayTime)
-            info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
+            info.pid !in PixivCacheData && runCatching { getImages(info) }.isSuccess
         }
     }.sum()
 
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
         delay(delayTime)
-        info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
+        info.pid !in PixivCacheData && runCatching { getImages(info) }.isSuccess
     }
 
     @SubCommand
@@ -48,7 +48,7 @@ object PixivCache : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.illusts.filter { (pid, illust) ->
+        PixivCacheData.values.filter { illust ->
             val dir = PixivHelperPlugin.imagesFolder(illust.pid)
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
@@ -60,13 +60,13 @@ object PixivCache : CompositeCommand(
                     }
                 }
             }.onFailure {
-                PixivHelperPlugin.logger.verbose("${pid}缓存出错: ${it.message}")
+                PixivHelperPlugin.logger.verbose("${illust.pid}缓存出错: ${it.message}")
             }.isFailure
         }
     }.onSuccess {
-        quoteReply("检查缓存完毕，错误率: ${it.size}/${PixivCacheData.illusts.size}")
-        it.forEach { (pid, _) ->
-            PixivCacheData.illusts.remove(pid)
+        quoteReply("检查缓存完毕，错误率: ${it.size}/${PixivCacheData.values.size}")
+        it.forEach { illust ->
+            PixivCacheData.remove(illust.pid)
         }
     }.onFailure {
         quoteReply(it.toString())
