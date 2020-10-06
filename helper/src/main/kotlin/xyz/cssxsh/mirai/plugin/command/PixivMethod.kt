@@ -24,9 +24,7 @@ object PixivMethod : CompositeCommand(
     "pixiv",
     description = "pixiv 基本方法",
     prefixOptional = true
-) {
-
-    private val logger: MiraiLogger get() = PixivHelperPlugin.logger
+), PixivHelperLogger {
 
     /**
      * 设置代理 pixiv proxy http://10.21.159.95:7890

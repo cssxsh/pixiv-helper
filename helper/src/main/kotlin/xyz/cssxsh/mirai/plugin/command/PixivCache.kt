@@ -19,7 +19,7 @@ object PixivCache : CompositeCommand(
     "cache",
     description = "缓存指令",
     prefixOptional = true
-) {
+), PixivHelperLogger {
     /**
      * timeMillis
       */
@@ -60,7 +60,7 @@ object PixivCache : CompositeCommand(
                     }
                 }
             }.onFailure {
-                PixivHelperPlugin.logger.verbose("${illust.pid}缓存出错: ${it.message}")
+                logger.verbose("${illust.pid}缓存出错: ${it.message}")
             }.isFailure
         }
     }.onSuccess {

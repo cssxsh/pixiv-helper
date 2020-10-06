@@ -2,10 +2,12 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
+import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import xyz.cssxsh.mirai.plugin.PixivHelperManager
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
-object PixivCacheData : AutoSavePluginData() {
+object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
     /**
      * 缓存
      */
@@ -25,7 +27,8 @@ object PixivCacheData : AutoSavePluginData() {
     }
 
     fun remove(pid: Long) = synchronized(illusts) {
-        PixivHelperPlugin.logger.verbose("作品${pid}信息将移除, 目前共${illusts.size}条信息")
-        illusts.remove(pid)
+        illusts.remove(pid)?.also { illust ->
+            PixivHelperPlugin.logger.verbose("作品${illust.pid}信息将移除, 目前共${illusts.size}条信息")
+        }
     }
 }

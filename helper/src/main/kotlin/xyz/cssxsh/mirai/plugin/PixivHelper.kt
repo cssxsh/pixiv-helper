@@ -7,7 +7,6 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.utils.MiraiLogger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
@@ -18,7 +17,7 @@ import xyz.cssxsh.pixiv.data.AuthResult
 class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     config = PixivHelperData.config
-) {
+), PixivHelperLogger {
 
     init {
         (config.refreshToken ?: authInfo?.refreshToken)?.let { token ->
@@ -38,9 +37,6 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     override var config: PixivConfig
         get() = PixivHelperData.config
         set(value) { PixivHelperData.config = value }
-
-    private val logger: MiraiLogger
-        get() = PixivHelperPlugin.logger
 
     override var authInfo: AuthResult.AuthInfo?
         get() = PixivHelperData.authInfo
