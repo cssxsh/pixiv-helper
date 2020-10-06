@@ -32,6 +32,7 @@ object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
     fun remove(pid: Long) = synchronized(illusts) {
         illusts.remove(pid)?.also { illust ->
             PixivHelperPlugin.logger.verbose("作品${illust.pid}信息将移除, 目前共${illusts.size}条信息")
+            if (illust.isEro()) ero.remove(illust)
         }
     }
 
@@ -39,6 +40,8 @@ object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
         totalBookmarks ?: 0 >= 10000 && sanityLevel > 3 && isR18().not() && pageCount == 1
 
     val ero: MutableList<IllustInfo> by lazy {
-        values.filter { it.isEro() }.toMutableList()
+        values.filter { it.isEro() }.also {
+            logger.verbose("色图集初始化，共${it.size}张色图")
+        }.toMutableList()
     }
 }
