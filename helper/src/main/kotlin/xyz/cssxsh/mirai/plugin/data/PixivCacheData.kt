@@ -34,8 +34,7 @@ object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
         }
     }
 
-    private fun IllustInfo.isEro() =
-        totalBookmarks ?: 0 >= 1000 && sanityLevel > 3 && isR18().not() && pageCount == 1
+    private fun IllustInfo.isEro() = sanityLevel > 3 && isR18().not() && pageCount == 1
 
     val ero: MutableList<IllustInfo> by lazy {
         values.filter { it.isEro() }.also {
