@@ -1,6 +1,7 @@
 @file:Suppress("unused")
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.delay
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -19,14 +20,20 @@ object PixivCache : CompositeCommand(
     description = "缓存指令",
     prefixOptional = true
 ) {
+    /**
+     * timeMillis
+      */
+    var delayTime = 1_000L
 
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
+            delay(delayTime)
             info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
         }
     }.sum()
 
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
+        delay(delayTime)
         info.pid !in PixivCacheData.illusts && runCatching { getImages(info) }.isSuccess
     }
 
@@ -43,9 +50,7 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.illusts.filter { (pid, illust) ->
             val dir = PixivHelperPlugin.imagesFolder(illust.pid)
-            illust.getImageUrls().flatMap { fileUrls ->
-                fileUrls.filter { "origin" in it.key }.values
-            }.runCatching {
+            (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"
                     File(dir, name).also {
