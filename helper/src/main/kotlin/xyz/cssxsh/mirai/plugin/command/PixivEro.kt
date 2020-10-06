@@ -21,18 +21,9 @@ object PixivEro : SimpleCommand(
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
     }
 
-    private fun randomIllust(): IllustInfo = PixivCacheData.values.random().let { illust ->
-        if (illust.totalBookmarks ?: 0 >= 10000 &&
-            illust.pid !in historyQueue &&
-            illust.sanityLevel > 3 &&
-            illust.isR18().not() &&
-            illust.pageCount == 1) {
-            illust
-        } else {
-            // logger.verbose("${illust.pid} 不够色, 再来")
-            randomIllust()
-        }
-    }
+    private fun randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
+        illust.pid !in historyQueue
+    } ?: randomIllust()
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
