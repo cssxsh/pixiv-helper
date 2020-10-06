@@ -22,7 +22,8 @@ import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 object PixivMethod : CompositeCommand(
     PixivHelperPlugin,
     "pixiv",
-    description = "pixiv 基本方法"
+    description = "pixiv 基本方法",
+    prefixOptional = true
 ) {
 
     private val logger: MiraiLogger get() = PixivHelperPlugin.logger

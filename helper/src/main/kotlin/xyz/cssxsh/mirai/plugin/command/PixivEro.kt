@@ -25,7 +25,8 @@ object PixivEro : SimpleCommand(
     private fun randomIllust(): IllustInfo = PixivCacheData.illusts.values.random().let { illust ->
         if (illust.totalBookmarks ?: 0 >= 10000 &&
             illust.pid !in historyQueue &&
-            illust.isR18().not()) {
+            illust.isR18().not() &&
+            illust.pageCount == 1) {
             illust
         } else {
             PixivHelperPlugin.logger.verbose("${illust.pid} 不够色, 再来")
