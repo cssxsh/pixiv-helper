@@ -52,7 +52,7 @@ object PixivCache : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
-        require(caching) { "正在缓存中..." }
+        require(caching.not()) { "正在缓存中..." }
         cacheFollow() + cacheRank()
     }.onSuccess {
         quoteReply("缓存完毕共${it}个新作品")
