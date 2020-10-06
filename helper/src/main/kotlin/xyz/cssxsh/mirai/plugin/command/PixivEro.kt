@@ -24,7 +24,7 @@ object PixivEro : SimpleCommand(
     private fun randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
         illust.pid !in historyQueue
     }?.also {
-        if (historyQueue.isEmpty().not()) historyQueue.remove()
+        if (historyQueue.remainingCapacity() == 0) historyQueue.take()
         historyQueue.put(it.pid)
     } ?: randomIllust()
 
