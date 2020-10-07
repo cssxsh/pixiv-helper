@@ -32,8 +32,10 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
                     }
                 }
             }.onSuccess {
-                config = config.copy(refreshToken = authInfo?.refreshToken)
-                logger.info("${contact}的助手自动${requireNotNull(authInfo).user.name}登陆成功")
+                authInfo?.run {
+                    config = config.copy(refreshToken = refreshToken)
+                    logger.info("${contact}的助手自动${user.name}登陆成功")
+                }
             }.onFailure {
                 logger.info("${contact}的助手自动登陆失败", it)
             }
