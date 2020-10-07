@@ -131,7 +131,7 @@ tasks {
 
         standardInput = System.`in`
 
-        jvmArgs("-Djavax.net.debug=all")
+        // jvmArgs("-Djavax.net.debug=all")
 
         doFirst {
             classpath = sourceSets["test"].runtimeClasspath
