@@ -1,8 +1,11 @@
 package xyz.cssxsh.mirai.plugin
 
+import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
+import xyz.cssxsh.mirai.plugin.data.PixivHelperData.provideDelegate
+import xyz.cssxsh.pixiv.data.AuthResult
 
 object PixivHelperManager {
     /**
@@ -14,6 +17,12 @@ object PixivHelperManager {
      * 用于存储群关联的助手
      */
     private val groups: MutableMap<Long, PixivHelper> = mutableMapOf()
+
+
+    /**
+     * 用于存储认证消息
+     */
+    var authInfo: AuthResult.AuthInfo? = null
 
     /**
      * 通过联系人获取

@@ -13,7 +13,6 @@ import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
 import java.io.File
 
-
 @Suppress("unused")
 object PixivCache : CompositeCommand(
     PixivHelperPlugin,

@@ -5,9 +5,7 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import java.util.concurrent.ArrayBlockingQueue
 
 @Suppress("unused")
 object PixivEro : SimpleCommand(

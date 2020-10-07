@@ -45,10 +45,10 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
         set(value) { PixivHelperData.config = value }
 
     override var authInfo: AuthResult.AuthInfo?
-        get() = PixivHelperData.authInfo
+        get() = PixivHelperManager.authInfo
         set(value) {
             if (value != null) {
-                PixivHelperData.authInfo = value
+                PixivHelperManager.authInfo = value
             }
         }
 
