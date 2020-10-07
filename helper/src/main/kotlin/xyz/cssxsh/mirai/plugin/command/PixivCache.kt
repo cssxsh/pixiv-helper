@@ -9,6 +9,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
+import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
 import java.io.File
@@ -65,6 +66,29 @@ object PixivCache : CompositeCommand(
         quoteReply("缓存完毕共${it}个新作品")
     }.onFailure {
         caching = false
+        quoteReply(it.toString())
+    }.isSuccess
+
+
+    /**
+     * 从文件夹中加载信息
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
+        PixivHelperPlugin.cacheFolder.list { _, name ->
+            name.matches("""^\d+$""".toRegex())
+        }?.count { pid ->
+            runCatching {
+                getImages(illustDetail(pid.toLong()).illust)
+            }.onSuccess {
+                delay(delayTime)
+            }.onFailure {
+                logger.verbose("获取图片${pid}错误", it)
+            }.isSuccess
+        } ?: 0
+    }.onSuccess {
+        quoteReply("加载缓存完毕， 新增率: ${it}/${PixivCacheData.values.size}")
+    }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
 
