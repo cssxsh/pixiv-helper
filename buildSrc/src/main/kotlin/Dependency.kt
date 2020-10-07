@@ -14,3 +14,6 @@ fun korlibs(module: String, version: String = "+") =
 
 fun okhttp3(module: String, version: String = Versions.okhttp) =
     "com.squareup.okhttp3:$module:$version"
+
+fun jsoup(version: String = Versions.jsoup) =
+    "org.jsoup:jsoup:$version"

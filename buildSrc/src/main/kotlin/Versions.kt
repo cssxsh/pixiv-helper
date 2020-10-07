@@ -18,4 +18,5 @@ object Versions {
     const val kapt = "1.4.0-rc"
     const val autoService = "1.0-rc7"
     const val okhttp = "4.9.0"
+    const val jsoup = "1.13.1"
 }

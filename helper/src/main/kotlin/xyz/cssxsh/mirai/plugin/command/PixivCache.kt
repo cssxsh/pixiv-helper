@@ -74,6 +74,7 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
+        require(caching.not()) { "正在缓存中..." }
         PixivHelperPlugin.cacheFolder.walk().mapNotNull { file ->
             if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                 name.toLong()

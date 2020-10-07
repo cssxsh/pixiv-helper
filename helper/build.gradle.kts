@@ -35,6 +35,7 @@ dependencies {
     implementation(mirai("core", Versions.core))
     implementation(mirai("console", Versions.console))
     implementation(korlibs("klock", Versions.klock))
+    implementation(jsoup(Versions.jsoup))
     // implementation(group = "xzy.cssxsh.pixiv", name = "pixiv-client-jvm", version = "0.7.0-dev-7")
     implementation(project(":client"))
     // test
