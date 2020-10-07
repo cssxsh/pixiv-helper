@@ -17,8 +17,10 @@ object PixivSearch : SimpleCommand(
 ) {
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
-        ImageSearcher.getSearchResults(image.queryUrl()).maxByOrNull { it.similarity }
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle(imageInfo: String) = runCatching {
+        """[A-Z]+""".toRegex().find(imageInfo)?.let { matchResult ->
+            ImageSearcher.getSearchResults(Image(matchResult.value).queryUrl()).maxByOrNull { it.similarity }
+        }
     }.onSuccess { result ->
         quoteReply(result?.content ?: "没有搜索结果")
     }.onFailure {
