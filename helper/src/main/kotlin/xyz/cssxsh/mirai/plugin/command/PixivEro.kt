@@ -16,11 +16,8 @@ object PixivEro : SimpleCommand(
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
-    private val historyQueue by lazy {
-        ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
-    }
 
-    private fun randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
+    private fun PixivHelper.randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
         illust.pid !in historyQueue
     }?.also {
         if (historyQueue.remainingCapacity() == 0) historyQueue.take()

@@ -10,12 +10,13 @@ import net.mamoe.mirai.message.data.PlainText
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
  * 助手实例
  */
 class PixivHelper(val contact: Contact, ) : SimplePixivClient(
-    parentCoroutineContext = PixivHelperPlugin.coroutineContext,
+    parentCoroutineContext = contact.coroutineContext,
     config = PixivHelperData.config
 ), PixivHelperLogger {
 
@@ -50,6 +51,10 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
                 PixivHelperData.authInfo = value
             }
         }
+
+    val historyQueue by lazy {
+        ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
+    }
 
     var simpleInfo: Boolean
         get() = PixivHelperData.simpleInfo.getOrPut(contact.id, { true })

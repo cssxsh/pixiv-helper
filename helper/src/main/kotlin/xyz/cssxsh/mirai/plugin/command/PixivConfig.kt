@@ -45,7 +45,6 @@ object PixivConfig: CompositeCommand(
             appendLine("账户：${config.account})")
             appendLine("Token: ${config.refreshToken}")
             appendLine("简单构造: $simpleInfo")
-            appendLine("简单构造: $simpleInfo")
         }
     }.onSuccess {
         quoteReply(it)
