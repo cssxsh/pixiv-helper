@@ -45,11 +45,10 @@ object PixivCache : CompositeCommand(
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
         info.pid !in PixivCacheData && runCatching {
             getImages(info)
-            delay(delayTime)
         }.onSuccess {
             delay(delayTime)
         }.onFailure {
-            logger.verbose("获取图片错误", it)
+            logger.verbose("获取图片${info.pid}错误", it)
         }.isSuccess
     }
 
@@ -75,10 +74,13 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        PixivHelperPlugin.cacheFolder.list { _, name ->
-            name.matches("""^\d+$""".toRegex()) and (name.toLong() !in PixivCacheData)
-        }?.count { name
-            val pid = name.toLong()
+        PixivHelperPlugin.cacheFolder.walk().mapNotNull {
+            if (it.isDirectory and (it.name.toLong() !in PixivCacheData)) {
+                name.toLong()
+            } else {
+                null
+            }
+        }.count { pid ->
             runCatching {
                 getImages(illustDetail(pid).illust)
             }.onSuccess {
@@ -86,7 +88,7 @@ object PixivCache : CompositeCommand(
             }.onFailure {
                 logger.verbose("获取图片${pid}错误", it)
             }.isSuccess
-        } ?: 0
+        }
     }.onSuccess {
         quoteReply("加载缓存完毕， 新增率: ${it}/${PixivCacheData.values.size}")
     }.onFailure {
