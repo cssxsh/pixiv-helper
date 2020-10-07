@@ -77,9 +77,12 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         PixivHelperPlugin.cacheFolder.list { _, name ->
             name.matches("""^\d+$""".toRegex())
-        }?.count { pid ->
+        }?.count { name
+            val pid = name.toLong()
             runCatching {
-                getImages(illustDetail(pid.toLong()).illust)
+                if (pid !in PixivCacheData) {
+                    getImages(illustDetail(pid).illust)
+                }
             }.onSuccess {
                 delay(delayTime)
             }.onFailure {
