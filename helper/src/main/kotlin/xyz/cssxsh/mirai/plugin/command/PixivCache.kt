@@ -75,7 +75,7 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         PixivHelperPlugin.cacheFolder.walk().mapNotNull {
-            if (it.isDirectory and (it.name.toLong() !in PixivCacheData)) {
+            if (it.isDirectory and (it.name.matches("""^\d+$""".toRegex())) and (it.name.toLong() !in PixivCacheData)) {
                 name.toLong()
             } else {
                 null
