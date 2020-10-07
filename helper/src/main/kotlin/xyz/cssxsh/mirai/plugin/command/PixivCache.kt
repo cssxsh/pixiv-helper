@@ -75,13 +75,13 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         PixivHelperPlugin.cacheFolder.walk().mapNotNull { file ->
-            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex()) && PixivCacheData.contains(file.name.toLong()).not()) {
+            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                 name.toLong()
             } else {
                 null
             }
         }.count { pid ->
-            runCatching {
+            pid !in PixivCacheData && runCatching {
                 getImages(illustDetail(pid).illust)
             }.onSuccess {
                 delay(delayTime)
