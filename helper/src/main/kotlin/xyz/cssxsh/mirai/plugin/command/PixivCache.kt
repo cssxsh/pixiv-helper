@@ -1,6 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -28,7 +31,7 @@ object PixivCache : CompositeCommand(
         get() = PixivHelperSettings.delayTime
         set(value) { PixivHelperSettings.delayTime = value }
 
-    private var caching = false
+    private var job: Job = Job()
 
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
@@ -57,14 +60,15 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
-        require(caching.not()) { "正在缓存中..." }
-        caching = true
-        cacheFollow() + cacheRank()
+        require(job.isActive) { "正在缓存中..." }
+        job = launch {
+            (cacheFollow() + cacheRank()).let {
+                quoteReply("缓存完毕共${it}个新作品")
+            }
+        }
     }.onSuccess {
-        caching = false
-        quoteReply("缓存完毕共${it}个新作品")
+        quoteReply("添加任务完成")
     }.onFailure {
-        caching = false
         quoteReply(it.toString())
     }.isSuccess
 
@@ -74,24 +78,40 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        require(caching.not()) { "正在缓存中..." }
-        PixivHelperPlugin.cacheFolder.walk().mapNotNull { file ->
-            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                name.toLong()
-            } else {
-                null
+        require(job.isActive) { "正在缓存中..." }
+        job = launch {
+            PixivHelperPlugin.cacheFolder.walk().mapNotNull { file ->
+                if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
+                    name.toLong()
+                } else {
+                    null
+                }
+            }.count { pid ->
+                pid !in PixivCacheData && runCatching {
+                    getImages(illustDetail(pid).illust)
+                }.onSuccess {
+                    delay(delayTime)
+                }.onFailure {
+                    logger.verbose("获取图片${pid}错误", it)
+                }.isSuccess
+            }.let {
+                quoteReply("加载缓存完毕， 新增率: ${it}/${PixivCacheData.values.size}")
             }
-        }.count { pid ->
-            pid !in PixivCacheData && runCatching {
-                getImages(illustDetail(pid).illust)
-            }.onSuccess {
-                delay(delayTime)
-            }.onFailure {
-                logger.verbose("获取图片${pid}错误", it)
-            }.isSuccess
         }
     }.onSuccess {
-        quoteReply("加载缓存完毕， 新增率: ${it}/${PixivCacheData.values.size}")
+        quoteReply("添加任务完成")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 强制停止缓存
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = job.runCatching {
+        job.cancelAndJoin()
+    }.onSuccess {
+        quoteReply("任务已停职")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess

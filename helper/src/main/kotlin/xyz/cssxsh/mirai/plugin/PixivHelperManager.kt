@@ -1,10 +1,9 @@
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.console.data.value
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
-import xyz.cssxsh.mirai.plugin.data.PixivHelperData.provideDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
 
 object PixivHelperManager {
@@ -51,7 +50,11 @@ object PixivHelperManager {
     }
 
     fun closeAll() {
-        users.forEach { it.value.close() }
-        groups.forEach { it.value.close() }
+        (users.values + groups.values).forEach {
+            runBlocking {
+                it.contact.sendMessage("机器人关闭中")
+            }
+            it.close()
+        }
     }
 }

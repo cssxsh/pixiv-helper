@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
@@ -28,6 +26,7 @@ repositories {
     gradlePluginPortal()
 }
 
+
 dependencies {
     kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
     compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
@@ -43,6 +42,7 @@ dependencies {
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
     // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
 }
+
 
 kotlin {
     sourceSets {
@@ -60,11 +60,11 @@ kotlin {
 
 tasks {
 
-    withType<Test> {
+    test {
         useJUnitPlatform()
     }
 
-    withType<ShadowJar> {
+    shadowJar {
         dependencies {
            exclude { "org.jetbrains" in it.moduleGroup }
            exclude { "net.mamoe" in it.moduleGroup }
