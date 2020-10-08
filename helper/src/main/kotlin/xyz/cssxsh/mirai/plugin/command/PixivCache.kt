@@ -90,6 +90,8 @@ object PixivCache : CompositeCommand(
                 } else {
                     null
                 }
+            }.also {
+                logger.verbose("共 ${it.count()} 个图片文件夹")
             }.count { pid ->
                 isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
