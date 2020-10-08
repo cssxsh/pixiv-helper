@@ -64,7 +64,7 @@ object PixivCache : CompositeCommand(
                 (getFollow() + getRank()).flatMap {
                     it.getOrNull() ?: emptyList()
                 }.also {
-                    logger.verbose("共 ${it.size} 个作品将会被添加")
+                    logger.verbose("共 ${it.size} 个作品信息将会被尝试添加")
                 }.count { info ->
                     isActive && info.pid !in PixivCacheData && runCatching {
                         getImages(info)
@@ -101,8 +101,8 @@ object PixivCache : CompositeCommand(
                 } else {
                     null
                 }
-            }.also {
-                logger.verbose("共 ${it.count()} 个图片文件夹")
+            }.toList().also {
+                logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
             }.count { pid ->
                 isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
