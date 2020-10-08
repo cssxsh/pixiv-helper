@@ -35,7 +35,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess {
         quoteReply("${it.user.name} 登陆成功，Token ${it.refreshToken}")
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -50,7 +50,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess {
         quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -75,7 +75,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -96,7 +96,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -109,7 +109,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -124,7 +124,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -139,7 +139,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -156,7 +156,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -168,7 +168,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("获取排行榜失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -182,7 +182,7 @@ object PixivMethod : CompositeCommand(
     }.onSuccess {
         quoteReply("监听任务添加成功")
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("监听任务添加失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -194,6 +194,6 @@ object PixivMethod : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("读取书签失败， ${it.message}")
     }.isSuccess
 }

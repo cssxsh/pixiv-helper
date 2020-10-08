@@ -28,7 +28,7 @@ object PixivEro : SimpleCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("读取色图失败， ${it.message}")
     }.isSuccess
 }
 

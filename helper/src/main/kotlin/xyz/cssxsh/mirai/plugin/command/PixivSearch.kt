@@ -8,10 +8,7 @@ import net.mamoe.mirai.console.command.description.CommandArgumentParser
 import net.mamoe.mirai.console.command.description.CommandArgumentParserException
 import net.mamoe.mirai.console.command.description.buildCommandArgumentContext
 import net.mamoe.mirai.message.MessageEvent
-import net.mamoe.mirai.message.data.Image
-import net.mamoe.mirai.message.data.MessageContent
-import net.mamoe.mirai.message.data.content
-import net.mamoe.mirai.message.data.queryUrl
+import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.ImageSearcher
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.getHelper
@@ -45,11 +42,11 @@ object PixivSearch : SimpleCommand(
                     getImages(illustDetail(it.pid).illust)
                 }
             }
-            "相似度: ${it.similarity * 10}% \n ${it.content}"
+            "相似度: ${it.similarity * 100}% \n ${it.content}"
         }
     }.onSuccess { result ->
         quoteReply(result ?: "没有搜索结果")
     }.onFailure {
-        quoteReply(it.toString())
+        quoteReply("搜索失败， ${it.message}")
     }.isSuccess
 }
