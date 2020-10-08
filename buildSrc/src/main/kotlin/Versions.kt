@@ -3,8 +3,8 @@
 object Versions {
     const val latest = "+"
     // mirai
-    const val core = "1.3.0"
-    const val console = "1.0-M4"
+    const val core = "1.3.2"
+    const val console = "1.0-RC-dev-29"
     // kotlin
     const val kotlin = "1.4.10"
     const val coroutines = "1.3.9"
