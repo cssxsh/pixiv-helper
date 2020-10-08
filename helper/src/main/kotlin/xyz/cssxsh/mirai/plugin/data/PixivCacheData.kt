@@ -21,14 +21,16 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     fun add(illust: IllustInfo) = synchronized(illusts) {
-        logger.info("作品(${illust.pid})[${illust.pid}]信息将保存, 目前共${illusts.size}条信息")
+        logger.info("作品(${illust.pid})[${illust.title}]信息将保存, 目前共${illusts.size}条信息")
         illusts[illust.pid] = illust
         if (illust.isEro()) ero.add(illust)
     }
 
+    fun remove(illust: IllustInfo) = remove(illust.pid)
+
     fun remove(pid: Long) = synchronized(illusts) {
         illusts.remove(pid)?.also { illust ->
-            logger.info("作品(${illust.pid})[${illust.pid}]信息将移除, 目前共${illusts.size}条信息")
+            logger.info("作品(${illust.pid})[${illust.title}]信息将移除, 目前共${illusts.size}条信息")
             if (illust.isEro()) ero.remove(illust)
         }
     }
