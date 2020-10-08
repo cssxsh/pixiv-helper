@@ -24,29 +24,11 @@ object RunMirai {
         configStorageForBuiltIns = JsonPluginDataStorage(rootPath.resolve("config")),
     )
 
-    private val shutdownThread: Thread = object : Thread() {
-        override fun run(): Unit = runBlocking {
-            MiraiConsole.mainLogger.info("Stopping mirai-console")
-            runCatching {
-                MiraiConsole.job.cancelAndJoin()
-            }.onSuccess {
-                MiraiConsole.mainLogger.info("mirai-console stopped successfully.")
-            }.onFailure {
-                if (it is CancellationException) {
-                    MiraiConsole.mainLogger.info("mirai-console stopped successfully.")
-                } else {
-                    MiraiConsole.mainLogger.error("Exception in stop", it)
-                }
-            }
-        }
-    }
-
     @JvmStatic
     fun main(args: Array<String>) {
         // 默认在 /test 目录下运行
         MiraiConsoleTerminalLoader.parse(args, exitProcess = true)
         MiraiConsoleTerminalLoader.startAsDaemon(miraiConsoleImpl(Paths.get(".").toAbsolutePath()))
-        Runtime.getRuntime().addShutdownHook(shutdownThread)
         try {
             runBlocking {
                 MiraiConsole.job.join()
