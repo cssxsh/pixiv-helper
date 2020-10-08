@@ -62,9 +62,7 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
         require(job.isActive) { "正在缓存中..." }
         job = launch {
-            (cacheFollow() + cacheRank()).let {
-                quoteReply("缓存完毕共${it}个新作品")
-            }
+            quoteReply("缓存完毕共${(cacheFollow() + cacheRank())}个新作品")
         }
     }.onSuccess {
         quoteReply("添加任务完成")
@@ -111,7 +109,7 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = job.runCatching {
         job.cancelAndJoin()
     }.onSuccess {
-        quoteReply("任务已停职")
+        quoteReply("任务已停止")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
