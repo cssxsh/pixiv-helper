@@ -25,12 +25,11 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * 缓存目录
      */
-    val cacheFolder: File =
-        if (cachePath.isEmpty()) {
-            File(PixivHelperPlugin.dataFolder, "cache").apply { mkdir() }
-        } else {
-            File(cachePath).apply { mkdir() }
-        }
+    val cacheFolder: File get() = if (cachePath.isEmpty()) {
+        File(PixivHelperPlugin.dataFolder, "cache").apply { mkdir() }
+    } else {
+        File(cachePath).apply { mkdir() }
+    }
 
     /**
      * 图片目录
