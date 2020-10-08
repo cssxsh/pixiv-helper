@@ -34,18 +34,22 @@ object PixivCache : CompositeCommand(
 
 
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
-        async {
-            runCatching {
-                illustRanking(mode = mode).illusts
-            }
+        runCatching {
+            illustRanking(mode = mode).illusts
+        }.onSuccess {
+            logger.verbose("加载排行榜${mode}成功")
+        }.onFailure {
+            logger.verbose("加载排行榜${mode}失败")
         }
     }
 
     private suspend fun PixivHelper.getFollow(page: Int = 10) = (0 until page).map { index ->
-        async {
-            runCatching {
-                illustFollow(offset = index * 30L).illusts
-            }
+        runCatching {
+            illustFollow(offset = index * 30L).illusts
+        }.onSuccess {
+            logger.verbose("加载关注作品第${index}页成功")
+        }.onFailure {
+            logger.verbose("加载关注作品第${index}页失败")
         }
     }
 
@@ -57,27 +61,26 @@ object PixivCache : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                (getFollow() + getRank()).awaitAll().mapNotNull {
-                    it.getOrNull()
+                (getFollow() + getRank()).flatMap {
+                    it.getOrNull() ?: emptyList()
                 }.also {
-                    logger.verbose("共 ${it.size} 个作品")
-                }.map { list ->
-                    list.count { info ->
-                        isActive && info.pid !in PixivCacheData && runCatching {
-                            getImages(info)
-                        }.onSuccess {
-                            delay(delayTime)
-                        }.onFailure {
-                            logger.verbose("获取图片${info.pid}错误", it)
-                        }.isSuccess
-                    }
-                }.sum()
+                    logger.verbose("共 ${it.size} 个作品将会被添加")
+                }.count { info ->
+                    isActive && info.pid !in PixivCacheData && runCatching {
+                        getImages(info)
+                    }.onSuccess {
+                        delay(delayTime)
+                    }.onFailure {
+                        logger.verbose("获取图片${info.pid}错误", it)
+                    }.isSuccess
+                }
             }.onSuccess {
                 quoteReply("缓存完毕共${it}个新作品")
             }
+        }.also {
+            job = it
         }
     }.onSuccess {
-        job = it
         quoteReply("添加任务完成${it}")
     }.onFailure {
         quoteReply(it.toString())

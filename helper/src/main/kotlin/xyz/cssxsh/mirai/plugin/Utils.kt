@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.UserCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.Message
+import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -15,12 +15,32 @@ import java.io.File
 /**
  * 获取对应subject的助手
  */
-fun UserCommandSender.getHelper() = PixivHelper(subject)
+fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
 
 /**
- * 获取对应subject的助手
+ * 并运行特定任务
  */
-fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
+suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivHelper.(message: MessageChain) -> Any) {
+    getHelper().runCatching {
+        block(message)
+    }.onSuccess { result ->
+        when (result) {
+            is MessageChain -> quoteReply(result)
+            is Message -> quoteReply(result)
+            is String -> quoteReply(result)
+            is Iterable<*> -> result.forEach {
+                when (it) {
+                    is MessageChain -> quoteReply(it)
+                    is Message -> quoteReply(it)
+                    else -> quoteReply(it.toString())
+                }
+            }
+            else -> quoteReply(result.toString())
+        }
+    }.onFailure {
+        quoteReply("读取书签失败， ${it.message}")
+    }
+}
 
 fun Long.positiveLongCheck() = also { require(it > 0) { "应该为正整数" } }
 
@@ -70,7 +90,7 @@ fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     type: String = "origin"
-) : List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
+): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
     if (File(dir, "${illust.pid}-${type}-${0}.jpg").canRead()) {
         illust.getImageUrls().flatMap { fileUrls ->
             fileUrls.filter { type in it.key }.values
