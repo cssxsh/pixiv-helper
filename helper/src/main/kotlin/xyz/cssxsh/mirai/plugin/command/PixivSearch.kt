@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
@@ -13,6 +14,9 @@ import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.message.data.queryUrl
 import xyz.cssxsh.mirai.plugin.ImageSearcher
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.getHelper
+import xyz.cssxsh.mirai.plugin.getImages
+import xyz.cssxsh.pixiv.api.app.illustDetail
 
 @Suppress("unused")
 object PixivSearch : SimpleCommand(
@@ -35,6 +39,9 @@ object PixivSearch : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
         ImageSearcher.getSearchResults(image.queryUrl()).maxByOrNull { it.similarity }?.let {
+            if (it.similarity > 0.9) getHelper().runCatching {
+                launch { getImages(illustDetail(it.pid).illust) }
+            }
             "相似度: ${it.similarity} \n ${it.content}"
         }
     }.onSuccess { result ->

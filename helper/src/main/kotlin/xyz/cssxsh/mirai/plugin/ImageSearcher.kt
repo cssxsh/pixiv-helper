@@ -25,13 +25,15 @@ object ImageSearcher: PixivHelperLogger {
             SearchResult(
                 similarity = it.select(".resultsimilarityinfo")
                     .text().replace("%", "").toDouble() / 100,
-                content = it.select(".resultcontent").text()
+                content = it.select(".resultcontent").text(),
+                pid = it.select(".resultcontent a").first().text().toLong()
             )
         }
     }
 
     class SearchResult(
         val similarity: Double,
-        val content: String
+        val content: String,
+        val pid: Long
     )
 }
