@@ -107,7 +107,7 @@ object PixivCache : CompositeCommand(
                 isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
                 }.onSuccess {
-                    delay(delayTime)
+                    // delay(delayTime)
                 }.onFailure {
                     logger.verbose("获取图片${pid}错误", it)
                 }.isSuccess

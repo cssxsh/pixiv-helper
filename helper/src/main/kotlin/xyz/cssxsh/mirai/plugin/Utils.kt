@@ -75,7 +75,10 @@ suspend fun PixivHelper.buildMessage(
 
 fun IllustInfo.getPixivCatUrls() = getPixivCatUrls(pid, pageCount)
 
-fun getPixivCatUrls(pid: Long, count: Int): List<String> = if (count > 1) {
+fun getPixivCatUrls(
+    pid: Long,
+    count: Int
+): List<String> = if (count > 1) {
     (1..count).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
     listOf("https://pixiv.cat/${pid}.jpg")
