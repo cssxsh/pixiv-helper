@@ -60,9 +60,13 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
-        require(job.isActive) { "正在缓存中..." }
+        check(job.isActive) { "正在缓存中..." }
         job = launch {
-            quoteReply("缓存完毕共${(cacheFollow() + cacheRank())}个新作品")
+            runCatching {
+                cacheFollow() + cacheRank()
+            }.onSuccess {
+                quoteReply("缓存完毕共${it}个新作品")
+            }
         }
     }.onSuccess {
         quoteReply("添加任务完成")
@@ -76,7 +80,7 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        require(job.isActive) { "正在缓存中..." }
+        check(job.isActive) { "正在缓存中..." }
         job = launch {
             logger.info("从缓存目录${PixivHelperSettings.cacheFolder.toURI()}")
             PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
@@ -107,10 +111,10 @@ object PixivCache : CompositeCommand(
      * 强制停止缓存
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = job.runCatching {
-        cancelAndJoin()
+    suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = runCatching {
+        job.cancelAndJoin()
     }.onSuccess {
-        quoteReply("任务已停止")
+        quoteReply("任务${job}已停止, ${job.isActive}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
