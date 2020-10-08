@@ -23,7 +23,7 @@ object PixivSearch : SimpleCommand(
             override fun parse(raw: String, sender: CommandSender): Image =
                 """[A-Z\-]+""".toRegex().find(raw)?.let { matchResult ->
                     Image(matchResult.value)
-                } ?: throw CommandArgumentParserException()
+                } ?: throw CommandArgumentParserException(raw)
         }
     }
 ) {
