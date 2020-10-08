@@ -5,7 +5,7 @@ import io.ktor.client.features.*
 import io.ktor.client.request.*
 import org.jsoup.Jsoup
 
-object ImageSearcher {
+object ImageSearcher: PixivHelperLogger {
     private const val API = "https://saucenao.com/search.php"
     private const val INDEX = 5 // Index #5: pixiv Images
     private val httpClient: HttpClient = HttpClient {
@@ -20,6 +20,7 @@ object ImageSearcher {
         parameter("db", INDEX)
         parameter("url", picUrl)
     }.let { html ->
+        logger.verbose("图片 $picUrl 查询")
         Jsoup.parse(html).select(".resulttablecontent").map {
             SearchResult(
                 similarity = it.select(".resultsimilarityinfo")
