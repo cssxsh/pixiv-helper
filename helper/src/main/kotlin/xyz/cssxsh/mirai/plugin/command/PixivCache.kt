@@ -86,7 +86,7 @@ object PixivCache : CompositeCommand(
             logger.info("从缓存目录${PixivHelperSettings.cacheFolder.absolutePath}")
             PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
                 if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                    name.toLong()
+                    file.name.toLong()
                 } else {
                     null
                 }
