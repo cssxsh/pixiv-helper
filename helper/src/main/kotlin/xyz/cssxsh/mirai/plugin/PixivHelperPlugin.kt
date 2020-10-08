@@ -10,7 +10,6 @@ import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import java.io.File
 
 
 @AutoService(JvmPlugin::class)
@@ -34,7 +33,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivMethod.register()
         PixivEro.register()
         PixivCache.register()
-        PixivConfig.register()
+        PixivSetting.register()
         PixivSearch.register()
     }
 
@@ -43,8 +42,8 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivMethod.unregister()
         PixivEro.unregister()
         PixivEro.unregister()
-        PixivConfig.unregister()
-        PixivConfig.unregister()
+        PixivSetting.unregister()
+        PixivSetting.unregister()
         PixivHelperManager.closeAll()
     }
 }

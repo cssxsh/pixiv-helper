@@ -6,14 +6,15 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
-object PixivConfig: CompositeCommand(
+object PixivSetting: CompositeCommand(
     PixivHelperPlugin,
-    "config",
+    "set",
     description = "pixiv 设置",
     prefixOptional = true
 ), PixivHelperLogger {
@@ -44,7 +45,8 @@ object PixivConfig: CompositeCommand(
         buildString {
             appendLine("账户：${config.account})")
             appendLine("Token: ${config.refreshToken}")
-            appendLine("简单构造: $simpleInfo")
+            appendLine("简略信息: $simpleInfo")
+            appendLine("色图数: ${PixivCacheData.ero.size}")
         }
     }.onSuccess {
         quoteReply(it)
@@ -53,10 +55,10 @@ object PixivConfig: CompositeCommand(
     }.isSuccess
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.simple(isSimple: Boolean) = getHelper().runCatching {
-        "$simpleInfo -> $isSimple".also {
-            simpleInfo = isSimple
-        }
+    suspend fun CommandSenderOnMessage<MessageEvent>.simple(
+        isSimple: Boolean
+    ) = getHelper().runCatching {
+        "$simpleInfo -> $isSimple".also { simpleInfo = isSimple }
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
