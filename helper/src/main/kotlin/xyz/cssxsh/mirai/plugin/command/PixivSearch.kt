@@ -11,7 +11,6 @@ import net.mamoe.mirai.message.data.Image
 import net.mamoe.mirai.message.data.queryUrl
 import xyz.cssxsh.mirai.plugin.ImageSearcher
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import kotlin.reflect.KClass
 
 @Suppress("unused")
 object PixivSearch : SimpleCommand(
@@ -22,7 +21,7 @@ object PixivSearch : SimpleCommand(
     overrideContext = buildCommandArgumentContext {
         Image::class with object : CommandArgumentParser<Image> {
             override fun parse(raw: String, sender: CommandSender): Image =
-                """[A-Z-]+""".toRegex().find(raw)?.let { matchResult ->
+                """[A-Z\-]+""".toRegex().find(raw)?.let { matchResult ->
                     Image(matchResult.value)
                 } ?: throw CommandArgumentParserException()
         }
