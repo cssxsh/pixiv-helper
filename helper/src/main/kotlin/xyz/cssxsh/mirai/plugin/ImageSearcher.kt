@@ -17,26 +17,29 @@ object ImageSearcher: PixivHelperLogger {
         }
     }
 
+    private fun parse(html: String): List<SearchResult> = Jsoup.parse(html).select(".resulttablecontent").map {
+        SearchResult(
+            similarity = it.select(".resultsimilarityinfo")
+                .text().replace("%", "").toDouble() / 100,
+            content = it.select(".resultcontent").text(),
+            pid = it.select(".resultcontent a").first().text().toLong()
+        )
+    }
+
     suspend fun getSearchResults(picUrl: String): List<SearchResult> = httpClient.get<String>(API) {
         parameter("db", DB_INDEX)
         parameter("url", picUrl)
     }.let { html ->
-        logger.verbose("图片 $picUrl 查询")
-        Jsoup.parse(html).select(".resulttablecontent").map {
-            SearchResult(
-                similarity = it.select(".resultsimilarityinfo")
-                    .text().replace("%", "").toDouble() / 100,
-                content = it.select(".resultcontent").text(),
-                pid = it.select(".resultcontent a").first().text().toLong()
-            )
-        }
+        parse(html)
     }
 
-    suspend fun postSearchResults(file: ByteArray): List<SearchResult> = httpClient.post(API) {
+    suspend fun postSearchResults(file: ByteArray): List<SearchResult> = httpClient.post<String>(API) {
         body = MultiPartFormDataContent(formData {
             append("file", file)
             append("database", DB_INDEX)
         })
+    }.let { html ->
+        parse(html)
     }
 
     class SearchResult(
