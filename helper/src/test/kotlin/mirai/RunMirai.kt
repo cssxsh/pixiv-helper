@@ -1,10 +1,9 @@
 package mirai
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.MiraiConsole
-import net.mamoe.mirai.console.command.BuiltInCommands
-import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
 import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
@@ -26,8 +25,19 @@ object RunMirai {
     )
 
     private val shutdownThread: Thread = object : Thread() {
-        override fun run() = runBlocking {
-            BuiltInCommands.StopCommand.run { ConsoleCommandSender.handle() }
+        override fun run(): Unit = runBlocking {
+            MiraiConsole.mainLogger.info("Stopping mirai-console")
+            runCatching {
+                MiraiConsole.job.cancelAndJoin()
+            }.onSuccess {
+                MiraiConsole.mainLogger.info("mirai-console stopped successfully.")
+            }.onFailure {
+                if (it is CancellationException) {
+                    MiraiConsole.mainLogger.info("mirai-console stopped successfully.")
+                } else {
+                    MiraiConsole.mainLogger.error("Exception in stop", it)
+                }
+            }
         }
     }
 
