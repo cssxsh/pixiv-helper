@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImage
 import java.io.File
@@ -69,7 +70,7 @@ fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     type: String = "origin"
-) : List<File> = PixivHelperPlugin.imagesFolder(illust.pid).let { dir ->
+) : List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
     if (File(dir, "${illust.pid}-${type}-${0}.jpg").canRead()) {
         illust.getImageUrls().flatMap { fileUrls ->
             fileUrls.filter { type in it.key }.values

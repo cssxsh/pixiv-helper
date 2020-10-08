@@ -78,7 +78,8 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         require(job.isActive) { "正在缓存中..." }
         job = launch {
-            PixivHelperPlugin.cacheFolder.walk().mapNotNull { file ->
+            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.toURI()}")
+            PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
                 if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                     name.toLong()
                 } else {
@@ -122,7 +123,7 @@ object PixivCache : CompositeCommand(
         PixivCacheData.values.also { list ->
             logger.verbose("共有 ${list.size} 个作品需要检查")
         }.filter { illust ->
-            val dir = PixivHelperPlugin.imagesFolder(illust.pid)
+            val dir = PixivHelperSettings.imagesFolder(illust.pid)
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"
@@ -149,13 +150,13 @@ object PixivCache : CompositeCommand(
     }.isSuccess
 
     /**
-     * 设置缓存目录 cache set /storage/emulated/0/PixivCache
+     * 设置缓存目录 cache path /storage/emulated/0/PixivCache
      * @param path 缓存目录
      */
     @SubCommand
     fun ConsoleCommandSender.path(path: String) {
         runCatching {
-            File(PixivHelperSettings.cachePath).renameTo(File(path))
+            if (File(path).exists().not()) File(PixivHelperSettings.cachePath).renameTo(File(path))
         }
         PixivHelperSettings.cachePath = path
     }
