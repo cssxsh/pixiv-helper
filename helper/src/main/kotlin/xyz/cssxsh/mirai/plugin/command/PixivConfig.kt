@@ -6,7 +6,7 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.PixivHelperData
+import xyz.cssxsh.mirai.plugin.data.PixivConfigData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.getHelper
 
@@ -23,8 +23,8 @@ object PixivConfig: CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info("${PixivHelperData.config.proxy} -> $proxy")
-        PixivHelperData.config.proxy = proxy
+        logger.info("${PixivConfigData.config.proxy} -> $proxy")
+        PixivConfigData.config.proxy = proxy
     }
 
     /**

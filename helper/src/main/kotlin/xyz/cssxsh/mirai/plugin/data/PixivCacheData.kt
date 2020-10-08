@@ -3,11 +3,10 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.isR18
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
-object PixivCacheData : AutoSavePluginData(), PixivHelperLogger {
+object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     /**
      * 缓存
      */

@@ -8,7 +8,7 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperData
+import xyz.cssxsh.mirai.plugin.data.PixivConfigData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.File
 
@@ -20,7 +20,6 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-
     // val qqId = 3337342367L // Bot的QQ号，需为Long类型，在结尾处添加大写L
     // val password = "66RKVt^eX&MfE7" // Bot的密码
     // login 3337342367 66RKVt^eX&MfE7
@@ -30,7 +29,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.reload()
         // Data
         PixivCacheData.reload()
-        PixivHelperData.reload()
+        PixivConfigData.reload()
         // cmd
         PixivMethod.register()
         PixivEro.register()

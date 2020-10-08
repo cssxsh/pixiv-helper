@@ -17,7 +17,7 @@ import java.util.concurrent.ArrayBlockingQueue
  */
 class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     parentCoroutineContext = contact.coroutineContext,
-    config = PixivHelperData.config
+    config = PixivConfigData.config
 ), PixivHelperLogger {
 
     init {
@@ -43,8 +43,8 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     }
 
     override var config: PixivConfig
-        get() = PixivHelperData.config
-        set(value) { PixivHelperData.config = value }
+        get() = PixivConfigData.config
+        set(value) { PixivConfigData.config = value }
 
     override var authInfo: AuthResult.AuthInfo?
         get() = PixivHelperManager.authInfo
@@ -59,16 +59,16 @@ class PixivHelper(val contact: Contact, ) : SimplePixivClient(
     }
 
     var simpleInfo: Boolean
-        get() = PixivHelperData.simpleInfo.getOrPut(contact.id, { true })
+        get() = PixivConfigData.simpleInfo.getOrPut(contact.id, { true })
         set(value) {
-            PixivHelperData.simpleInfo[contact.id] = value
+            PixivConfigData.simpleInfo[contact.id] = value
         }
 
     val isLoggedIn: Boolean
         get() = authInfo != null
 
     override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { PixivHelperData.config = it }
+        config.apply(block).also { PixivConfigData.config = it }
 
     override suspend fun refresh(): AuthResult.AuthInfo =
         super.refresh().also { authInfo = it }

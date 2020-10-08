@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 
-object PixivHelperSettings : AutoSavePluginConfig() {
+object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * 色图间隔
      */

@@ -3,9 +3,8 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.pixiv.client.PixivConfig
-import xyz.cssxsh.pixiv.data.AuthResult
 
-object PixivHelperData : AutoSavePluginData() {
+object PixivConfigData : AutoSavePluginData("PixivConfig") {
 
     /**
      * 助手配置
