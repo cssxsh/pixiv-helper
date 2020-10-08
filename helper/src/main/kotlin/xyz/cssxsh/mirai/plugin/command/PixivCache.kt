@@ -107,7 +107,7 @@ object PixivCache : CompositeCommand(
                 isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
                 }.onSuccess {
-                    // delay(delayTime)
+                    delay(delayTime)
                 }.onFailure {
                     logger.verbose("获取图片${pid}错误", it)
                 }.isSuccess
@@ -125,7 +125,7 @@ object PixivCache : CompositeCommand(
     /**
      * 强制停止缓存
      */
-    @SubCommand
+    @SubCommand("cancel", "stop")
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = runCatching {
         job?.cancelAndJoin()
     }.onSuccess {
@@ -159,11 +159,9 @@ object PixivCache : CompositeCommand(
                 logger.verbose("${illust.pid}缓存出错", it)
             }.isFailure
         }
-    }.onSuccess {
-        quoteReply("检查缓存完毕，错误率: ${it.size}/${PixivCacheData.values.size}")
-        it.forEach { illust ->
-            PixivCacheData.remove(illust.pid)
-        }
+    }.onSuccess { list ->
+        quoteReply("检查缓存完毕，错误率: ${list.size}/${PixivCacheData.values.size}")
+        list.forEach(PixivCacheData::remove)
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
