@@ -40,9 +40,12 @@ object PixivSearch : SimpleCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
         ImageSearcher.getSearchResults(image.queryUrl()).maxByOrNull { it.similarity }?.let {
             if (it.similarity > 0.9) getHelper().runCatching {
-                launch { getImages(illustDetail(it.pid).illust) }
+                launch {
+                    logger.verbose("开始获取搜索结果${it.pid}")
+                    getImages(illustDetail(it.pid).illust)
+                }
             }
-            "相似度: ${it.similarity} \n ${it.content}"
+            "相似度: ${it.similarity * 10}% \n ${it.content}"
         }
     }.onSuccess { result ->
         quoteReply(result ?: "没有搜索结果")
