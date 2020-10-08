@@ -35,13 +35,17 @@ object PixivCache : CompositeCommand(
 
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
         async {
-            illustRanking(mode = mode).illusts
+            runCatching {
+                illustRanking(mode = mode).illusts
+            }
         }
     }
 
     private suspend fun PixivHelper.getFollow(page: Int = 10) = (0 until page).map { index ->
         async {
-            illustFollow(offset = index * 30L).illusts
+            runCatching {
+                illustFollow(offset = index * 30L).illusts
+            }
         }
     }
 
@@ -53,7 +57,11 @@ object PixivCache : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                (getFollow() + getRank()).awaitAll().map { list ->
+                (getFollow() + getRank()).awaitAll().mapNotNull {
+                    it.getOrNull()
+                }.also {
+                    logger.verbose("共 ${it.size} 个作品")
+                }.map { list ->
                     list.count { info ->
                         isActive && info.pid !in PixivCacheData && runCatching {
                             getImages(info)
@@ -101,7 +109,7 @@ object PixivCache : CompositeCommand(
                     logger.verbose("获取图片${pid}错误", it)
                 }.isSuccess
             }.let {
-                quoteReply("加载缓存完毕， 新增率: ${it}/${PixivCacheData.values.size}")
+                quoteReply("加载缓存完毕，共${it}个新作品")
             }
         }
     }.onSuccess {
