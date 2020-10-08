@@ -20,7 +20,9 @@ fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManage
 /**
  * 并运行特定任务
  */
-suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivHelper.(message: MessageChain) -> Any) {
+suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(
+    block: PixivHelper.(message: MessageChain) -> Any
+) {
     getHelper().runCatching {
         block(message)
     }.onSuccess { result ->
@@ -57,7 +59,7 @@ fun IllustInfo.getMessage(): Message = buildString {
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
-    type: String = "origin"
+    save: Boolean = true
 ): List<Message> = buildList {
     if (simpleInfo) {
         add(PlainText("作品ID: ${illust.pid}"))
@@ -65,7 +67,7 @@ suspend fun PixivHelper.buildMessage(
         add(illust.getMessage())
     }
     if (!illust.isR18()) {
-        addAll(getImages(illust, type).map {
+        addAll(getImages(illust, save).map {
             it.uploadAsImage(contact)
         })
     } else {
@@ -92,18 +94,16 @@ fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).
 
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
-    type: String = "origin"
+    save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    if (File(dir, "${illust.pid}-${type}-${0}.jpg").canRead()) {
-        illust.getImageUrls().flatMap { fileUrls ->
-            fileUrls.filter { type in it.key }.values
-        }.mapIndexed { index, _ ->
-            val name = "${illust.pid}-${type}-${index}.jpg"
+    if (File(dir, "${illust.pid}-origin-${0}.jpg").canRead()) {
+        illust.getOriginUrl().mapIndexed { index, _ ->
+            val name = "${illust.pid}-origin-${index}.jpg"
             File(dir, name)
         }
     } else {
-        downloadImage<ByteArray>(illust, { name, _ -> type in name }).mapIndexed { index, result ->
-            val name = "${illust.pid}-${type}-${index}.jpg"
+        downloadImage<ByteArray>(illust).mapIndexed { index, result ->
+            val name = "${illust.pid}-origin-${index}.jpg"
             File(dir, name).apply {
                 writeBytes(result.getOrThrow())
                 // PixivHelperPlugin.logger.verbose("文件${name}(${this.length() / 1024 / 1024}MB)已保存")
@@ -111,7 +111,7 @@ suspend fun PixivHelper.getImages(
         }
     }
 }.also {
-    if (type == "origin") illust.save()
+    if (save) illust.save()
 }
 
 
