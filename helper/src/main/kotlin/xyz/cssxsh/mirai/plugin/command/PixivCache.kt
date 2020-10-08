@@ -1,9 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -33,26 +30,16 @@ object PixivCache : CompositeCommand(
 
     private var job: Job = Job()
 
-    private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
-        illustRanking(mode = mode).illusts.count { info ->
-            job.isActive && info.pid !in PixivCacheData && runCatching {
-                getImages(info)
-            }.onSuccess {
-                delay(delayTime)
-            }.onFailure {
-                logger.verbose("获取图片${info.pid}错误", it)
-            }.isSuccess
+    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
+        async {
+            illustRanking(mode = mode).illusts
         }
-    }.sum()
+    }
 
-    private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
-        job.isActive && info.pid !in PixivCacheData && runCatching {
-            getImages(info)
-        }.onSuccess {
-            delay(delayTime)
-        }.onFailure {
-            logger.verbose("获取图片${info.pid}错误", it)
-        }.isSuccess
+    private suspend fun PixivHelper.getFollow(page: Int = 10) = (0 until page).map { index ->
+        async {
+            illustFollow(offset = index * 30L).illusts
+        }
     }
 
     /**
@@ -61,15 +48,26 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
         check(job.isActive) { "正在缓存中..." }
-        job = launch {
+        launch {
             runCatching {
-                cacheFollow() + cacheRank()
+                (getFollow() + getRank()).awaitAll().map { list ->
+                    list.count { info ->
+                        isActive && info.pid !in PixivCacheData && runCatching {
+                            getImages(info)
+                        }.onSuccess {
+                            delay(delayTime)
+                        }.onFailure {
+                            logger.verbose("获取图片${info.pid}错误", it)
+                        }.isSuccess
+                    }
+                }.sum()
             }.onSuccess {
                 quoteReply("缓存完毕共${it}个新作品")
             }
         }
     }.onSuccess {
-        quoteReply("添加任务完成")
+        job = it
+        quoteReply("添加任务完成${it}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -81,7 +79,7 @@ object PixivCache : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         check(job.isActive) { "正在缓存中..." }
-        job = launch {
+        launch {
             logger.info("从缓存目录${PixivHelperSettings.cacheFolder.toURI()}")
             PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
                 if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
@@ -90,7 +88,7 @@ object PixivCache : CompositeCommand(
                     null
                 }
             }.count { pid ->
-                job.isActive && pid !in PixivCacheData && runCatching {
+                isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
                 }.onSuccess {
                     delay(delayTime)
@@ -102,7 +100,8 @@ object PixivCache : CompositeCommand(
             }
         }
     }.onSuccess {
-        quoteReply("添加任务完成")
+        job = it
+        quoteReply("添加任务完成${it}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
