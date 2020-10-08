@@ -28,7 +28,10 @@ object PixivCache : CompositeCommand(
         get() = PixivHelperSettings.delayTime
         set(value) { PixivHelperSettings.delayTime = value }
 
-    private var job: Job = Job()
+    private var job: Job? = null
+
+    private val isStop: Boolean get() = job?.isActive?.not() ?: true
+
 
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
         async {
@@ -47,7 +50,7 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
-        check(job.isActive) { "正在缓存中..." }
+        check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
                 (getFollow() + getRank()).awaitAll().map { list ->
@@ -78,9 +81,9 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        check(job.isActive) { "正在缓存中..." }
+        check(isStop) { "正在缓存中, ${job}..." }
         launch {
-            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.toURI()}")
+            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.absolutePath}")
             PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
                 if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                     name.toLong()
@@ -111,9 +114,9 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = runCatching {
-        job.cancelAndJoin()
+        job?.cancelAndJoin()
     }.onSuccess {
-        quoteReply("任务${job}已停止, ${job.isActive}")
+        quoteReply("任务${job}已停止")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
