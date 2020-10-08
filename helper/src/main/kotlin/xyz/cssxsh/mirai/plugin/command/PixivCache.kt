@@ -35,7 +35,7 @@ object PixivCache : CompositeCommand(
 
     private suspend fun PixivHelper.cacheRank(): Int = RankMode.values().map { mode ->
         illustRanking(mode = mode).illusts.count { info ->
-            info.pid !in PixivCacheData && runCatching {
+            job.isActive && info.pid !in PixivCacheData && runCatching {
                 getImages(info)
             }.onSuccess {
                 delay(delayTime)
@@ -46,7 +46,7 @@ object PixivCache : CompositeCommand(
     }.sum()
 
     private suspend fun PixivHelper.cacheFollow(): Int = illustFollow().illusts.count { info ->
-        info.pid !in PixivCacheData && runCatching {
+        job.isActive && info.pid !in PixivCacheData && runCatching {
             getImages(info)
         }.onSuccess {
             delay(delayTime)
@@ -85,7 +85,7 @@ object PixivCache : CompositeCommand(
                     null
                 }
             }.count { pid ->
-                pid !in PixivCacheData && runCatching {
+                job.isActive && pid !in PixivCacheData && runCatching {
                     getImages(illustDetail(pid).illust)
                 }.onSuccess {
                     delay(delayTime)
@@ -107,7 +107,7 @@ object PixivCache : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = job.runCatching {
-        job.cancelAndJoin()
+        cancelAndJoin()
     }.onSuccess {
         quoteReply("任务已停止")
     }.onFailure {
