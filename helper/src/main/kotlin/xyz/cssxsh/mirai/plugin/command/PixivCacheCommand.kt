@@ -52,19 +52,13 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    /**
-     * 缓存排行榜和关注列表最新30个作品
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.all() = getHelper().runCatching {
+    private suspend fun CommandSenderOnMessage<MessageEvent>.method(
+        block: suspend PixivHelper.() -> List<IllustInfo>
+    ) = getHelper().runCatching {
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                (getFollow() + getRank()).flatMap {
-                    it.getOrNull() ?: emptyList()
-                }.let {
-                    PixivCacheData.filter(it)
-                }.also { list: List<IllustInfo> ->
+                PixivCacheData.filter(block()).also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
@@ -89,51 +83,33 @@ object PixivCacheCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
+    /**
+     * 缓存排行榜和关注列表最新30个作品
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
+        (getFollow() + getRank()).flatMap {
+            it.getOrNull() ?: emptyList()
+        }
+    }
 
     /**
      * 从文件夹中加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        check(isStop) { "正在缓存中, ${job}..." }
-        launch {
-            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.absolutePath}加载作品")
-
-            runCatching {
-                PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
-                    if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                        file.name.toLong()
-                    } else {
-                        null
-                    }
-                }.toList().map { pid ->
-                    getIllustInfo(pid)
-                }.let {
-                    PixivCacheData.filter(it)
-                }.also {
-                    logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
-                }.count { illust: IllustInfo ->
-                    isActive && illust.pid !in PixivCacheData && runCatching {
-                        getImages(illust)
-                    }.onSuccess {
-                        delay(delayTime)
-                    }.onFailure {
-                        logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
-                    }.isSuccess
-                }
-            }.onSuccess {
-                quoteReply("缓存完毕共${it}个新作品")
-            }.onFailure {
-                quoteReply("缓存失败, ${it.message}")
+    suspend fun CommandSenderOnMessage<MessageEvent>.load() = method {
+        PixivHelperSettings.cacheFolder.also {
+            logger.verbose("从 ${it.absolutePath} 加载作品信息")
+        }.walk().mapNotNull { file ->
+            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
+                file.name.toLong()
+            } else {
+                null
             }
-        }.also {
-            job = it
+        }.toList().map { pid ->
+            getIllustInfo(pid)
         }
-    }.onSuccess {
-        quoteReply("添加任务完成${it}")
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 
     /**
      * 强制停止缓存
