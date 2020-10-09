@@ -148,10 +148,11 @@ object PixivCache : CompositeCommand(
                     val name = "${illust.pid}-origin-${index}.jpg"
                     File(dir, name).apply {
                         require(canRead()) {
-                            "$name 不可读， 文件将删除，结果：${dir.run { 
+                            dir.apply {
                                 listFiles()?.forEach { it.delete() }
-                                delete()
-                            }}"
+                            }.delete().let {
+                                "$name 不可读， 文件将删除，结果：${it}"
+                            }
                         }
                     }
                 }

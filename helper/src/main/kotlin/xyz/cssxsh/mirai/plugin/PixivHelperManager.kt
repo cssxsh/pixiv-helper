@@ -52,7 +52,7 @@ object PixivHelperManager {
     fun closeAll() {
         (users.values + groups.values).forEach {
             runBlocking {
-                it.contact.sendMessage("机器人关闭中")
+                it.reply("机器人关闭中")
             }
             it.close()
         }

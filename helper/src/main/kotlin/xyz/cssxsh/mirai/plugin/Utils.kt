@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
+import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.Message
@@ -18,7 +19,7 @@ import java.io.File
 fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
 
 /**
- * 并运行特定任务
+ * 运行助手
  */
 suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(
     block: PixivHelper.(message: MessageChain) -> Any
@@ -34,13 +35,14 @@ suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(
                 when (it) {
                     is MessageChain -> quoteReply(it)
                     is Message -> quoteReply(it)
+                    is String -> quoteReply(it)
                     else -> quoteReply(it.toString())
                 }
             }
             else -> quoteReply(result.toString())
         }
     }.onFailure {
-        quoteReply("读取书签失败， ${it.message}")
+        quoteReply("执行失败， ${it.message}")
     }
 }
 
@@ -54,8 +56,10 @@ fun IllustInfo.getMessage(): Message = buildString {
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
-    getPixivCatUrls(pid, pageCount).forEach { appendLine(it) }
-}.let { PlainText(it) }
+    getPixivCatUrls().forEach { appendLine(it) }
+}.let {
+    PlainText(it)
+}
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
@@ -75,13 +79,8 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
-fun IllustInfo.getPixivCatUrls() = getPixivCatUrls(pid, pageCount)
-
-fun getPixivCatUrls(
-    pid: Long,
-    count: Int
-): List<String> = if (count > 1) {
-    (1..count).map { "https://pixiv.cat/${pid}-${it}.jpg" }
+fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
+    (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
@@ -92,10 +91,21 @@ fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).
     if (it) PixivCacheData.add(this)
 }
 
+fun IllustInfo.writeTo(file: File) = file.writeText(
+    Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        isLenient = true
+        allowStructuredMapKeys = true
+    }.encodeToString(IllustInfo.serializer(), this)
+)
+
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
+    val jsonFile = File(dir, "${illust.pid}.json")
+    if (jsonFile.exists().not()) illust.writeTo(jsonFile)
     if (File(dir, "${illust.pid}-origin-${0}.jpg").canRead()) {
         illust.getOriginUrl().mapIndexed { index, _ ->
             val name = "${illust.pid}-origin-${index}.jpg"
