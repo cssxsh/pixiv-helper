@@ -9,6 +9,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getIllustInfo
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
+import xyz.cssxsh.pixiv.data.app.UserInfo
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -27,16 +28,16 @@ object PixivFollowCommand : CompositeCommand(
             getIllustInfo(pid).takeIf { info ->
                 info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
             }
-        }.fold(emptySet<Long>()) { acc, info ->
+        }.fold(emptySet<UserInfo>()) { acc, info ->
             if (info.user.isFollowed == true) {
                 acc
             } else {
-                acc + info.user.id
+                acc + info.user
             }
-        }.count { uid ->
-            logger.verbose("添加关注${uid}")
+        }.count { user ->
+            logger.verbose("添加关注(${user.id})[${user.name}]")
             runCatching {
-                userFollowAdd(uid)
+                userFollowAdd(user.id)
             }.isSuccess
         }
     }.onSuccess {
