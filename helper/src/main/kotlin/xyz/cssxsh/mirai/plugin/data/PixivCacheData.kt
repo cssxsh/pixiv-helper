@@ -26,7 +26,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun add(illust: IllustInfo) = synchronized(illusts) {
         illusts.add(illust.pid)
-        if (illust.isEro()) eros.put(illust.pid, illust)
+        logger.info("作品(${illust.pid})[${illust.title}]信息将添加, 目前共${illusts.size}条信息")
+        if (illust.isEro()) eros[illust.pid] = illust
     }
 
     fun remove(illust: IllustInfo) = synchronized(illusts) {

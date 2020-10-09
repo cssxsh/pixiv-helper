@@ -114,9 +114,10 @@ object PixivCacheCommand : CompositeCommand(
             }.let {
                 quoteReply("加载缓存完毕，共${it}个新作品")
             }
+        }.also {
+            job = it
         }
     }.onSuccess {
-        job = it
         quoteReply("添加任务完成${it}")
     }.onFailure {
         quoteReply(it.toString())
@@ -186,7 +187,17 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.delay(timeMillis: Long) {
+        logger.info("$delayTime -> $timeMillis")
         delayTime = timeMillis
     }
 
+    /**
+     * 设置缓存延迟时间
+     */
+    @SubCommand
+    fun ConsoleCommandSender.remove(pid: Long) {
+        PixivCacheData.eros.remove(pid)?.let {
+            logger.info("色图作品(${it.pid})[${it.title}]信息将从{色图}移除, 目前共${PixivCacheData.eros.size}条色图")
+        }
+    }
 }
