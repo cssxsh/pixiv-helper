@@ -11,6 +11,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
+import xyz.cssxsh.pixiv.api.app.userFollowing
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.io.File
 
@@ -46,9 +47,19 @@ object PixivCacheCommand : CompositeCommand(
         runCatching {
             illustFollow(offset = index * 30L).illusts
         }.onSuccess {
-            logger.verbose("加载关注作品第${index + 1}页{${it.size}}成功")
+            logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
         }.onFailure {
-            logger.verbose("加载关注作品第${index + 1}页失败")
+            logger.verbose("加载关注用户作品时间线第${index + 1}页失败")
+        }
+    }
+
+    private suspend fun PixivHelper.getUserPreviews(page: Int = 10) = (0 until page).map { index ->
+        runCatching {
+            userFollowing(uid = authInfo!!.user.uid, offset = index * 30L).UserPreviews.flatMap { it.illusts }
+        }.onSuccess {
+            logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
+        }.onFailure {
+            logger.verbose("加载关注用户作品预览第${index + 1}页失败")
         }
     }
 
@@ -88,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
-        (getFollow() + getRank()).flatMap {
+        (getFollow() + getRank() + getUserPreviews()).flatMap {
             it.getOrNull() ?: emptyList()
         }
     }
