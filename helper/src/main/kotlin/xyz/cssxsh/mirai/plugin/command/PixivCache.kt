@@ -143,6 +143,8 @@ object PixivCache : CompositeCommand(
             logger.verbose("共有 ${list.size} 个作品需要检查")
         }.filter { illust ->
             val dir = PixivHelperSettings.imagesFolder(illust.pid)
+            val jsonFile = File(dir, "${illust.pid}.json")
+            if (jsonFile.exists().not()) illust.writeTo(jsonFile)
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"

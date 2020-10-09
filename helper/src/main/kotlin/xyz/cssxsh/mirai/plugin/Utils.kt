@@ -104,8 +104,6 @@ suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    val jsonFile = File(dir, "${illust.pid}.json")
-    if (jsonFile.exists().not()) illust.writeTo(jsonFile)
     if (File(dir, "${illust.pid}-origin-${0}.jpg").canRead()) {
         illust.getOriginUrl().mapIndexed { index, _ ->
             val name = "${illust.pid}-origin-${index}.jpg"
