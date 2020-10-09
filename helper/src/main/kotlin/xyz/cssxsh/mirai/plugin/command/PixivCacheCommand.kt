@@ -156,10 +156,11 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }
                 }
-                illust
             }.onFailure {
                 logger.verbose("${illust.pid}缓存出错", it)
-            }.getOrNull()
+            }.let {
+                if (it.isFailure) illust else null
+            }
         }
     }.onSuccess { list ->
         quoteReply("检查缓存完毕，错误率: ${list.size}/${PixivCacheData.values.size}")
