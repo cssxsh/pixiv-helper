@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.isR18
+import xyz.cssxsh.pixiv.ContentType
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
@@ -14,7 +15,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     val eros: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
-    private fun IllustInfo.isEro() = totalBookmarks ?: 0 >= 1000 && sanityLevel > 2 && isR18().not() && pageCount < 4
+    private fun IllustInfo.isEro() =
+        totalBookmarks ?: 0 >= 1000 && sanityLevel > 2 && isR18().not() && pageCount < 4 && type == ContentType.ILLUST
 
     val values: Set<Long> get() = synchronized(illusts) {
         illusts.toSet()
