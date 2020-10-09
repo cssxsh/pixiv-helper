@@ -118,6 +118,7 @@ tasks {
                 buildString {
                     appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} \\")
                     appendln("  -Dfile.encoding=UTF-8 \\")
+                    appendln("  -Duser.dir=${testConsoleDir.absolutePath}")
                     appendln("  mirai.RunMirai")
                 }
             )
