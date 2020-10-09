@@ -70,7 +70,9 @@ suspend fun PixivHelper.buildMessage(
         add(illust.getMessage())
     }
     if (!illust.isR18()) {
-        addAll(getImages(illust, save).map {
+        addAll(getImages(getImageInfo(illust.pid) {
+            illust
+        }, save).map {
             it.uploadAsImage(contact)
         })
     } else {
@@ -124,15 +126,10 @@ suspend fun PixivHelper.getImageInfo(
 }
 
 suspend fun PixivHelper.getImages(
-    pid: Long,
-    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
-): List<File> = getImages(getImageInfo(pid, block))
-
-suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    if (illust.pid in PixivCacheData) {
+    if (File(dir, "${illust.pid}-origin-0.jpg").canRead()) {
         illust.getOriginUrl().mapIndexed { index, _ ->
             File(dir, "${illust.pid}-origin-${index}.jpg")
         }

@@ -9,10 +9,7 @@ import net.mamoe.mirai.console.command.description.CommandArgumentParserExceptio
 import net.mamoe.mirai.console.command.description.buildCommandArgumentContext
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
-import xyz.cssxsh.mirai.plugin.ImageSearcher
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.getHelper
-import xyz.cssxsh.mirai.plugin.getImages
+import xyz.cssxsh.mirai.plugin.*
 
 @Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
@@ -38,7 +35,7 @@ object PixivSearchCommand : SimpleCommand(
             if (it.similarity > 0.9) getHelper().runCatching {
                 launch {
                     logger.verbose("开始获取搜索结果${it.pid}")
-                    getImages(it.pid)
+                    getImages(getImageInfo(it.pid))
                 }
             }
             "相似度: ${it.similarity * 100}% \n ${it.content}"

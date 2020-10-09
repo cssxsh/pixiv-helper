@@ -105,7 +105,7 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
             }.count { pid ->
                 isActive && pid !in PixivCacheData && runCatching {
-                    getImages(pid)
+                    getImageInfo(pid)
                 }.onFailure {
                     logger.verbose("获取图片${pid}错误", it)
                 }.isSuccess
