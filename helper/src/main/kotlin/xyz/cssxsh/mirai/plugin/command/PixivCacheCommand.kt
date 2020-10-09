@@ -43,7 +43,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getFollow(page: Int = 30) = (0 until page).map { index ->
+    private suspend fun PixivHelper.getFollow(page: Int = 100) = (0 until page).map { index ->
         runCatching {
             illustFollow(offset = index * 30L).illusts
         }.onSuccess {
@@ -53,7 +53,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(page: Int = 30) = (0 until page).map { index ->
+    private suspend fun PixivHelper.getUserPreviews(page: Int = 100) = (0 until page).map { index ->
         runCatching {
             userFollowing(uid = authInfo!!.user.uid, offset = index * 30L).UserPreviews.flatMap { it.illusts }
         }.onSuccess {
