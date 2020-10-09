@@ -114,6 +114,13 @@ tasks {
                     }
                 }
             }
+            File(testConsoleDir, "start.sh").writeText(
+                buildString {
+                    appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} \\")
+                    appendln("  -Dfile.encoding=UTF-8 \\")
+                    appendln("  mirai.RunMirai")
+                }
+            )
         }
     }
 
