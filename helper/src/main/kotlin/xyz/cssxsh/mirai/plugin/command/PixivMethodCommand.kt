@@ -120,7 +120,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
         pid: Long
     ) = getHelper().runCatching {
-        buildMessage(getImageInfo(pid.positiveLongCheck()))
+        buildMessage(getIllustInfo(pid.positiveLongCheck()))
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

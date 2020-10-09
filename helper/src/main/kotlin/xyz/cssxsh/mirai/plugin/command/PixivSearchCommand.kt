@@ -35,7 +35,7 @@ object PixivSearchCommand : SimpleCommand(
             if (it.similarity > 0.9) getHelper().runCatching {
                 launch {
                     logger.verbose("开始获取搜索结果${it.pid}")
-                    getImages(getImageInfo(it.pid))
+                    getImages(getIllustInfo(it.pid))
                 }
             }
             "相似度: ${it.similarity * 100}% \n ${it.content}"

@@ -65,13 +65,13 @@ object PixivCacheCommand : CompositeCommand(
                     it.getOrNull() ?: emptyList()
                 }.also { list: List<IllustInfo> ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
-                }.count { info: IllustInfo ->
-                    isActive && info.pid !in PixivCacheData && runCatching {
-                        getImages(info)
+                }.count { illust: IllustInfo ->
+                    isActive && illust.pid !in PixivCacheData && runCatching {
+                        getImages(illust)
                     }.onSuccess {
                         delay(delayTime)
                     }.onFailure {
-                        logger.verbose("获取图片${info.pid}错误", it)
+                        logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
                     }.isSuccess
                 }
             }.onSuccess {
@@ -105,9 +105,9 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
             }.count { pid ->
                 isActive && pid !in PixivCacheData && runCatching {
-                    getImages(getImageInfo(pid))
+                    getImages(getIllustInfo(pid))
                 }.onFailure {
-                    logger.verbose("获取图片${pid}错误", it)
+                    logger.verbose("获取作品(${pid})错误", it)
                 }.isSuccess
             }.let {
                 quoteReply("加载缓存完毕，共${it}个新作品")
@@ -142,11 +142,10 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose("共有 ${list.size} 个作品需要检查")
         }.mapNotNull { pid ->
             val dir = PixivHelperSettings.imagesFolder(pid)
-            val illust = getImageInfo(pid)
+            val illust = getIllustInfo(pid)
             (0 until illust.pageCount).runCatching {
-                forEachIndexed { index, _ ->
-                    val name = "${illust.pid}-origin-${index}.jpg"
-                    File(dir, name).apply {
+                forEach { index ->
+                    File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                         require(canRead()) {
                             dir.apply {
                                 listFiles()?.forEach { it.delete() }
@@ -157,7 +156,7 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }
             }.onFailure {
-                logger.verbose("${illust.pid}缓存出错", it)
+                logger.verbose("作品(${illust.pid})[${illust.title}]缓存出错, ${it.message}")
             }.let {
                 if (it.isFailure) illust else null
             }

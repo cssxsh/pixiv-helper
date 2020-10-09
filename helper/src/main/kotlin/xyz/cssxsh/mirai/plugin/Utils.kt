@@ -64,7 +64,7 @@ suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     save: Boolean = true
 ): List<Message> = buildList {
-    getImageInfo(illust.pid) { illust }
+    getIllustInfo(illust.pid) { illust }
     if (simpleInfo) {
         add(PlainText("作品ID: ${illust.pid}"))
     } else {
@@ -109,7 +109,7 @@ fun File.readIllustInfo(): IllustInfo = readText().let {
     }.decodeFromString(IllustInfo.serializer(), it)
 }
 
-suspend fun PixivHelper.getImageInfo(
+suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
 ): IllustInfo = PixivHelperSettings.imagesFolder(pid).let { dir ->
