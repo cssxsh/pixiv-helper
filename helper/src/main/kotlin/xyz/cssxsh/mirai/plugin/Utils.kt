@@ -64,15 +64,14 @@ suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     save: Boolean = true
 ): List<Message> = buildList {
+    getImageInfo(illust.pid) { illust }
     if (simpleInfo) {
         add(PlainText("作品ID: ${illust.pid}"))
     } else {
         add(illust.getMessage())
     }
     if (!illust.isR18()) {
-        addAll(getImages(getImageInfo(illust.pid) {
-            illust
-        }, save).map {
+        addAll(getImages(illust, save).map {
             it.uploadAsImage(contact)
         })
     } else {
