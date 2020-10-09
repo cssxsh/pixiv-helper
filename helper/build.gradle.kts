@@ -116,9 +116,9 @@ tasks {
             }
             File(testConsoleDir, "start.sh").writeText(
                 buildString {
+                    appendln("cd ${testConsoleDir.absolutePath}")
                     appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} \\")
                     appendln("  -Dfile.encoding=UTF-8 \\")
-                    appendln("  -Duser.dir=${testConsoleDir.absolutePath} \\")
                     appendln("  mirai.RunMirai")
                 }
             )
