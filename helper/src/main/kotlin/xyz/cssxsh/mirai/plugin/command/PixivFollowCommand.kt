@@ -10,6 +10,7 @@ import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getIllustInfo
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
 
+@Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
     PixivHelperPlugin,
     "follow",
@@ -33,6 +34,7 @@ object PixivFollowCommand : CompositeCommand(
                 acc + info.user.id
             }
         }.count { uid ->
+            logger.verbose("添加关注${uid}")
             runCatching {
                 userFollowAdd(uid)
             }.isSuccess
@@ -40,6 +42,6 @@ object PixivFollowCommand : CompositeCommand(
     }.onSuccess {
         quoteReply("关注添加成功, 共${it}个新关注")
     }.onFailure {
-        quoteReply("g关注失败， ${it.message}")
+        quoteReply("关注添加失败， ${it.message}")
     }.isSuccess
 }
