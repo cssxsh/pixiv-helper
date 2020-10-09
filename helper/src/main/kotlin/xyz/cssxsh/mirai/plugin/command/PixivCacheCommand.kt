@@ -76,7 +76,6 @@ object PixivCacheCommand : CompositeCommand(
                 }).also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
-                    illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
                     isActive && illust.pid !in PixivCacheData && runCatching {
                         getImages(illust)
                     }.onSuccess {
