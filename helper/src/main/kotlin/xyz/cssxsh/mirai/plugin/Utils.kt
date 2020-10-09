@@ -132,21 +132,19 @@ suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    illust.let { info ->
-        if (illust.pid in PixivCacheData) {
-            info.getOriginUrl().mapIndexed { index, _ ->
-                File(dir, "${illust.pid}-origin-${index}.jpg")
-            }
-        } else {
-            downloadImage<ByteArray>(info).mapIndexed { index, result ->
-                File(dir, "${illust.pid}-origin-${index}.jpg").apply {
-                    writeBytes(result.getOrThrow())
-                }
-            }.apply {
-                if (save) info.save()
+    if (illust.pid in PixivCacheData) {
+        illust.getOriginUrl().mapIndexed { index, _ ->
+            File(dir, "${illust.pid}-origin-${index}.jpg")
+        }
+    } else {
+        downloadImage<ByteArray>(illust).mapIndexed { index, result ->
+            File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+                writeBytes(result.getOrThrow())
             }
         }
     }
+}.apply {
+    if (save) illust.save()
 }
 
 
