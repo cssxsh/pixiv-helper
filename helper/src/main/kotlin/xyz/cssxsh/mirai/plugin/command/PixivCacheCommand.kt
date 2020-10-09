@@ -9,13 +9,13 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.RankMode
-import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
+import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.io.File
 
 @Suppress("unused")
-object PixivCache : CompositeCommand(
+object PixivCacheCommand : CompositeCommand(
     PixivHelperPlugin,
     "cache",
     description = "缓存指令",
@@ -63,9 +63,9 @@ object PixivCache : CompositeCommand(
             runCatching {
                 (getFollow() + getRank()).flatMap {
                     it.getOrNull() ?: emptyList()
-                }.also {
-                    logger.verbose("共 ${it.size} 个作品信息将会被尝试添加")
-                }.count { info ->
+                }.also { list: List<IllustInfo> ->
+                    logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
+                }.count { info: IllustInfo ->
                     isActive && info.pid !in PixivCacheData && runCatching {
                         getImages(info)
                     }.onSuccess {
@@ -105,7 +105,7 @@ object PixivCache : CompositeCommand(
                 logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
             }.count { pid ->
                 isActive && pid !in PixivCacheData && runCatching {
-                    getImages(illustDetail(pid).illust)
+                    getImages(pid)
                 }.onSuccess {
                     delay(delayTime)
                 }.onFailure {
@@ -141,10 +141,9 @@ object PixivCache : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.values.also { list ->
             logger.verbose("共有 ${list.size} 个作品需要检查")
-        }.filter { illust ->
-            val dir = PixivHelperSettings.imagesFolder(illust.pid)
-            val jsonFile = File(dir, "${illust.pid}.json")
-            if (jsonFile.exists().not()) illust.writeTo(jsonFile)
+        }.mapNotNull { pid ->
+            val dir = PixivHelperSettings.imagesFolder(pid)
+            val illust = getImageInfo(pid)
             (0 until illust.pageCount).runCatching {
                 forEachIndexed { index, _ ->
                     val name = "${illust.pid}-origin-${index}.jpg"
@@ -158,9 +157,10 @@ object PixivCache : CompositeCommand(
                         }
                     }
                 }
+                illust
             }.onFailure {
                 logger.verbose("${illust.pid}缓存出错", it)
-            }.isFailure
+            }.getOrNull()
         }
     }.onSuccess { list ->
         quoteReply("检查缓存完毕，错误率: ${list.size}/${PixivCacheData.values.size}")

@@ -12,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
-object PixivSetting: CompositeCommand(
+object PixivSettingCommand: CompositeCommand(
     PixivHelperPlugin,
     "set",
     description = "pixiv 设置",
@@ -46,7 +46,7 @@ object PixivSetting: CompositeCommand(
             appendLine("账户：${config.account}")
             appendLine("Token: ${config.refreshToken}")
             appendLine("简略信息: $simpleInfo")
-            appendLine("色图数: ${PixivCacheData.ero.size}")
+            appendLine("色图数: ${PixivCacheData.eros.size}")
         }
     }.onSuccess {
         quoteReply(it)

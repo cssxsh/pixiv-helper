@@ -10,10 +10,14 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     /**
      * 缓存
      */
-    private val illusts: MutableMap<Long, IllustInfo> by value(mutableMapOf())
+    private val illusts: MutableList<Long> by value(mutableListOf())
 
-    val values: List<IllustInfo> get() = synchronized(illusts) {
-        illusts.values.toList()
+    val eros: MutableMap<Long, IllustInfo> by value(mutableMapOf())
+
+    private fun IllustInfo.isEro() = totalBookmarks ?: 0 >= 1000 && sanityLevel > 2 && isR18().not() && pageCount < 4
+
+    val values: List<Long> get() = synchronized(illusts) {
+        illusts.toList()
     }
 
     operator fun contains(pid: Long) = synchronized(illusts) {
@@ -21,26 +25,14 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     fun add(illust: IllustInfo) = synchronized(illusts) {
-        logger.info("作品(${illust.pid})[${illust.title}]信息将保存, 目前共${illusts.size}条信息")
-        illusts[illust.pid] = illust
-        if (illust.isEro()) ero.add(illust)
+        illusts.add(illust.pid)
+        if (illust.isEro()) eros.put(illust.pid, illust)
     }
 
-    fun remove(illust: IllustInfo) = remove(illust.pid)
-
-    fun remove(pid: Long) = synchronized(illusts) {
-        illusts.remove(pid)?.also { illust ->
+    fun remove(illust: IllustInfo) = synchronized(illusts) {
+        if (illusts.remove(illust.pid)) {
             logger.info("作品(${illust.pid})[${illust.title}]信息将移除, 目前共${illusts.size}条信息")
-            if (illust.isEro()) ero.remove(illust)
+            if (illust.isEro()) eros.remove(illust.pid)
         }
-    }
-
-    private fun IllustInfo.isEro() =
-        totalBookmarks ?: 0 >= 1000 && sanityLevel > 2 && isR18().not() && pageCount < 4
-
-    val ero: MutableList<IllustInfo> by lazy {
-        values.filter { it.isEro() }.also {
-            logger.verbose("色图集初始化，共${it.size}张色图")
-        }.toMutableList()
     }
 }

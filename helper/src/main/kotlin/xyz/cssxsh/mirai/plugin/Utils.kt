@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImage
 import java.io.File
@@ -21,9 +22,7 @@ fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManage
 /**
  * 运行助手
  */
-suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(
-    block: PixivHelper.(message: MessageChain) -> Any
-) {
+suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivHelper.(MessageChain) -> Any) {
     getHelper().runCatching {
         block(message)
     }.onSuccess { result ->
@@ -85,7 +84,7 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
 
-fun IllustInfo.isR18(): Boolean = tags.any { Regex("""R-?18""") in it.name }
+fun IllustInfo.isR18(): Boolean = tags.any { """R-?18""".toRegex() in it.name }
 
 fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).also {
     if (it) PixivCacheData.add(this)
@@ -100,26 +99,54 @@ fun IllustInfo.writeTo(file: File) = file.writeText(
     }.encodeToString(IllustInfo.serializer(), this)
 )
 
+fun File.readIllustInfo(): IllustInfo = readText().let {
+    Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        isLenient = true
+        allowStructuredMapKeys = true
+    }.decodeFromString(IllustInfo.serializer(), it)
+}
+
+suspend fun PixivHelper.getImageInfo(
+    pid: Long,
+    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
+): IllustInfo = PixivHelperSettings.imagesFolder(pid).let { dir ->
+    File(dir, "${pid}.json").let { file ->
+        if (file.canRead()) {
+            file.readIllustInfo()
+        } else {
+            block(pid).also {
+                it.writeTo(file)
+            }
+        }
+    }
+}
+
+suspend fun PixivHelper.getImages(
+    pid: Long,
+    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
+): List<File> = getImages(getImageInfo(pid, block))
+
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
 ): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    if (File(dir, "${illust.pid}-origin-${0}.jpg").canRead()) {
-        illust.getOriginUrl().mapIndexed { index, _ ->
-            val name = "${illust.pid}-origin-${index}.jpg"
-            File(dir, name)
-        }
-    } else {
-        downloadImage<ByteArray>(illust).mapIndexed { index, result ->
-            val name = "${illust.pid}-origin-${index}.jpg"
-            File(dir, name).apply {
-                writeBytes(result.getOrThrow())
-                // PixivHelperPlugin.logger.verbose("文件${name}(${this.length() / 1024 / 1024}MB)已保存")
+    illust.let { info ->
+        if (illust.pid in PixivCacheData) {
+            info.getOriginUrl().mapIndexed { index, _ ->
+                File(dir, "${illust.pid}-origin-${index}.jpg")
+            }
+        } else {
+            downloadImage<ByteArray>(info).mapIndexed { index, result ->
+                File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+                    writeBytes(result.getOrThrow())
+                }
+            }.apply {
+                if (save) info.save()
             }
         }
     }
-}.also {
-    if (save) illust.save()
 }
 
 

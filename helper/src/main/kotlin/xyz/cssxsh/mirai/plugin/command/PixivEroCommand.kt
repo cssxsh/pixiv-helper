@@ -8,14 +8,14 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 @Suppress("unused")
-object PixivEro : SimpleCommand(
+object PixivEroCommand : SimpleCommand(
     PixivHelperPlugin,
     "ero", "色图",
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private fun PixivHelper.randomIllust(): IllustInfo = PixivCacheData.ero.random().takeIf { illust ->
+    private fun PixivHelper.randomIllust(): IllustInfo = PixivCacheData.eros.values.random().takeIf { illust ->
         illust.pid !in historyQueue
     }?.also {
         if (historyQueue.remainingCapacity() == 0) historyQueue.take()

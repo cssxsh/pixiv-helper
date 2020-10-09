@@ -13,10 +13,9 @@ import xyz.cssxsh.mirai.plugin.ImageSearcher
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getImages
-import xyz.cssxsh.pixiv.api.app.illustDetail
 
 @Suppress("unused")
-object PixivSearch : SimpleCommand(
+object PixivSearchCommand : SimpleCommand(
     PixivHelperPlugin,
     "search", "搜索",
     description = "缓存指令",
@@ -39,7 +38,7 @@ object PixivSearch : SimpleCommand(
             if (it.similarity > 0.9) getHelper().runCatching {
                 launch {
                     logger.verbose("开始获取搜索结果${it.pid}")
-                    getImages(illustDetail(it.pid).illust)
+                    getImages(it.pid)
                 }
             }
             "相似度: ${it.similarity * 100}% \n ${it.content}"

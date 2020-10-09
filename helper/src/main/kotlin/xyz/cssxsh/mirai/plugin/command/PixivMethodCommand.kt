@@ -14,7 +14,7 @@ import xyz.cssxsh.pixiv.client.exception.NotLoginException
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 
 @Suppress("unused")
-object PixivMethod : CompositeCommand(
+object PixivMethodCommand : CompositeCommand(
     PixivHelperPlugin,
     "pixiv",
     description = "pixiv 基本方法",
@@ -120,7 +120,7 @@ object PixivMethod : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
         pid: Long
     ) = getHelper().runCatching {
-        buildMessage(illustDetail(pid.positiveLongCheck()).illust)
+        buildMessage(getImageInfo(pid.positiveLongCheck()))
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

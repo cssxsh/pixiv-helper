@@ -30,20 +30,20 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivCacheData.reload()
         PixivConfigData.reload()
         // cmd
-        PixivMethod.register()
-        PixivEro.register()
-        PixivCache.register()
-        PixivSetting.register()
-        PixivSearch.register()
+        PixivMethodCommand.register()
+        PixivEroCommand.register()
+        PixivCacheCommand.register()
+        PixivSettingCommand.register()
+        PixivSearchCommand.register()
     }
 
 
     override fun onDisable() {
-        PixivMethod.unregister()
-        PixivEro.unregister()
-        PixivEro.unregister()
-        PixivSetting.unregister()
-        PixivSetting.unregister()
+        PixivMethodCommand.unregister()
+        PixivEroCommand.unregister()
+        PixivEroCommand.unregister()
+        PixivSettingCommand.unregister()
+        PixivSettingCommand.unregister()
         PixivHelperManager.closeAll()
     }
 }
