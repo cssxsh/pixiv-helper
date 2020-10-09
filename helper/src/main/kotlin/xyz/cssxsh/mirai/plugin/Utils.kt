@@ -86,7 +86,7 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
 
 fun IllustInfo.isR18(): Boolean = tags.any { """R-?18""".toRegex() in it.name }
 
-fun IllustInfo.save(cover: Boolean = false) = (pid !in PixivCacheData || cover).also {
+fun IllustInfo.save() = (pid !in PixivCacheData).also {
     if (it) PixivCacheData.add(this)
 }
 
