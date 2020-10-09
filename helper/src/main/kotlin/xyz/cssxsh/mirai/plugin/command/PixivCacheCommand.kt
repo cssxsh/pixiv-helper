@@ -32,12 +32,11 @@ object PixivCacheCommand : CompositeCommand(
 
     private val isStop: Boolean get() = job?.isActive?.not() ?: true
 
-
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
         runCatching {
             illustRanking(mode = mode).illusts
         }.onSuccess {
-            logger.verbose("加载排行榜[${mode}](${it.size})成功")
+            logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
         }.onFailure {
             logger.verbose("加载排行榜[${mode}]失败")
         }
@@ -47,7 +46,7 @@ object PixivCacheCommand : CompositeCommand(
         runCatching {
             illustFollow(offset = index * 30L).illusts
         }.onSuccess {
-            logger.verbose("加载关注作品第${index + 1}页(${it.size})成功")
+            logger.verbose("加载关注作品第${index + 1}页{${it.size}}成功")
         }.onFailure {
             logger.verbose("加载关注作品第${index + 1}页失败")
         }
@@ -63,6 +62,8 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 (getFollow() + getRank()).flatMap {
                     it.getOrNull() ?: emptyList()
+                }.let {
+                    PixivCacheData.filter(it)
                 }.also { list: List<IllustInfo> ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
@@ -76,6 +77,8 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }.onSuccess {
                 quoteReply("缓存完毕共${it}个新作品")
+            }.onFailure {
+                quoteReply("缓存失败, ${it.message}")
             }
         }.also {
             job = it
@@ -94,23 +97,34 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
-            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.absolutePath}")
-            PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
-                if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                    file.name.toLong()
-                } else {
-                    null
+            logger.info("从缓存目录${PixivHelperSettings.cacheFolder.absolutePath}加载作品")
+
+            runCatching {
+                PixivHelperSettings.cacheFolder.walk().mapNotNull { file ->
+                    if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
+                        file.name.toLong()
+                    } else {
+                        null
+                    }
+                }.toList().map { pid ->
+                    getIllustInfo(pid)
+                }.let {
+                    PixivCacheData.filter(it)
+                }.also {
+                    logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
+                }.count { illust: IllustInfo ->
+                    isActive && illust.pid !in PixivCacheData && runCatching {
+                        getImages(illust)
+                    }.onSuccess {
+                        delay(delayTime)
+                    }.onFailure {
+                        logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
+                    }.isSuccess
                 }
-            }.toList().also {
-                logger.verbose("共 ${it.size} 个图片文件夹会被尝试加载")
-            }.count { pid ->
-                isActive && pid !in PixivCacheData && runCatching {
-                    getImages(getIllustInfo(pid))
-                }.onFailure {
-                    logger.verbose("获取作品(${pid})错误", it)
-                }.isSuccess
-            }.let {
-                quoteReply("加载缓存完毕，共${it}个新作品")
+            }.onSuccess {
+                quoteReply("缓存完毕共${it}个新作品")
+            }.onFailure {
+                quoteReply("缓存失败, ${it.message}")
             }
         }.also {
             job = it
@@ -143,8 +157,8 @@ object PixivCacheCommand : CompositeCommand(
         }.mapNotNull { pid ->
             val dir = PixivHelperSettings.imagesFolder(pid)
             val illust = getIllustInfo(pid)
-            (0 until illust.pageCount).runCatching {
-                forEach { index ->
+            runCatching {
+                (0 until illust.pageCount).forEach { index ->
                     File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                         require(canRead()) {
                             dir.apply {
