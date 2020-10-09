@@ -37,9 +37,9 @@ object PixivCacheCommand : CompositeCommand(
         runCatching {
             illustRanking(mode = mode).illusts
         }.onSuccess {
-            logger.verbose("加载排行榜${mode}成功")
+            logger.verbose("加载排行榜[${mode}](${it.size})成功")
         }.onFailure {
-            logger.verbose("加载排行榜${mode}失败")
+            logger.verbose("加载排行榜[${mode}]失败")
         }
     }
 
@@ -47,9 +47,9 @@ object PixivCacheCommand : CompositeCommand(
         runCatching {
             illustFollow(offset = index * 30L).illusts
         }.onSuccess {
-            logger.verbose("加载关注作品第${index}页成功")
+            logger.verbose("加载关注作品第${index + 1}页(${it.size})成功")
         }.onFailure {
-            logger.verbose("加载关注作品第${index}页失败")
+            logger.verbose("加载关注作品第${index + 1}页失败")
         }
     }
 
@@ -162,7 +162,7 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess { list ->
-        quoteReply("检查缓存完毕，错误率: ${list.size}/${PixivCacheData.values.size}")
+        quoteReply("检查缓存完毕，错误数: ${list.size}")
         list.forEach(PixivCacheData::remove)
     }.onFailure {
         quoteReply(it.toString())
