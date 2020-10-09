@@ -69,11 +69,13 @@ object PixivCacheCommand : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                PixivCacheData.filter(block().apply {
+                block().apply {
                     forEach { illust ->
                         illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
                     }
-                }).also { list ->
+                }.let {
+                    PixivCacheData.filter(it)
+                }.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
