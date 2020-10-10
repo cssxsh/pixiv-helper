@@ -56,7 +56,7 @@ class JsonPluginDataStorage(
     override fun store(holder: PluginDataHolder, instance: PluginData) {
         getPluginDataFile(holder, instance).writeText(
             kotlin.runCatching {
-                json.encodeToString(instance.updaterSerializer, Unit.INSTANCE)
+                json.encodeToString(instance.updaterSerializer, {}())
             }.getOrElse {
                 throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
             }
