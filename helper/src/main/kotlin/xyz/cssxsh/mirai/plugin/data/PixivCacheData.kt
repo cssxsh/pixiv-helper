@@ -41,7 +41,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun add(illust: IllustInfo) = synchronized(illusts) {
         if (illusts.add(illust.pid)) {
-            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.pageCount}}信息已添加, 目前共${illusts.size}条信息")
+            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.totalBookmarks}}信息已添加, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
                 if (illust.isR18()) {
                     r18s[illust.pid] = illust
@@ -54,7 +54,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun remove(illust: IllustInfo) = synchronized(illusts) {
         if (illusts.remove(illust.pid)) {
-            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.pageCount}}信息已移除, 目前共${illusts.size}条信息")
+            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.totalBookmarks}}信息已移除, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
                 eros.remove(illust.pid)
                 r18s.remove(illust.pid)
