@@ -129,7 +129,18 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
-        (getFollow() + getRank() + getRecommendeds() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
+        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
+            forEach { illust ->
+                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+            }
+        }
+    }
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = method {
+        getRecommendeds().flatten().filter { illust ->
+            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
+        }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
