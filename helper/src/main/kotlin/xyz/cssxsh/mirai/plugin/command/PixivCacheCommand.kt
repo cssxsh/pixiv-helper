@@ -43,23 +43,37 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getFollow(page: Int = 100) = (0 until page).map { index ->
-        runCatching {
-            illustFollow(offset = index * 30L).illusts
-        }.onSuccess {
-            logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
-        }.onFailure {
-            logger.verbose("加载关注用户作品时间线第${index + 1}页失败, ${it.message}")
+    private suspend fun PixivHelper.getFollow(page: Int = 100):  List<Result<List<IllustInfo>>> = buildList {
+        for (index in 0 until page) {
+            val result = runCatching {
+                illustFollow(offset = index * 30L).illusts
+            }.onSuccess {
+                logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载关注用户作品时间线第${index + 1}页失败, ${it.message}")
+            }
+            if (result.getOrNull()?.size == 0) {
+                break
+            } else {
+                add(result)
+            }
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100) = (0 until page).map { index ->
-        runCatching {
-            userFollowing(uid = uid, offset = index * 30L).userPreviews.flatMap { it.illusts }
-        }.onSuccess {
-            logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
-        }.onFailure {
-            logger.verbose("加载关注用户作品预览第${index + 1}页失败, ${it.message}")
+    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100):  List<Result<List<IllustInfo>>> = buildList {
+        for (index in 0 until page) {
+            val result = runCatching {
+                userFollowing(uid = uid, offset = index * 30L).userPreviews.flatMap { it.illusts }
+            }.onSuccess {
+                logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载关注用户作品预览第${index + 1}页失败, ${it.message}")
+            }
+            if (result.getOrNull()?.size == 0) {
+                break
+            } else {
+                add(result)
+            }
         }
     }
 
