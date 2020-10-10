@@ -55,7 +55,7 @@ object PixivCacheCommand : CompositeCommand(
 
     private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100) = (0 until page).map { index ->
         runCatching {
-            userFollowing(uid = uid, offset = index * 30L).UserPreviews.flatMap { it.illusts }
+            userFollowing(uid = uid, offset = index * 30L).userPreviews.flatMap { it.illusts }
         }.onSuccess {
             logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
         }.onFailure {
@@ -95,7 +95,7 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * 缓存排行榜和关注列表最新30个作品
+     * 缓存排行榜和关注列表
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
@@ -107,6 +107,21 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }
+
+    /**
+     * 缓存指定用户关注的用户的预览作品
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
+        getUserPreviews(uid).flatMap {
+            it.getOrNull() ?: emptyList()
+        }.apply {
+            forEach { illust ->
+                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+            }
+        }
+    }
+
 
     /**
      * 从文件夹中加载信息
