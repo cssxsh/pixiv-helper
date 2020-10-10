@@ -8,6 +8,7 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getIllustInfo
+import xyz.cssxsh.pixiv.api.app.userDetail
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
 import xyz.cssxsh.pixiv.data.app.UserInfo
 
@@ -35,11 +36,9 @@ object PixivFollowCommand : CompositeCommand(
                 acc + info.user
             }
         }.count { user ->
-            logger.verbose("添加关注(${user.id})[${user.name}]")
-            runCatching {
-                userFollowAdd(user.id).let {
-                    logger.verbose(it.toString())
-                }
+            (userDetail(uid = user.id).user.isFollowed == false) && runCatching {
+                logger.verbose("添加关注(${user.id})[${user.name}]")
+                userFollowAdd(user.id)
             }.isSuccess
         }
     }.onSuccess {
