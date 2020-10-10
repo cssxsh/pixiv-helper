@@ -190,7 +190,7 @@ object PixivCacheCommand : CompositeCommand(
 
         (0 until (detail.profile.totalIllusts / 30 + 1)).mapNotNull { index ->
             runCatching {
-                userIllusts(uid = uid, offset = index).illusts
+                userIllusts(uid = uid, offset = index * 30).illusts
             }.onSuccess {
                 logger.verbose("加载用户作品第${index}页{${it.size}}成功")
             }.onFailure {
