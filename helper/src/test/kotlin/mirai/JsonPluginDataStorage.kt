@@ -5,10 +5,7 @@ import net.mamoe.mirai.console.data.MultiFilePluginDataStorage
 import net.mamoe.mirai.console.data.PluginData
 import net.mamoe.mirai.console.data.PluginDataHolder
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.utils.MiraiLogger
-import net.mamoe.mirai.utils.SilentLogger
-import net.mamoe.mirai.utils.debug
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import java.io.File
 import java.nio.file.Path
 
@@ -38,7 +35,7 @@ class JsonPluginDataStorage(
         } else {
             this.store(holder, instance) // save an initial copy
         }
-        logger.debug { "Successfully loaded PluginData: ${instance.saveName}" }
+        logger.verbose { "Successfully loaded PluginData: ${instance.saveName}" }
     }
 
     private fun getPluginDataFile(holder: PluginDataHolder, instance: PluginData): File = directoryPath.run {
@@ -52,7 +49,7 @@ class JsonPluginDataStorage(
         require(file.isDirectory.not()) {
             "Target File $file is occupied by a directory therefore data ${instance::class.qualifiedName} can't be saved."
         }
-        logger.debug { "File allocated for ${instance.saveName}: ${file.toURI()}" }
+        logger.verbose { "File allocated for ${instance.saveName}: ${file.toURI()}" }
         file.createNewFile()
     }
 
@@ -64,6 +61,6 @@ class JsonPluginDataStorage(
                 throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
             }
         )
-        logger.debug { "Successfully saved PluginData: ${instance.saveName}" }
+        logger.verbose { "Successfully saved PluginData: ${instance.saveName}" }
     }
 }
