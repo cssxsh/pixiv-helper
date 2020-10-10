@@ -13,6 +13,7 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
 import xyz.cssxsh.pixiv.api.app.userFollowing
+import xyz.cssxsh.pixiv.api.app.userRecommended
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.io.File
 
@@ -56,9 +57,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.filter(it).values)
-                logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
+                logger.verbose("加载关注用户作品时间线第${index}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品时间线第${index + 1}页失败, $it")
+                logger.verbose("加载关注用户作品时间线第${index}页失败, $it")
             }
         }
     }
@@ -70,9 +71,23 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.filter(it).values)
-                logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
+                logger.verbose("加载关注用户作品预览第${index}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品预览第${index + 1}页失败, $it")
+                logger.verbose("加载关注用户作品预览第${index}页失败, $it")
+            }
+        }
+    }
+
+    private suspend fun PixivHelper.getRecommendeds(page: Int = 10) = buildList {
+        (0 until page).forEach { index ->
+            runCatching {
+                userRecommended(offset = index * 30L).userPreviews.flatMap { it.illusts }
+            }.onSuccess {
+                if (it.isEmpty()) return@buildList
+                add(PixivCacheData.filter(it).values)
+                logger.verbose("加载推荐用户预览第${index}页{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载推荐用户预览第${index}页失败, $it")
             }
         }
     }
@@ -114,7 +129,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
-        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
+        (getFollow() + getRank() + getRecommendeds() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
