@@ -27,7 +27,9 @@ object PixivCacheCommand : CompositeCommand(
      */
     private var delayTime: Long
         get() = PixivHelperSettings.delayTime
-        set(value) { PixivHelperSettings.delayTime = value }
+        set(value) {
+            PixivHelperSettings.delayTime = value
+        }
 
     private var job: Job? = null
 
@@ -175,7 +177,9 @@ object PixivCacheCommand : CompositeCommand(
                 (0 until illust.pageCount).forEach { index ->
                     File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                         require(canRead()) {
-                            "$name 不可读， 文件将删除，结果：${delete()}"
+                            "$name 不可读， 文件将删除，结果：${
+                                File(dir, "${illust.pid}-origin-${0}.jpg").delete()
+                            }"
                         }
                     }
                 }
