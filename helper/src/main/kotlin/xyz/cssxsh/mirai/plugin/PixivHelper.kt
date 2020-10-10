@@ -7,24 +7,22 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
 import java.util.concurrent.ArrayBlockingQueue
-import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 /**
  * 助手实例
  */
-@ExperimentalTime
 class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     config = PixivConfigData.config
 ), PixivHelperLogger {
 
     init {
-        if (isLoggedIn.not()) {
+        if (authInfo != null) {
             runBlocking {
                 runCatching {
                     config.refreshToken?.let { token ->
@@ -37,8 +35,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }.onSuccess {
                 authInfo?.run {
                     config = config.copy(refreshToken = refreshToken)
-                    logger.info("${contact}的助手自动${user.name}登陆成功, ")
-                    flushTaken.start()
+                    logger.info("${contact}的助手自动${user.name}登陆成功")
                 }
             }.onFailure {
                 logger.info("${contact}的助手自动登陆失败", it)
@@ -46,8 +43,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    private var flushTaken: Job = launch(start = CoroutineStart.LAZY) {
-        delay(getAuthInfoOrThrow().expiresIn.seconds)
+    private val flushTaken: Job = launch(start = CoroutineStart.LAZY) {
+        delay(getAuthInfoOrThrow().expiresIn.secondsToMillis)
+        logger.info("Token将刷新")
         refresh()
     }
 
@@ -73,23 +71,16 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             PixivConfigData.simpleInfo[contact.id] = value
         }
 
-    val isLoggedIn: Boolean
-        get() = authInfo != null
-
     override fun config(block: PixivConfig.() -> Unit) =
         config.apply(block).also { PixivConfigData.config = it }
 
-    override suspend fun refresh(): AuthResult.AuthInfo =
-        super.refresh().also { authInfo = it }
+    override suspend fun refresh(token: String) = super.refresh(token).also {
+        logger.info("$it by RefreshToken: $token")
+    }
 
-    override suspend fun refresh(token: String): AuthResult.AuthInfo =
-        super.refresh(token).also { logger.info("$it by RefreshToken: $token") }
-
-    override suspend fun login(): AuthResult.AuthInfo =
-        super.login().also { authInfo = it }
-
-    override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
-        super.login(mailOrPixivID, password).also { logger.info("$it by Account: $mailOrPixivID") }
+    override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
+        logger.info("$it by Account: $mailOrPixivID")
+    }
 
     /**
      * 给这个助手的联系人发送消息
