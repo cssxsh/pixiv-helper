@@ -24,7 +24,7 @@ object PixivSettingCommand: CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info("${PixivConfigData.config.proxy} -> $proxy")
+        logger.info("proxy: ${PixivConfigData.config.proxy} -> $proxy")
         PixivConfigData.config.proxy = proxy
     }
 
@@ -33,7 +33,7 @@ object PixivSettingCommand: CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.interval(interval: Int) {
-        logger.info("${PixivHelperSettings.minInterval} -> $interval")
+        logger.info("interval: ${PixivHelperSettings.minInterval} -> $interval")
         PixivHelperSettings.minInterval = interval
     }
 
@@ -47,7 +47,7 @@ object PixivSettingCommand: CompositeCommand(
             appendLine("Token: ${config.refreshToken}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.values.size}")
-            appendLine("全年龄色图数: ${PixivCacheData.eros.size}， ")
+            appendLine("全年龄色图数: ${PixivCacheData.eros.size}")
             appendLine("R18色图数: ${PixivCacheData.r18s.size}")
         }
     }.onSuccess {
