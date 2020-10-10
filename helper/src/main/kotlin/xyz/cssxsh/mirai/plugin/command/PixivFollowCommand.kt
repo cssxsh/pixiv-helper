@@ -12,7 +12,6 @@ import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getIllustInfo
 import xyz.cssxsh.pixiv.api.app.userDetail
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
-import xyz.cssxsh.pixiv.data.app.UserInfo
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -31,20 +30,22 @@ object PixivFollowCommand : CompositeCommand(
             getIllustInfo(pid).takeIf { info ->
                 info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
             }
-        }.fold(emptySet<UserInfo>()) { acc, info ->
+        }.fold(emptySet<Long>()) { acc, info ->
             if (info.user.isFollowed == true) {
-                acc
+                acc - info.user.id
             } else {
-                acc + info.user
+                acc + info.user.id
             }
         }.also {
             logger.verbose("共有${it.size}个用户等待关注")
-        }.count { user ->
-            (userDetail(uid = user.id).user.isFollowed == false) && runCatching {
-                logger.verbose("添加关注(${user.id})[${user.name}]")
-                userFollowAdd(user.id)
-                delay(30.secondsToMillis)
-            }.isSuccess
+        }.count { uid ->
+            userDetail(uid = uid).let {
+                (it.user.isFollowed == false) && runCatching {
+                    logger.verbose("添加关注(${it.user.id})[${it.user.name}]")
+                    userFollowAdd(it.user.id)
+                    delay(30.secondsToMillis)
+                }.isSuccess
+            }
         }
     }.onSuccess {
         quoteReply("关注添加成功, 共${it}个新关注")
