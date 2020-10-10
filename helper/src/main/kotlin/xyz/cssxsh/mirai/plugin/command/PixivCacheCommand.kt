@@ -39,7 +39,7 @@ object PixivCacheCommand : CompositeCommand(
         }.onSuccess {
             logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
         }.onFailure {
-            logger.verbose("加载排行榜[${mode}]失败")
+            logger.verbose("加载排行榜[${mode}]失败, ${it.message}")
         }
     }
 
@@ -49,7 +49,7 @@ object PixivCacheCommand : CompositeCommand(
         }.onSuccess {
             logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
         }.onFailure {
-            logger.verbose("加载关注用户作品时间线第${index + 1}页失败")
+            logger.verbose("加载关注用户作品时间线第${index + 1}页失败, ${it.message}")
         }
     }
 
@@ -59,7 +59,7 @@ object PixivCacheCommand : CompositeCommand(
         }.onSuccess {
             logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
         }.onFailure {
-            logger.verbose("加载关注用户作品预览第${index + 1}页失败")
+            logger.verbose("加载关注用户作品预览第${index + 1}页失败, ${it.message}")
         }
     }
 
@@ -69,7 +69,7 @@ object PixivCacheCommand : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                PixivCacheData.filter(block()).also { list ->
+                PixivCacheData.filter(block()).values.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {

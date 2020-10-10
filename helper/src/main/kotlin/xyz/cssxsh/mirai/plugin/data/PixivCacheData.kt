@@ -16,7 +16,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     val eros: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
     private fun IllustInfo.isEro() =
-        totalBookmarks ?: 0 >= 1000 && sanityLevel > 2 && isR18().not() && pageCount < 4 && type == ContentType.ILLUST
+        totalBookmarks ?: 0 >= 1_000 && sanityLevel > 2 && isR18().not() && pageCount < 4 && type == ContentType.ILLUST
 
     val values: Set<Long> get() = synchronized(illusts) {
         illusts.toSet()
@@ -25,9 +25,11 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     /**
      * 筛选出不在缓存里的部分
      */
-    fun filter(list: List<IllustInfo>): List<IllustInfo> = synchronized(illusts) {
-        list.filter {
-            illusts.contains(it.pid).not()
+    fun filter(list: List<IllustInfo>): Map<Long, IllustInfo> = buildMap {
+        synchronized(illusts) {
+            list.forEach {
+                if (illusts.contains(it.pid).not()) { put(it.pid, it) }
+            }
         }
     }
 
