@@ -15,7 +15,7 @@ import xyz.cssxsh.pixiv.api.app.userFollowAdd
 object PixivFollowCommand : CompositeCommand(
     PixivHelperPlugin,
     "follow",
-    description = "缓存指令",
+    description = "关注指令",
     prefixOptional = true
 ), PixivHelperLogger {
 
