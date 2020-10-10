@@ -50,44 +50,44 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getFollow(page: Int = 100) = buildList {
-        (0 until page).forEach { index ->
+    private suspend fun PixivHelper.getFollow(limit: Long = 10_000) = buildList {
+        (0 until limit step 30).forEach { offset ->
             runCatching {
-                illustFollow(offset = index * 30L).illusts
+                illustFollow(offset = offset).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.filter(it).values)
-                logger.verbose("加载关注用户作品时间线第${index}页{${it.size}}成功")
+                logger.verbose("加载关注用户作品时间线第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品时间线第${index}页失败, $it")
+                logger.verbose("加载关注用户作品时间线第${offset / 30}页失败, $it")
             }
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100) = buildList {
-        (0 until page).forEach { index ->
+    private suspend fun PixivHelper.getUserPreviews(uid: Long, limit: Long = 10_000) = buildList {
+        (0 until limit step 30).forEach { offset ->
             runCatching {
-                userFollowing(uid = uid, offset = index * 30L).userPreviews.flatMap { it.illusts }
+                userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.filter(it).values)
-                logger.verbose("加载关注用户作品预览第${index}页{${it.size}}成功")
+                logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品预览第${index}页失败, $it")
+                logger.verbose("加载关注用户作品预览第${offset / 30}页失败, $it")
             }
         }
     }
 
-    private suspend fun PixivHelper.getRecommended(page: Int = 100) = buildList {
-        (0 until page).forEach { index ->
+    private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
+        (0 until limit step 30).forEach { offset ->
             runCatching {
-                userRecommended(offset = index * 30L).userPreviews.flatMap { it.illusts }
+                userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.filter(it).values)
-                logger.verbose("加载推荐用户预览第${index}页{${it.size}}成功")
+                logger.verbose("加载推荐用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载推荐用户预览第${index}页失败, $it")
+                logger.verbose("加载推荐用户预览第${offset / 30}页失败, $it")
             }
         }
     }
@@ -188,13 +188,13 @@ object PixivCacheCommand : CompositeCommand(
         val detail: UserDetail = userDetail(uid)
         logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
 
-        (0 until (detail.profile.totalIllusts / 30 + 1)).mapNotNull { index ->
+        (0 until detail.profile.totalIllusts step 30).mapNotNull { offset ->
             runCatching {
-                userIllusts(uid = uid, offset = index * 30).illusts
+                userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
-                logger.verbose("加载用户作品第${index}页{${it.size}}成功")
+                logger.verbose("加载用户作品第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载用户作品第${index}页失败, $it")
+                logger.verbose("加载用户作品第${offset / 30}页失败, $it")
             }.getOrNull()
         }.flatten()
     }
