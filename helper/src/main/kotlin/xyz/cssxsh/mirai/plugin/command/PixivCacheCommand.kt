@@ -209,7 +209,7 @@ object PixivCacheCommand : CompositeCommand(
                         File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                             if (canRead().not()) {
                                 delete().let {
-                                    logger.info("$name 不可读， 文件将删除重新下载，删除结果：${it}")
+                                    logger.info("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
                                 }
                                 httpClient().use { client ->
                                     client.get<ByteArray>(illust.getOriginUrl()[index]) {
