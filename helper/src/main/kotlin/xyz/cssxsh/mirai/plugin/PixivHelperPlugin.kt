@@ -25,7 +25,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
     @ConsoleExperimentalApi
     override val autoSaveIntervalMillis: LongRange
-        get() = 30.secondsToMillis..1.minutesToMillis
+        get() = 30.secondsToMillis..3.minutesToMillis
 
     // val qqId = 3337342367L // Bot的QQ号，需为Long类型，在结尾处添加大写L
     // val password = "66RKVt^eX&MfE7" // Bot的密码
