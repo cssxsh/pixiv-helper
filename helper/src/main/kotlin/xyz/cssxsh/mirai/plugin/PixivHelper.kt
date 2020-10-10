@@ -2,7 +2,7 @@
 
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -11,10 +11,13 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
 import java.util.concurrent.ArrayBlockingQueue
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 /**
  * 助手实例
  */
+@ExperimentalTime
 class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     config = PixivConfigData.config
@@ -34,12 +37,18 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }.onSuccess {
                 authInfo?.run {
                     config = config.copy(refreshToken = refreshToken)
-                    logger.info("${contact}的助手自动${user.name}登陆成功")
+                    logger.info("${contact}的助手自动${user.name}登陆成功, ")
+                    flushTaken.start()
                 }
             }.onFailure {
                 logger.info("${contact}的助手自动登陆失败", it)
             }
         }
+    }
+
+    private var flushTaken: Job = launch(start = CoroutineStart.LAZY) {
+        delay(getAuthInfoOrThrow().expiresIn.seconds)
+        refresh()
     }
 
     override var config: PixivConfig
