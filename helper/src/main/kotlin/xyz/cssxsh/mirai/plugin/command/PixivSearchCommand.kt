@@ -16,8 +16,8 @@ object PixivSearchCommand : SimpleCommand(
 ) {
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image?) = runCatching {
-        ImageSearcher.postSearchResults(image?.queryUrl() ?: "https://www.ping.cn/").maxByOrNull {
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
+        ImageSearcher.postSearchResults(image.queryUrl()).maxByOrNull {
             it.similarity
         }?.let {
             if (it.similarity > 0.9) getHelper().runCatching {
