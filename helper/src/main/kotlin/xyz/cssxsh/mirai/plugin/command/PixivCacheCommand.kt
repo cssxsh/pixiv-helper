@@ -8,6 +8,7 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.pixiv.ContentType
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.illustFollow
 import xyz.cssxsh.pixiv.api.app.illustRanking
@@ -83,7 +84,9 @@ object PixivCacheCommand : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                PixivCacheData.filter(block()).values.also { list ->
+                PixivCacheData.filter(block()).values.filter { info ->
+                    info.type == ContentType.ILLUST
+                }.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
@@ -125,7 +128,9 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
-        getUserPreviews(uid).flatten().apply {
+        getUserPreviews(uid).flatten().filter { info ->
+            info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
+        }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
