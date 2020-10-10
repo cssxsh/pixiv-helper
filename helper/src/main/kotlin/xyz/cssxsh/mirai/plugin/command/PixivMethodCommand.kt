@@ -10,7 +10,6 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
-import xyz.cssxsh.pixiv.client.exception.NotLoginException
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 
 @Suppress("unused")
@@ -190,7 +189,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessage(userBookmarksIllust(uid = (authInfo ?: throw NotLoginException()).user.uid).illusts.random())
+        buildMessage(userBookmarksIllust(uid = getAuthInfoOrThrow().user.uid).illusts.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

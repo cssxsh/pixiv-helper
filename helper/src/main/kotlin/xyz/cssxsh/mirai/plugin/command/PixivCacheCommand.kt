@@ -53,9 +53,9 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(page: Int = 100) = (0 until page).map { index ->
+    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100) = (0 until page).map { index ->
         runCatching {
-            userFollowing(uid = authInfo!!.user.uid, offset = index * 30L).UserPreviews.flatMap { it.illusts }
+            userFollowing(uid = uid, offset = index * 30L).UserPreviews.flatMap { it.illusts }
         }.onSuccess {
             logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
         }.onFailure {
@@ -99,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
-        (getFollow() + getRank() + getUserPreviews()).flatMap {
+        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatMap {
             it.getOrNull() ?: emptyList()
         }.apply {
             forEach { illust ->
