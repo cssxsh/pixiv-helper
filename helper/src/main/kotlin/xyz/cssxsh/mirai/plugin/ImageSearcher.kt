@@ -6,6 +6,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import org.jsoup.Jsoup
 
+@Suppress("unused")
 object ImageSearcher: PixivHelperLogger {
     private const val API = "https://saucenao.com/search.php"
     private const val DB_INDEX = 5 // Index #5: pixiv Images
@@ -26,14 +27,22 @@ object ImageSearcher: PixivHelperLogger {
         )
     }
 
-    suspend fun getSearchResults(picUrl: String): List<SearchResult> = httpClient.get<String>(API) {
+    suspend fun getSearchResults(
+        picUrl: String
+    ): List<SearchResult> = httpClient.get<String>(API) {
         parameter("db", DB_INDEX)
         parameter("url", picUrl)
     }.let { html ->
         parse(html)
     }
 
-    suspend fun postSearchResults(file: ByteArray): List<SearchResult> = httpClient.post<String>(API) {
+    suspend fun postSearchResults(
+        picUrl: String
+    ): List<SearchResult> = postSearchResults(httpClient.get<ByteArray>(picUrl))
+
+    suspend fun postSearchResults(
+        file: ByteArray
+    ): List<SearchResult> = httpClient.post<String>(API) {
         body = MultiPartFormDataContent(formData {
             append("file", file)
             append("database", DB_INDEX)
