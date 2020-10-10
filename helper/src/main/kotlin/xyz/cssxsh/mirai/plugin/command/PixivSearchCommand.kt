@@ -13,13 +13,10 @@ object PixivSearchCommand : SimpleCommand(
     "search", "搜索",
     description = "缓存指令",
     prefixOptional = true
-) {
+), PixivHelperLogger {
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle() = runCatching {
-        val image =
-            requireNotNull(message[Image] ?: message[QuoteReply]?.let { it.source.originalMessage[Image] }) { "没有包含图片" }
-
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
         ImageSearcher.postSearchResults(image.queryUrl()).maxByOrNull {
             it.similarity
         }?.let {
