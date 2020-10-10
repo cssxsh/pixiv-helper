@@ -15,8 +15,8 @@ import java.util.concurrent.ArrayBlockingQueue
 /**
  * 助手实例
  */
-class PixivHelper(val contact: Contact, ) : SimplePixivClient(
-    parentCoroutineContext = contact.coroutineContext,
+class PixivHelper(val contact: Contact) : SimplePixivClient(
+    parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     config = PixivConfigData.config
 ), PixivHelperLogger {
 
