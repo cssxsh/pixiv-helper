@@ -54,6 +54,5 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSettingCommand.unregister()
         PixivSettingCommand.unregister()
         PixivFollowCommand.unregister()
-        PixivHelperManager.closeAll()
     }
 }

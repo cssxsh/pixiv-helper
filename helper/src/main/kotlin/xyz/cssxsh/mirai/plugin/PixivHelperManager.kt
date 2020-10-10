@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
@@ -44,17 +43,8 @@ object PixivHelperManager {
      * set 操作符[] 关联 put
      */
     operator fun set(contact: Contact, value: PixivHelper) = when(contact) {
-        is User -> users[contact.id] = value
-        is Group -> groups[contact.id] =  value
+        is User -> groups[contact.id] = value
+        is Group -> groups[contact.id] = value
         else -> throw IllegalAccessException("未知类型联系人!")
-    }
-
-    fun closeAll() {
-        (users.values + groups.values).forEach {
-            runBlocking {
-                it.reply("机器人关闭中")
-            }
-            it.close()
-        }
     }
 }
