@@ -1,8 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import io.ktor.client.features.*
-import io.ktor.client.features.get
 import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -196,7 +195,7 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * 检查当前数据中不可读，并删除图片文件夹
+     * 检查当前缓存中不可读，删除并重新下载
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
@@ -213,7 +212,11 @@ object PixivCacheCommand : CompositeCommand(
                                     logger.info("$name 不可读， 文件将删除重新下载，删除结果：${it}")
                                 }
                                 httpClient().use { client ->
-                                    writeBytes(client.get(illust.getOriginUrl()[index]))
+                                    client.get<ByteArray>(illust.getOriginUrl()[index]) {
+                                        headers[HttpHeaders.Referrer] = url.buildString()
+                                    }
+                                }.let {
+                                    writeBytes(it)
                                 }
                             }
                         }
@@ -224,8 +227,7 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess { list ->
-        quoteReply("检查缓存完毕，错误数: ${list.size}")
-        list.forEach(PixivCacheData::remove)
+        quoteReply("检查缓存完毕，失败重载数: ${list.size}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
