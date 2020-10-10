@@ -78,7 +78,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getRecommendeds(page: Int = 10) = buildList {
+    private suspend fun PixivHelper.getRecommended(page: Int = 100) = buildList {
         (0 until page).forEach { index ->
             runCatching {
                 userRecommended(offset = index * 30L).userPreviews.flatMap { it.illusts }
@@ -138,7 +138,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = method {
-        getRecommendeds().flatten().filter { illust ->
+        getRecommended().flatten().filter { illust ->
             illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
         }.apply {
             forEach { illust ->
