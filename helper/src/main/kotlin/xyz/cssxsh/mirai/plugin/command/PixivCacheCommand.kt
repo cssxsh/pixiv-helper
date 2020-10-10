@@ -237,9 +237,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.king() = getHelper().runCatching {
-        (PixivCacheData.eros + PixivCacheData.r18s).values.filter {
-            it.sanityLevel >= 6
-        }.maxByOrNull {
+        (PixivCacheData.eros + PixivCacheData.r18s).values.maxByOrNull {
             it.totalBookmarks ?: 0
         }.let {
             buildMessage(requireNotNull(it) { "缓存为空" })
