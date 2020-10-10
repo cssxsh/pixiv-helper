@@ -47,7 +47,8 @@ object PixivSettingCommand: CompositeCommand(
             appendLine("Token: ${config.refreshToken}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.values.size}")
-            appendLine("色图数: ${PixivCacheData.eros.size}")
+            appendLine("全年龄色图数: ${PixivCacheData.eros.size}， ")
+            appendLine("R18色图数: ${PixivCacheData.r18s.size}")
         }
     }.onSuccess {
         quoteReply(it)
