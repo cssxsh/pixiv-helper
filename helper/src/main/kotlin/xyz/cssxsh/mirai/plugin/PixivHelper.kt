@@ -22,7 +22,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 ), PixivHelperLogger {
 
     init {
-        if (authInfo != null) {
+        if (authInfo == null) {
             runBlocking {
                 runCatching {
                     config.refreshToken?.let { token ->
