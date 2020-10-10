@@ -201,21 +201,20 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose("共有 ${list.size} 个作品需要检查")
         }.mapNotNull { pid ->
             val dir = PixivHelperSettings.imagesFolder(pid)
-            val illust = getIllustInfo(pid)
-            runCatching {
-                (0 until illust.pageCount).forEach { index ->
-                    File(dir, "${illust.pid}-origin-${index}.jpg").apply {
-                        require(canRead()) {
-                            "$name 不可读， 文件将删除，结果：${
-                                File(dir, "${illust.pid}-origin-${0}.jpg").delete()
-                            }"
+            getIllustInfo(pid).takeUnless { illust ->
+                runCatching {
+                    (0 until illust.pageCount).forEach { index ->
+                        File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+                            require(canRead()) {
+                                "$name 不可读， 文件将删除，结果：${
+                                    File(dir, "${illust.pid}-origin-${0}.jpg").delete()
+                                }"
+                            }
                         }
                     }
-                }
-            }.onFailure {
-                logger.verbose("作品(${illust.pid})[${illust.title}]缓存出错, ${it.message}")
-            }.let {
-                if (it.isFailure) illust else null
+                }.onFailure {
+                    logger.verbose("作品(${illust.pid})[${illust.title}]缓存出错, ${it.message}")
+                }.isSuccess
             }
         }
     }.onSuccess { list ->
@@ -242,7 +241,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.delay(timeMillis: Long) {
-        logger.info("$delayTime -> $timeMillis")
+        logger.info("delay: $delayTime -> $timeMillis")
         delayTime = timeMillis
     }
 
