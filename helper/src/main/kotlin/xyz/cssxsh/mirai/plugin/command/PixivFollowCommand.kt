@@ -1,8 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.delay
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -35,10 +37,13 @@ object PixivFollowCommand : CompositeCommand(
             } else {
                 acc + info.user
             }
+        }.also {
+            logger.verbose("共有${it.size}个用户等待关注")
         }.count { user ->
             (userDetail(uid = user.id).user.isFollowed == false) && runCatching {
                 logger.verbose("添加关注(${user.id})[${user.name}]")
                 userFollowAdd(user.id)
+                delay(30.secondsToMillis)
             }.isSuccess
         }
     }.onSuccess {
