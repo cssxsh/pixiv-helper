@@ -75,6 +75,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun CommandSenderOnMessage<MessageEvent>.method(
+        timeMillis: Long = delayTime,
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(isStop) { "正在缓存中, ${job}..." }
@@ -86,7 +87,7 @@ object PixivCacheCommand : CompositeCommand(
                     isActive && illust.pid !in PixivCacheData && runCatching {
                         getImages(illust)
                     }.onSuccess {
-                        delay(delayTime)
+                        delay(timeMillis)
                     }.onFailure {
                         logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
                     }.isSuccess
@@ -134,7 +135,7 @@ object PixivCacheCommand : CompositeCommand(
      * 从文件夹中加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.load() = method {
+    suspend fun CommandSenderOnMessage<MessageEvent>.load() = method(0) {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose("从 ${it.absolutePath} 加载作品信息")
         }.walk().mapNotNull { file ->
