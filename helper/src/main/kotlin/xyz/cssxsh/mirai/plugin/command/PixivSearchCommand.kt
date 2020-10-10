@@ -14,6 +14,12 @@ object PixivSearchCommand : SimpleCommand(
     description = "缓存指令",
     prefixOptional = true
 ) {
+    @Handler
+    suspend fun CommandSenderOnMessage<MessageEvent>.quote() = message[QuoteReply]?.let {
+        it.source.originalMessage[Image]?.let { image ->
+            handle(image)
+        }
+    }
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
