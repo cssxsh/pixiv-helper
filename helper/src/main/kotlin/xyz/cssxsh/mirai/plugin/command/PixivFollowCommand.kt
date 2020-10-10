@@ -8,8 +8,8 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.getIllustInfo
-import xyz.cssxsh.pixiv.api.app.userDetail
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
+import xyz.cssxsh.pixiv.api.app.userFollowing
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -24,30 +24,34 @@ object PixivFollowCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().runCatching {
+        val authInfo = getAuthInfoOrThrow()
+         val followed = buildList {
+            (0 until 100).forEach { index ->
+                runCatching {
+                    userFollowing(uid = authInfo.user.uid, offset = index * 30L).userPreviews.map { it.user.id }
+                }.onSuccess {
+                    if (it.isEmpty()) return@buildList
+                    add(it)
+                    logger.verbose("加载关注用户作品预览第${index}页{${it.size}}成功")
+                }.onFailure {
+                    logger.verbose("加载关注用户作品预览第${index}页失败, $it")
+                }
+            }
+        }.flatten().toSet()
+
         PixivCacheData.values.mapNotNull { pid ->
             getIllustInfo(pid).takeIf { info ->
                 info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
-            }
-        }.fold(emptySet<Long>()) { acc, info ->
-            if (info.user.isFollowed == false) {
-                acc + info.user.id
-            } else {
-                acc - info.user.id
-            }
+            }?.user?.id
+        }.toSet().let {
+            it - followed
         }.also {
             logger.verbose("共有${it.size}个用户等待关注")
-        }.mapNotNull { uid ->
+        }.count { uid ->
             runCatching {
-                userDetail(uid = uid).user
-            }.onSuccess { user ->
-                logger.verbose("用户(${user.id})[${user.name}]状态加载完毕.")
-            }.onFailure {
-                logger.verbose("用户(${uid})状态加载失败", it)
-            }.getOrNull()
-        }.count { user ->
-            (user.isFollowed == false) && runCatching {
-                logger.info("添加关注(${user.id})[${user.name}]")
-                userFollowAdd(user.id)
+                userFollowAdd(uid).let {
+                    logger.info("用户(${authInfo.user.name})添加关注(${uid}), $it")
+                }
             }.isSuccess
         }
     }.onSuccess {
