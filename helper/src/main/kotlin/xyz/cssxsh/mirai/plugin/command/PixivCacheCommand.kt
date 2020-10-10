@@ -12,11 +12,9 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.ContentType
 import xyz.cssxsh.pixiv.RankMode
-import xyz.cssxsh.pixiv.api.app.illustFollow
-import xyz.cssxsh.pixiv.api.app.illustRanking
-import xyz.cssxsh.pixiv.api.app.userFollowing
-import xyz.cssxsh.pixiv.api.app.userRecommended
+import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
+import xyz.cssxsh.pixiv.data.app.UserDetail
 import java.io.File
 
 @Suppress("unused")
@@ -180,6 +178,25 @@ object PixivCacheCommand : CompositeCommand(
         }.toList().map { pid ->
             getIllustInfo(pid)
         }
+    }
+
+    /**
+     * 从用户详情加载信息
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = method {
+        val detail: UserDetail = userDetail(uid)
+        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
+
+        (0 until (detail.profile.totalIllusts / 30 + 1)).mapNotNull { index ->
+            runCatching {
+                userIllusts(uid = uid, offset = index).illusts
+            }.onSuccess {
+                logger.verbose("加载用户作品第${index}页{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载用户作品第${index}页失败, $it")
+            }.getOrNull()
+        }.flatten()
     }
 
     /**
