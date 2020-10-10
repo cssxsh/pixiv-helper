@@ -92,7 +92,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun CommandSenderOnMessage<MessageEvent>.method(
+    private suspend fun CommandSenderOnMessage<MessageEvent>.doCache(
         timeMillis: Long = delayTime,
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
@@ -128,7 +128,7 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存排行榜和关注列表
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
+    suspend fun CommandSenderOnMessage<MessageEvent>.all() = doCache {
         (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
@@ -137,7 +137,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = method {
+    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = doCache {
         getRecommended().flatten().filter { illust ->
             illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
         }.apply {
@@ -151,7 +151,7 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存指定用户关注的用户的预览作品
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
+    suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = doCache {
         getUserPreviews(uid).flatten().filter { illust ->
             illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
         }.apply {
@@ -166,7 +166,7 @@ object PixivCacheCommand : CompositeCommand(
      * 从文件夹中加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.load() = method(0) {
+    suspend fun CommandSenderOnMessage<MessageEvent>.load() = doCache(0) {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose("从 ${it.absolutePath} 加载作品信息")
         }.walk().mapNotNull { file ->
@@ -184,11 +184,11 @@ object PixivCacheCommand : CompositeCommand(
      * 从用户详情加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = method {
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
         val detail: UserDetail = userDetail(uid)
         logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
 
-        (0 until detail.profile.totalIllusts step 30).mapNotNull { offset ->
+        (0 .. detail.profile.totalIllusts step 30).mapNotNull { offset ->
             runCatching {
                 userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
@@ -196,7 +196,11 @@ object PixivCacheCommand : CompositeCommand(
             }.onFailure {
                 logger.verbose("加载用户作品第${offset / 30}页失败, $it")
             }.getOrNull()
-        }.flatten()
+        }.flatten().apply {
+            forEach { illust ->
+                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+            }
+        }
     }
 
     /**
