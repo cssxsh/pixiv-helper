@@ -233,6 +233,24 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
+     * 色图之王
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.king() = getHelper().runCatching {
+        (PixivCacheData.eros + PixivCacheData.r18s).values.filter {
+            it.sanityLevel >= 6
+        }.maxByOrNull {
+            it.totalBookmarks ?: 0
+        }.let {
+            buildMessage(requireNotNull(it) { "缓存为空" })
+        }
+    }.onSuccess { lists ->
+        lists.forEach { quoteReply(it) }
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
      * 设置缓存目录 cache path /storage/emulated/0/PixivCache
      * @param path 缓存目录
      */
