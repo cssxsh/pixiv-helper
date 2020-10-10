@@ -84,9 +84,7 @@ object PixivCacheCommand : CompositeCommand(
         check(isStop) { "正在缓存中, ${job}..." }
         launch {
             runCatching {
-                PixivCacheData.filter(block()).values.filter { info ->
-                    info.type == ContentType.ILLUST
-                }.also { list ->
+                PixivCacheData.filter(block()).values.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
@@ -128,8 +126,8 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
-        getUserPreviews(uid).flatten().filter { info ->
-            info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
+        getUserPreviews(uid).flatten().filter { illust ->
+            illust.totalBookmarks ?: 0 >= 10_000 && illust.sanityLevel > 4 && illust.type == ContentType.ILLUST
         }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
