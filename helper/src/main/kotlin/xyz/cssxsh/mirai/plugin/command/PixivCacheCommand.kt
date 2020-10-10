@@ -24,7 +24,7 @@ object PixivCacheCommand : CompositeCommand(
 ), PixivHelperLogger {
     /**
      * timeMillis
-      */
+     */
     private var delayTime: Long
         get() = PixivHelperSettings.delayTime
         set(value) { PixivHelperSettings.delayTime = value }
@@ -33,46 +33,43 @@ object PixivCacheCommand : CompositeCommand(
 
     private val isStop: Boolean get() = job?.isActive?.not() ?: true
 
-    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = modes.map { mode ->
-        runCatching {
-            illustRanking(mode = mode).illusts
-        }.onSuccess {
-            logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
-        }.onFailure {
-            logger.verbose("加载排行榜[${mode}]失败, ${it.message}")
+    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
+        modes.map { mode ->
+            runCatching {
+                illustRanking(mode = mode).illusts
+            }.onSuccess {
+                add(PixivCacheData.filter(it).values)
+                logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载排行榜[${mode}]失败, ${it.message}")
+            }
         }
     }
 
-    private suspend fun PixivHelper.getFollow(page: Int = 100):  List<Result<List<IllustInfo>>> = buildList {
-        for (index in 0 until page) {
-            val result = runCatching {
+    private suspend fun PixivHelper.getFollow(page: Int = 100) = buildList {
+        (0 until page).forEach { index ->
+            runCatching {
                 illustFollow(offset = index * 30L).illusts
             }.onSuccess {
+                if (it.isEmpty()) return@buildList
+                add(PixivCacheData.filter(it).values)
                 logger.verbose("加载关注用户作品时间线第${index + 1}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品时间线第${index + 1}页失败, ${it.message}")
-            }
-            if (result.getOrNull()?.size == 0) {
-                break
-            } else {
-                add(result)
+                logger.verbose("加载关注用户作品时间线第${index + 1}页失败, $it")
             }
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100):  List<Result<List<IllustInfo>>> = buildList {
-        for (index in 0 until page) {
-            val result = runCatching {
+    private suspend fun PixivHelper.getUserPreviews(uid: Long, page: Int = 100) = buildList {
+        (0 until page).forEach { index ->
+            runCatching {
                 userFollowing(uid = uid, offset = index * 30L).userPreviews.flatMap { it.illusts }
             }.onSuccess {
+                if (it.isEmpty()) return@buildList
+                add(PixivCacheData.filter(it).values)
                 logger.verbose("加载关注用户作品预览第${index + 1}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品预览第${index + 1}页失败, ${it.message}")
-            }
-            if (result.getOrNull()?.size == 0) {
-                break
-            } else {
-                add(result)
+                logger.verbose("加载关注用户作品预览第${index + 1}页失败, $it")
             }
         }
     }
@@ -113,9 +110,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.all() = method {
-        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatMap {
-            it.getOrNull() ?: emptyList()
-        }.apply {
+        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
@@ -127,9 +122,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
-        getUserPreviews(uid).flatMap {
-            it.getOrNull() ?: emptyList()
-        }.apply {
+        getUserPreviews(uid).flatten().apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
