@@ -1,10 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.delay
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
-import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -31,20 +29,26 @@ object PixivFollowCommand : CompositeCommand(
                 info.totalBookmarks ?: 0 >= 10_000 && info.sanityLevel > 4
             }
         }.fold(emptySet<Long>()) { acc, info ->
-            if (info.user.isFollowed == true) {
-                acc - info.user.id
-            } else {
+            if (info.user.isFollowed == false) {
                 acc + info.user.id
+            } else {
+                acc - info.user.id
             }
         }.also {
             logger.verbose("共有${it.size}个用户等待关注")
-        }.count { uid ->
-            userDetail(uid = uid).let {
-                (it.user.isFollowed == false) && runCatching {
-                    logger.info("添加关注(${it.user.id})[${it.user.name}]")
-                    userFollowAdd(it.user.id)
-                }.isSuccess
-            }
+        }.mapNotNull { uid ->
+            runCatching {
+                userDetail(uid = uid).user
+            }.onSuccess { user ->
+                logger.verbose("用户(${user.id})[${user.name}]状态加载完毕.")
+            }.onFailure {
+                logger.verbose("用户(${uid})状态加载失败", it)
+            }.getOrNull()
+        }.count { user ->
+            (user.isFollowed == false) && runCatching {
+                logger.info("添加关注(${user.id})[${user.name}]")
+                userFollowAdd(user.id)
+            }.isSuccess
         }
     }.onSuccess {
         quoteReply("关注添加成功, 共${it}个新关注")
