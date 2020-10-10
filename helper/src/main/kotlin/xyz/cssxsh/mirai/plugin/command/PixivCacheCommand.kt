@@ -1,5 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.ktor.client.features.*
+import io.ktor.client.features.get
+import io.ktor.client.request.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -205,10 +208,13 @@ object PixivCacheCommand : CompositeCommand(
                 runCatching {
                     (0 until illust.pageCount).forEach { index ->
                         File(dir, "${illust.pid}-origin-${index}.jpg").apply {
-                            require(canRead()) {
-                                "$name 不可读， 文件将删除，结果：${
-                                    File(dir, "${illust.pid}-origin-${0}.jpg").delete()
-                                }"
+                            if (canRead().not()) {
+                                delete().let {
+                                    logger.info("$name 不可读， 文件将删除重新下载，删除结果：${it}")
+                                }
+                                httpClient().use { client ->
+                                    writeBytes(client.get(illust.getOriginUrl()[index]))
+                                }
                             }
                         }
                     }
