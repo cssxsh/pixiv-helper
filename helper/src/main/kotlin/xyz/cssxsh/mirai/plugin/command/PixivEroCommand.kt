@@ -10,7 +10,7 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
     PixivHelperPlugin,
-    "ero", "色图",
+    "ero", "色图", "涩图",
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
