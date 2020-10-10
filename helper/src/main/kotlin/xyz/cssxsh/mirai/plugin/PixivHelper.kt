@@ -74,13 +74,13 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         super.refresh().also { authInfo = it }
 
     override suspend fun refresh(token: String): AuthResult.AuthInfo =
-        super.refresh(token).also { logger.info("Auth by RefreshToken: $token") }
+        super.refresh(token).also { logger.info("$it by RefreshToken: $token") }
 
     override suspend fun login(): AuthResult.AuthInfo =
         super.login().also { authInfo = it }
 
     override suspend fun login(mailOrPixivID: String, password: String): AuthResult.AuthInfo =
-        super.login(mailOrPixivID, password).also { logger.info("Auth by Account: $mailOrPixivID") }
+        super.login(mailOrPixivID, password).also { logger.info("$it by Account: $mailOrPixivID") }
 
     /**
      * 给这个助手的联系人发送消息
