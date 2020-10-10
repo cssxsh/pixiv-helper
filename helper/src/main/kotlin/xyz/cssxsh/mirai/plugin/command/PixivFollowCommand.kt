@@ -43,7 +43,6 @@ object PixivFollowCommand : CompositeCommand(
                 (it.user.isFollowed == false) && runCatching {
                     logger.verbose("添加关注(${it.user.id})[${it.user.name}]")
                     userFollowAdd(it.user.id)
-                    delay(30.secondsToMillis)
                 }.isSuccess
             }
         }
