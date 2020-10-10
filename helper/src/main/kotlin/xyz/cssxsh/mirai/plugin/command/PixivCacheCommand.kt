@@ -127,7 +127,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = method {
         getUserPreviews(uid).flatten().filter { illust ->
-            illust.totalBookmarks ?: 0 >= 10_000 && illust.sanityLevel > 4 && illust.type == ContentType.ILLUST
+            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
         }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
