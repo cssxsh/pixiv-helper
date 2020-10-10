@@ -5,8 +5,10 @@ import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
+import io.ktor.utils.io.core.*
 import io.ktor.utils.io.streams.*
 import org.jsoup.Jsoup
+import kotlin.io.use
 
 @Suppress("unused")
 object ImageSearcher: PixivHelperLogger {
@@ -14,14 +16,10 @@ object ImageSearcher: PixivHelperLogger {
     private const val DB_INDEX = 5 // Index #5: pixiv Images
     private val httpClient: HttpClient get() = HttpClient {
         install(HttpTimeout) {
-            socketTimeoutMillis = 10_000
-            connectTimeoutMillis = 10_000
-            requestTimeoutMillis = 30_000
+            socketTimeoutMillis = 60_000
+            connectTimeoutMillis = 60_000
+            requestTimeoutMillis = 60_000
         }
-    }
-
-    fun finalize() {
-        httpClient.close()
     }
 
     private fun parse(html: String): List<SearchResult> = Jsoup.parse(html).select(".resulttablecontent").map {
@@ -46,27 +44,26 @@ object ImageSearcher: PixivHelperLogger {
 
     suspend fun postSearchResults(
         picUrl: String
-    ): List<SearchResult> = postSearchResults(httpClient.get<ByteArray>(picUrl))
+    ): List<SearchResult> = httpClient.use { client ->
+        postSearchResults(client.get<ByteArray>(picUrl))
+    }
 
     suspend fun postSearchResults(
         file: ByteArray
     ): List<SearchResult> = httpClient.use { client ->
         client.post<String>(API) {
             body = MultiPartFormDataContent(formData {
-                appendInput("file", Headers.build {
-                    set(HttpHeaders.ContentType, ContentType.Image.Any.contentType)
-                    set(HttpHeaders.ContentDisposition, "image")
-                }) {
-                    file.inputStream().asInput()
-                }
                 append("database", DB_INDEX)
+                append("file", "file.jpg") {
+                    writeFully(file)
+                }
             })
-        }.let { html ->
-            parse(html)
         }
+    }.let { html ->
+        parse(html)
     }
 
-    class SearchResult(
+    data class SearchResult(
         val similarity: Double,
         val content: String,
         val pid: Long
