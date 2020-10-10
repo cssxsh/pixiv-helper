@@ -20,9 +20,10 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     private fun IllustInfo.isEro() =
         totalBookmarks ?: 0 >= 5_000 && sanityLevel > 2 && pageCount < 4 && type == ContentType.ILLUST
 
-    val values: Set<Long> get() = synchronized(illusts) {
-        illusts.toSet()
-    }
+    val values: Set<Long>
+        get() = synchronized(illusts) {
+            illusts.toSet()
+        }
 
     /**
      * 筛选出不在缓存里的部分
@@ -30,7 +31,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     fun filter(list: List<IllustInfo>): Map<Long, IllustInfo> = buildMap {
         synchronized(illusts) {
             list.forEach {
-                if (illusts.contains(it.pid).not()) { put(it.pid, it) }
+                if (illusts.contains(it.pid).not()) {
+                    put(it.pid, it)
+                }
             }
         }
     }
@@ -41,7 +44,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun add(illust: IllustInfo) = synchronized(illusts) {
         if (illusts.add(illust.pid)) {
-            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.totalBookmarks}}信息已添加, 目前共${illusts.size}条信息")
+            logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已添加, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
                 if (illust.isR18()) {
                     r18s[illust.pid] = illust
@@ -54,7 +57,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun remove(illust: IllustInfo) = synchronized(illusts) {
         if (illusts.remove(illust.pid)) {
-            logger.info("作品(${illust.pid})<${illust.type}>[${illust.title}]{${illust.totalBookmarks}}信息已移除, 目前共${illusts.size}条信息")
+            logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已移除, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
                 eros.remove(illust.pid)
                 r18s.remove(illust.pid)
