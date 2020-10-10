@@ -152,11 +152,7 @@ object PixivCacheCommand : CompositeCommand(
                 (0 until illust.pageCount).forEach { index ->
                     File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                         require(canRead()) {
-                            dir.apply {
-                                listFiles()?.forEach { it.delete() }
-                            }.delete().let {
-                                "$name 不可读， 文件将删除，结果：${it}"
-                            }
+                            "$name 不可读， 文件将删除，结果：${delete()}"
                         }
                     }
                 }
