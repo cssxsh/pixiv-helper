@@ -41,7 +41,7 @@ object PixivFollowCommand : CompositeCommand(
         }.count { uid ->
             userDetail(uid = uid).let {
                 (it.user.isFollowed == false) && runCatching {
-                    logger.verbose("添加关注(${it.user.id})[${it.user.name}]")
+                    logger.info("添加关注(${it.user.id})[${it.user.name}]")
                     userFollowAdd(it.user.id)
                 }.isSuccess
             }
