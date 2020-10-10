@@ -37,7 +37,9 @@ object PixivFollowCommand : CompositeCommand(
         }.count { user ->
             logger.verbose("添加关注(${user.id})[${user.name}]")
             runCatching {
-                userFollowAdd(user.id)
+                userFollowAdd(user.id).let {
+                    logger.verbose(it.toString())
+                }
             }.isSuccess
         }
     }.onSuccess {
