@@ -19,7 +19,7 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
-        (PixivCacheData.eros + PixivCacheData.r18s).values.filter { illust ->
+        PixivCacheData.eros.values.filter { illust ->
             illust.tags.any {
                 tag in it.name || tag in it.translatedName ?: ""
             }
