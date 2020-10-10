@@ -44,6 +44,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSettingCommand.register()
         PixivSearchCommand.register()
         PixivFollowCommand.register()
+        PixivTagCommand.register()
     }
 
 
@@ -54,5 +55,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSettingCommand.unregister()
         PixivSettingCommand.unregister()
         PixivFollowCommand.unregister()
+        PixivTagCommand.unregister()
     }
 }
