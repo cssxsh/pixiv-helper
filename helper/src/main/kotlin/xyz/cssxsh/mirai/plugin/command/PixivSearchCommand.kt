@@ -15,11 +15,11 @@ object PixivSearchCommand : SimpleCommand(
     prefixOptional = true
 ) {
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.quote() = message[QuoteReply]?.let {
+    suspend fun CommandSenderOnMessage<MessageEvent>.quote(): Boolean = message[QuoteReply]?.let {
         it.source.originalMessage[Image]?.let { image ->
             handle(image)
         }
-    }
+    } ?: false
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {

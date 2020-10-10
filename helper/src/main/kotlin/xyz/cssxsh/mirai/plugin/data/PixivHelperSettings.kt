@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import java.io.File
 
@@ -19,7 +20,7 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * 缓存延迟时间
      */
-    var delayTime: Long by value(1_000L)
+    var delayTime: Long by value(1.secondsToMillis)
 
 
     /**
