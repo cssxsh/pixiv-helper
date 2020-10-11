@@ -4,7 +4,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -294,8 +293,13 @@ object PixivCacheCommand : CompositeCommand(
         }.let {
             json.encodeToString(TagData.serializer(), TagData(it))
         }
-    }.onSuccess {
-        logger.info(it)
+    }.onSuccess { text ->
+        File(PixivHelperSettings.cachePath, "tags.json").apply {
+            writeText(text)
+            Runtime.getRuntime().runCatching {
+                exec("termux-open-url file://${absolutePath}")
+            }
+        }
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
