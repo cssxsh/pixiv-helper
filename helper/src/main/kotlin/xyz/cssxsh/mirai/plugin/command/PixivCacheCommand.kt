@@ -49,7 +49,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun PixivHelper.getFollow(limit: Long = 10_000) = buildList {
-        (0 until limit step 30).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
                 illustFollow(offset = offset).illusts
             }.onSuccess {
@@ -63,7 +63,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun PixivHelper.getUserPreviews(uid: Long, limit: Long = 10_000) = buildList {
-        (0 until limit step 30).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
                 userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
@@ -77,7 +77,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
-        (0 until limit step 30).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
                 userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
@@ -186,7 +186,7 @@ object PixivCacheCommand : CompositeCommand(
         val detail: UserDetail = userDetail(uid)
         logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
 
-        (0 .. detail.profile.totalIllusts step 30).mapNotNull { offset ->
+        (0 .. detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
                 userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
