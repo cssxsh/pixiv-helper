@@ -3,6 +3,8 @@ package xyz.cssxsh.mirai.plugin.command
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -261,6 +263,36 @@ object PixivCacheCommand : CompositeCommand(
         }
     }.onSuccess { lists ->
         lists.forEach { quoteReply(it) }
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 标签统计
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.tags() = getHelper().runCatching {
+        val json = Json {
+            prettyPrint = true
+            isLenient = true
+            allowStructuredMapKeys = true
+        }
+        buildMap<String, Int> {
+            cacheInfos().forEach { illust ->
+                illust.tags.forEach { tag ->
+                    tag.name.let {
+                        put(it, getOrDefault(it, 0) + 1)
+                    }
+                    tag.translatedName?.let {
+                        put(it, getOrDefault(it, 0) + 1)
+                    }
+                }
+            }
+        }.let {
+            json.encodeToString(it)
+        }
+    }.onSuccess {
+        logger.info(it)
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
