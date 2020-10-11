@@ -37,14 +37,17 @@ object PixivHelperManager {
      * 操作符[] 关联 getOrPut, 默认值为 PixivClientData()
      * @see [getOrPut]
      */
-    operator fun get(contact: Contact): PixivHelper = getOrPut(contact) { PixivHelper(contact) }
+    operator fun get(contact: Contact): PixivHelper = synchronized(this) {
+        getOrPut(contact) { PixivHelper(contact) }
+    }
+
 
     /**
      * set 操作符[] 关联 put
      */
     operator fun set(contact: Contact, value: PixivHelper) = when(contact) {
-        is User -> groups[contact.id] = value
-        is Group -> groups[contact.id] = value
+        is User -> synchronized(this) { groups[contact.id] = value }
+        is Group -> synchronized(this) { groups[contact.id] = value }
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }
