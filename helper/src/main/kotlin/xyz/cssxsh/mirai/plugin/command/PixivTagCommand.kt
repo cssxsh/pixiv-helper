@@ -37,6 +37,8 @@ object PixivTagCommand: SimpleCommand(
             }
         }.flatten().filter {
             it.isEro()
+        }.also {
+            logger.verbose("共搜索到${it.size}个作品")
         }.runCatching {
             forEach {
                 getImages(it)
@@ -67,6 +69,8 @@ object PixivTagCommand: SimpleCommand(
             }
         }.flatten().filter {
             it.isEro()
+        }.also {
+            logger.verbose("共搜索到${it.size}个作品")
         }.forEach {
             getImages(it)
         }
