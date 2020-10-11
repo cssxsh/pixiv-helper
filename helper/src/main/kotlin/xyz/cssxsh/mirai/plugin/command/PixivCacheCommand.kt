@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin.command
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -267,6 +268,8 @@ object PixivCacheCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
+    @Serializable
+    data class TagData(val tags: Map<String, Int>)
     /**
      * 标签统计
      */
@@ -278,18 +281,18 @@ object PixivCacheCommand : CompositeCommand(
             allowStructuredMapKeys = true
         }
         buildMap<String, Int> {
-            PixivCacheData.eros.values.forEach { illust ->
-                illust.tags.forEach { tag ->
-                    tag.name.let {
-                        put(it, getOrDefault(it, 0) + 1)
-                    }
-                    tag.translatedName?.let {
-                        put(it, getOrDefault(it, 0) + 1)
-                    }
+            PixivCacheData.eros.values.flatMap {
+                it.tags
+            }.forEach { tag ->
+                tag.name.let {
+                    put(it, getOrDefault(it, 0) + 1)
+                }
+                tag.translatedName?.let {
+                    put(it, getOrDefault(it, 0) + 1)
                 }
             }
         }.let {
-            json.encodeToString(it)
+            json.encodeToString(TagData.serializer(), TagData(it))
         }
     }.onSuccess {
         logger.info(it)
