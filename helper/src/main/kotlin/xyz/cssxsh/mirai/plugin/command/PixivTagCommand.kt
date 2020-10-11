@@ -6,6 +6,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.command.PixivTagCommand.searchTag
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
@@ -74,6 +75,7 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
+        searchTag(tag)
         PixivCacheData.eros.values.filter { illust ->
             tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
         }.let { list ->
@@ -84,6 +86,5 @@ object PixivTagCommand: SimpleCommand(
         list.forEach { quoteReply(it) }
     }.onFailure {
         quoteReply("读取色图失败， ${it.message}")
-        getHelper().searchTag(tag)
     }.isSuccess
 }
