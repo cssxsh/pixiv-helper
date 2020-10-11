@@ -278,7 +278,7 @@ object PixivCacheCommand : CompositeCommand(
             allowStructuredMapKeys = true
         }
         buildMap<String, Int> {
-            cacheInfos().forEach { illust ->
+            PixivCacheData.eros.values.forEach { illust ->
                 illust.tags.forEach { tag ->
                     tag.name.let {
                         put(it, getOrDefault(it, 0) + 1)
