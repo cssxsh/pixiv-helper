@@ -35,10 +35,12 @@ object PixivTagCommand: SimpleCommand(
                     logger.verbose("加载搜索列表第${offset / 30}页失败", it)
                 }
             }
-        }.flatten().forEach {
-            if (it.isEro()) {
-                PixivCacheData.add(it)
-                addRelated(illust = it, emptyList())
+        }.flatten().runCatching {
+            forEach {
+                if (it.isEro()) {
+                    PixivCacheData.add(it)
+                    addRelated(illust = it, this)
+                }
             }
         }
     }.also {
@@ -75,7 +77,6 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
-        searchTag(tag)
         PixivCacheData.eros.values.filter { illust ->
             tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
         }.let { list ->
@@ -86,5 +87,6 @@ object PixivTagCommand: SimpleCommand(
         list.forEach { quoteReply(it) }
     }.onFailure {
         quoteReply("读取色图失败， ${it.message}")
+        getHelper().searchTag(tag)
     }.isSuccess
 }
