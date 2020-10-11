@@ -6,7 +6,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.command.PixivTagCommand.searchTag
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
@@ -36,7 +35,7 @@ object PixivTagCommand: SimpleCommand(
                 }
             }
         }.flatten().filter {
-            it.isEro()
+            it.isEro() && it.pid !in PixivCacheData
         }.also {
             logger.verbose("共搜索到${it.size}个作品")
         }.runCatching {
@@ -68,9 +67,9 @@ object PixivTagCommand: SimpleCommand(
                 }
             }
         }.flatten().filter {
-            it.isEro()
+            it.isEro() && it.pid !in PixivCacheData
         }.also {
-            logger.verbose("共搜索到${it.size}个作品")
+            logger.verbose("共获取到${it.size}个作品")
         }.forEach {
             getImages(it)
         }
