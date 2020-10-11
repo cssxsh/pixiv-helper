@@ -31,9 +31,6 @@ object PixivHelperPlugin : KotlinPlugin(
     override val autoSaveIntervalMillis: LongRange
         get() = 3.minutesToMillis..30.minutesToMillis
 
-    // val qqId = 3337342367L // Bot的QQ号，需为Long类型，在结尾处添加大写L
-    // val password = "66RKVt^eX&MfE7" // Bot的密码
-    // login 3337342367 66RKVt^eX&MfE7
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
         // Settings
@@ -49,6 +46,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.register()
         PixivFollowCommand.register()
         PixivTagCommand.register()
+        PixivRecallCommand.register()
 
         //
         subscribe<NewFriendRequestEvent> {
@@ -71,5 +69,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSettingCommand.unregister()
         PixivFollowCommand.unregister()
         PixivTagCommand.unregister()
+        PixivRecallCommand.unregister()
     }
 }
