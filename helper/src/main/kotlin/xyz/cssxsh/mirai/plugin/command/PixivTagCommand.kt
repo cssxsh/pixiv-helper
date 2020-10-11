@@ -31,11 +31,14 @@ object PixivTagCommand: SimpleCommand(
                     add(PixivCacheData.filter(it).values)
                     logger.verbose("加载搜索列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.verbose("加载搜索列表第${offset / 30}页失败, $it")
+                    logger.verbose("加载搜索列表第${offset / 30}页失败", it)
                 }
             }
         }.flatten().forEach {
-            if (it.isEro()) PixivCacheData.add(it)
+            if (it.isEro()) {
+                PixivCacheData.add(it)
+                addRelated(illust = it, emptyList())
+            }
         }
     }.also {
         jobs.add(it)
@@ -55,11 +58,13 @@ object PixivTagCommand: SimpleCommand(
                     add(PixivCacheData.filter(it).values)
                     logger.verbose("加载相关列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.verbose("加载相关列表第${offset / 30}页失败, $it")
+                    logger.verbose("加载相关列表第${offset / 30}页失败", it)
                 }
             }
         }.flatten().forEach {
-            if (it.isEro()) PixivCacheData.add(it)
+            if (it.isEro()) {
+                PixivCacheData.add(it)
+            }
         }
     }.also {
         jobs.add(it)
@@ -71,6 +76,7 @@ object PixivTagCommand: SimpleCommand(
         PixivCacheData.eros.values.filter { illust ->
             tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
         }.let { list ->
+            logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
             buildMessage(list.random().also { addRelated(it, list) })
         }
     }.onSuccess { list ->
