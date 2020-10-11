@@ -3,11 +3,8 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.buildMessage
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.getHelper
 
 object PixivTagCommand: SimpleCommand(
     PixivHelperPlugin,

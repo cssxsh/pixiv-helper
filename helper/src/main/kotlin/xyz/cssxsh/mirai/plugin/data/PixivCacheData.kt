@@ -2,12 +2,8 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.isEro
-import xyz.cssxsh.mirai.plugin.isR18
-import xyz.cssxsh.mirai.plugin.readIllustInfo
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import java.io.File
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     /**
@@ -21,19 +17,10 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     val size: Int get() = synchronized(illusts) { illusts.size }
 
-    fun values(): Map<Long, IllustInfo?> = buildMap {
-        synchronized(illusts) {
-            illusts.forEach { pid ->
-                val file = File(PixivHelperSettings.imagesFolder(pid), "${pid}.json")
-                runCatching {
-                    file.readIllustInfo()
-                }.onFailure {
-                    logger.warning("${file.absolutePath} 读取失败")
-                }.let {
-                    put(pid, it.getOrNull())
-                }
-            }
-        }
+    suspend fun PixivHelper.cacheInfos(): List<IllustInfo> = synchronized(illusts) {
+        illusts.toSet()
+    }.map { pid ->
+        getIllustInfo(pid)
     }
 
     /**
