@@ -297,6 +297,7 @@ object PixivCacheCommand : CompositeCommand(
         File(PixivHelperSettings.cachePath, "tags.json").apply {
             writeText(text)
             Runtime.getRuntime().runCatching {
+                logger.verbose("exec(\"termux-open-url file://${absolutePath}\")")
                 exec("termux-open-url file://${absolutePath}")
             }
         }
