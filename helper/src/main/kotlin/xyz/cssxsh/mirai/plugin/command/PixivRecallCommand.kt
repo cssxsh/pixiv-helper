@@ -19,6 +19,7 @@ object PixivRecallCommand : SimpleCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle()  {
         message[QuoteReply]?.runCatching {
+            logger.verbose("尝试对${source}进行撤回")
             fromEvent.subject.recall(source)
         }
     }
