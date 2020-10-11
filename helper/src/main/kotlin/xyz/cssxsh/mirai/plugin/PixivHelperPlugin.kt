@@ -7,6 +7,10 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.event.ListeningStatus
+import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
+import net.mamoe.mirai.event.events.NewFriendRequestEvent
+import net.mamoe.mirai.event.subscribe
 import net.mamoe.mirai.utils.minutesToMillis
 import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.command.*
@@ -45,6 +49,17 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.register()
         PixivFollowCommand.register()
         PixivTagCommand.register()
+
+        //
+        subscribe<NewFriendRequestEvent> {
+            accept()
+            ListeningStatus.LISTENING
+        }
+
+        subscribe<BotInvitedJoinGroupRequestEvent> {
+            accept()
+            ListeningStatus.LISTENING
+        }
     }
 
 
