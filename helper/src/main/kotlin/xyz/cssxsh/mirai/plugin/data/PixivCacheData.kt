@@ -19,6 +19,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     val r18s: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
+    val size: Int get() = synchronized(illusts) { illusts.size }
+
     fun values(): Map<Long, IllustInfo?> = buildMap {
         synchronized(illusts) {
             illusts.forEach { pid ->
