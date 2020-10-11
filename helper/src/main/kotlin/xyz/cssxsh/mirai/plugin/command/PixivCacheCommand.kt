@@ -33,9 +33,7 @@ object PixivCacheCommand : CompositeCommand(
             PixivHelperSettings.delayTime = value
         }
 
-    private var job: Job? = null
-
-    private val isStop: Boolean get() = job?.isActive?.not() ?: true
+    private var cacheJob: Job? = null
 
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
         modes.map { mode ->
@@ -96,7 +94,7 @@ object PixivCacheCommand : CompositeCommand(
         timeMillis: Long = delayTime,
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
-        check(isStop) { "正在缓存中, ${job}..." }
+        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
         launch {
             runCatching {
                 PixivCacheData.filter(block()).values.also { list ->
@@ -116,7 +114,7 @@ object PixivCacheCommand : CompositeCommand(
                 quoteReply("缓存失败, ${it.message}")
             }
         }.also {
-            job = it
+            cacheJob = it
         }
     }.onSuccess {
         quoteReply("添加任务完成${it}")
@@ -208,9 +206,9 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand("cancel", "stop")
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = runCatching {
-        job?.cancelAndJoin()
+        cacheJob?.cancelAndJoin()
     }.onSuccess {
-        quoteReply("任务${job}已停止")
+        quoteReply("任务${cacheJob}已停止")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
