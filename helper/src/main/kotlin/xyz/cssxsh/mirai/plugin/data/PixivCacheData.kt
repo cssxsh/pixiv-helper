@@ -3,9 +3,11 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import xyz.cssxsh.mirai.plugin.isEro
 import xyz.cssxsh.mirai.plugin.isR18
-import xyz.cssxsh.pixiv.ContentType
+import xyz.cssxsh.mirai.plugin.readIllustInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
+import java.io.File
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     /**
@@ -17,13 +19,20 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     val r18s: MutableMap<Long, IllustInfo> by value(mutableMapOf())
 
-    private fun IllustInfo.isEro() =
-        totalBookmarks ?: 0 >= 5_000 && sanityLevel > 2 && pageCount < 4 && type == ContentType.ILLUST
-
-    val values: Set<Long>
-        get() = synchronized(illusts) {
-            illusts.toSet()
+    fun values(): Map<Long, IllustInfo?> = buildMap {
+        synchronized(illusts) {
+            illusts.forEach { pid ->
+                val file = File(PixivHelperSettings.imagesFolder(pid), "${pid}.json")
+                runCatching {
+                    file.readIllustInfo()
+                }.onFailure {
+                    logger.warning("${file.absolutePath} 读取失败")
+                }.let {
+                    put(pid, it.getOrNull())
+                }
+            }
         }
+    }
 
     /**
      * 筛选出不在缓存里的部分

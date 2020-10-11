@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImage
@@ -85,7 +86,11 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
 
-fun IllustInfo.isR18(): Boolean = tags.any { """R-?18""".toRegex() in it.name }
+fun IllustInfo.isR18(): Boolean =
+    tags.any { """R-?18""".toRegex() in it.name }
+
+fun IllustInfo.isEro(): Boolean =
+    totalBookmarks ?: 0 >= 5_000 && sanityLevel > 2 && pageCount < 4 && type == WorkContentType.ILLUST
 
 fun IllustInfo.save() = (pid !in PixivCacheData).also {
     if (it) PixivCacheData.add(this)

@@ -10,7 +10,7 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.pixiv.ContentType
+import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
@@ -137,7 +137,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = doCache {
         getRecommended().flatten().filter { illust ->
-            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
+            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == WorkContentType.ILLUST
         }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
@@ -151,7 +151,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = doCache {
         getUserPreviews(uid).flatten().filter { illust ->
-            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == ContentType.ILLUST
+            illust.totalBookmarks ?: 0 >= 10_000 && illust.type == WorkContentType.ILLUST
         }.apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
@@ -218,35 +218,34 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.values.also { list ->
-            logger.verbose("共有 ${list.size} 个作品需要检查")
-        }.mapNotNull { pid ->
-            val dir = PixivHelperSettings.imagesFolder(pid)
-            getIllustInfo(pid).takeUnless { illust ->
-                runCatching {
-                    (0 until illust.pageCount).forEach { index ->
-                        File(dir, "${illust.pid}-origin-${index}.jpg").apply {
-                            if (canRead().not()) {
-                                delete().let {
-                                    logger.info("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
+        PixivCacheData.values().also {
+            logger.verbose("共有 ${it.size} 个作品需要检查")
+        }.count { (pid, data) ->
+            runCatching {
+                val illust = requireNotNull(data) { "没有数据" }
+                val dir = PixivHelperSettings.imagesFolder(pid)
+                (0 until illust.pageCount).forEach { index ->
+                    File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+                        if (canRead().not()) {
+                            delete().let {
+                                logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
+                            }
+                            httpClient().use { client ->
+                                client.get<ByteArray>(illust.getOriginUrl()[index]) {
+                                    headers[HttpHeaders.Referrer] = url.buildString()
                                 }
-                                httpClient().use { client ->
-                                    client.get<ByteArray>(illust.getOriginUrl()[index]) {
-                                        headers[HttpHeaders.Referrer] = url.buildString()
-                                    }
-                                }.let {
-                                    writeBytes(it)
-                                }
+                            }.let {
+                                writeBytes(it)
                             }
                         }
                     }
-                }.onFailure {
-                    logger.verbose("作品(${illust.pid})[${illust.title}]缓存出错, ${it.message}")
-                }.isSuccess
-            }
+                }
+            }.onFailure {
+                logger.warning("作品(${pid})缓存出错, ${it.message}")
+            }.isFailure
         }
-    }.onSuccess { list ->
-        quoteReply("检查缓存完毕，失败重载数: ${list.size}")
+    }.onSuccess {
+        quoteReply("检查缓存完毕，无法修复错误数: $it")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
