@@ -35,12 +35,12 @@ object PixivTagCommand: SimpleCommand(
                     logger.verbose("加载搜索列表第${offset / 30}页失败", it)
                 }
             }
-        }.flatten().runCatching {
+        }.flatten().filter {
+            it.isEro()
+        }.runCatching {
             forEach {
-                if (it.isEro()) {
-                    PixivCacheData.add(it)
-                    addRelated(illust = it, this)
-                }
+                getImages(it)
+                addRelated(illust = it, this)
             }
         }
     }.also {
@@ -65,10 +65,10 @@ object PixivTagCommand: SimpleCommand(
                     logger.verbose("加载相关列表第${offset / 30}页失败", it)
                 }
             }
-        }.flatten().forEach {
-            if (it.isEro()) {
-                PixivCacheData.add(it)
-            }
+        }.flatten().filter {
+            it.isEro()
+        }.forEach {
+            getImages(it)
         }
     }.also {
         jobs.add(it)
