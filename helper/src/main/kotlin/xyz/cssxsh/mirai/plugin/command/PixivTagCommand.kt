@@ -44,13 +44,14 @@ object PixivTagCommand: SimpleCommand(
         jobs.add(it)
     }
 
-    private fun PixivHelper.addRelated(illust: IllustInfo, seeds: List<IllustInfo>, limit: Long = 100) = launch {
+    private fun PixivHelper.addRelated(illust: IllustInfo, illusts: List<IllustInfo>, limit: Long = 100) = launch {
+        val seeds: List<Long> = (0 until 10).map { illusts.random().pid }
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
                     illustRelated(
                         pid = illust.pid,
-                        seedIllustIds = seeds.map { it.pid },
+                        seedIllustIds = seeds,
                         offset = offset
                     ).illusts
                 }.onSuccess {
