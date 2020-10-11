@@ -291,15 +291,12 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }
         }.let {
+            logger.info("共有tag: ${it.size}")
             json.encodeToString(TagData.serializer(), TagData(it))
         }
     }.onSuccess { text ->
         File(PixivHelperSettings.cachePath, "tags.json").apply {
             writeText(text)
-            Runtime.getRuntime().runCatching {
-                logger.verbose("exec(\"termux-open-url file://${absolutePath}\")")
-                exec("termux-open-url file://${absolutePath}")
-            }
         }
     }.onFailure {
         quoteReply(it.toString())
