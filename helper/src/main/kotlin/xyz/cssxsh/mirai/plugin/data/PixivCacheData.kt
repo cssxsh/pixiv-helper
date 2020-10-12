@@ -41,6 +41,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
             list.forEach {
                 if (it.pid !in illusts) {
                     put(it.pid, it)
+                } else {
+                    illusts[it.pid] = it.toBaseInfo()
                 }
             }
         }
