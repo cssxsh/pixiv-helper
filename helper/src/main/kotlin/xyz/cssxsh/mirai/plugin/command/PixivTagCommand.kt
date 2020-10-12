@@ -82,6 +82,7 @@ object PixivTagCommand: SimpleCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
         if (jobs.none { it.isActive }) {
+            jobs.clear()
             PixivCacheData.eros.values.filter { illust ->
                 tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
