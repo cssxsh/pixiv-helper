@@ -192,11 +192,13 @@ object PixivCacheCommand : CompositeCommand(
                     } else {
                         null
                     }
+                }.filter { pid ->
+                    pid !in PixivCacheData
                 }.toList().also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { pid ->
                     val illust = getIllustInfo(pid)
-                    isActive && illust.pid !in PixivCacheData && runCatching {
+                    isActive && runCatching {
                         getImages(illust)
                     }.onFailure {
                         logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
