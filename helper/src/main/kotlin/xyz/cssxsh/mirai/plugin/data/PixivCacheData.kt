@@ -21,9 +21,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     private val r18s_illusts: MutableSet<Long> by value(mutableSetOf())
 
-    fun keys() = synchronized(illusts) { illusts.keys.toSet() }
-
-    fun values() = synchronized(illusts) { illusts.values.toList() }
+    fun caches() = synchronized(illusts) { illusts.toMap() }
 
     fun eros() = synchronized(illusts) {
         eros_illusts.map {

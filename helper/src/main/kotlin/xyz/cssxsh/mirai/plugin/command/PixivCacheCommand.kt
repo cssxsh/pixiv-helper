@@ -191,7 +191,7 @@ object PixivCacheCommand : CompositeCommand(
                         null
                     }
                 }.toSet().let { list ->
-                    list - PixivCacheData.keys()
+                    list - PixivCacheData.caches().keys
                 }.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { pid ->
@@ -222,7 +222,7 @@ object PixivCacheCommand : CompositeCommand(
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
         launch {
             runCatching {
-                PixivCacheData.keys().count { pid ->
+                PixivCacheData.caches().keys.count { pid ->
                     runCatching {
                         getIllustInfo(pid, true)
                     }.onFailure {
@@ -260,7 +260,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.values().also {
+        PixivCacheData.caches().values.also {
             logger.verbose("共有 ${it.size} 个作品需要检查")
         }.count { info ->
             runCatching {
@@ -371,7 +371,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.remove(pid: Long) {
         PixivCacheData.remove(pid)?.let {
-            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除, 目前共${PixivCacheData.keys().size}条缓存")
+            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除, 目前共${PixivCacheData.caches().size}条缓存")
         }
     }
 }

@@ -36,12 +36,12 @@ object PixivFollowCommand : CompositeCommand(
             }
         }.flatten().toSet()
 
-        PixivCacheData.values().mapNotNull { info ->
-            getIllustInfo(info.pid).takeIf {
+        PixivCacheData.caches().values.mapNotNull { info ->
+            info.takeIf {
                 it.isEro()
             }
         }.map {
-            it.user.id
+            it.uid
         }.toSet().let {
             it - followed
         }.also {

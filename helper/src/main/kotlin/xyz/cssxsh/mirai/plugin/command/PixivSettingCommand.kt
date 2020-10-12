@@ -46,7 +46,7 @@ object PixivSettingCommand: CompositeCommand(
             appendLine("账户: ${getAuthInfo().user.account}")
             appendLine("Token: ${config.refreshToken}")
             appendLine("简略信息: $simpleInfo")
-            appendLine("缓存数: ${PixivCacheData.values().size}")
+            appendLine("缓存数: ${PixivCacheData.caches().size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
             appendLine("R18色图数: ${PixivCacheData.r18s().size}")
         }
