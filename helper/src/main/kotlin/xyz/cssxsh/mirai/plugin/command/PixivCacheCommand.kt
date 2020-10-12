@@ -11,7 +11,6 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData.cacheInfos
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
@@ -220,11 +219,12 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        cacheInfos().also {
+        PixivCacheData.pidSet().also {
             logger.verbose("共有 ${it.size} 个作品需要检查")
-        }.count { illust ->
+        }.count { pid ->
             runCatching {
-                val dir = PixivHelperSettings.imagesFolder(illust.pid)
+                val dir = PixivHelperSettings.imagesFolder(pid)
+                val illust = getIllustInfo(pid)
                 (0 until illust.pageCount).forEach { index ->
                     File(dir, "${illust.pid}-origin-${index}.jpg").apply {
                         if (canRead().not()) {
@@ -242,7 +242,7 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }
             }.onFailure {
-                logger.warning("作品(${illust.pid})[${illust.title}]缓存出错", it)
+                logger.warning("作品(${pid})缓存出错", it)
             }.isFailure
         }
     }.onSuccess {

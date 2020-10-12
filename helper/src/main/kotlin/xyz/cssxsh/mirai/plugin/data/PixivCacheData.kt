@@ -17,11 +17,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     val size: Int get() = synchronized(illusts) { illusts.size }
 
-    suspend fun PixivHelper.cacheInfos(): List<IllustInfo> = synchronized(illusts) {
-        illusts.toSet()
-    }.map { pid ->
-        getIllustInfo(pid)
-    }
+    fun pidSet() = synchronized(illusts) { illusts.toSet() }
 
     /**
      * 筛选出不在缓存里的部分
