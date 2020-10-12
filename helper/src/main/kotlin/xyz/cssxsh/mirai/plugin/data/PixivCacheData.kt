@@ -2,11 +2,15 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
+
+    @ConsoleExperimentalApi
+    override fun shouldPerformAutoSaveWheneverChanged() = false
 
     /**
      * 缓存
@@ -53,7 +57,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
         illusts.contains(pid)
     }
 
-    private fun put_(illust: IllustInfo) = illusts.put(illust.pid, illust.toBaseInfo()).also {
+    private fun put0(illust: IllustInfo) = illusts.put(illust.pid, illust.toBaseInfo()).also {
         logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已设置, 目前共${illusts.size}条信息")
         if (illust.isEro()) {
             if (illust.isR18()) {
@@ -65,11 +69,11 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     fun putAll(list: Collection<IllustInfo>) = synchronized(illusts) {
-        list.map { illust -> put_(illust) }
+        list.map { illust -> put0(illust) }
     }
 
     fun put(illust: IllustInfo) = synchronized(illusts) {
-        put_(illust)
+        put0(illust)
     }
 
     fun remove(illust: IllustInfo) = remove(illust.pid)

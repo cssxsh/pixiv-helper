@@ -265,7 +265,7 @@ object PixivCacheCommand : CompositeCommand(
         }.count { info ->
             runCatching {
                 val dir = PixivHelperSettings.imagesFolder(info.pid)
-                info.originUrl.forEachIndexed { index, url ->
+                info.originUrl.forEach { url ->
                     File(dir, url.getFilename()).apply {
                         if (canRead().not()) {
                             delete().let {
