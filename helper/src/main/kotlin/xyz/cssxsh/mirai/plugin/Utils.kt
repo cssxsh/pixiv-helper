@@ -211,7 +211,7 @@ suspend fun PixivHelper.getImages(
             File(dir, url.getFilename())
         }
     } else {
-        downloadImageUrl<ByteArray, File>(urls) { index, url , result ->
+        downloadImageUrl<ByteArray, File>(urls) { _, url , result ->
             File(dir, url.getFilename()).apply {
                 writeBytes(result.getOrThrow())
             }
