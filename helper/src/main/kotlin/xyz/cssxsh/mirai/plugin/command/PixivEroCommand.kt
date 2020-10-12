@@ -6,7 +6,6 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(

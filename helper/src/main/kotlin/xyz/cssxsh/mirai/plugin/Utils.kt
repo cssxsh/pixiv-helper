@@ -67,7 +67,7 @@ fun BaseInfo.getMessage(): Message = buildString {
     appendLine("UID: $uid ")
     appendLine("健全等级: $sanityLevel ")
     appendLine("创作于: ${createDate.format("yyyy-MM-dd'T'HH:mm:ssXXX")} ")
-    appendLine("共: ${originUrl.size} 张图片 ")
+    appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
     getPixivCatUrls().forEach { appendLine(it) }
@@ -119,8 +119,8 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
 
-fun BaseInfo.getPixivCatUrls(): List<String> = if (originUrl.size > 1) {
-    (1..originUrl.size).map { "https://pixiv.cat/${pid}-${it}.jpg" }
+fun BaseInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
+    (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
@@ -135,7 +135,7 @@ fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
 fun BaseInfo.isEro(): Boolean =
-    totalBookmarks >= PixivHelperSettings.totalBookmarks && originUrl.size < 4 && type == WorkContentType.ILLUST
+    totalBookmarks >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
 fun IllustInfo.save() = PixivCacheData.put(this)
 
@@ -187,7 +187,7 @@ suspend fun PixivHelper.getImages(
     info: BaseInfo
 ): List<File> = getImages(
     pid = info.pid,
-    urls = info.originUrl
+    urls = info.getOriginUrl()
 )
 
 suspend fun PixivHelper.getImages(

@@ -15,8 +15,8 @@ data class BaseInfo(
     @SerialName("create_date")
     @Serializable(with = IllustInfo.Companion.CreateDateSerializer::class)
     val createDate: WDateTimeTz,
-    @SerialName("origin_url")
-    val originUrl: List<String>,
+    @SerialName("page_count")
+    val pageCount: Int,
     @SerialName("sanity_level")
     val sanityLevel: Int,
     @SerialName("type")
@@ -39,16 +39,20 @@ data class BaseInfo(
             pid = pid,
             title = title,
             createDate = createDate,
-            originUrl = getOriginUrl(),
+            pageCount = pageCount,
             sanityLevel = sanityLevel,
             type = type,
             width = width,
             height = height,
-            tags = tags.map { Tag(it.name, it.translatedName ?: "") },
+            tags = tags.map { Tag(it.name, it.translatedName) },
             uid = user.id,
             uname = user.name,
             totalBookmarks = totalBookmarks ?: 0
         )
+    }
+
+    fun getOriginUrl(): List<String> = (0 until pageCount).map { index ->
+        "https://i.pximg.net/img-original/img/${createDate.format("yyyy/MM/dd/HH/mm/ss")}/${pid}_p${index}.jpg"
     }
 
     @Serializable
@@ -56,6 +60,6 @@ data class BaseInfo(
         @SerialName("name")
         val name: String,
         @SerialName("translated_name")
-        val translatedName: String
+        val translatedName: String?
     )
 }

@@ -264,11 +264,11 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.values().also {
             logger.verbose("共有 ${it.size} 个作品需要检查")
-        }.count { illust ->
+        }.count { info ->
             runCatching {
-                val dir = PixivHelperSettings.imagesFolder(illust.pid)
-                illust.originUrl.forEachIndexed { index, url ->
-                    File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+                val dir = PixivHelperSettings.imagesFolder(info.pid)
+                info.getOriginUrl().forEachIndexed { index, url ->
+                    File(dir, "${info.pid}-origin-${index}.jpg").apply {
                         if (canRead().not()) {
                             delete().let {
                                 logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
@@ -284,7 +284,7 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }
             }.onFailure {
-                logger.warning("作品(${illust.pid})[${illust.title}]缓存出错", it)
+                logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
             }.isFailure
         }
     }.onSuccess {
