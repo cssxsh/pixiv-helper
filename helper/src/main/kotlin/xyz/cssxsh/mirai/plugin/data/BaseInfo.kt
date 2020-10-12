@@ -32,7 +32,9 @@ data class BaseInfo(
     @SerialName("user_name")
     val uname: String,
     @SerialName("total_bookmarks")
-    val totalBookmarks: Long
+    val totalBookmarks: Long,
+    @SerialName("origin_Url")
+    val originUrl: List<String>
 ) {
     companion object {
         fun IllustInfo.toBaseInfo() = BaseInfo(
@@ -47,12 +49,9 @@ data class BaseInfo(
             tags = tags.map { Tag(it.name, it.translatedName) },
             uid = user.id,
             uname = user.name,
-            totalBookmarks = totalBookmarks ?: 0
+            totalBookmarks = totalBookmarks ?: 0,
+            originUrl = getOriginUrl()
         )
-    }
-
-    fun getOriginUrl(): List<String> = (0 until pageCount).map { index ->
-        "https://i.pximg.net/img-original/img/${createDate.format("yyyy/MM/dd/HH/mm/ss")}/${pid}_p${index}.jpg"
     }
 
     @Serializable

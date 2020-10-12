@@ -47,6 +47,8 @@ suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivH
     }
 }
 
+fun String.getFilename() = substring(lastIndexOf("/"))
+
 fun Long.positiveLongCheck() = also { require(it > 0) { "应该为正整数" } }
 
 fun IllustInfo.getMessage(): Message = buildString {
@@ -187,7 +189,7 @@ suspend fun PixivHelper.getImages(
     info: BaseInfo
 ): List<File> = getImages(
     pid = info.pid,
-    urls = info.getOriginUrl()
+    urls = info.originUrl
 )
 
 suspend fun PixivHelper.getImages(
@@ -204,13 +206,13 @@ suspend fun PixivHelper.getImages(
     pid: Long,
     urls: List<String>
 ): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
-    if (File(dir, "${pid}-origin-0.jpg").canRead()) {
-        urls.mapIndexed { index, _ ->
-            File(dir, "${pid}-origin-${index}.jpg")
+    if (File(dir, urls.first().getFilename()).canRead()) {
+        urls.map { url ->
+            File(dir, url.getFilename())
         }
     } else {
-        downloadImageUrl<ByteArray, File>(urls) { index, result ->
-            File(dir, "${pid}-origin-${index}.jpg").apply {
+        downloadImageUrl<ByteArray, File>(urls) { index, url , result ->
+            File(dir, url.getFilename()).apply {
                 writeBytes(result.getOrThrow())
             }
         }

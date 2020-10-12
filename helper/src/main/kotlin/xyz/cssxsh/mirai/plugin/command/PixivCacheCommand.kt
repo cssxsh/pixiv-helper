@@ -265,8 +265,11 @@ object PixivCacheCommand : CompositeCommand(
         }.count { info ->
             runCatching {
                 val dir = PixivHelperSettings.imagesFolder(info.pid)
-                info.getOriginUrl().forEachIndexed { index, url ->
-                    File(dir, "${info.pid}-origin-${index}.jpg").apply {
+                info.originUrl.forEachIndexed { index, url ->
+                    File(dir, url.getFilename()).apply {
+                        File(dir, "${info.pid}-origin-${index}.jpg").let {
+                            if (it.canRead()) it.renameTo(this)
+                        }
                         if (canRead().not()) {
                             delete().let {
                                 logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
