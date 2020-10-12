@@ -12,6 +12,7 @@ import java.nio.file.Path
 @ConsoleExperimentalApi
 class JsonPluginDataStorage(
     override val directoryPath: Path,
+    isConfig: Boolean,
     private val logger: MiraiLogger = SilentLogger
 ) : MultiFilePluginDataStorage {
     init {
@@ -19,9 +20,9 @@ class JsonPluginDataStorage(
     }
 
     private val json = Json {
-        prettyPrint = true
+        prettyPrint = isConfig
         ignoreUnknownKeys = true
-        isLenient = true
+        isLenient = isConfig
         allowStructuredMapKeys = true
     }
 
@@ -56,7 +57,7 @@ class JsonPluginDataStorage(
     override fun store(holder: PluginDataHolder, instance: PluginData) {
         getPluginDataFile(holder, instance).writeText(
             kotlin.runCatching {
-                json.encodeToString(instance.updaterSerializer, {}())
+                Json.encodeToString(instance.updaterSerializer, {}())
             }.getOrElse {
                 throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
             }

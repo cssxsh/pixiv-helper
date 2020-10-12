@@ -18,10 +18,10 @@ object RunMirai {
 
     private fun miraiConsoleImpl(rootPath: Path) = MiraiConsoleImplementationTerminal(
         rootPath = rootPath,
-        dataStorageForJvmPluginLoader = JsonPluginDataStorage(rootPath.resolve("data")),
-        dataStorageForBuiltIns = JsonPluginDataStorage(rootPath.resolve("data")),
-        configStorageForJvmPluginLoader = JsonPluginDataStorage(rootPath.resolve("config")),
-        configStorageForBuiltIns = JsonPluginDataStorage(rootPath.resolve("config")),
+        dataStorageForJvmPluginLoader = JsonPluginDataStorage(rootPath.resolve("data"), false),
+        dataStorageForBuiltIns = JsonPluginDataStorage(rootPath.resolve("data"), false),
+        configStorageForJvmPluginLoader = JsonPluginDataStorage(rootPath.resolve("config"), true),
+        configStorageForBuiltIns = JsonPluginDataStorage(rootPath.resolve("config"), true),
     )
 
     @JvmStatic
