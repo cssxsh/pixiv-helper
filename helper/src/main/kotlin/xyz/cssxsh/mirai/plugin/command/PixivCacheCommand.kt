@@ -192,9 +192,9 @@ object PixivCacheCommand : CompositeCommand(
                     } else {
                         null
                     }
-                }.filter { pid ->
-                    pid !in PixivCacheData
-                }.toList().also { list ->
+                }.toSet().let { list ->
+                    list - PixivCacheData.pidSet()
+                }.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { pid ->
                     val illust = getIllustInfo(pid)
