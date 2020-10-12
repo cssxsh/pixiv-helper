@@ -90,7 +90,7 @@ fun IllustInfo.isR18(): Boolean =
     tags.any { """R-?18""".toRegex() in it.name }
 
 fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= 5_000 && sanityLevel > 2 && pageCount < 4 && type == WorkContentType.ILLUST
+    totalBookmarks ?: 0 >= 5_000 && pageCount < 4 && type == WorkContentType.ILLUST
 
 fun IllustInfo.save() = (pid !in PixivCacheData).also {
     if (it) PixivCacheData.add(this)
