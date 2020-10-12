@@ -116,10 +116,11 @@ fun File.readIllustInfo(): IllustInfo = readText().let {
 
 suspend fun PixivHelper.getIllustInfo(
     pid: Long,
+    flush: Boolean = false,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
 ): IllustInfo = PixivHelperSettings.imagesFolder(pid).let { dir ->
     File(dir, "${pid}.json").let { file ->
-        if (file.canRead()) {
+        if (!flush && file.canRead()) {
             file.readIllustInfo()
         } else {
             block(pid).also {

@@ -175,6 +175,28 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
+    /**
+     * 从用户详情加载信息
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
+        val detail: UserDetail = userDetail(uid)
+        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
+
+        (0 .. detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
+            runCatching {
+                userIllusts(uid = uid, offset = offset).illusts
+            }.onSuccess {
+                logger.verbose("加载用户作品第${offset / 30}页{${it.size}}成功")
+            }.onFailure {
+                logger.verbose("加载用户作品第${offset / 30}页失败", it)
+            }.getOrNull()
+        }.flatten().apply {
+            forEach { illust ->
+                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+            }
+        }
+    }
 
     /**
      * 从文件夹中加载信息
@@ -218,28 +240,32 @@ object PixivCacheCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-    /**
-     * 从用户详情加载信息
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
-        val detail: UserDetail = userDetail(uid)
-        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
 
-        (0 .. detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.flush() = getHelper().runCatching {
+        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
+        launch {
             runCatching {
-                userIllusts(uid = uid, offset = offset).illusts
+                PixivCacheData.pidSet().count { pid ->
+                    runCatching {
+                        getIllustInfo(pid, true)
+                    }.onFailure {
+                        logger.warning("刷新")
+                    }.isFailure
+                }
             }.onSuccess {
-                logger.verbose("加载用户作品第${offset / 30}页{${it.size}}成功")
+                quoteReply("缓存完毕, 共${it}个缓存失败")
             }.onFailure {
-                logger.verbose("加载用户作品第${offset / 30}页失败", it)
-            }.getOrNull()
-        }.flatten().apply {
-            forEach { illust ->
-                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+                quoteReply("缓存失败, ${it.message}")
             }
+        }.also {
+            cacheJob = it
         }
-    }
+    }.onSuccess {
+        quoteReply("添加任务完成${it}")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
 
     /**
      * 强制停止缓存
