@@ -52,6 +52,19 @@ object PixivMethodCommand : CompositeCommand(
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
+
+    /**
+     * 自动登录
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
+        auto()
+    }.onSuccess {
+        quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
+    }.onFailure {
+        quoteReply("登陆失败， ${it.message}")
+    }.isSuccess
+
     /**
      * 排行榜
      * @param type 模式名 [RankMode]

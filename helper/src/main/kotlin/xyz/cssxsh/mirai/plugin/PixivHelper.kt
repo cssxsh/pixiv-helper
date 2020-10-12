@@ -11,6 +11,7 @@ import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
+import java.lang.IllegalArgumentException
 import java.util.concurrent.ArrayBlockingQueue
 
 /**
@@ -23,14 +24,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     init {
         if (authInfo == null) {
-            runBlocking {
-                runCatching {
-                    config.refreshToken?.let { token ->
-                        authInfo = refresh(token)
-                    } ?: config.account?.let { account ->
-                        // XXX login(account)
-                        authInfo = login(account.mailOrUID, account.password)
-                    }
+            runCatching {
+                runBlocking {
+                    authInfo = auto()
                 }
             }.onSuccess {
                 authInfo?.run {
@@ -73,6 +69,14 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override fun config(block: PixivConfig.() -> Unit) =
         config.apply(block).also { PixivConfigData.config = it }
+
+    suspend fun auto(): AuthResult.AuthInfo = config.run {
+        refreshToken?.let { token ->
+            refresh(token)
+        } ?: account?.let { account ->
+            login(account.mailOrUID, account.password)
+        } ?: throw IllegalArgumentException("没有登陆参数")
+    }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info("$it by RefreshToken: $token")
