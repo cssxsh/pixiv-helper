@@ -26,7 +26,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         if (authInfo == null) {
             runCatching {
                 runBlocking {
-                    authInfo = auto()
+                    auto()
                 }
             }.onSuccess {
                 authInfo?.run {
