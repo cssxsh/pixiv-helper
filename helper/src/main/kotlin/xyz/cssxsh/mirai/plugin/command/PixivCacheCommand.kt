@@ -36,10 +36,10 @@ object PixivCacheCommand : CompositeCommand(
 
     private var cacheJob: Job? = null
 
-    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
+    private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) = buildList {
         modes.map { mode ->
             runCatching {
-                illustRanking(mode = mode).illusts
+                illustRanking(date = date, mode = mode).illusts
             }.onSuccess {
                 add(PixivCacheData.filter(it).values)
                 logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
@@ -124,17 +124,32 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * 缓存排行榜和关注列表
+     * 缓存关注列表
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.all() = doCache {
-        (getFollow() + getRank() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
+    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache {
+        (getFollow() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
             forEach { illust ->
                 illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
             }
         }
     }
 
+    /**
+     *
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank() = doCache {
+        getRank().flatten().apply {
+            forEach { illust ->
+                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+            }
+        }
+    }
+
+    /**
+     *
+     */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = doCache {
         getRecommended().flatten().filter { illust ->
