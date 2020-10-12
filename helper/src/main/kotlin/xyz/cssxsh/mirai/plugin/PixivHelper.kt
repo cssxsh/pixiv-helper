@@ -39,12 +39,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    private val flushTaken: Job = launch(start = CoroutineStart.LAZY) {
-        delay(getAuthInfoOrThrow().expiresIn.secondsToMillis)
-        logger.info("Token将刷新")
-        refresh()
-    }
-
     override var config: PixivConfig
         get() = PixivConfigData.config
         set(value) { PixivConfigData.config = value }

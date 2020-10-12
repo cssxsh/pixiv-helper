@@ -1,11 +1,15 @@
 package xyz.cssxsh.mirai.plugin
 
+import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
+import net.mamoe.mirai.utils.secondsToMillis
+import xyz.cssxsh.mirai.plugin.data.PixivConfigData
+import xyz.cssxsh.pixiv.client.SimplePixivClient
 import xyz.cssxsh.pixiv.data.AuthResult
 
-object PixivHelperManager {
+object PixivHelperManager: PixivHelperLogger {
     /**
      * 用于存储用户关联的助手
      */
@@ -21,6 +25,23 @@ object PixivHelperManager {
      * 用于存储认证消息
      */
     var authInfo: AuthResult.AuthInfo? = null
+        set(value) {
+            field = value?.also {
+                flushTaken = client.launch {
+                    logger.info("pixiv账户 ${it.user.uid} token自动刷新 delay 开始")
+                    delay((it.expiresIn - 600).secondsToMillis)
+                    logger.info("pixiv账户 ${it.user.uid} token自动刷新 refresh 开始")
+                    client.refresh()
+                }
+            }
+        }
+
+    private val client = SimplePixivClient(
+        parentCoroutineContext = PixivHelperPlugin.coroutineContext,
+        config = PixivConfigData.config
+    )
+
+    private var flushTaken: Job? = null
 
     /**
      * 通过联系人获取
