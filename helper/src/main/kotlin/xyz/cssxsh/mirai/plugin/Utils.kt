@@ -206,13 +206,6 @@ suspend fun PixivHelper.getImages(
     pid: Long,
     urls: List<String>
 ): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
-    urls.forEachIndexed { index, url ->
-        File(dir, url.getFilename()).apply {
-            File(dir, "${pid}-origin-${index}.jpg").let {
-                if (it.canRead()) it.renameTo(this)
-            }
-        }
-    }
     if (File(dir, urls.first().getFilename()).canRead()) {
         urls.map { url ->
             File(dir, url.getFilename())
