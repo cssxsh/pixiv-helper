@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.message.data.PlainText
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.api.app.AppApi
@@ -80,16 +81,20 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
-        PixivCacheData.eros.values.filter { illust ->
-            tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
-        }.let { list ->
-            logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
-            buildMessage(list.random().also { addRelated(it, list) })
+        if (jobs.none { it.isActive }) {
+            PixivCacheData.eros.values.filter { illust ->
+                tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+            }.let { list ->
+                logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
+                buildMessage(list.random().also { addRelated(it, list) })
+            }
+        } else {
+            listOf(PlainText("技能冷却中"))
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply("读取色图失败， ${it.message}")
+        quoteReply("读取色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文 ${it.message}")
         getHelper().searchTag(tag)
     }.isSuccess
 }
