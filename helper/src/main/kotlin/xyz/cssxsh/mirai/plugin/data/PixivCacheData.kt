@@ -57,9 +57,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
         logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已设置, 目前共${illusts.size}条信息")
         if (illust.isEro()) {
             if (illust.isR18()) {
-                eros_illusts.add(illust.pid)
-            } else {
                 r18s_illusts.add(illust.pid)
+            } else {
+                eros_illusts.add(illust.pid)
             }
         }
     }
