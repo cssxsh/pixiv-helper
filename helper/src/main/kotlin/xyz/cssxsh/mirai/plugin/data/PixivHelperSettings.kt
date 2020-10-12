@@ -22,6 +22,11 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
      */
     var delayTime: Long by value(1.secondsToMillis)
 
+    /**
+     * 涩图标准
+     */
+    var totalBookmarks: Long by value(10_000L)
+
 
     /**
      * 缓存目录

@@ -11,7 +11,6 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
 import xyz.cssxsh.pixiv.api.app.searchIllust
-import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivTagCommand: SimpleCommand(
     PixivHelperPlugin,
@@ -40,22 +39,22 @@ object PixivTagCommand: SimpleCommand(
         }.also {
             logger.verbose("共搜索到${it.size}个作品")
         }.runCatching {
-            forEach {
-                getImages(it)
-                addRelated(illust = it, this)
+            forEach { info ->
+                getImages(info)
+                addRelated(pid = info.pid, map { it.pid })
             }
         }
     }.also {
         jobs.add(it)
     }
 
-    private fun PixivHelper.addRelated(illust: IllustInfo, illusts: List<IllustInfo>, limit: Long = 100) = launch {
-        val seeds: List<Long> = (0 until 10).map { illusts.random().pid }
+    private fun PixivHelper.addRelated(pid: Long, illusts: List<Long>, limit: Long = 100) = launch {
+        val seeds: List<Long> = (0 until 10).map { illusts.random() }
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
                     illustRelated(
-                        pid = illust.pid,
+                        pid = pid,
                         seedIllustIds = seeds,
                         offset = offset
                     ).illusts
@@ -83,11 +82,13 @@ object PixivTagCommand: SimpleCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
         if (jobs.none { it.isActive }) {
             jobs.clear()
-            PixivCacheData.eros.values.filter { illust ->
+            PixivCacheData.eros().filter { illust ->
                 tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
-                buildMessage(list.random().also { addRelated(it, list) })
+                buildMessage(list.random().also { info ->
+                    addRelated(info.pid, list.map { it.pid })
+                })
             }
         } else {
             listOf(PlainText("技能冷却中"))

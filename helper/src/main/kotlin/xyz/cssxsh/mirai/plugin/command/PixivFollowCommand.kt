@@ -3,11 +3,8 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.getHelper
-import xyz.cssxsh.mirai.plugin.getIllustInfo
 import xyz.cssxsh.pixiv.api.app.userFollowAdd
 import xyz.cssxsh.pixiv.api.app.userFollowing
 
@@ -39,9 +36,9 @@ object PixivFollowCommand : CompositeCommand(
             }
         }.flatten().toSet()
 
-        PixivCacheData.pidSet().mapNotNull { pid ->
-            getIllustInfo(pid).takeIf { illust ->
-                illust.totalBookmarks ?: 0 >= 10_000 && illust.sanityLevel > 4
+        PixivCacheData.values().mapNotNull { info ->
+            getIllustInfo(info.pid).takeIf {
+                it.isEro()
             }
         }.map {
             it.user.id

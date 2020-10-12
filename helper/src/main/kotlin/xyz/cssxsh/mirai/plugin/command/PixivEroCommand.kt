@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
@@ -15,7 +16,7 @@ object PixivEroCommand : SimpleCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private fun PixivHelper.randomIllust(): IllustInfo = PixivCacheData.eros.values.random().takeIf { illust ->
+    private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros().random().takeIf { illust ->
         illust.pid !in historyQueue
     }?.also {
         if (historyQueue.remainingCapacity() == 0) historyQueue.take()

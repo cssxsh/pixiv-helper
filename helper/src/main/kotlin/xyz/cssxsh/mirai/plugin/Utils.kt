@@ -7,12 +7,13 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
+import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.tool.downloadImage
+import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
 
 /**
@@ -61,6 +62,20 @@ fun IllustInfo.getMessage(): Message = buildString {
     PlainText(it)
 }
 
+fun BaseInfo.getMessage(): Message = buildString {
+    appendLine("作者: $uname ")
+    appendLine("UID: $uid ")
+    appendLine("健全等级: $sanityLevel ")
+    appendLine("创作于: ${createDate.format("yyyy-MM-dd'T'HH:mm:ssXXX")} ")
+    appendLine("共: ${originUrl.size} 张图片 ")
+    appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
+    appendLine("标签：${tags.map { it.name }}")
+    getPixivCatUrls().forEach { appendLine(it) }
+}.let {
+    PlainText(it)
+}
+
+
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     save: Boolean = true
@@ -80,8 +95,32 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
+suspend fun PixivHelper.buildMessage(
+    info: BaseInfo
+): List<Message> = buildList {
+    getIllustInfo(info.pid)
+    if (simpleInfo) {
+        add(PlainText("作品ID: ${info.pid}"))
+    } else {
+        add(info.getMessage())
+    }
+    if (!info.isR18()) {
+        addAll(getImages(info).map {
+            it.uploadAsImage(contact)
+        })
+    } else {
+        add(PlainText("R18禁止！"))
+    }
+}
+
 fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
+} else {
+    listOf("https://pixiv.cat/${pid}.jpg")
+}
+
+fun BaseInfo.getPixivCatUrls(): List<String> = if (originUrl.size > 1) {
+    (1..originUrl.size).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
     listOf("https://pixiv.cat/${pid}.jpg")
 }
@@ -89,14 +128,22 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
 fun IllustInfo.isR18(): Boolean =
     tags.any { """R-?18""".toRegex() in it.name }
 
+fun BaseInfo.isR18(): Boolean =
+    tags.any { """R-?18""".toRegex() in it.name }
+
 fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= 5_000 && pageCount < 4 && type == WorkContentType.ILLUST
+    totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
-fun IllustInfo.save() = (pid !in PixivCacheData).also {
-    if (it) PixivCacheData.add(this)
-}
+fun BaseInfo.isEro(): Boolean =
+    totalBookmarks >= PixivHelperSettings.totalBookmarks && originUrl.size < 4 && type == WorkContentType.ILLUST
 
-fun IllustInfo.writeTo(file: File) = file.writeText(
+fun IllustInfo.save() = PixivCacheData.put(this)
+
+fun Collection<IllustInfo>.save() = PixivCacheData.putAll(this)
+
+fun IllustInfo.writeTo(
+    file: File
+) = file.writeText(
     Json {
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -104,6 +151,12 @@ fun IllustInfo.writeTo(file: File) = file.writeText(
         allowStructuredMapKeys = true
     }.encodeToString(IllustInfo.serializer(), this)
 )
+
+fun IllustInfo.writeToCache() = writeTo(File(PixivHelperSettings.imagesFolder(pid), "${pid}.json"))
+
+fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
+    illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+}
 
 fun File.readIllustInfo(): IllustInfo = readText().let {
     Json {
@@ -131,22 +184,37 @@ suspend fun PixivHelper.getIllustInfo(
 }
 
 suspend fun PixivHelper.getImages(
+    info: BaseInfo
+): List<File> = getImages(
+    pid = info.pid,
+    urls = info.originUrl
+)
+
+suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
-): List<File> = PixivHelperSettings.imagesFolder(illust.pid).let { dir ->
-    if (File(dir, "${illust.pid}-origin-0.jpg").canRead()) {
-        illust.getOriginUrl().mapIndexed { index, _ ->
-            File(dir, "${illust.pid}-origin-${index}.jpg")
+): List<File> = getImages(
+    pid = illust.pid,
+    urls = illust.getOriginUrl()
+).apply {
+    if (save) illust.save()
+}
+
+suspend fun PixivHelper.getImages(
+    pid: Long,
+    urls: List<String>
+): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
+    if (File(dir, "${pid}-origin-0.jpg").canRead()) {
+        urls.mapIndexed { index, _ ->
+            File(dir, "${pid}-origin-${index}.jpg")
         }
     } else {
-        downloadImage<ByteArray>(illust).mapIndexed { index, result ->
-            File(dir, "${illust.pid}-origin-${index}.jpg").apply {
+        downloadImageUrl<ByteArray, File>(urls) { index, result ->
+            File(dir, "${pid}-origin-${index}.jpg").apply {
                 writeBytes(result.getOrThrow())
             }
         }
     }
-}.apply {
-    if (save) illust.save()
 }
 
 

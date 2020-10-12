@@ -46,9 +46,9 @@ object PixivSettingCommand: CompositeCommand(
             appendLine("账户: ${authInfo?.user?.account}")
             appendLine("Token: ${config.refreshToken}")
             appendLine("简略信息: $simpleInfo")
-            appendLine("缓存数: ${PixivCacheData.size}")
-            appendLine("全年龄色图数: ${PixivCacheData.eros.size}")
-            appendLine("R18色图数: ${PixivCacheData.r18s.size}")
+            appendLine("缓存数: ${PixivCacheData.values().size}")
+            appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
+            appendLine("R18色图数: ${PixivCacheData.r18s().size}")
         }
     }.onSuccess {
         quoteReply(it)
@@ -66,4 +66,10 @@ object PixivSettingCommand: CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
+
+    @SubCommand
+    fun CommandSenderOnMessage<MessageEvent>.bookmark(total: Long) {
+        logger.info("totalBookmarks: ${PixivHelperSettings.totalBookmarks} -> $total")
+        PixivHelperSettings.totalBookmarks = total
+    }
 }
