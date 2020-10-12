@@ -40,7 +40,7 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 illustRanking(date = date, mode = mode).illusts
             }.onSuccess {
-                it.writeToCache()
+                it.save()
                 add(PixivCacheData.filter(it).values)
                 logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
             }.onFailure {
@@ -55,7 +55,7 @@ object PixivCacheCommand : CompositeCommand(
                 userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
-                it.writeToCache()
+                it.save()
                 add(PixivCacheData.filter(it).values)
                 logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
@@ -100,7 +100,7 @@ object PixivCacheCommand : CompositeCommand(
         launch {
             runCatching {
                 PixivCacheData.filter(block()).values.also { list ->
-                    list.save()
+                    list.writeToCache()
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
