@@ -5,7 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.data.app.TagInfo
 
 @Serializable
 data class BaseInfo(
@@ -27,17 +26,13 @@ data class BaseInfo(
     @SerialName("height")
     val height: Int,
     @SerialName("tags")
-    val tags: List<TagInfo>,
+    val tags: List<Tag>,
     @SerialName("user_id")
     val uid: Long,
     @SerialName("user_name")
     val uname: String,
     @SerialName("total_bookmarks")
-    val totalBookmarks: Long,
-    @SerialName("total_comments")
-    val totalComments: Long,
-    @SerialName("total_view")
-    val totalView: Long,
+    val totalBookmarks: Long
 ) {
     companion object {
         fun IllustInfo.toBaseInfo() = BaseInfo(
@@ -49,12 +44,18 @@ data class BaseInfo(
             type = type,
             width = width,
             height = height,
-            tags = tags,
+            tags = tags.map { Tag(it.name, it.translatedName ?: "") },
             uid = user.id,
             uname = user.name,
-            totalBookmarks = totalBookmarks ?: 0,
-            totalComments = totalComments ?: 0,
-            totalView = totalView ?: 0
+            totalBookmarks = totalBookmarks ?: 0
         )
     }
+
+    @Serializable
+    data class Tag(
+        @SerialName("name")
+        val name: String,
+        @SerialName("translated_name")
+        val translatedName: String
+    )
 }
