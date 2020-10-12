@@ -35,8 +35,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     /**
      * 筛选出不在缓存里的部分
+     * @return 不包含在已缓存的数据中的部分
      */
-    fun filter(list: List<IllustInfo>): Map<Long, IllustInfo> = buildMap {
+    fun update(list: List<IllustInfo>): Map<Long, IllustInfo> = buildMap {
         synchronized(illusts) {
             list.forEach {
                 if (it.pid !in illusts) {

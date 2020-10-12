@@ -28,7 +28,7 @@ object PixivTagCommand: SimpleCommand(
                     searchIllust(word = tag, offset = offset).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
-                    add(PixivCacheData.filter(it).values)
+                    add(PixivCacheData.update(it).values)
                     logger.verbose("加载搜索列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
                     logger.verbose("加载搜索列表第${offset / 30}页失败", it)
@@ -60,7 +60,7 @@ object PixivTagCommand: SimpleCommand(
                     ).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
-                    add(PixivCacheData.filter(it).values)
+                    add(PixivCacheData.update(it).values)
                     logger.verbose("加载相关列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
                     logger.verbose("加载相关列表第${offset / 30}页失败", it)

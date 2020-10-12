@@ -40,7 +40,7 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 illustRanking(date = date, mode = mode).illusts
             }.onSuccess {
-                add(PixivCacheData.filter(it).values)
+                add(PixivCacheData.update(it).values)
                 logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
             }.onFailure {
                 logger.verbose("加载排行榜[${mode}]失败", it)
@@ -54,7 +54,7 @@ object PixivCacheCommand : CompositeCommand(
                 userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
-                add(PixivCacheData.filter(it).values)
+                add(PixivCacheData.update(it).values)
                 logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
                 logger.verbose("加载关注用户作品预览第${offset / 30}页失败", it)
@@ -68,7 +68,7 @@ object PixivCacheCommand : CompositeCommand(
                 illustFollow(offset = offset).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
-                add(PixivCacheData.filter(it).values)
+                add(PixivCacheData.update(it).values)
                 logger.verbose("加载关注用户作品时间线第${offset / 30}页{${it.size}}成功")
             }.onFailure {
                 logger.verbose("加载关注用户作品时间线第${offset / 30}页失败", it)
@@ -82,7 +82,7 @@ object PixivCacheCommand : CompositeCommand(
                 userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
-                add(PixivCacheData.filter(it).values)
+                add(PixivCacheData.update(it).values)
                 logger.verbose("加载推荐用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
                 logger.verbose("加载推荐用户预览第${offset / 30}页失败", it)
@@ -97,7 +97,7 @@ object PixivCacheCommand : CompositeCommand(
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
         launch {
             runCatching {
-                PixivCacheData.filter(block()).values.also { list ->
+                PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.count { illust: IllustInfo ->
