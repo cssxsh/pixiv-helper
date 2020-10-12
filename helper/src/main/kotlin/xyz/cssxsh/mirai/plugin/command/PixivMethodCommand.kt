@@ -209,7 +209,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessage(userBookmarksIllust(uid = getAuthInfoOrThrow().user.uid).illusts.random())
+        buildMessage(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

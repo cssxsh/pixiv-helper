@@ -21,7 +21,7 @@ object PixivFollowCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().runCatching {
-        val authInfo = getAuthInfoOrThrow()
+        val authInfo = getAuthInfo()
          val followed = buildList {
             (0 until 100).forEach { index ->
                 runCatching {

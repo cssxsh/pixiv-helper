@@ -128,7 +128,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache {
-        (getFollow() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten()
+        (getFollow() + getUserPreviews(getAuthInfo().user.uid)).flatten()
     }
 
     /**
