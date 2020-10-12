@@ -41,6 +41,9 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 illustRanking(date = date, mode = mode).illusts
             }.onSuccess {
+                it.forEach { illust ->
+                    illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+                }
                 add(PixivCacheData.filter(it).values)
                 logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
             }.onFailure {
@@ -69,6 +72,9 @@ object PixivCacheCommand : CompositeCommand(
                 userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
+                it.forEach { illust ->
+                    illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+                }
                 add(PixivCacheData.filter(it).values)
                 logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
@@ -128,11 +134,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache {
-        (getFollow() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten().apply {
-            forEach { illust ->
-                illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
-            }
-        }
+        (getFollow() + getUserPreviews(getAuthInfoOrThrow().user.uid)).flatten()
     }
 
     /**
