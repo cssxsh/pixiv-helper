@@ -231,6 +231,7 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 quoteReply("缓存完毕共${it}个新作品")
             }.onFailure {
+                logger.warning("缓存失败", it)
                 quoteReply("缓存失败, ${it.message}")
             }
         }.also {
