@@ -33,7 +33,7 @@ data class BaseInfo(
     val uname: String,
     @SerialName("total_bookmarks")
     val totalBookmarks: Long,
-    @SerialName("origin_Url")
+    @SerialName("origin_url")
     val originUrl: List<String>
 ) {
     companion object {
