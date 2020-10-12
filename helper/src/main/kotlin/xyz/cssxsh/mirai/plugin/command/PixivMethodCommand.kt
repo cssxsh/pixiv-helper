@@ -4,8 +4,10 @@ import com.soywiz.klock.PatternDateFormat
 import com.soywiz.klock.parseDate
 import com.soywiz.klock.wrapped.WDate
 import com.soywiz.klock.wrapped.wrapped
+import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.description.*
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.RankMode
@@ -17,7 +19,13 @@ object PixivMethodCommand : CompositeCommand(
     PixivHelperPlugin,
     "pixiv",
     description = "pixiv 基本方法",
-    prefixOptional = true
+    prefixOptional = true,
+    overrideContext = buildCommandArgumentContext {
+        WDate::class with object : CommandArgumentParser<WDate> {
+            override fun parse(raw: String, sender: CommandSender): WDate =
+                PatternDateFormat("y-M-d").parseDate(raw).wrapped
+        }
+    }
 ), PixivHelperLogger {
 
     /**
@@ -75,15 +83,14 @@ object PixivMethodCommand : CompositeCommand(
     @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
     suspend fun CommandSenderOnMessage<MessageEvent>.rank(
         type: String,
-        date: String,
+        date: WDate,
         index: Long
     ) = getHelper().runCatching {
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        val wDate: WDate = PatternDateFormat("y-M-d").parseDate(date).wrapped
 
-        buildMessage(illustRanking(date = wDate, mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
+        buildMessage(illustRanking(date = date, mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
