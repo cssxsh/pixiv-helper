@@ -66,7 +66,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
-        auto()
+        autoAuth()
     }.onSuccess {
         quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
     }.onFailure {

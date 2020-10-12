@@ -2,7 +2,6 @@
 
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -10,7 +9,6 @@ import net.mamoe.mirai.message.data.PlainText
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthResult
-import java.lang.IllegalArgumentException
 import java.util.concurrent.ArrayBlockingQueue
 
 /**
@@ -20,23 +18,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     config = PixivConfigData.config
 ), PixivHelperLogger {
-
-    init {
-        if (authInfo == null) {
-            runCatching {
-                runBlocking {
-                    auto()
-                }
-            }.onSuccess {
-                authInfo?.run {
-                    config = config.copy(refreshToken = refreshToken)
-                    logger.info("${contact}的助手自动${user.name}登陆成功")
-                }
-            }.onFailure {
-                logger.warning("${contact}的助手自动登陆失败", it)
-            }
-        }
-    }
 
     override var config: PixivConfig
         get() = PixivConfigData.config
@@ -62,14 +43,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override fun config(block: PixivConfig.() -> Unit) =
         config.apply(block).also { PixivConfigData.config = it }
-
-    suspend fun auto(): AuthResult.AuthInfo = config.run {
-        refreshToken?.let { token ->
-            refresh(token)
-        } ?: account?.let { account ->
-            login(account.mailOrUID, account.password)
-        } ?: throw IllegalArgumentException("没有登陆参数")
-    }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info("$it by RefreshToken: $token")
