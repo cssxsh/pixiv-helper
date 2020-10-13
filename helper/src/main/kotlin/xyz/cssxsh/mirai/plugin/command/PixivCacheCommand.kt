@@ -1,7 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import io.ktor.client.request.*
-import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -279,7 +277,7 @@ object PixivCacheCommand : CompositeCommand(
                                 logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
                                 writeBytes(it)
                             }.onFailure {
-                                logger.warning("$url 下载失败")
+                                logger.warning("$url 下载失败", it)
                             }
                         }
                     }
