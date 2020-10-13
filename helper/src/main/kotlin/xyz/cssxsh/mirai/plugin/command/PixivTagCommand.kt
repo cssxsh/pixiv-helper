@@ -82,8 +82,8 @@ object PixivTagCommand: SimpleCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
         if (jobs.none { it.isActive }) {
             jobs.clear()
-            PixivCacheData.eros().filter { illust ->
-                tag in illust.title || illust.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+            PixivCacheData.caches().values.filter { info ->
+                tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
                 buildMessage(list.random().also { info ->
