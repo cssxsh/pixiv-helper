@@ -275,8 +275,8 @@ object PixivCacheCommand : CompositeCommand(
                 }.let { urls ->
                     downloadImageUrl<ByteArray, Unit>(urls) { _, url, result ->
                         File(dir, url.getFilename()).run {
-                            logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
                             result.onSuccess {
+                                logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
                                 writeBytes(it)
                             }.onFailure {
                                 logger.warning("$url 下载失败")
