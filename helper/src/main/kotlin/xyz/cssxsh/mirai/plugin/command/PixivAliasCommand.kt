@@ -31,7 +31,7 @@ object PixivAliasCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-    @SubCommand("artwork", "作品")
+    @SubCommand("alias", "别名")
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.alias(name: String, uid: Long) = getHelper().runCatching {
         PixivAliasData.aliases[name] = uid
