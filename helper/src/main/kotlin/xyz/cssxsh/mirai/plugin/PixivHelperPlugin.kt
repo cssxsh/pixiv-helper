@@ -12,7 +12,6 @@ import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribe
 import net.mamoe.mirai.utils.minutesToMillis
-import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
@@ -47,6 +46,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivFollowCommand.register()
         PixivTagCommand.register()
         PixivRecallCommand.register()
+        PixivAliasCommand.register()
 
         //
         subscribe<NewFriendRequestEvent> {
@@ -70,5 +70,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivFollowCommand.unregister()
         PixivTagCommand.unregister()
         PixivRecallCommand.unregister()
+        PixivAliasCommand.unregister()
     }
 }
