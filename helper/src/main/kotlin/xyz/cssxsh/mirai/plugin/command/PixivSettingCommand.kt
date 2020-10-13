@@ -44,7 +44,7 @@ object PixivSettingCommand: CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.info() = getHelper().runCatching {
         buildString {
             appendLine("账户: ${getAuthInfo().user.account}")
-            appendLine("Token: ${config.refreshToken}")
+            appendLine("Token: ${getAuthInfo().refreshToken}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.caches().size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")

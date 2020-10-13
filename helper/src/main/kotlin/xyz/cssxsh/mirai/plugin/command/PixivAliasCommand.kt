@@ -40,4 +40,16 @@ object PixivAliasCommand : CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
+
+    @SubCommand("list", "列表")
+    @Suppress("unused")
+    suspend fun CommandSenderOnMessage<MessageEvent>.list() = getHelper().runCatching {
+        PixivAliasData.aliases.map { (name, uid) ->
+            "$name -> $uid"
+        }.joinToString("\n")
+    }.onSuccess {
+        quoteReply(it)
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
 }

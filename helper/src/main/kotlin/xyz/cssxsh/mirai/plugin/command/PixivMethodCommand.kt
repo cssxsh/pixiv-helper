@@ -143,7 +143,7 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        quoteReply("获取排行榜失败， ${it.message}")
+        quoteReply("获取详情失败， ${it.message}")
     }.isSuccess
 
     /**
