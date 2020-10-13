@@ -15,6 +15,7 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.data.app.UserDetail
+import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
 
 @Suppress("unused")
@@ -100,17 +101,19 @@ object PixivCacheCommand : CompositeCommand(
                 PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
-                }.count { illust: IllustInfo ->
-                    isActive && illust.pid !in PixivCacheData && runCatching {
-                        getImages(illust)
-                    }.onSuccess {
-                        delay(timeMillis)
-                    }.onFailure {
-                        logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
-                    }.isSuccess
+                }.run {
+                    size to count { illust: IllustInfo ->
+                        isActive && illust.pid !in PixivCacheData && runCatching {
+                            getImages(illust)
+                        }.onSuccess {
+                            delay(timeMillis)
+                        }.onFailure {
+                            logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
+                        }.isSuccess
+                    }
                 }
-            }.onSuccess {
-                quoteReply("缓存完毕共${it}个新作品")
+            }.onSuccess { (total, success) ->
+                quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
             }.onFailure {
                 quoteReply("缓存失败, ${it.message}")
             }
@@ -194,15 +197,17 @@ object PixivCacheCommand : CompositeCommand(
                     list - PixivCacheData.caches().keys
                 }.also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
-                }.count { pid ->
-                    isActive && runCatching {
-                        getImages(getIllustInfo(pid))
-                    }.onFailure {
-                        logger.verbose("获取作品(${pid})错误", it)
-                    }.isSuccess
+                }.run {
+                    size to count { pid ->
+                        isActive && runCatching {
+                            getImages(getIllustInfo(pid))
+                        }.onFailure {
+                            logger.verbose("获取作品(${pid})错误", it)
+                        }.isSuccess
+                    }
                 }
-            }.onSuccess {
-                quoteReply("缓存完毕共${it}个新作品")
+            }.onSuccess { (total, success) ->
+                quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
             }.onFailure {
                 logger.warning("缓存失败", it)
                 quoteReply("缓存失败, ${it.message}")
@@ -265,19 +270,13 @@ object PixivCacheCommand : CompositeCommand(
         }.count { info ->
             runCatching {
                 val dir = PixivHelperSettings.imagesFolder(info.pid)
-                info.originUrl.forEach { url ->
-                    File(dir, url.getFilename()).apply {
-                        if (canRead().not()) {
-                            delete().let {
-                                logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${it}")
-                            }
-                            httpClient().use { client ->
-                                client.get<ByteArray>(url) {
-                                    headers[HttpHeaders.Referrer] = url
-                                }
-                            }.let {
-                                writeBytes(it)
-                            }
+                info.originUrl.filter { url ->
+                    File(dir, url.getFilename()).canRead().not()
+                }.let {
+                    downloadImageUrl<ByteArray, Unit>(it) { _, url, result ->
+                        File(dir, url.getFilename()).run {
+                            logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
+                            writeBytes(result.getOrThrow())
                         }
                     }
                 }
