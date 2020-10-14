@@ -19,11 +19,11 @@ object PixivEroCommand : SimpleCommand(
     private fun PixivHelper.randomIllust(block: List<BaseInfo>.() -> Unit): BaseInfo = PixivCacheData.eros { info ->
         info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
     }.apply(block).random().also { info ->
+        minSanityLevel = info.sanityLevel
+        minBookmarks = info.totalBookmarks
         historyQueue.apply {
             if (remainingCapacity() == 0) take()
             put(info.pid)
-            minSanityLevel = info.sanityLevel
-            minBookmarks = info.totalBookmarks
         }
     }
 
