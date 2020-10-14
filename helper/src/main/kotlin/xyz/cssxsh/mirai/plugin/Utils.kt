@@ -90,7 +90,6 @@ suspend fun PixivHelper.buildMessage(
 suspend fun PixivHelper.buildMessage(
     info: BaseInfo
 ): List<Message> = buildList {
-    getIllustInfo(info.pid)
     if (simpleInfo) {
         add(PlainText("作品ID: ${info.pid}, 收藏数: ${info.totalBookmarks}"))
     } else {
