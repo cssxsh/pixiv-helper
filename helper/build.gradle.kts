@@ -34,7 +34,7 @@ dependencies {
     implementation(mirai("core", Versions.core))
     implementation(mirai("console", Versions.console))
     implementation(korlibs("klock", Versions.klock))
-    implementation(korlibs("krypto", Versions.krypto))
+    // implementation(korlibs("krypto", Versions.krypto))
     implementation(ktor("client-core", Versions.ktor))
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
