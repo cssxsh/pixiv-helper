@@ -10,8 +10,10 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
-import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.updater.CreateResultData
 import xyz.cssxsh.mirai.plugin.updater.PanConfig
 import xyz.cssxsh.mirai.plugin.updater.PreCreateData
@@ -50,12 +52,7 @@ object PanUpdater {
             }
         }
     }
-    private val config: PanConfig = PanConfig(
-        bdsToken = "a25846e85d9ae2b6356b1c78d31c9ef3",
-        logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",
-        targetPath = "/Pixiv",
-        cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
-    )
+    private val config: PanConfig get() = PixivHelperSettings.panConfig
 
     private suspend fun HttpClient.preCreate(
         updatePath: String,
@@ -74,7 +71,7 @@ object PanUpdater {
         parameter("clienttype", 0)
 
         body = FormDataContent(Parameters.build {
-            append("path", updatePath)
+            append("path", config.targetPath + updatePath)
             append("autoinit", 1.toString())
             append("target_path", config.targetPath)
             append("block_list", "[${md5List.joinToString(",") { "\"${it}\"" }}]")
@@ -112,6 +109,17 @@ object PanUpdater {
         Json.decodeFromString(SuperFileData.serializer(), it)
     }
 
+    private suspend fun HttpClient.superFileOrNull(
+        data: ByteArray,
+        index: Int,
+        uploadId: String,
+        path: String
+    ): SuperFileData = runCatching {
+        superFile(data, index, uploadId, path)
+    }.onFailure {
+        if (it !is ClientRequestException) throw it
+    }.getOrNull() ?: superFileOrNull(data, index, uploadId, path)
+
     private suspend fun HttpClient.createFile(
         length: Long,
         uploadId: String,
@@ -132,7 +140,7 @@ object PanUpdater {
         parameter("clienttype", 0)
 
         body = MultiPartFormDataContent(formData {
-            append("path", path)
+            append("path", config.targetPath + path)
             append("size", length)
             append("uploadid", uploadId)
             append("block_list", "[${md5List.joinToString(",") { "\"${it}\"" }}]")
@@ -141,31 +149,41 @@ object PanUpdater {
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    suspend fun update(pathname: String, updatePath: String) = httpClient.use { client ->
-        val file = RandomAccessFile(File(pathname), "r")
+    fun CoroutineScope.update(sourcePath: String, updatePath: String) = launch(Dispatchers.IO) {
+        val file = RandomAccessFile(File(sourcePath), "r")
         val length = file.length()
-        val localMtime = File(pathname).lastModified()
+        val localMtime = File(sourcePath).lastModified()
         val blocks = (0 until length step BLOCK_SIZE).map { offset ->
             offset until minOf(offset + BLOCK_SIZE, length)
         }
-        val preCreateData = client.preCreate(
-            updatePath = updatePath,
-            localMtime = localMtime
-        )
-        val superList = blocks.mapIndexed { index, range ->
-            client.superFile(
-                data = range.map { file.readByte() }.toByteArray(),
-                index = index,
-                uploadId = preCreateData.uploadId,
-                path = updatePath
+
+        httpClient.use { client ->
+            val preCreateData = client.preCreate(
+                updatePath = updatePath,
+                localMtime = localMtime
+            )
+            val channel = Channel<Int>(8)
+            val superList = blocks.mapIndexed { index, range ->
+                async {
+                    channel.send(index)
+                    client.superFileOrNull(
+                        data = range.map { file.readByte() }.toByteArray(),
+                        index = index,
+                        uploadId = preCreateData.uploadId,
+                        path = updatePath
+                    ).also {
+                        channel.receive()
+                        println(it)
+                    }
+                }
+            }.awaitAll()
+            client.createFile(
+                length = length,
+                localMtime = localMtime,
+                path = updatePath,
+                md5List = superList.map { it.md5 },
+                uploadId = preCreateData.uploadId
             )
         }
-        client.createFile(
-            length = length,
-            localMtime = localMtime,
-            path = updatePath,
-            md5List = superList.map { it.md5 },
-            uploadId = preCreateData.uploadId
-        )
     }
 }

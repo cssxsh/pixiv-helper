@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.updater.PanConfig
 import java.io.File
 
 object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
@@ -26,6 +27,16 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
      * 涩图标准
      */
     var totalBookmarks: Long by value(10_000L)
+
+    /**
+     * 百度云
+     */
+    var panConfig: PanConfig by value(PanConfig(
+        bdsToken = "a25846e85d9ae2b6356b1c78d31c9ef3",
+        logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",
+        targetPath = "/Pixiv",
+        cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
+    ))
 
 
     /**

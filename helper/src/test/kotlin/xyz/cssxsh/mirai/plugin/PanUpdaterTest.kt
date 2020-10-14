@@ -4,11 +4,12 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
+import xyz.cssxsh.mirai.plugin.PanUpdater.update
 
 internal class PanUpdaterTest {
 
     @Test
     fun update(): Unit = runBlocking {
-        PanUpdater.update("D:\\Downloads\\app-release.apk", "app-release.apk")
+        update("D:\\Downloads\\Linux\\2053497.zip", "2053497.zip")
     }
 }

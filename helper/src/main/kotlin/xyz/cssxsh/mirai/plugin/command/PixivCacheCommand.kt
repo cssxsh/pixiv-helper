@@ -8,6 +8,8 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PanUpdater.update
+import xyz.cssxsh.mirai.plugin.Zipper.compress
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
@@ -15,11 +17,6 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import java.io.BufferedOutputStream
-import java.nio.file.attribute.FileTime
-import java.util.zip.Deflater.BEST_COMPRESSION
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -38,6 +35,10 @@ object PixivCacheCommand : CompositeCommand(
         }
 
     private var cacheJob: Job? = null
+
+    private var compressJob: Job? = null
+
+    private var panJob: Job? = null
 
     private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) = buildList {
         modes.map { mode ->
@@ -352,34 +353,19 @@ object PixivCacheCommand : CompositeCommand(
 
 
     @SubCommand
-    @Suppress("BlockingMethodInNonBlockingContext")
-    suspend fun ConsoleCommandSender.tozip(uid: Long) = withContext(Dispatchers.IO) {
-        fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
-            mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜").run {
-                getOrDefault(it.value, "")
-            }
+    fun ConsoleCommandSender.tozip(uid: Long) {
+        check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
+        PixivCacheData.caches().values.filter {
+            it.uid == uid
+        }.let {
+            compressJob = PixivHelperPlugin.compress(it, "${uid}.zip")
         }
+    }
 
-        ZipOutputStream(BufferedOutputStream(File("${uid}.zip").apply {
-            createNewFile()
-        }.outputStream(), 64 * 1024 * 1024)).use { zipOutputStream ->
-            zipOutputStream.setLevel(BEST_COMPRESSION)
-            PixivCacheData.caches().values.filter {
-                it.uid == uid
-            }.also {
-                logger.verbose("共${it.size} 个作品将写入文件")
-            }.forEach { info ->
-                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
-                        creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                        lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                    })
-                    zipOutputStream.write(file.readBytes())
-                }
-            }
-            zipOutputStream.flush()
-        }
-        logger.verbose("${uid}压缩完毕！")
+    @SubCommand
+    fun ConsoleCommandSender.pan(file: String) {
+        check(panJob?.isActive != true) { "正在上传中, ${panJob}..." }
+        PixivHelperPlugin.update(file, file)
     }
 
     /**
