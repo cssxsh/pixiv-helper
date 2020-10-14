@@ -367,7 +367,7 @@ object PixivCacheCommand : CompositeCommand(
                         creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                         lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                     })
-                    BufferedOutputStream(zipOutputStream, 64 * 1024).use { buffer ->
+                    BufferedOutputStream(zipOutputStream, 8 * 1024 * 1024).use { buffer ->
                         buffer.write(file.readBytes())
                     }
                 }
