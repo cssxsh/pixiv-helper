@@ -352,8 +352,9 @@ object PixivCacheCommand : CompositeCommand(
 
 
     @SubCommand
-    fun ConsoleCommandSender.tozip(uid: Long) {
-        ZipOutputStream(FileOutputStream("/data/data/com.termux/files/home/${uid}.zip")).use { zipOutputStream ->
+    @Suppress("BlockingMethodInNonBlockingContext")
+    suspend fun ConsoleCommandSender.tozip(uid: Long) = withContext(Dispatchers.IO) {
+        ZipOutputStream(FileOutputStream("~/${uid}.zip")).use { zipOutputStream ->
             zipOutputStream.setLevel(BEST_COMPRESSION)
             BufferedOutputStream(zipOutputStream).use { buffer ->
                 PixivCacheData.caches().values.filter {
