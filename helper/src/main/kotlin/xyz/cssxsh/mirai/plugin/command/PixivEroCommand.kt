@@ -11,13 +11,13 @@ import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
     PixivHelperPlugin,
-    "ero", "色图", "涩图",
+    "ero", "色图", "涩图", "不够色",
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
 
     private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros().random().takeIf { illust ->
-        illust.pid !in historyQueue
+        illust.pid !in historyQueue && illust.sanityLevel > minSanityLevel
     }?.also {
         if (historyQueue.remainingCapacity() == 0) historyQueue.take()
         historyQueue.put(it.pid)
@@ -25,6 +25,11 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
+        if ("不够色" in message.contentToString()) {
+            minSanityLevel++
+        } else {
+            minSanityLevel = 0
+        }
         PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
             logger.verbose("${fromEvent.sender}第${it}次使用色图")
         }

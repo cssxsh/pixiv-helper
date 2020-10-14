@@ -35,6 +35,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
     }
 
+    var minSanityLevel = 0
+
     var simpleInfo: Boolean
         get() = PixivConfigData.simpleInfo.getOrPut(contact.id, { true })
         set(value) {
