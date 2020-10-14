@@ -87,7 +87,7 @@ object PixivTagCommand: SimpleCommand(
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
                 buildMessage(list.random().also { info ->
-                    addRelated(info.pid, list.map { it.pid })
+                    if (list.size < 64) addRelated(info.pid, list.map { it.pid })
                 })
             }
         } else {
