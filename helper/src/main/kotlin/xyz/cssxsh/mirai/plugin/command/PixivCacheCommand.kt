@@ -372,6 +372,7 @@ object PixivCacheCommand : CompositeCommand(
                     zipOutputStream.write(file.readBytes())
                 }
             }
+            zipOutputStream.flush()
         }
         logger.verbose("${uid}压缩完毕！")
     }
