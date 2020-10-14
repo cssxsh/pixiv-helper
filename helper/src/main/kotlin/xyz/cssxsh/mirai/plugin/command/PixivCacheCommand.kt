@@ -351,7 +351,7 @@ object PixivCacheCommand : CompositeCommand(
 
 
     @SubCommand
-    fun ConsoleCommandSender.zip(uid: Long) {
+    fun ConsoleCommandSender.zipUser(uid: Long) {
         ZipOutputStream(FileOutputStream("~/${uid}.zip")).use { zipOutputStream ->
             BufferedOutputStream(zipOutputStream).use { buffer ->
                 PixivCacheData.caches().values.filter {
