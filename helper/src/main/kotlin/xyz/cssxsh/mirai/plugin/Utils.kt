@@ -8,6 +8,7 @@ import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
+import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.WorkContentType
@@ -51,18 +52,7 @@ fun String.getFilename() = substring(lastIndexOf("/"))
 
 fun Long.positiveLongCheck() = also { require(it > 0) { "应该为正整数" } }
 
-fun IllustInfo.getMessage(): Message = buildString {
-    appendLine("作者: ${user.name} ")
-    appendLine("UID: ${user.id} ")
-    appendLine("健全等级: $sanityLevel ")
-    appendLine("创作于: ${createDate.format("yyyy-MM-dd'T'HH:mm:ssXXX")} ")
-    appendLine("共: $pageCount 张图片 ")
-    appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
-    appendLine("标签：${tags.map { it.name }}")
-    getPixivCatUrls().forEach { appendLine(it) }
-}.let {
-    PlainText(it)
-}
+fun IllustInfo.getMessage(): Message = toBaseInfo().getMessage()
 
 fun BaseInfo.getMessage(): Message = buildString {
     appendLine("作者: $uname ")
@@ -84,7 +74,7 @@ suspend fun PixivHelper.buildMessage(
 ): List<Message> = buildList {
     getIllustInfo(illust.pid) { illust }
     if (simpleInfo) {
-        add(PlainText("作品ID: ${illust.pid}"))
+        add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}"))
     } else {
         add(illust.getMessage())
     }
@@ -102,7 +92,7 @@ suspend fun PixivHelper.buildMessage(
 ): List<Message> = buildList {
     getIllustInfo(info.pid)
     if (simpleInfo) {
-        add(PlainText("作品ID: ${info.pid}"))
+        add(PlainText("作品ID: ${info.pid}, 收藏数: ${info.totalBookmarks}"))
     } else {
         add(info.getMessage())
     }
