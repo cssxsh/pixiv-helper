@@ -16,11 +16,9 @@ object PixivEroCommand : SimpleCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros { info ->
+    private fun PixivHelper.randomIllust(block: List<BaseInfo>.() -> Unit): BaseInfo = PixivCacheData.eros { info ->
         info.pid !in historyQueue && info.sanityLevel >= minSanityLevel
-    }.also {
-        logger.verbose("共找到${it.size}个作品")
-    }.random().also { info ->
+    }.apply(block).random().also { info ->
         historyQueue.apply {
             if (remainingCapacity() == 0) take()
             put(info.pid)
@@ -35,10 +33,11 @@ object PixivEroCommand : SimpleCommand(
         } else {
             minSanityLevel = 1
         }
-        PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
-            logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜索等级${minSanityLevel}")
-        }
-        buildMessage(randomIllust())
+        buildMessage(randomIllust {
+            PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
+                logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜索等级${minSanityLevel}, 共找到${size} 张色图")
+            }
+        })
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
