@@ -149,7 +149,7 @@ object PanUpdater {
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    fun CoroutineScope.update(sourcePath: String, updatePath: String) = launch(Dispatchers.IO) {
+    fun CoroutineScope.update(sourcePath: String, updatePath: String, block: (SuperFileData) -> Unit = {}) = launch(Dispatchers.IO) {
         val file = RandomAccessFile(File(sourcePath), "r")
         val length = file.length()
         val localMtime = File(sourcePath).lastModified()
@@ -173,7 +173,7 @@ object PanUpdater {
                         path = updatePath
                     ).also {
                         channel.receive()
-                        println(it)
+                        block(it)
                     }
                 }
             }.awaitAll()

@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
+import com.soywiz.klock.measureTime
+import com.soywiz.klock.toTimeString
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
@@ -10,6 +12,12 @@ internal class PanUpdaterTest {
 
     @Test
     fun update(): Unit = runBlocking {
-        update("D:\\Downloads\\Linux\\2053497.zip", "2053497.zip")
+        measureTime {
+            update("D:\\Downloads\\Linux\\2053497.zip", "2053497.zip") {
+                println(it)
+            }.join()
+        }.let {
+            println(it.toTimeString())
+        }
     }
 }
