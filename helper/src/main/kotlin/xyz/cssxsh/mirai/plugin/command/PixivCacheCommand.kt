@@ -370,7 +370,7 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("共${it.size} 个作品将写入文件")
             }.forEach { info ->
                 PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title.replace("/", "///")})/${file.name}").apply {
+                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
                         creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                         lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                     })
