@@ -14,6 +14,11 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     var minInterval: Int by value(16)
 
     /**
+     * tag总计最大
+     */
+    var maxTagCount: Int by value(64)
+
+    /**
      * 图片缓存位置
      */
     var cachePath: String by value()

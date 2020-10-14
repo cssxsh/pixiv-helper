@@ -8,6 +8,7 @@ import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.PlainText
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
 import xyz.cssxsh.pixiv.api.app.searchIllust
@@ -87,7 +88,7 @@ object PixivTagCommand: SimpleCommand(
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
                 buildMessage(list.random().also { info ->
-                    if (list.size < 64) addRelated(info.pid, list.map { it.pid })
+                    if (list.size < PixivHelperSettings.maxTagCount) addRelated(info.pid, list.map { it.pid })
                 })
             }
         } else {
