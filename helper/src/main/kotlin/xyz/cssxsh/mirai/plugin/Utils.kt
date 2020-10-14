@@ -57,6 +57,7 @@ fun IllustInfo.getMessage(): Message = toBaseInfo().getMessage()
 fun BaseInfo.getMessage(): Message = buildString {
     appendLine("作者: $uname ")
     appendLine("UID: $uid ")
+    appendLine("收藏数: $totalBookmarks ")
     appendLine("健全等级: $sanityLevel ")
     appendLine("创作于: ${createDate.format("yyyy-MM-dd'T'HH:mm:ssXXX")} ")
     appendLine("共: $pageCount 张图片 ")
@@ -66,7 +67,6 @@ fun BaseInfo.getMessage(): Message = buildString {
 }.let {
     PlainText(it)
 }
-
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
@@ -104,12 +104,6 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
-fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
-    (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
-} else {
-    listOf("https://pixiv.cat/${pid}.jpg")
-}
-
 fun BaseInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
@@ -130,8 +124,6 @@ fun BaseInfo.isEro(): Boolean =
 
 fun IllustInfo.save() = PixivCacheData.put(this)
 
-fun Collection<IllustInfo>.save() = PixivCacheData.putAll(this)
-
 fun IllustInfo.writeTo(
     file: File
 ) = file.writeText(
@@ -146,7 +138,7 @@ fun IllustInfo.writeTo(
 fun IllustInfo.writeToCache() = writeTo(File(PixivHelperSettings.imagesFolder(pid), "${pid}.json"))
 
 fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
-    illust.writeTo(File(PixivHelperSettings.imagesFolder(illust.pid), "${illust.pid}.json"))
+    illust.writeToCache()
 }
 
 fun File.readIllustInfo(): IllustInfo = readText().let {
