@@ -362,12 +362,12 @@ object PixivCacheCommand : CompositeCommand(
             }.also {
                 logger.verbose("共${it.size} 个作品将写入文件")
             }.forEach { info ->
-                BufferedOutputStream(zipOutputStream).use { buffer ->
-                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                        zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
-                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                            lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                        })
+                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
+                        creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                        lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                    })
+                    BufferedOutputStream(zipOutputStream, 64 * 1024).use { buffer ->
                         buffer.write(file.readBytes())
                     }
                 }
