@@ -363,7 +363,7 @@ object PixivCacheCommand : CompositeCommand(
                     logger.verbose("共${it.size} 个作品将写入文件")
                 }.forEach { info ->
                     PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                        zipOutputStream.putNextEntry(ZipEntry("${info}/${file.name}"))
+                        zipOutputStream.putNextEntry(ZipEntry("[${info.uid}]<${info.title}>/${file.name}"))
                         buffer.write(file.readBytes())
                     }
                 }
