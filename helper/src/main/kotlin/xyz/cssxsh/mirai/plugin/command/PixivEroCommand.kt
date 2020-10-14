@@ -17,10 +17,13 @@ object PixivEroCommand : SimpleCommand(
 ), PixivHelperLogger {
 
     private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros().random().takeIf { illust ->
-        illust.pid !in historyQueue && illust.sanityLevel > minSanityLevel
-    }?.also {
-        if (historyQueue.remainingCapacity() == 0) historyQueue.take()
-        historyQueue.put(it.pid)
+        illust.pid !in historyQueue && illust.sanityLevel >= minSanityLevel
+    }?.also { info ->
+        historyQueue.apply {
+            if (remainingCapacity() == 0) take()
+            put(info.pid)
+            minSanityLevel = info.sanityLevel
+        }
     } ?: randomIllust()
 
     @Handler
@@ -31,7 +34,7 @@ object PixivEroCommand : SimpleCommand(
             minSanityLevel = 0
         }
         PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
-            logger.verbose("${fromEvent.sender}第${it}次使用色图")
+            logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜素等级${minSanityLevel}")
         }
         buildMessage(randomIllust())
     }.onSuccess { list ->
