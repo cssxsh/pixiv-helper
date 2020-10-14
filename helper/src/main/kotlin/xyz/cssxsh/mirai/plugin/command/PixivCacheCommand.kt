@@ -15,7 +15,6 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
-import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import java.io.BufferedOutputStream
@@ -355,6 +354,12 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun ConsoleCommandSender.tozip(uid: Long) = withContext(Dispatchers.IO) {
+        fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
+            mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜").run {
+                getOrDefault(it.value, "")
+            }
+        }
+
         ZipOutputStream(BufferedOutputStream(File("${uid}.zip").apply {
             createNewFile()
         }.outputStream(), 64 * 1024 * 1024)).use { zipOutputStream ->
@@ -365,7 +370,7 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("共${it.size} 个作品将写入文件")
             }.forEach { info ->
                 PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
+                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title.replace("/", "///")})/${file.name}").apply {
                         creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                         lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                     })
