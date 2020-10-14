@@ -5,8 +5,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.pixiv.api.app.userFollowAdd
-import xyz.cssxsh.pixiv.api.app.userFollowing
+import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -21,31 +20,29 @@ object PixivFollowCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().runCatching {
-        val authInfo = getAuthInfo()
+         val authInfo = getAuthInfo()
          val followed = buildList {
-            (0 until 100).forEach { index ->
+            (0L until 10_000 step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
-                    userFollowing(uid = authInfo.user.uid, offset = index * 30L).userPreviews.map { it.user.id }
+                    userFollowing(uid = authInfo.user.uid, offset = offset).userPreviews.map { it.user.id }
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(it)
-                    logger.verbose("加载关注用户作品预览第${index}页{${it.size}}成功")
+                    logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.verbose("加载关注用户作品预览第${index}页失败", it)
+                    logger.verbose("加载关注用户作品预览第${offset / 30}页失败", it)
                 }
             }
         }.flatten().toSet()
 
-        PixivCacheData.caches().values.mapNotNull { info ->
-            info.takeIf {
-                it.isEro()
-            }
-        }.map {
-            it.uid
+        PixivCacheData.caches().values.filter { info ->
+            info.isEro()
+        }.map { info ->
+            info.uid
         }.toSet().let {
             it - followed
         }.also {
-            logger.verbose("共有${it.size}个用户等待关注")
+            logger.verbose("已关注${followed.size}, 共有${it.size}个用户等待关注")
         }.count { uid ->
             runCatching {
                 userFollowAdd(uid).let {
