@@ -15,6 +15,10 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import java.io.BufferedOutputStream
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -344,6 +348,24 @@ object PixivCacheCommand : CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
+
+
+    @SubCommand
+    fun ConsoleCommandSender.zip(uid: Long, path: String) {
+        ZipOutputStream(FileOutputStream(path)).use { zipOutputStream ->
+            BufferedOutputStream(zipOutputStream).use { buffer ->
+                PixivCacheData.caches().values.filter {
+                    it.uid == uid
+                }.forEach { info ->
+                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                        logger.verbose("${file.absolutePath} 将写入文件")
+                        zipOutputStream.putNextEntry(ZipEntry("${info}/${file.name}"))
+                        buffer.write(file.readBytes())
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 设置缓存目录 cache path /storage/emulated/0/PixivCache
