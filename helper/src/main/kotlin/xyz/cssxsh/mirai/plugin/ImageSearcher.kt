@@ -1,12 +1,11 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
-import io.ktor.http.*
 import io.ktor.utils.io.core.*
-import io.ktor.utils.io.streams.*
 import org.jsoup.Jsoup
 import kotlin.io.use
 
@@ -14,7 +13,7 @@ import kotlin.io.use
 object ImageSearcher: PixivHelperLogger {
     private const val API = "https://saucenao.com/search.php"
     private const val DB_INDEX = 5 // Index #5: pixiv Images
-    private val httpClient: HttpClient get() = HttpClient {
+    private val httpClient: HttpClient get() = HttpClient(OkHttp) {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             connectTimeoutMillis = 60_000
