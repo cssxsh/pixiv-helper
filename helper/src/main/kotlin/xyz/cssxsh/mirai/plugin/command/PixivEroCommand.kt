@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
     PixivHelperPlugin,
-    "ero", "色图", "涩图", "不够色",
+    "ero", "色图", "涩图",
     description = "色图指令",
     prefixOptional = true
 ), PixivHelperLogger {
@@ -28,7 +28,7 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
-        if ("不够色" in message.contentToString()) {
+        if ("更色" in message.contentToString()) {
             minSanityLevel++
         } else {
             minSanityLevel = 1
