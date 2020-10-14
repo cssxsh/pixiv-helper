@@ -48,7 +48,7 @@ suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivH
     }
 }
 
-fun String.getFilename() = substring(lastIndexOf("/"))
+fun String.getFilename() = substring(lastIndexOfAny(listOf("/", "\\")))
 
 fun Long.positiveLongCheck() = also { require(it > 0) { "应该为正整数" } }
 
