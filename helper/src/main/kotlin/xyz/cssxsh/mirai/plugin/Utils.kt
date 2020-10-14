@@ -74,7 +74,7 @@ suspend fun PixivHelper.buildMessage(
 ): List<Message> = buildList {
     getIllustInfo(illust.pid) { illust }
     if (simpleInfo) {
-        add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}\n 健全等级: ${illust.sanityLevel} "))
+        add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}, 健全等级: ${illust.sanityLevel} "))
     } else {
         add(illust.getMessage())
     }
@@ -91,7 +91,7 @@ suspend fun PixivHelper.buildMessage(
     info: BaseInfo
 ): List<Message> = buildList {
     if (simpleInfo) {
-        add(PlainText("作品ID: ${info.pid}, 收藏数: ${info.totalBookmarks}\n 健全等级: ${info.sanityLevel} "))
+        add(PlainText("作品ID: ${info.pid}, 收藏数: ${info.totalBookmarks}, 健全等级: ${info.sanityLevel} "))
     } else {
         add(info.getMessage())
     }
