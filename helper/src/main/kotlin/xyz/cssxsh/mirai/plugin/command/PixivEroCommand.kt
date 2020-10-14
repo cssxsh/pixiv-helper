@@ -23,6 +23,7 @@ object PixivEroCommand : SimpleCommand(
             if (remainingCapacity() == 0) take()
             put(info.pid)
             minSanityLevel = info.sanityLevel
+            minBookmarks = info.totalBookmarks
         }
     }
 
