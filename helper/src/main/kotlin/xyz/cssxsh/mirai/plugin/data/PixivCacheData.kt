@@ -23,15 +23,19 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun caches() = synchronized(illusts) { illusts.toMap() }
 
-    fun eros() = synchronized(illusts) {
-        eros_illusts.map {
-            requireNotNull(illusts[it]) { "缓存错误" }
+    fun eros(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
+        eros_illusts.mapNotNull { pid ->
+            requireNotNull(illusts[pid]) { "${pid}缓存错误" }.takeIf {
+                predicate(it)
+            }
         }
     }
 
-    fun r18s() = synchronized(illusts) {
-        r18s_illusts.map {
-            requireNotNull(illusts[it]) { "缓存错误" }
+    fun r18s(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
+        r18s_illusts.mapNotNull { pid ->
+            requireNotNull(illusts[pid]) { "${pid}缓存错误" }.takeIf {
+                predicate(it)
+            }
         }
     }
 

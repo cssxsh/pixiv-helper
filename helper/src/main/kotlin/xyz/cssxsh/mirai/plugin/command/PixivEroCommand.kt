@@ -16,15 +16,17 @@ object PixivEroCommand : SimpleCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros().random().takeIf { illust ->
-        illust.pid !in historyQueue && illust.sanityLevel >= minSanityLevel
-    }?.also { info ->
+    private fun PixivHelper.randomIllust(): BaseInfo = PixivCacheData.eros { info ->
+        info.pid !in historyQueue && info.sanityLevel >= minSanityLevel
+    }.also {
+        logger.verbose("共找到${it.size}个作品")
+    }.random().also { info ->
         historyQueue.apply {
             if (remainingCapacity() == 0) take()
             put(info.pid)
             minSanityLevel = info.sanityLevel
         }
-    } ?: randomIllust()
+    }
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
