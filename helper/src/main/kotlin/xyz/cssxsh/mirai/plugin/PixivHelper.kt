@@ -35,7 +35,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
     }
 
-    var minSanityLevel = 0
+    var minSanityLevel = 1
         set(value) { field = minOf(value,6) }
 
     var simpleInfo: Boolean

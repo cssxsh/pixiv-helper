@@ -31,7 +31,7 @@ object PixivEroCommand : SimpleCommand(
         if ("不够色" in message.contentToString()) {
             minSanityLevel++
         } else {
-            minSanityLevel = 0
+            minSanityLevel = 1
         }
         PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
             logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜索等级${minSanityLevel}")
