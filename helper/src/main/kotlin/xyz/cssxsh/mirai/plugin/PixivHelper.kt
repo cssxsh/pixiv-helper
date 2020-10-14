@@ -36,6 +36,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     }
 
     var minSanityLevel = 0
+        set(value) { field = minOf(value,6) }
 
     var simpleInfo: Boolean
         get() = PixivConfigData.simpleInfo.getOrPut(contact.id, { true })

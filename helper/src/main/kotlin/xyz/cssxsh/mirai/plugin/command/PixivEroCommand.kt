@@ -34,7 +34,7 @@ object PixivEroCommand : SimpleCommand(
             minSanityLevel = 0
         }
         PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
-            logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜素等级${minSanityLevel}")
+            logger.verbose("${fromEvent.sender}第${it}次使用色图, 搜索等级${minSanityLevel}")
         }
         buildMessage(randomIllust())
     }.onSuccess { list ->
