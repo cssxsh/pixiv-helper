@@ -38,6 +38,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     var minSanityLevel = 1
         set(value) { field = minOf(value,6) }
 
+    var minBookmarks: Long = 0
+
     var simpleInfo: Boolean
         get() = PixivConfigData.simpleInfo.getOrPut(contact.id, { true })
         set(value) {

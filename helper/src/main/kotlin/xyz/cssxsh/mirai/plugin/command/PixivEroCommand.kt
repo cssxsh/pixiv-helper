@@ -17,7 +17,7 @@ object PixivEroCommand : SimpleCommand(
 ), PixivHelperLogger {
 
     private fun PixivHelper.randomIllust(block: List<BaseInfo>.() -> Unit): BaseInfo = PixivCacheData.eros { info ->
-        info.pid !in historyQueue && info.sanityLevel >= minSanityLevel
+        info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
     }.apply(block).random().also { info ->
         historyQueue.apply {
             if (remainingCapacity() == 0) take()
@@ -32,6 +32,9 @@ object PixivEroCommand : SimpleCommand(
             minSanityLevel++
         } else {
             minSanityLevel = 1
+        }
+        if ("更好" !in message.contentToString()) {
+            minBookmarks = 0
         }
         buildMessage(randomIllust {
             PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
