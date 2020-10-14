@@ -354,7 +354,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Suppress("BlockingMethodInNonBlockingContext")
-    fun ConsoleCommandSender.tozip(uid: Long, path: String) = launch(Dispatchers.IO) {
+    suspend fun ConsoleCommandSender.tozip(uid: Long, path: String) = withContext(Dispatchers.IO) {
         ZipOutputStream(File(path).apply { createNewFile() }.outputStream()).use { zipOutputStream ->
             zipOutputStream.setLevel(BEST_COMPRESSION)
             PixivCacheData.caches().values.filter {
@@ -367,7 +367,7 @@ object PixivCacheCommand : CompositeCommand(
                         creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                         lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
                     })
-                    BufferedOutputStream(zipOutputStream, 8 * 1024 * 1024).use { buffer ->
+                    BufferedOutputStream(zipOutputStream).use { buffer ->
                         buffer.write(file.readBytes())
                     }
                 }
