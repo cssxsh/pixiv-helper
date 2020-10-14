@@ -397,5 +397,11 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.remove(pid)?.let {
             logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除, 目前共${PixivCacheData.caches().size}条缓存")
         }
+        PixivHelperSettings.imagesFolder(pid).apply {
+            listFiles()?.forEach {
+                it.delete()
+            }
+            delete()
+        }
     }
 }
