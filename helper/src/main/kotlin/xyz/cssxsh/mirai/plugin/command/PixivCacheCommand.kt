@@ -355,25 +355,25 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun ConsoleCommandSender.tozip(uid: Long) = withContext(Dispatchers.IO) {
-        ZipOutputStream(File("${uid}.zip").apply { createNewFile() }.outputStream()).use { zipOutputStream ->
-            BufferedOutputStream(zipOutputStream, 16 * 1024 * 1024).use { buffer ->
-                zipOutputStream.setLevel(BEST_COMPRESSION)
-                PixivCacheData.caches().values.filter {
-                    it.uid == uid
-                }.also {
-                    logger.verbose("共${it.size} 个作品将写入文件")
-                }.forEach { info ->
-                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                        zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
-                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                            lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                        })
-                        buffer.write(file.readBytes())
-                    }
+        ZipOutputStream(BufferedOutputStream(File("${uid}.zip").apply {
+            createNewFile()
+        }.outputStream(), 64 * 1024 * 1024)).use { zipOutputStream ->
+            zipOutputStream.setLevel(BEST_COMPRESSION)
+            PixivCacheData.caches().values.filter {
+                it.uid == uid
+            }.also {
+                logger.verbose("共${it.size} 个作品将写入文件")
+            }.forEach { info ->
+                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
+                        creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                        lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                    })
+                    zipOutputStream.write(file.readBytes())
                 }
             }
-            logger.verbose("${uid}压缩完毕！")
         }
+        logger.verbose("${uid}压缩完毕！")
     }
 
     /**
