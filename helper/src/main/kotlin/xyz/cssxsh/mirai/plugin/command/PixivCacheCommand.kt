@@ -356,23 +356,23 @@ object PixivCacheCommand : CompositeCommand(
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun ConsoleCommandSender.tozip(uid: Long, path: String) = withContext(Dispatchers.IO) {
         ZipOutputStream(File(path).apply { createNewFile() }.outputStream()).use { zipOutputStream ->
-            zipOutputStream.setLevel(BEST_COMPRESSION)
-            PixivCacheData.caches().values.filter {
-                it.uid == uid
-            }.also {
-                logger.verbose("共${it.size} 个作品将写入文件")
-            }.forEach { info ->
-                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
-                        creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                        lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                    })
-                    BufferedOutputStream(zipOutputStream).use { buffer ->
+            BufferedOutputStream(zipOutputStream).use { buffer ->
+                zipOutputStream.setLevel(BEST_COMPRESSION)
+                PixivCacheData.caches().values.filter {
+                    it.uid == uid
+                }.also {
+                    logger.verbose("共${it.size} 个作品将写入文件")
+                }.forEach { info ->
+                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                        zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.title})/${file.name}").apply {
+                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                            lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                        })
                         buffer.write(file.readBytes())
                     }
                 }
             }
-            logger.verbose("压缩完毕！")
+            logger.verbose("${uid}压缩完毕！")
         }
     }
 
