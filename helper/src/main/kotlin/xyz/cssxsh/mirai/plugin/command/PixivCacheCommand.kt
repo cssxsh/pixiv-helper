@@ -352,7 +352,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     fun ConsoleCommandSender.tozip(uid: Long) {
-        ZipOutputStream(FileOutputStream("~/${uid}.zip")).use { zipOutputStream ->
+        ZipOutputStream(FileOutputStream("/data/data/com.termux/files/home/${uid}.zip")).use { zipOutputStream ->
             BufferedOutputStream(zipOutputStream).use { buffer ->
                 PixivCacheData.caches().values.filter {
                     it.uid == uid
