@@ -401,7 +401,7 @@ object PixivCacheCommand : CompositeCommand(
             listFiles()?.forEach {
                 it.delete()
             }
-            delete()
+            logger.info("色图(${pid})文件夹将删除，结果${delete()}")
         }
     }
 }
