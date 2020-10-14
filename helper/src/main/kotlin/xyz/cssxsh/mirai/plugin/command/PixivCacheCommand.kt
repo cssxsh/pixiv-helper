@@ -19,6 +19,7 @@ import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import java.io.BufferedOutputStream
+import java.util.zip.Deflater.BEST_COMPRESSION
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -353,16 +354,19 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.tozip(uid: Long) {
         ZipOutputStream(FileOutputStream("/data/data/com.termux/files/home/${uid}.zip")).use { zipOutputStream ->
+            zipOutputStream.setLevel(BEST_COMPRESSION)
             BufferedOutputStream(zipOutputStream).use { buffer ->
                 PixivCacheData.caches().values.filter {
                     it.uid == uid
+                }.also {
+                    logger.verbose("共${it.size} 个作品将写入文件")
                 }.forEach { info ->
                     PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                        logger.verbose("${file.absolutePath} 将写入文件")
                         zipOutputStream.putNextEntry(ZipEntry("${info}/${file.name}"))
                         buffer.write(file.readBytes())
                     }
                 }
+                logger.verbose("压缩完毕！")
             }
         }
     }
