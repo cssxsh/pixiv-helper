@@ -6,6 +6,7 @@ import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
@@ -24,6 +25,9 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
+        PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
+            logger.verbose("${fromEvent.sender}第${it}次使用色图")
+        }
         buildMessage(randomIllust())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }

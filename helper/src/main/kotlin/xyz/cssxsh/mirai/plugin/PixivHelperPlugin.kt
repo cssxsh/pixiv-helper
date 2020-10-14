@@ -13,9 +13,7 @@ import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribe
 import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.command.*
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivConfigData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.*
 
 
 @AutoService(JvmPlugin::class)
@@ -37,6 +35,7 @@ object PixivHelperPlugin : KotlinPlugin(
         // Data
         PixivCacheData.reload()
         PixivConfigData.reload()
+        PixivStatisticalData.reload()
         // cmd
         PixivMethodCommand.register()
         PixivEroCommand.register()
