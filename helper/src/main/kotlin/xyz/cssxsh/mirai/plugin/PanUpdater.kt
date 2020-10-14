@@ -13,7 +13,6 @@ import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.updater.CreateResultData
 import xyz.cssxsh.mirai.plugin.updater.PanConfig
 import xyz.cssxsh.mirai.plugin.updater.PreCreateData
@@ -27,7 +26,7 @@ object PanUpdater {
     private const val SUPER_FILE = "https://c3.pcs.baidu.com/rest/2.0/pcs/superfile2"
     private const val CREATE_FILE = "https://pan.baidu.com/api/create"
     private const val BLOCK_SIZE = 4L * 1024 * 1024
-    private val httpClient: HttpClient get() = HttpClient(OkHttp) {
+    private fun httpClient(): HttpClient = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
         }
@@ -42,22 +41,13 @@ object PanUpdater {
             connectTimeoutMillis = 10_000
             requestTimeoutMillis = 600_000
         }
-        engine {
-            config {
-                addInterceptor { chain ->
-                    chain.request().let {
-                        chain.proceed(it)
-                    }
-                }
-            }
-        }
     }
-    private val config: PanConfig get() = PixivHelperSettings.panConfig
 
     private suspend fun HttpClient.preCreate(
-        updatePath: String,
+        path: String,
         localMtime: Long,
-        md5List: List<String> = listOf("5910a591dd8fc18c32a8f3df4fdc1761","a5fc157d78e6ad1c7e114b056c92821e")
+        config: PanConfig,
+        md5List: Set<String> = setOf("5910a591dd8fc18c32a8f3df4fdc1761","a5fc157d78e6ad1c7e114b056c92821e")
     ) = post<PreCreateData>(PRE_CREATE) {
         header(HttpHeaders.Origin, "https://pan.baidu.com")
         header(HttpHeaders.Referrer, "https://pan.baidu.com/disk/home?")
@@ -71,7 +61,7 @@ object PanUpdater {
         parameter("clienttype", 0)
 
         body = FormDataContent(Parameters.build {
-            append("path", config.targetPath + updatePath)
+            append("path", config.targetPath + "/" + path)
             append("autoinit", 1.toString())
             append("target_path", config.targetPath)
             append("block_list", "[${md5List.joinToString(",") { "\"${it}\"" }}]")
@@ -83,7 +73,8 @@ object PanUpdater {
         data: ByteArray,
         index: Int,
         uploadId: String,
-        path: String
+        path: String,
+        config: PanConfig
     ) = post<String>(SUPER_FILE) {
         header(HttpHeaders.Origin, "https://pan.baidu.com")
         header(HttpHeaders.Referrer, "https://pan.baidu.com/")
@@ -95,7 +86,7 @@ object PanUpdater {
         parameter("clienttype", 0)
         parameter("web", 1)
         parameter("logid", config.logId)
-        parameter("path", path)
+        parameter("path", config.targetPath + "/" + path)
         parameter("uploadid", uploadId)
         parameter("uploadsign", 0)
         parameter("partseq", index)
@@ -113,19 +104,21 @@ object PanUpdater {
         data: ByteArray,
         index: Int,
         uploadId: String,
-        path: String
+        path: String,
+        config: PanConfig
     ): SuperFileData = runCatching {
-        superFile(data, index, uploadId, path)
+        superFile(data, index, uploadId, path, config)
     }.onFailure {
         if (it !is ClientRequestException) throw it
-    }.getOrNull() ?: superFileOrNull(data, index, uploadId, path)
+    }.getOrNull() ?: superFileOrNull(data, index, uploadId, path, config)
 
     private suspend fun HttpClient.createFile(
         length: Long,
         uploadId: String,
         path: String,
         localMtime: Long,
-        md5List: List<String>
+        md5List: List<String>,
+        config: PanConfig
     ) = post<CreateResultData>(CREATE_FILE) {
         header(HttpHeaders.Origin, "https://pan.baidu.com")
         header(HttpHeaders.Referrer, "https://pan.baidu.com/disk/home?")
@@ -140,7 +133,7 @@ object PanUpdater {
         parameter("clienttype", 0)
 
         body = MultiPartFormDataContent(formData {
-            append("path", config.targetPath + path)
+            append("path", config.targetPath + "/" + path)
             append("size", length)
             append("uploadid", uploadId)
             append("block_list", "[${md5List.joinToString(",") { "\"${it}\"" }}]")
@@ -149,31 +142,46 @@ object PanUpdater {
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    fun CoroutineScope.update(sourcePath: String, updatePath: String, block: (SuperFileData) -> Unit = {}) = launch(Dispatchers.IO) {
-        val file = RandomAccessFile(File(sourcePath), "r")
+    fun CoroutineScope.update(
+        sourcePath: String,
+        updatePath: String,
+        config: PanConfig,
+        block: (SuperFileData, Pair<Int, Int>) -> Unit = { _, _ -> }
+    ) = launch(Dispatchers.IO) {
+        val file = File(sourcePath)
         val length = file.length()
-        val localMtime = File(sourcePath).lastModified()
+        val localMtime = file.lastModified()
         val blocks = (0 until length step BLOCK_SIZE).map { offset ->
             offset until minOf(offset + BLOCK_SIZE, length)
         }
 
-        httpClient.use { client ->
+        httpClient().use { client ->
             val preCreateData = client.preCreate(
-                updatePath = updatePath,
-                localMtime = localMtime
+                path = updatePath,
+                localMtime = localMtime,
+                config = config
             )
             val channel = Channel<Int>(8)
-            val superList = blocks.mapIndexed { index, range ->
+            var count = 0
+            val md5List = blocks.mapIndexed { index, range ->
                 async {
                     channel.send(index)
-                    client.superFileOrNull(
-                        data = range.map { file.readByte() }.toByteArray(),
-                        index = index,
-                        uploadId = preCreateData.uploadId,
-                        path = updatePath
-                    ).also {
-                        channel.receive()
-                        block(it)
+                    synchronized(file) {
+                        RandomAccessFile(File(sourcePath), "r").run {
+                            seek(range.first)
+                            range.map { readByte() }.toByteArray()
+                        }
+                    }.let { data ->
+                        client.superFileOrNull(
+                            data = data,
+                            index = index,
+                            uploadId = preCreateData.uploadId,
+                            path = updatePath,
+                            config = config
+                        ).also {
+                            channel.receive()
+                            block(it, ++count to blocks.size)
+                        }.md5
                     }
                 }
             }.awaitAll()
@@ -181,8 +189,9 @@ object PanUpdater {
                 length = length,
                 localMtime = localMtime,
                 path = updatePath,
-                md5List = superList.map { it.md5 },
-                uploadId = preCreateData.uploadId
+                md5List = md5List,
+                uploadId = preCreateData.uploadId,
+                config = config
             )
         }
     }
