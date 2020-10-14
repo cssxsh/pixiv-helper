@@ -19,6 +19,7 @@ import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import java.io.BufferedOutputStream
+import java.nio.file.attribute.FileTime
 import java.util.zip.Deflater.BEST_COMPRESSION
 
 @Suppress("unused")
@@ -363,7 +364,9 @@ object PixivCacheCommand : CompositeCommand(
                     logger.verbose("共${it.size} 个作品将写入文件")
                 }.forEach { info ->
                     PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                        zipOutputStream.putNextEntry(ZipEntry("[${info.uid}]<${info.title}>/${file.name}"))
+                        zipOutputStream.putNextEntry(ZipEntry("[${info.uid}]<${info.title}>/${file.name}").apply {
+                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                        })
                         buffer.write(file.readBytes())
                     }
                 }
