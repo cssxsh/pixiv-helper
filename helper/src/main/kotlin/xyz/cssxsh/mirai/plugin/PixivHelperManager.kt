@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
+import kotlinx.coroutines.cancel
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
@@ -52,5 +53,7 @@ object PixivHelperManager: PixivHelperLogger {
         is User -> synchronized(users) { users.remove(contact.id) }
         is Group -> synchronized(groups) { groups.remove(contact.id) }
         else -> throw IllegalAccessException("未知类型联系人!")
+    }?.apply {
+        cancel()
     }
 }
