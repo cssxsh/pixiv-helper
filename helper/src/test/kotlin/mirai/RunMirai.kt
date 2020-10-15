@@ -3,10 +3,14 @@ package mirai
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
-import io.ktor.util.Identity.decode
+import io.ktor.client.request.forms.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.content
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
@@ -16,29 +20,16 @@ import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribeAlways
 import net.mamoe.mirai.event.subscribeGroupMessages
-import ws.schild.jave.Encoder
-import ws.schild.jave.MultimediaObject
-import ws.schild.jave.encode.AudioAttributes
-import ws.schild.jave.encode.EncodingAttributes
+import okhttp3.internal.wait
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.use
 
 
 @ConsoleExperimentalApi
 @ConsoleTerminalExperimentalApi
 object RunMirai {
-
-    private val attributes = EncodingAttributes().apply {
-        setInputFormat("mp3")
-        setOutputFormat("amr")
-        setAudioAttributes(AudioAttributes().apply {
-            setBitRate(64000)
-            setChannels(1)
-            setSamplingRate(22050)
-        })
-    }
 
     private fun miraiConsoleImpl(rootPath: Path) = MiraiConsoleImplementationTerminal(
         rootPath = rootPath,
@@ -70,16 +61,31 @@ object RunMirai {
                             File(".").resolve("${result.value}.amr").apply {
                                 if (canRead().not()) {
                                     HttpClient(OkHttp).use { client ->
-                                        client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
+                                        val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
                                             parameter("lan", "zh")
                                             parameter("text", result.value)
                                             parameter("spd", 5)
                                             parameter("source", "web")
                                         }
+                                        val text = client.post<String>("https://s19.aconvert.com/convert/convert-batch.php") {
+                                            body = MultiPartFormDataContent(formData {
+                                                append(key = "file", filename = "blob") {
+                                                    writeFully(file)
+                                                }
+                                                append(key = "targetformat", value = "amr")
+                                                append(key = "audiobitratetype", value = 0)
+                                                append(key = "customaudiobitrate", value = "")
+                                                append(key = "audiosamplingtype", value = 0)
+                                                append(key = "customaudiosampling", value = "")
+                                                append(key = "code", value = 82000)
+                                                append(key = "filelocation", value = "local")
+                                            })
+                                        }
+                                        val filename = Json.parseToJsonElement(text).jsonObject["filename"]!!.jsonPrimitive.content
+                                        client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}")
                                     }.let {
-                                        File("tts.mp3").writeBytes(it)
+                                        writeBytes(it)
                                     }
-                                    Encoder().encode(MultimediaObject(File("tts.mp3")), this, attributes)
                                 }
                             }.let {
                                 group.uploadVoice(it.inputStream())
