@@ -47,8 +47,14 @@ object RunMirai {
                         atBot {
                             quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
                         }
-                        "当当爬" reply {
-                            group.uploadVoice(File("当当爬.amr").inputStream())
+                        File(".").listFiles()!!.filter { file ->
+                            ".amr" in  file.name &&  file.canRead()
+                        }.forEach { file ->
+                            file.name.run {
+                                subSequence(0, lastIndexOf("."))
+                            }.toString() reply {
+                                group.uploadVoice(file.inputStream())
+                            }
                         }
                     }
                 }.job.join()
