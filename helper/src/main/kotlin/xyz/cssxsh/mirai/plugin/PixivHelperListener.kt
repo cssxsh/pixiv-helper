@@ -4,9 +4,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
-import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.GroupMuteAllEvent
-import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribeAlways
 import kotlin.coroutines.CoroutineContext
 
@@ -20,13 +18,7 @@ class PixivHelperListener(private val parentCoroutineContext: CoroutineContext) 
             _coroutineScope = it
         }
 
-    fun start() = coroutineScope.apply {
-        subscribeAlways<NewFriendRequestEvent> {
-            accept()
-        }
-        subscribeAlways<BotInvitedJoinGroupRequestEvent> {
-            accept()
-        }
+    fun subscribeAll() = coroutineScope.apply {
         subscribeAlways<GroupMuteAllEvent> {
             PixivHelperManager.remove(group)
         }

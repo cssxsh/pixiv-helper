@@ -46,7 +46,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivAliasCommand.register()
 
         //
-        listener.start()
+        listener.subscribeAll()
     }
 
 

@@ -8,6 +8,11 @@ import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
 import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
+import net.mamoe.mirai.event.events.NewFriendRequestEvent
+import net.mamoe.mirai.event.subscribeAlways
+import net.mamoe.mirai.event.subscribeGroupMessages
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -31,7 +36,22 @@ object RunMirai {
         MiraiConsoleTerminalLoader.startAsDaemon(miraiConsoleImpl(Paths.get(".").toAbsolutePath()))
         try {
             runBlocking {
-                MiraiConsole.job.join()
+                MiraiConsole.apply {
+                    subscribeAlways<NewFriendRequestEvent> {
+                        accept()
+                    }
+                    subscribeAlways<BotInvitedJoinGroupRequestEvent> {
+                        accept()
+                    }
+                    subscribeGroupMessages {
+                        atBot {
+                            quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
+                        }
+                        "当当爬" reply {
+                            group.uploadVoice(File("当当爬.amr").inputStream())
+                        }
+                    }
+                }.job.join()
             }
         } catch (e: CancellationException) {
             // ignored
