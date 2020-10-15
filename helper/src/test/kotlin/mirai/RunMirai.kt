@@ -31,6 +31,11 @@ import kotlin.io.use
 @ConsoleTerminalExperimentalApi
 object RunMirai {
 
+
+    private val logger by lazy {
+        MiraiConsole.createLogger("RunMirai")
+    }
+
     private fun miraiConsoleImpl(rootPath: Path) = MiraiConsoleImplementationTerminal(
         rootPath = rootPath,
         dataStorageForJvmPluginLoader = JsonPluginDataStorage(rootPath.resolve("data"), false),
@@ -44,58 +49,63 @@ object RunMirai {
         // 默认在 /test 目录下运行
         MiraiConsoleTerminalLoader.parse(args, exitProcess = true)
         MiraiConsoleTerminalLoader.startAsDaemon(miraiConsoleImpl(Paths.get(".").toAbsolutePath()))
+        MiraiConsole.subscribeEvent()
         try {
             runBlocking {
-                MiraiConsole.apply {
-                    subscribeAlways<NewFriendRequestEvent> {
-                        accept()
-                    }
-                    subscribeAlways<BotInvitedJoinGroupRequestEvent> {
-                        accept()
-                    }
-                    subscribeGroupMessages {
-                        atBot {
-                            quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
-                        }
-                        """.+爬""".toRegex() matchingReply { result ->
-                            File(".").resolve("${result.value}.amr").apply {
-                                if (canRead().not()) {
-                                    HttpClient(OkHttp).use { client ->
-                                        val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
-                                            parameter("lan", "zh")
-                                            parameter("text", result.value)
-                                            parameter("spd", 5)
-                                            parameter("source", "web")
-                                        }
-                                        val text = client.post<String>("https://s19.aconvert.com/convert/convert-batch.php") {
-                                            body = MultiPartFormDataContent(formData {
-                                                append(key = "file", filename = "blob") {
-                                                    writeFully(file)
-                                                }
-                                                append(key = "targetformat", value = "amr")
-                                                append(key = "audiobitratetype", value = 0)
-                                                append(key = "customaudiobitrate", value = "")
-                                                append(key = "audiosamplingtype", value = 0)
-                                                append(key = "customaudiosampling", value = "")
-                                                append(key = "code", value = 82000)
-                                                append(key = "filelocation", value = "local")
-                                            })
-                                        }
-                                        val filename = Json.parseToJsonElement(text).jsonObject["filename"]!!.jsonPrimitive.content
-                                        client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}")
-                                    }.let {
-                                        writeBytes(it)
-                                    }
-                                }
-                            }.let {
-                                group.uploadVoice(it.inputStream())
-                            }
-                        }
-                    }
-                }.job.join()
+                MiraiConsole.job.join()
             }
         } catch (e: CancellationException) {
             // ignored
+        }
+    }
+
+    private fun MiraiConsole.subscribeEvent() = apply {
+        subscribeAlways<NewFriendRequestEvent> {
+            accept()
+        }
+        subscribeAlways<BotInvitedJoinGroupRequestEvent> {
+            accept()
+        }
+        subscribeGroupMessages {
+            atBot {
+                quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
+            }
+            """.+爬""".toRegex() matchingReply { result ->
+                File(".").resolve("${result.value}.amr").apply {
+                    if (canRead().not()) {
+                        HttpClient(OkHttp).use { client ->
+                            logger.verbose("开始tts")
+                            val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
+                                parameter("lan", "zh")
+                                parameter("text", result.value)
+                                parameter("spd", 5)
+                                parameter("source", "web")
+                            }
+                            logger.verbose("开始mp3 -> amr")
+                            val text = client.post<String>("https://s19.aconvert.com/convert/convert-batch.php") {
+                                body = MultiPartFormDataContent(formData {
+                                    append(key = "file", filename = "blob") {
+                                        writeFully(file)
+                                    }
+                                    append(key = "targetformat", value = "amr")
+                                    append(key = "audiobitratetype", value = 0)
+                                    append(key = "customaudiobitrate", value = "")
+                                    append(key = "audiosamplingtype", value = 0)
+                                    append(key = "customaudiosampling", value = "")
+                                    append(key = "code", value = 82000)
+                                    append(key = "filelocation", value = "local")
+                                })
+                            }
+                            val filename = Json.parseToJsonElement(text).jsonObject["filename"]!!.jsonPrimitive.content
+                            client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}")
+                        }.let {
+                            writeBytes(it)
+                        }
+                    }
+                }.let {
+                    group.uploadVoice(it.inputStream())
+                }
+            }
         }
     }
 }
