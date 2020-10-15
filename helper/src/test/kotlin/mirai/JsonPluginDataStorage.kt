@@ -25,7 +25,6 @@ class JsonPluginDataStorage(
         }
     }
 
-
     private val json = Json {
         prettyPrint = isConfig
         ignoreUnknownKeys = true
