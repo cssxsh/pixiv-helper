@@ -55,7 +55,7 @@ class JsonPluginDataStorage(
         require(file.isDirectory.not()) {
             "Target File $file is occupied by a directory therefore data ${instance::class.qualifiedName} can't be saved."
         }
-        logger.verbose("File allocated for ${instance.saveName}: ${file.toURI()}")
+        logger.verbose("File allocated for ${instance.saveName}: ${file.absolutePath}")
         file.createNewFile()
     }
 
