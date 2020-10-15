@@ -13,7 +13,7 @@ import java.nio.file.Path
 class JsonPluginDataStorage(
     override val directoryPath: Path,
     isConfig: Boolean,
-    private val logger: MiraiLogger = SilentLogger
+    private val logger: MiraiLogger = DefaultLogger("DataStorage")
 ) : MultiFilePluginDataStorage {
     init {
         directoryPath.toFile().mkdir()
