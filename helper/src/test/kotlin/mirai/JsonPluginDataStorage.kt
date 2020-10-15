@@ -35,15 +35,14 @@ class JsonPluginDataStorage(
 
     override fun load(holder: PluginDataHolder, instance: PluginData) {
         instance.onInit(holder, this)
-
-        val text = getPluginDataFile(holder, instance).readText()
-        if (text.isNotBlank()) {
-            logger.warning { "Deserializing $text" }
-            json.decodeFromString(instance.updaterSerializer, text)
-        } else {
-            this.store(holder, instance) // save an initial copy
+        getPluginDataFile(holder, instance).readText().let { text ->
+            if (text.isNotBlank()) {
+                json.decodeFromString(instance.updaterSerializer, text)
+            } else {
+                store(holder, instance) // save an initial copy
+            }
         }
-        logger.verbose { "Successfully loaded PluginData: ${instance.saveName}" }
+        logger.verbose("Successfully loaded PluginData: ${instance.saveName}")
     }
 
     private fun getPluginDataFile(holder: PluginDataHolder, instance: PluginData): File = directoryPath.run {
@@ -57,7 +56,7 @@ class JsonPluginDataStorage(
         require(file.isDirectory.not()) {
             "Target File $file is occupied by a directory therefore data ${instance::class.qualifiedName} can't be saved."
         }
-        logger.verbose { "File allocated for ${instance.saveName}: ${file.toURI()}" }
+        logger.verbose("File allocated for ${instance.saveName}: ${file.toURI()}")
         file.createNewFile()
     }
 
@@ -69,6 +68,6 @@ class JsonPluginDataStorage(
                 throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
             }
         )
-        logger.verbose { "Successfully saved PluginData: ${instance.saveName}" }
+        logger.verbose("Successfully saved PluginData: ${instance.saveName}")
     }
 }
