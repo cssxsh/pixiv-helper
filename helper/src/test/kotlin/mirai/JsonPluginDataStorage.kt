@@ -1,6 +1,7 @@
 package mirai
 
 import kotlinx.serialization.json.Json
+import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.data.MultiFilePluginDataStorage
 import net.mamoe.mirai.console.data.PluginData
 import net.mamoe.mirai.console.data.PluginDataHolder
@@ -13,7 +14,7 @@ import java.nio.file.Path
 class JsonPluginDataStorage(
     override val directoryPath: Path,
     isConfig: Boolean,
-    private val logger: MiraiLogger = DefaultLogger("DataStorage")
+    private val logger: MiraiLogger = MiraiConsole.createLogger("DataStorage")
 ) : MultiFilePluginDataStorage {
     init {
         directoryPath.toFile().mkdir()
