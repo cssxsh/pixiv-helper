@@ -45,6 +45,7 @@ dependencies {
     // test
     testImplementation(mirai("core-qqandroid", Versions.core))
     testImplementation(mirai("console-terminal", Versions.console))
+    testImplementation("ws.schild:jave-all-deps:3.0.1")
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
     // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
 }
