@@ -21,9 +21,13 @@ object PixivAliasCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.artwork(name: String) = getHelper().runCatching {
         requireNotNull(PixivAliasData.aliases[name]) { "找不到别名${name}" }.let { pid ->
-            PixivCacheData.caches().values.filter { it.uid == pid }
-        }.random().let { info ->
-            buildMessage(info)
+            PixivCacheData.caches().values.filter {
+                it.uid == pid
+            }.also { list ->
+                logger.verbose("画师(${pid})[${name}] 共找到${list.size}个作品")
+            }.random().let { info ->
+                buildMessage(info)
+            }
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
