@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin
 
 import com.google.auto.service.AutoService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
@@ -9,8 +11,11 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.ListeningStatus
 import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
+import net.mamoe.mirai.event.events.GroupMuteAllEvent
+import net.mamoe.mirai.event.events.GroupOperableEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribe
+import net.mamoe.mirai.event.subscribeAlways
 import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -27,6 +32,8 @@ object PixivHelperPlugin : KotlinPlugin(
     @ConsoleExperimentalApi
     override val autoSaveIntervalMillis: LongRange
         get() = 3.minutesToMillis..30.minutesToMillis
+
+    private val subscribeJobs: MutableList<Job> = mutableListOf()
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
@@ -48,14 +55,16 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivAliasCommand.register()
 
         //
-        subscribe<NewFriendRequestEvent> {
-            accept()
-            ListeningStatus.LISTENING
-        }
-
-        subscribe<BotInvitedJoinGroupRequestEvent> {
-            accept()
-            ListeningStatus.LISTENING
+        subscribeJobs.apply {
+            add(subscribeAlways<NewFriendRequestEvent> {
+                accept()
+            })
+            add(subscribeAlways<BotInvitedJoinGroupRequestEvent> {
+                accept()
+            })
+            add(subscribeAlways<GroupMuteAllEvent> {
+                PixivHelperManager.remove(group)
+            })
         }
     }
 
@@ -70,5 +79,12 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivTagCommand.unregister()
         PixivRecallCommand.unregister()
         PixivAliasCommand.unregister()
+
+        subscribeJobs.apply {
+            forEach {
+                it.cancel()
+            }
+            clear()
+        }
     }
 }

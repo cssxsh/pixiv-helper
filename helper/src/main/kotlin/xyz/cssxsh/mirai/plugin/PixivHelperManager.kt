@@ -1,12 +1,8 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.utils.secondsToMillis
-import xyz.cssxsh.mirai.plugin.data.PixivConfigData
-import xyz.cssxsh.pixiv.client.SimplePixivClient
 import xyz.cssxsh.pixiv.data.AuthResult
 
 object PixivHelperManager: PixivHelperLogger {
@@ -32,8 +28,8 @@ object PixivHelperManager: PixivHelperLogger {
      * @param defaultValue 构建默认值
      */
     fun getOrPut(contact: Contact, defaultValue: () -> PixivHelper): PixivHelper = when(contact) {
-        is User -> users.getOrPut(contact.id) { defaultValue() }
-        is Group -> groups.getOrPut(contact.id) { defaultValue() }
+        is User -> synchronized(users) { users.getOrPut(contact.id) { defaultValue() } }
+        is Group -> synchronized(groups) { groups.getOrPut(contact.id) { defaultValue() } }
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 
@@ -41,17 +37,20 @@ object PixivHelperManager: PixivHelperLogger {
      * 操作符[] 关联 getOrPut, 默认值为 PixivClientData()
      * @see [getOrPut]
      */
-    operator fun get(contact: Contact): PixivHelper = synchronized(this) {
-        getOrPut(contact) { PixivHelper(contact) }
-    }
-
+    operator fun get(contact: Contact): PixivHelper = getOrPut(contact) { PixivHelper(contact) }
 
     /**
      * set 操作符[] 关联 put
      */
     operator fun set(contact: Contact, value: PixivHelper) = when(contact) {
-        is User -> synchronized(this) { groups[contact.id] = value }
-        is Group -> synchronized(this) { groups[contact.id] = value }
+        is User -> synchronized(users) { users[contact.id] = value }
+        is Group -> synchronized(groups) { groups[contact.id] = value }
+        else -> throw IllegalAccessException("未知类型联系人!")
+    }
+
+    fun remove(contact: Contact) = when(contact) {
+        is User -> synchronized(users) { users.remove(contact.id) }
+        is Group -> synchronized(groups) { groups.remove(contact.id) }
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }
