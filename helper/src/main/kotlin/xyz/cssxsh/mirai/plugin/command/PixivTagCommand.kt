@@ -84,9 +84,11 @@ object PixivTagCommand: SimpleCommand(
         if (jobs.none { it.isActive }) {
             jobs.clear()
             PixivCacheData.caches().values.filter { info ->
-                tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+                info.isR18().not()
+            }.filter { info ->
+                 tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
-                logger.verbose("根据TAG: $tag 在涩图中找到${list.size}个作品")
+                logger.verbose("根据TAG: $tag 在缓存中找到${list.size}个作品")
                 buildMessage(list.random().also { info ->
                     if (list.size < PixivHelperSettings.maxTagCount) addRelated(info.pid, list.map { it.pid })
                 })
