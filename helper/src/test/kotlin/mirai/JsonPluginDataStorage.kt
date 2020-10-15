@@ -14,11 +14,17 @@ import java.nio.file.Path
 class JsonPluginDataStorage(
     override val directoryPath: Path,
     isConfig: Boolean,
-    private val logger: MiraiLogger = MiraiConsole.createLogger("DataStorage")
 ) : MultiFilePluginDataStorage {
     init {
         directoryPath.toFile().mkdir()
     }
+
+    companion object {
+        private val logger: MiraiLogger by lazy {
+            MiraiConsole.createLogger("DataStorage")
+        }
+    }
+
 
     private val json = Json {
         prettyPrint = isConfig
