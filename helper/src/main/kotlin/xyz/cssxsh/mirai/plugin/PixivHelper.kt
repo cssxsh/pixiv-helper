@@ -2,6 +2,7 @@
 
 package xyz.cssxsh.mirai.plugin
 
+import com.soywiz.klock.wrapped.WDateTime
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -32,6 +33,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
         }
 
+    override var expiresTime: WDateTime
+        get() = PixivHelperManager.expiresTime
+        set(value) { PixivHelperManager.expiresTime = value }
+
     val historyQueue by lazy {
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
     }
@@ -51,11 +56,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         config.apply(block).also { PixivConfigData.config = it }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info("$it by RefreshToken: $token")
+        logger.info("$it by RefreshToken: $token, expiresTime ${expiresTime.format("HH:mm:ss")}")
     }
 
     override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info("$it by Account: $mailOrPixivID")
+        logger.info("$it by Account: $mailOrPixivID, expiresTime ${expiresTime.format("HH:mm:ss")}")
     }
 
     /**

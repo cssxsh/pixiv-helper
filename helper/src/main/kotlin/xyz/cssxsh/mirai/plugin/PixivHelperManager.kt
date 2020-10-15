@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
+import com.soywiz.klock.wrapped.WDateTime
 import kotlinx.coroutines.cancel
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
@@ -22,6 +23,11 @@ object PixivHelperManager: PixivHelperLogger {
      * 用于存储认证消息
      */
     var authInfo: AuthResult.AuthInfo? = null
+
+    /**
+     * 信息
+     */
+    var expiresTime: WDateTime = WDateTime.now()
 
     /**
      * 通过联系人获取
