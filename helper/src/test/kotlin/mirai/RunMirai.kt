@@ -109,10 +109,11 @@ object RunMirai {
             atBot {
                 quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
             }
-            """.+爬""".toRegex() matchingReply { result ->
-                File(".").resolve("${result.value}.amr").apply {
+            """(?<=说：|say:).+""".toRegex() matchingReply { result ->
+                val text = if (result.value.length < 128) result.value else "太长不说"
+                File(".").resolve("${text}.amr").apply {
                     if (canRead().not()) {
-                        writeBytes(getAmr(result.value))
+                        writeBytes(getAmr(text))
                     }
                 }.let {
                     group.uploadVoice(it.inputStream())
