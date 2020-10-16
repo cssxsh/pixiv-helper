@@ -42,21 +42,18 @@ object TTS {
 
     @Serializable
     data class FileAlias(
-        val files: Map<String, String>
+        val files: MutableMap<String, String>
     )
 
     private val rootPath = File("amr")
 
-    private var fileMap: FileAlias
-        get() = Json.decodeFromString(FileAlias.serializer(), File(rootPath, "map.json").apply {
-            if (exists().not()) {
-                createNewFile()
-                writeText(Json.encodeToString(FileAlias.serializer(), FileAlias(files = emptyMap())))
-            }
-        }.readText())
-        set(value) {
-            File(rootPath, "map.json").writeText(Json.encodeToString(FileAlias.serializer(), value))
-        }
+    private val fileMap: FileAlias by lazy {
+        File(rootPath, "map.json").takeIf {
+            it.exists()
+        }?.let {
+            Json.decodeFromString(FileAlias.serializer(), it.readText())
+        } ?: FileAlias(files = mutableMapOf())
+    }
 
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
         logger.verbose("开始tts $text")
@@ -82,9 +79,8 @@ object TTS {
         client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}").let {
             File(rootPath, filename).writeBytes(it)
         }
-        fileMap = fileMap.run {
-            copy(files = files + (text to filename))
-        }
+        fileMap.files[text] = filename
+        File(rootPath, "map.json").writeText(Json.encodeToString(FileAlias.serializer(), fileMap))
         filename
     }
 
