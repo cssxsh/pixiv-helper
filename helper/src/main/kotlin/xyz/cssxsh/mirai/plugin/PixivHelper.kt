@@ -8,6 +8,7 @@ import com.soywiz.klock.PatternDateFormat
 import com.soywiz.klock.TimezoneNames
 import com.soywiz.klock.locale.chinese
 import com.soywiz.klock.wrapped.WDateTime
+import com.soywiz.klock.wrapped.WDateTimeTz
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -42,7 +43,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
         }
 
-    public override var expiresTime: WDateTime
+    public override var expiresTime: WDateTimeTz
         get() = PixivHelperManager.expiresTime
         set(value) { PixivHelperManager.expiresTime = value }
 
