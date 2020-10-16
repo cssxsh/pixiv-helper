@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
@@ -82,7 +83,7 @@ object RunMirai {
                             logger.verbose("开始mp3 -> amr")
                             val text = client.post<String>("https://s19.aconvert.com/convert/convert-batch.php") {
                                 body = MultiPartFormDataContent(formData {
-                                    append(key = "file", filename = "tts.mp3") {
+                                    append(key = "file", filename = "tts.mp3", contentType = ContentType.Audio.MPEG) {
                                         writeFully(file)
                                     }
                                     append(key = "targetformat", value = "amr")
