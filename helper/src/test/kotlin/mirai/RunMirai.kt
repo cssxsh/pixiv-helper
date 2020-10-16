@@ -8,7 +8,6 @@ import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.content
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.mamoe.mirai.console.MiraiConsole
@@ -20,7 +19,6 @@ import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribeAlways
 import net.mamoe.mirai.event.subscribeGroupMessages
-import okhttp3.internal.wait
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -84,7 +82,7 @@ object RunMirai {
                             logger.verbose("开始mp3 -> amr")
                             val text = client.post<String>("https://s19.aconvert.com/convert/convert-batch.php") {
                                 body = MultiPartFormDataContent(formData {
-                                    append(key = "file", filename = "blob") {
+                                    append(key = "file", filename = "tts.mp3") {
                                         writeFully(file)
                                     }
                                     append(key = "targetformat", value = "amr")
@@ -96,6 +94,7 @@ object RunMirai {
                                     append(key = "filelocation", value = "local")
                                 })
                             }
+                            logger.verbose("转换结果: $text")
                             val filename = Json.parseToJsonElement(text).jsonObject["filename"]!!.jsonPrimitive.content
                             client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}")
                         }.let {
