@@ -48,7 +48,12 @@ object TTS {
     private val rootPath = File("amr")
 
     private var fileMap: FileAlias
-        get() = Json.decodeFromString(FileAlias.serializer(), File(rootPath, "map.json").readText())
+        get() = Json.decodeFromString(FileAlias.serializer(), File(rootPath, "map.json").apply {
+            if (exists().not()) {
+                createNewFile()
+                writeText(Json.encodeToString(FileAlias.serializer(), FileAlias(files = emptyMap())))
+            }
+        }.readText())
         set(value) {
             File(rootPath, "map.json").writeText(Json.encodeToString(FileAlias.serializer(), value))
         }
