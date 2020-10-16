@@ -1,10 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import com.soywiz.klock.DateFormat
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
+import xyz.cssxsh.mirai.plugin.PixivHelper.Companion.DATE_FORMAT_CHINESE
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -46,7 +46,7 @@ object PixivSettingCommand: CompositeCommand(
         buildString {
             appendLine("账户: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
-            appendLine("Token: ${expiresTime.format(DateFormat.FORMAT1)}")
+            appendLine("Token: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.caches().size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")

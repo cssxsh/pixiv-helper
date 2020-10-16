@@ -3,6 +3,10 @@
 package xyz.cssxsh.mirai.plugin
 
 import com.soywiz.klock.DateFormat
+import com.soywiz.klock.KlockLocale
+import com.soywiz.klock.PatternDateFormat
+import com.soywiz.klock.TimezoneNames
+import com.soywiz.klock.locale.chinese
 import com.soywiz.klock.wrapped.WDateTime
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
@@ -21,6 +25,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     coroutineName = "PixivHelper:${contact}",
     config = PixivConfigData.config
 ), PixivHelperLogger {
+
+    companion object {
+        val DATE_FORMAT_CHINESE = PatternDateFormat("YYYY-MM-dd HH:mm:ss", KlockLocale.chinese)
+    }
 
     override var config: PixivConfig
         get() = PixivConfigData.config
@@ -57,11 +65,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         config.apply(block).also { PixivConfigData.config = it }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info("$it by RefreshToken: $token, expiresTime ${expiresTime.format(DateFormat.FORMAT1)}")
+        logger.info("$it by RefreshToken: $token, expiresTime ${expiresTime.format(DATE_FORMAT_CHINESE)}")
     }
 
     override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info("$it by Account: $mailOrPixivID, expiresTime ${expiresTime.format(DateFormat.FORMAT1)}")
+        logger.info("$it by Account: $mailOrPixivID, expiresTime ${expiresTime.format(DATE_FORMAT_CHINESE)}")
     }
 
     /**
