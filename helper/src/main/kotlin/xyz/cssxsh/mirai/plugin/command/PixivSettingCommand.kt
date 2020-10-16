@@ -46,7 +46,7 @@ object PixivSettingCommand: CompositeCommand(
         buildString {
             appendLine("账户: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
-            appendLine("Token: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
+            appendLine("ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.caches().size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
