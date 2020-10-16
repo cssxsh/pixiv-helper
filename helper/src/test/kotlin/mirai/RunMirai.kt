@@ -109,8 +109,8 @@ object RunMirai {
             atBot {
                 quoteReply("部分指令需要好友私聊，已添加自动好友验证\n有事请联系：QQ: 1438159989")
             }
-            """(?<=(说：|say:)).+""".toRegex() matchingReply { result ->
-                val text = if (result.value.length < 128) result.value else "太长不说"
+            """(?:说：|say:)(.+)""".toRegex() matchingReply { result ->
+                val text = if (result.groupValues[1].length < 128) result.groupValues[1] else "太长不说"
                 File(".").resolve("${text}.amr").apply {
                     if (canRead().not()) {
                         writeBytes(getAmr(text))
