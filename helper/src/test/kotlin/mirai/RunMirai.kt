@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import mirai.TTS.getAmrFile
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
@@ -35,11 +36,6 @@ import kotlin.io.use
 @ConsoleExperimentalApi
 @ConsoleTerminalExperimentalApi
 object RunMirai {
-
-
-    private val logger by lazy {
-        MiraiConsole.createLogger("RunMirai")
-    }
 
     private fun miraiConsoleImpl(rootPath: Path) = MiraiConsoleImplementationTerminal(
         rootPath = rootPath,
@@ -64,40 +60,6 @@ object RunMirai {
         }
     }
 
-    private suspend fun getAmr(text: String) = HttpClient(OkHttp) {
-        install(JsonFeature) {
-            serializer = KotlinxSerializer()
-        }
-        BrowserUserAgent()
-        ContentEncoding {
-            gzip()
-            deflate()
-            identity()
-        }
-    }.use { client ->
-        logger.verbose("开始tts $text")
-        val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
-            parameter("lan", "zh")
-            parameter("text", text)
-            parameter("spd", 5)
-            parameter("source", "web")
-        }
-        File("tts.mp3").writeBytes(file)
-        logger.verbose("开始mp3(${file.size}) -> amr")
-        val json = client.submitFormWithBinaryData<String>(
-            url = "https://s19.aconvert.com/convert/convert-batch.php",
-            formData = formData {
-                append(key = "file", filename = "blob", size = file.size.toLong(), contentType = ContentType.Audio.MPEG) {
-                    writeFully(file)
-                }
-                append(key = "targetformat", value = "amr")
-            }
-        )
-        logger.verbose("转换结果: $json")
-        val filename = Json.parseToJsonElement(json).jsonObject["filename"]!!.jsonPrimitive.content
-        client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}")
-    }
-
     private fun MiraiConsole.subscribeEvent() = apply {
         subscribeAlways<NewFriendRequestEvent> {
             accept()
@@ -111,13 +73,7 @@ object RunMirai {
             }
             """(?:说：|say:)(.+)""".toRegex() matchingReply { result ->
                 val text = if (result.groupValues[1].length < 128) result.groupValues[1] else "太长不说"
-                File(".").resolve("${text}.amr").apply {
-                    if (canRead().not()) {
-                        writeBytes(getAmr(text))
-                    }
-                }.let {
-                    group.uploadVoice(it.inputStream())
-                }
+                group.uploadVoice(getAmrFile(text).inputStream())
             }
         }
     }
