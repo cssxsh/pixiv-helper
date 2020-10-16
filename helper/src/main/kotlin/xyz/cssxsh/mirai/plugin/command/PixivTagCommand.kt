@@ -50,7 +50,7 @@ object PixivTagCommand: SimpleCommand(
     }
 
     private fun PixivHelper.addRelated(pid: Long, illusts: List<Long>, limit: Long = 100) = launch {
-        val seeds: List<Long> = illusts.takeIf { it.size <= 64 } ?: illusts.shuffled().subList(0, 64)
+        val seeds: List<Long> = illusts.shuffled().subList(0, minOf(illusts.size, PixivHelperSettings.maxTagCount))
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
