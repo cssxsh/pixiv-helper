@@ -16,7 +16,7 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * tag总计最大
      */
-    var maxTagCount: Int by value(64)
+    var maxTagCount: Int by value(16)
 
     /**
      * 图片缓存位置
