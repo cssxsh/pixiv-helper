@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import com.soywiz.klock.DateFormat
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -44,7 +45,8 @@ object PixivSettingCommand: CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.info() = getHelper().runCatching {
         buildString {
             appendLine("账户: ${getAuthInfo().user.account}")
-            appendLine("Token: ${getAuthInfo().refreshToken}")
+            appendLine("Token: ${getAuthInfo().accessToken}")
+            appendLine("Token: ${expiresTime.format(DateFormat.FORMAT1)}")
             appendLine("简略信息: $simpleInfo")
             appendLine("缓存数: ${PixivCacheData.caches().size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")

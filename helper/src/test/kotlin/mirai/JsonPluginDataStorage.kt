@@ -46,27 +46,28 @@ class JsonPluginDataStorage(
 
     private fun getPluginDataFile(holder: PluginDataHolder, instance: PluginData): File = directoryPath.run {
         resolve(holder.dataHolderName).toFile()
-    }.also { path ->
-        require(path.isFile.not()) {
+    }.apply {
+        require(isFile.not()) {
             "Target directory $path for holder $holder is occupied by a file therefore data ${instance::class.qualifiedName} can't be saved."
         }
-        path.mkdir()
-    }.resolve("${instance.saveName}.json").also { file ->
-        require(file.isDirectory.not()) {
-            "Target File $file is occupied by a directory therefore data ${instance::class.qualifiedName} can't be saved."
+        mkdir()
+    }.resolve("${instance.saveName}.json").apply {
+        require(isDirectory.not()) {
+            "Target File $absolutePath is occupied by a directory therefore data ${instance::class.qualifiedName} can't be saved."
         }
-        logger.verbose("File allocated for ${instance.saveName}: ${file.absolutePath}")
-        file.createNewFile()
+        logger.verbose("File allocated for ${instance.saveName}: $absolutePath")
+        createNewFile()
     }
 
     override fun store(holder: PluginDataHolder, instance: PluginData) {
-        getPluginDataFile(holder, instance).writeText(
-            kotlin.runCatching {
-                json.encodeToString(instance.updaterSerializer, {}())
-            }.getOrElse {
-                throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
-            }
-        )
-        logger.verbose("Successfully saved PluginData: ${instance.saveName}")
+        runCatching {
+            getPluginDataFile(holder, instance).writeText(
+                json.encodeToString(instance.updaterSerializer, Unit)
+            )
+        }.onSuccess {
+            logger.verbose("Successfully saved PluginData: ${instance.saveName}")
+        }.onFailure {
+            throw IllegalStateException("Exception while saving $instance, saveName=${instance.saveName}", it)
+        }
     }
 }
