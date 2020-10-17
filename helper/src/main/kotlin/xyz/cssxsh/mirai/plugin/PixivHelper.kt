@@ -37,11 +37,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override var authInfo: AuthResult.AuthInfo?
         get() = PixivHelperManager.authInfo
-        set(value) {
-            if (value != null) {
-                PixivHelperManager.authInfo = value
-            }
-        }
+        set(value) { PixivHelperManager.authInfo = value }
 
     public override var expiresTime: WDateTimeTz
         get() = PixivHelperManager.expiresTime
