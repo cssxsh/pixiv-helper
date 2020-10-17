@@ -9,8 +9,8 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
-    @ConsoleExperimentalApi
-    override fun shouldPerformAutoSaveWheneverChanged() = false
+//    @ConsoleExperimentalApi
+//    override fun shouldPerformAutoSaveWheneverChanged() = false
 
     /**
      * 缓存
