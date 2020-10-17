@@ -59,5 +59,5 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     fun imagesFolder(pid: Long): File = cacheFolder
         .resolve("%03d______".format(pid / 1_000_000)).apply { mkdir() }
         .resolve("%06d___".format(pid / 1_000)).apply { mkdir() }
-        .resolve("$pid")
+        .resolve("$pid").apply { mkdir() }
 }
