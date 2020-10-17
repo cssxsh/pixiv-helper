@@ -56,5 +56,8 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * 图片目录
      */
-    fun imagesFolder(pid: Long): File = File(cacheFolder, pid.toString()).apply { mkdir() }
+    fun imagesFolder(pid: Long): File = cacheFolder
+        .resolve("%03d______".format(pid / 1_000_000)).apply { mkdir() }
+        .resolve("%06d___".format(pid / 1_000)).apply { mkdir() }
+        .resolve("$pid")
 }

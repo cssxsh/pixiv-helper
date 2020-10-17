@@ -191,7 +191,7 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 PixivHelperSettings.cacheFolder.also {
                     logger.verbose("从 ${it.absolutePath} 加载作品信息")
-                }.walk().mapNotNull { file ->
+                }.walk().maxDepth(3).mapNotNull { file ->
                     if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                         file.name.toLong()
                     } else {
