@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 object PixivRecallCommand : SimpleCommand(
     PixivHelperPlugin,
     "recall", "撤回",
-    description = "色图指令",
+    description = "撤回指令",
     prefixOptional = true
 ), PixivHelperLogger {
 

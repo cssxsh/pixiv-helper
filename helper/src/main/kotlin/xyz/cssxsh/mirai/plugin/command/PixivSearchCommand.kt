@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.*
 object PixivSearchCommand : SimpleCommand(
     PixivHelperPlugin,
     "search", "搜索",
-    description = "缓存指令",
+    description = "搜索指令",
     prefixOptional = true
 ), PixivHelperLogger {
 

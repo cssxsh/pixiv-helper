@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -100,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch {
+        launch(Dispatchers.IO) {
             runCatching {
                 PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
@@ -316,8 +315,6 @@ object PixivCacheCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-    @Serializable
-    data class TagData(val tags: Map<String, Int>)
     /**
      * 标签统计
      */
@@ -329,7 +326,7 @@ object PixivCacheCommand : CompositeCommand(
             allowStructuredMapKeys = true
         }
         buildMap<String, Int> {
-            PixivCacheData.eros().flatMap {
+            PixivCacheData.caches().values.flatMap {
                 it.tags
             }.forEach { tag ->
                 tag.name.let {
