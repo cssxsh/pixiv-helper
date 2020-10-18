@@ -45,7 +45,7 @@ object TTS {
         val files: MutableMap<String, String>
     )
 
-    private val rootPath = File("amr")
+    private val rootPath = File("amrs").apply { mkdir() }
 
     private val fileMap: FileAlias by lazy {
         File(rootPath, "map.json").takeIf {
@@ -56,14 +56,14 @@ object TTS {
     }
 
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
-        logger.verbose("开始tts $text")
+        logger.verbose("开始tts '$text'")
         val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
             parameter("lan", "zh")
             parameter("text", text)
             parameter("spd", 5)
             parameter("source", "web")
         }
-        File("tts.mp3").writeBytes(file)
+        // File("tts.mp3").writeBytes(file)
         logger.verbose("开始mp3(${file.size}) -> amr")
         val json = client.submitFormWithBinaryData<String>(
             url = "https://s19.aconvert.com/convert/convert-batch.php",
