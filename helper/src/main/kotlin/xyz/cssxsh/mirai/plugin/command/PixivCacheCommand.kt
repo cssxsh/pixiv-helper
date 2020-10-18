@@ -337,13 +337,12 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }
         }.let {
-            logger.info("共有tag: ${it.size}")
-            json.encodeToString(TagData.serializer(), TagData(it))
+            it.size to File(PixivHelperSettings.cachePath, "tags.json").apply {
+                writeText(json.encodeToString(TagData.serializer(), TagData(it)))
+            }.absolutePath.toString()
         }
-    }.onSuccess { text ->
-        File(PixivHelperSettings.cachePath, "tags.json").apply {
-            writeText(text)
-        }
+    }.onSuccess { (size, path) ->
+        logger.info("共有tag: ${size}, 保存至${path}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
