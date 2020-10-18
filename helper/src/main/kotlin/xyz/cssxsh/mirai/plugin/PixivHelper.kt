@@ -62,11 +62,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         config.apply(block).also { PixivConfigData.config = it }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info("$it by RefreshToken: $token, expiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
+        logger.info("$it by RefreshToken: $token, ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
     }
 
     override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info("$it by Account: $mailOrPixivID, expiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
+        logger.info("$it by Account: $mailOrPixivID, ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
     }
 
     /**
