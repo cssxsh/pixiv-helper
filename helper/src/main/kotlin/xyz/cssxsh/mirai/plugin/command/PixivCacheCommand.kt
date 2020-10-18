@@ -47,7 +47,7 @@ object PixivCacheCommand : CompositeCommand(
                 add(PixivCacheData.update(it).values)
                 logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载排行榜[${mode}]失败", it)
+                logger.warning("加载排行榜[${mode}]失败", it)
             }
         }
     }
@@ -61,7 +61,7 @@ object PixivCacheCommand : CompositeCommand(
                 add(PixivCacheData.update(it).values)
                 logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品预览第${offset / 30}页失败", it)
+                logger.warning("加载关注用户作品预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -75,7 +75,7 @@ object PixivCacheCommand : CompositeCommand(
                 add(PixivCacheData.update(it).values)
                 logger.verbose("加载关注用户作品时间线第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载关注用户作品时间线第${offset / 30}页失败", it)
+                logger.warning("加载关注用户作品时间线第${offset / 30}页失败", it)
             }
         }
     }
@@ -89,7 +89,7 @@ object PixivCacheCommand : CompositeCommand(
                 add(PixivCacheData.update(it).values)
                 logger.verbose("加载推荐用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载推荐用户预览第${offset / 30}页失败", it)
+                logger.warning("加载推荐用户预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -111,7 +111,7 @@ object PixivCacheCommand : CompositeCommand(
                         }.onSuccess {
                             delay(timeMillis)
                         }.onFailure {
-                            logger.verbose("获取作品(${illust.pid})[${illust.title}]错误", it)
+                            logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
                         }.isSuccess
                     }
                 }
@@ -175,7 +175,7 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 logger.verbose("加载用户作品第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.verbose("加载用户作品第${offset / 30}页失败", it)
+                logger.warning("加载用户作品第${offset / 30}页失败", it)
             }.getOrNull()
         }.flatten()
     }
@@ -205,7 +205,7 @@ object PixivCacheCommand : CompositeCommand(
                         isActive && runCatching {
                             getImages(getIllustInfo(pid))
                         }.onFailure {
-                            logger.verbose("获取作品(${pid})错误", it)
+                            logger.warning("获取作品(${pid})错误", it)
                         }.isSuccess
                     }
                 }
@@ -234,7 +234,7 @@ object PixivCacheCommand : CompositeCommand(
                     runCatching {
                         getIllustInfo(pid, true)
                     }.onFailure {
-                        logger.warning("刷新")
+                        logger.warning("刷新失败", it)
                     }.isFailure
                 }
             }.onSuccess {

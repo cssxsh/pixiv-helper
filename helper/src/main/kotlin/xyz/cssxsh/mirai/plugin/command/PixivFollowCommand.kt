@@ -32,7 +32,7 @@ object PixivFollowCommand : CompositeCommand(
                     add(it)
                     logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.verbose("加载关注用户作品预览第${offset / 30}页失败", it)
+                    logger.warning("加载关注用户作品预览第${offset / 30}页失败", it)
                 }
             }
         }.flatten().toSet()
