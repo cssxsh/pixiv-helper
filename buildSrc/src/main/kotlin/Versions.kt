@@ -11,7 +11,7 @@ object Versions {
     const val serialization = "1.0-M1-1.4.0-rc"
     const val ktor = "1.4.0"
     // other
-    const val shadow = "6.0.0"
+    const val shadow = "6.1.0"
     const val junit = "5.6.2"
     const val klock = "1.12.0"
     const val krypto = "1.11.2"
