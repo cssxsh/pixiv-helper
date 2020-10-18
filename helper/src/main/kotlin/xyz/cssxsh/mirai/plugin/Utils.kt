@@ -183,13 +183,13 @@ suspend fun PixivHelper.getImages(
 ).apply {
     if (save) {
         illust.save()
-        if (illust.user.isFollowed != true) {
+        if (illust.user.isFollowed != true && illust.isEro()) {
             runCatching {
                 userFollowAdd(illust.user.id)
             }.onSuccess {
-                logger.info("用户(${getAuthInfo().user.name})添加关注(${illust.user.id})成功, $it")
+                logger.info("用户(${getAuthInfo().user.name})添加关注(${illust.user.id})[${illust.user.name}]成功, $it")
             }.onFailure {
-                logger.warning("用户(${getAuthInfo().user.name})添加关注(${illust.user.id})失败", it)
+                logger.warning("用户(${getAuthInfo().user.name})添加(${illust.user.id})[${illust.user.name}]失败", it)
             }
         }
     }
