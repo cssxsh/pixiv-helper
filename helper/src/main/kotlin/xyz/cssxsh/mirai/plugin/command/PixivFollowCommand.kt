@@ -48,9 +48,9 @@ object PixivFollowCommand : CompositeCommand(
                 runCatching {
                     userFollowAdd(uid)
                 }.onSuccess {
-                    logger.info("用户(${authInfo.user.name})添加关注(${uid}), $it")
-                }.onSuccess {
-
+                    logger.info("用户(${authInfo.user.name})添加关注(${uid})成功, $it")
+                }.onFailure {
+                    logger.warning("用户(${authInfo.user.name})添加关注(${uid})失败", it)
                 }.isSuccess
             }
         }
