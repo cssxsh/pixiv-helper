@@ -1,8 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.delay
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.pixiv.api.app.*
@@ -49,6 +51,7 @@ object PixivFollowCommand : CompositeCommand(
                     userFollowAdd(uid)
                 }.onSuccess {
                     logger.info("用户(${authInfo.user.name})添加关注(${uid})成功, $it")
+                    delay(3.secondsToMillis)
                 }.onFailure {
                     logger.warning("用户(${authInfo.user.name})添加关注(${uid})失败", it)
                 }.isSuccess
