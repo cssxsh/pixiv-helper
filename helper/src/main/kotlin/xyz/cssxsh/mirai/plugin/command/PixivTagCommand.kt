@@ -81,7 +81,7 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
-        PixivStatisticalData.tagAdd(fromEvent.sender.id, tag).also {
+        PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag).also {
             logger.verbose("${fromEvent.sender}第${it}次使用tag 检索$tag ")
         }
         if (jobs.none { it.isActive }) {

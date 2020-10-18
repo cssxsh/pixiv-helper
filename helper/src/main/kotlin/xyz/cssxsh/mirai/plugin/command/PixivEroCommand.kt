@@ -38,7 +38,7 @@ object PixivEroCommand : SimpleCommand(
             minBookmarks = 0
         }
         buildMessage(randomIllust {
-            PixivStatisticalData.eroAdd(id = fromEvent.sender.id).let {
+            PixivStatisticalData.eroAdd(user = fromEvent.sender).let {
                 logger.verbose("${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图")
             }
         })
