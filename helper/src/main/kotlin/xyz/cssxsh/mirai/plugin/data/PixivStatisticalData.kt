@@ -6,21 +6,24 @@ import net.mamoe.mirai.contact.User
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 
 object PixivStatisticalData : AutoSavePluginData("PixivStatistics"), PixivHelperLogger {
-    private val eroCount: MutableMap<Long, Int> by value(mutableMapOf())
 
-    private val tagCount: MutableMap<Long, MutableMap<String, Int>> by value(mutableMapOf())
+    private val data: MutableMap<Long, UserData> by value(mutableMapOf())
 
-    fun eroAdd(user: User): Int = eroCount.run {
-        (getOrDefault(user.id, 0) + 1).also {
-            put(user.id, it)
+    fun eroAdd(user: User): Int = data.compute(user.id) { _, userData ->
+        (userData ?: UserData()).run {
+            copy(eroCount = eroCount + 1)
         }
-    }
+    }!!.eroCount
 
-    fun tagAdd(user: User, tag: String): Int = tagCount.getOrPut(user.id) { mutableMapOf() }.run {
-        (getOrDefault(tag, 0) + 1).also {
-            put(tag, it)
+    fun tagAdd(user: User, tag: String): Int = data.compute(user.id) { _, userData ->
+        (userData ?: UserData()).run {
+            copy(tagCount = tagCount.toMutableMap().apply {
+                compute(tag) { _, old ->
+                    (old ?: 0) + 1
+                }
+            }.toMap())
         }
-    }
+    }!!.tagCount[tag]!!
 
-    fun getCount(user: User) = eroCount.getOrPut(user.id, { 0 }) to tagCount.getOrPut(user.id) { mutableMapOf() }.toMap()
+    fun getCount(user: User) = data.getOrPut(user.id) { UserData() }
 }
