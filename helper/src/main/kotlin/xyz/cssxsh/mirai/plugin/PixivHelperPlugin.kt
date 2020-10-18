@@ -43,7 +43,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivFollowCommand.register()
         PixivTagCommand.register()
         PixivRecallCommand.register()
-        PixivAliasCommand.register()
+        PixivIllustratorCommand.register()
         PixivInfoCommand.register()
 
         //
@@ -60,7 +60,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivFollowCommand.unregister()
         PixivTagCommand.unregister()
         PixivRecallCommand.unregister()
-        PixivAliasCommand.unregister()
+        PixivIllustratorCommand.unregister()
         PixivInfoCommand.unregister()
 
         listener.stop()

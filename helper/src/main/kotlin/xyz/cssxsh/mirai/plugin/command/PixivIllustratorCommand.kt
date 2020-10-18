@@ -10,9 +10,9 @@ import xyz.cssxsh.mirai.plugin.data.PixivAliasData
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
 
-object PixivAliasCommand : CompositeCommand(
+object PixivIllustratorCommand : CompositeCommand(
     PixivHelperPlugin,
-    "Illustrator", "画师",
+    "illustrator", "画师",
     description = "画师指令",
     prefixOptional = true
 ), PixivHelperLogger {
