@@ -40,43 +40,6 @@ object PixivSettingCommand: CompositeCommand(
         PixivHelperSettings.minInterval = interval
     }
 
-    /**
-     * 获取助手信息
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.info() = getHelper().runCatching {
-        buildString {
-            appendLine("账户: ${getAuthInfo().user.account}")
-            appendLine("Token: ${getAuthInfo().accessToken}")
-            appendLine("ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
-            appendLine("简略信息: $simpleInfo")
-            appendLine("缓存数: ${PixivCacheData.caches().size}")
-            appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
-            appendLine("R18色图数: ${PixivCacheData.r18s().size}")
-        }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
-
-    /**
-     * 获取用户信息
-     */
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(target: User) = runCatching {
-        PixivStatisticalData.getCount(target).let { (ero, tags) ->
-            buildString {
-                appendLine("账户: ${target}")
-                appendLine("使用色图指令次数: $ero")
-                appendLine("使用tag指令次数: $tags")
-            }
-        }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
-
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.simple(
         isSimple: Boolean
