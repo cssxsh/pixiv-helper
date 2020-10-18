@@ -13,7 +13,7 @@ import xyz.cssxsh.mirai.plugin.getHelper
 object PixivAliasCommand : CompositeCommand(
     PixivHelperPlugin,
     "Illustrator", "画师",
-    description = "缓存指令",
+    description = "画师指令",
     prefixOptional = true
 ), PixivHelperLogger {
 
