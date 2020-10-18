@@ -43,15 +43,19 @@ object PixivFollowCommand : CompositeCommand(
             it - followed
         }.also {
             logger.verbose("已关注${followed.size}, 共有${it.size}个用户等待关注")
-        }.count { uid ->
-            runCatching {
-                userFollowAdd(uid).let {
+        }.run {
+            size to count { uid ->
+                runCatching {
+                    userFollowAdd(uid)
+                }.onSuccess {
                     logger.info("用户(${authInfo.user.name})添加关注(${uid}), $it")
-                }
-            }.isSuccess
+                }.onSuccess {
+
+                }.isSuccess
+            }
         }
-    }.onSuccess {
-        quoteReply("关注添加成功, 共${it}个新关注")
+    }.onSuccess { (size, count) ->
+        quoteReply("关注添加成功, 共${size}个新关注, ${count}个关注成功。")
     }.onFailure {
         quoteReply("关注添加失败， ${it.message}")
     }.isSuccess
