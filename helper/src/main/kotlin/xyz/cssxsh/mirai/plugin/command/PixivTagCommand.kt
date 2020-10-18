@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.PlainText
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
 import xyz.cssxsh.pixiv.api.app.searchIllust
@@ -80,6 +81,9 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
+        PixivStatisticalData.tagAdd(fromEvent.sender.id, tag).also {
+            logger.verbose("${fromEvent.sender}第${it}次使用tag 检索$tag ")
+        }
         if (jobs.none { it.isActive }) {
             jobs.clear()
             PixivCacheData.caches().values.filter { info ->
@@ -87,7 +91,7 @@ object PixivTagCommand: SimpleCommand(
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在缓存中找到${list.size}个作品")
                 list.filter { info ->
-                    info.isR18().not()
+                    info.isR18().not() && info.pageCount < 4
                 }.random().also { info ->
                     if (list.size < PixivHelperSettings.maxTagCount) addRelated(info.pid, list.map { it.pid })
                 }.let {
