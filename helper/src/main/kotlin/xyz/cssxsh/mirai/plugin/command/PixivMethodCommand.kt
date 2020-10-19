@@ -10,6 +10,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.description.*
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PixivHelperManager.expiresTime
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
@@ -40,7 +41,7 @@ object PixivMethodCommand : CompositeCommand(
     ) = getHelper().runCatching {
         login(username, password)
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功，Token ${it.refreshToken}")
+        quoteReply("${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
@@ -55,7 +56,7 @@ object PixivMethodCommand : CompositeCommand(
     ) = getHelper().runCatching {
         refresh(token)
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
+        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
@@ -68,7 +69,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
         autoAuth()
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功, Token ${it.refreshToken}")
+        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
@@ -90,7 +91,7 @@ object PixivMethodCommand : CompositeCommand(
             require("18" !in it) { "R18禁止！" }
         })
 
-        buildMessage(illustRanking(date = date, mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
+        buildMessage(illustRanking(date = date, mode = rankMode, offset = index).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -111,7 +112,7 @@ object PixivMethodCommand : CompositeCommand(
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        buildMessage(illustRanking(mode = rankMode, offset = index.positiveLongCheck()).illusts.first())
+        buildMessage(illustRanking(mode = rankMode, offset = index).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -139,7 +140,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
         pid: Long
     ) = getHelper().runCatching {
-        buildMessage(getIllustInfo(pid.positiveLongCheck()))
+        buildMessage(getIllustInfo(pid))
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -154,7 +155,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(
         uid: Long
     ) = getHelper().runCatching {
-        buildMessage(userIllusts(uid.positiveLongCheck()).illusts.first())
+        buildMessage(userIllusts(uid).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

@@ -51,8 +51,6 @@ suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivH
 
 fun String.getFilename() = substring(lastIndexOfAny(listOf("/", "\\")))
 
-fun Long.positiveLongCheck() = also { require(it > 0) { "应该为正整数" } }
-
 fun IllustInfo.getMessage(): Message = toBaseInfo().getMessage()
 
 fun BaseInfo.getMessage(): Message = buildString {
@@ -160,8 +158,8 @@ suspend fun PixivHelper.getIllustInfo(
         if (!flush && file.canRead()) {
             file.readIllustInfo()
         } else {
-            block(pid).also {
-                it.writeTo(file)
+            block(pid).apply {
+                writeTo(file)
             }
         }
     }
