@@ -273,6 +273,12 @@ object PixivCacheCommand : CompositeCommand(
         }.count { info ->
             runCatching {
                 val dir = PixivHelperSettings.imagesFolder(info.pid)
+                File(dir, "${info.pid}.json").run {
+                    if (canRead().not()) {
+                        delete()
+                        illustDetail(info.pid).illust.writeTo(this)
+                    }
+                }
                 info.originUrl.filter { url ->
                     File(dir, url.getFilename()).canRead().not()
                 }.let { urls ->
