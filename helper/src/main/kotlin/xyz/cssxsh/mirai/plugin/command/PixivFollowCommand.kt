@@ -58,8 +58,8 @@ object PixivFollowCommand : CompositeCommand(
                 }.isSuccess
             }
         }
-    }.onSuccess { (size, count) ->
-        quoteReply("关注添加成功, 共${size}个新关注, ${count}个关注成功。")
+    }.onSuccess { (total, success) ->
+        quoteReply("关注添加成功, 共${total}个新关注, ${success}个关注成功。")
     }.onFailure {
         quoteReply("关注添加失败， ${it.message}")
     }.isSuccess
