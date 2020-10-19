@@ -99,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO + CoroutineName("DoCache(${timeMillis}ms)")) {
+        launch(Dispatchers.IO) {
             runCatching {
                 PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
@@ -188,7 +188,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch {
+        launch(Dispatchers.IO) {
             runCatching {
                 PixivHelperSettings.cacheFolder.also {
                     logger.verbose("从 ${it.absolutePath} 加载作品信息")
@@ -230,7 +230,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.flush() = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch {
+        launch(Dispatchers.IO) {
             runCatching {
                 PixivCacheData.caches().keys.count { pid ->
                     runCatching {
