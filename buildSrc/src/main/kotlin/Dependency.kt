@@ -9,7 +9,7 @@ fun ktor(module: String, version: String= Versions.ktor) =
 fun mirai(module: String, version: String = "+") =
     "net.mamoe:mirai-$module:$version"
 
-fun korlibs(module: String, version: String = "+") =
+fun korlibs(module: String, version: String = Versions.korlibs) =
     "com.soywiz.korlibs.$module:$module:$version"
 
 fun okhttp3(module: String, version: String = Versions.okhttp) =

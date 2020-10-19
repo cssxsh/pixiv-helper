@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.internal.DependencyFilter
+
 plugins {
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
@@ -33,7 +35,7 @@ dependencies {
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(mirai("core", Versions.core))
     implementation(mirai("console", Versions.console))
-    implementation(korlibs("klock", Versions.klock))
+    // implementation(korlibs("klock", Versions.klock))
     // implementation(korlibs("krypto", Versions.krypto))
     implementation(ktor("client-core", Versions.ktor))
     implementation(ktor("client-serialization", Versions.ktor))
@@ -71,11 +73,13 @@ tasks {
         useJUnitPlatform()
     }
 
+
     shadowJar {
-        dependencies {
-           exclude { "org.jetbrains" in it.moduleGroup }
-           exclude { "net.mamoe" in it.moduleGroup }
-       }
+        val block: DependencyFilter.() -> Unit = {
+            exclude { "org.jetbrains" in it.moduleGroup }
+            exclude { "net.mamoe" in it.moduleGroup }
+        }
+        dependencies(block)
     }
 
     compileKotlin {
@@ -120,12 +124,13 @@ tasks {
                     }
                 }
             }
-            File(testConsoleDir, "start.sh").writeText(
+            File(testConsoleDir, "start.bat").writeText(
                 buildString {
                     appendln("cd ${testConsoleDir.absolutePath}")
-                    appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} \\")
-                    appendln("  -Dfile.encoding=UTF-8 \\")
-                    appendln("  mirai.RunMirai")
+                    appendln("@echo off")
+                    appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} ^")
+                    appendln("-Dfile.encoding=UTF-8 ^")
+                    appendln("mirai.RunMirai")
                 }
             )
         }
