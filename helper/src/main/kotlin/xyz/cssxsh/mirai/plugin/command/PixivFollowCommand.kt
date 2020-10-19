@@ -49,7 +49,7 @@ object PixivFollowCommand : CompositeCommand(
         }.run {
             size to count { uid ->
                 runCatching {
-                    delay(30.secondsToMillis)
+                    delay(10.secondsToMillis)
                     userFollowAdd(uid)
                 }.onSuccess {
                     logger.info("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${uid})成功, $it")
