@@ -300,11 +300,11 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }.onFailure {
                     logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
-                }.isSuccess
+                }.isFailure
             }
         }
     }.onSuccess { (size, num) ->
-        quoteReply("检查缓存完毕，总计${size}, 修复成功数: $num")
+        quoteReply("检查缓存完毕，总计${size}, 无法修复数: $num")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
