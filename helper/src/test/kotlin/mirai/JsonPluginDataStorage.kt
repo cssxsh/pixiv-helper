@@ -62,7 +62,7 @@ class JsonPluginDataStorage(
     override fun store(holder: PluginDataHolder, instance: PluginData) {
         runCatching {
             getPluginDataFile(holder, instance).writeText(
-                json.encodeToString(instance.updaterSerializer, Unit)
+                json.encodeToString(instance.updaterSerializer, {}())
             )
         }.onSuccess {
             logger.verbose("Successfully saved PluginData: ${instance.saveName}")

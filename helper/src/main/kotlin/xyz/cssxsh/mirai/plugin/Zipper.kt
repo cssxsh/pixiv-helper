@@ -1,9 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import xyz.cssxsh.mirai.plugin.command.PixivCacheCommand
+import kotlinx.coroutines.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.BufferedOutputStream

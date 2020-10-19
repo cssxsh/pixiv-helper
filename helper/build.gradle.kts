@@ -32,7 +32,7 @@ repositories {
 dependencies {
     kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
     compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
-    implementation(kotlin("stdlib", Versions.kotlin))
+    // implementation(kotlin("stdlib", Versions.kotlin))
     implementation(mirai("core", Versions.core))
     implementation(mirai("console", Versions.console))
     // implementation(korlibs("klock", Versions.klock))
@@ -156,7 +156,7 @@ tasks {
 
         doFirst {
             classpath = sourceSets["test"].runtimeClasspath
-            println("WorkingDir: ${workingDir.toURI()}, Args: $args")
+            println("WorkingDir: ${workingDir.absolutePath}, Args: $args")
         }
     }
 }
