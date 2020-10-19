@@ -28,7 +28,7 @@ object PixivTagCommand: SimpleCommand(
     private fun PixivHelper.searchTag(
         tag: String,
         limit: Long = 100
-    ) = launch(Dispatchers.IO + CoroutineName("SearchTag(${tag})")) {
+    ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
@@ -60,7 +60,7 @@ object PixivTagCommand: SimpleCommand(
         pid: Long,
         illusts: List<Long>,
         limit: Long = 100
-    ) = launch(Dispatchers.IO + CoroutineName("AddRelated(${pid})")) {
+    ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
