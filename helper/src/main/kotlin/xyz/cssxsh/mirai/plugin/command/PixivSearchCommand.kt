@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.*
 @Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
     PixivHelperPlugin,
-    "search", "搜索",
+    "search", "搜索", "搜图",
     description = "搜索指令",
     prefixOptional = true
 ), PixivHelperLogger {
