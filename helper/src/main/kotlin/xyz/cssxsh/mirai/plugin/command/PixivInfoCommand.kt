@@ -47,7 +47,7 @@ object PixivInfoCommand : CompositeCommand(
             buildString {
                 appendLine("用户: $target")
                 appendLine("使用色图指令次数: $ero")
-                appendLine("使用tag指令次数: $tags")
+                appendLine("使用标签指令次数: $tags")
             }
         }
     }.onSuccess {
