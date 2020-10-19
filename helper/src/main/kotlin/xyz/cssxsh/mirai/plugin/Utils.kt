@@ -187,9 +187,9 @@ suspend fun PixivHelper.getImages(
             runCatching {
                 userFollowAdd(illust.user.id)
             }.onSuccess {
-                logger.info("用户(${getAuthInfo().user.name})添加关注(${illust.user.id})[${illust.user.name}]成功, $it")
+                logger.info("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${illust.user.id})[${illust.user.name}]成功, $it")
             }.onFailure {
-                logger.warning("用户(${getAuthInfo().user.name})添加(${illust.user.id})[${illust.user.name}]失败", it)
+                logger.warning("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加(${illust.user.id})[${illust.user.name}]失败", it)
             }
         }
     }
