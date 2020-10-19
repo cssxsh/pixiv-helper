@@ -98,7 +98,7 @@ object PixivTagCommand: SimpleCommand(
         if (jobs.none { it.isActive }) {
             jobs.clear()
             PixivCacheData.caches().values.filter { info ->
-                 tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+                 tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在缓存中找到${list.size}个作品")
                 list.filter { info ->

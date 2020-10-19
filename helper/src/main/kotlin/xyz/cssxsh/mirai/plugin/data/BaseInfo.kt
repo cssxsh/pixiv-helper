@@ -12,6 +12,8 @@ data class BaseInfo(
     val pid: Long,
     @SerialName("title")
     val title: String,
+    @SerialName("caption")
+    val caption: String,
     @SerialName("create_date")
     @Serializable(with = IllustInfo.Companion.CreateDateSerializer::class)
     val createDate: WDateTimeTz,
@@ -40,6 +42,7 @@ data class BaseInfo(
         fun IllustInfo.toBaseInfo() = BaseInfo(
             pid = pid,
             title = title,
+            caption = caption,
             createDate = createDate,
             pageCount = pageCount,
             sanityLevel = sanityLevel,
