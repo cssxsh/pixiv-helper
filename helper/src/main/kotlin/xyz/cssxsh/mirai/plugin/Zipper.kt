@@ -14,6 +14,8 @@ object Zipper: PixivHelperLogger {
 
     private val charMap = mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜")
 
+    private const val BUFFER_SIZE = 64 * 1024 * 1024
+
     private fun BaseInfo.toInfo() =
         "(${pid})${getFullWidthTitle()}]{${pageCount}}"
 
@@ -23,9 +25,9 @@ object Zipper: PixivHelperLogger {
 
     fun CoroutineScope.compress(list: List<BaseInfo>, filename: String) = launch(Dispatchers.IO) {
         logger.verbose("共${list.size} 个作品将写入文件${filename}")
-        ZipOutputStream(BufferedOutputStream(File(PixivHelperSettings.cacheFolder, filename).apply {
+        ZipOutputStream(BufferedOutputStream(File(PixivHelperSettings.zipFolder, filename).apply {
             createNewFile()
-        }.outputStream(), 64 * 1024 * 1024)).use { zipOutputStream ->
+        }.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
             zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
             list.forEach { info ->
                 PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
@@ -37,6 +39,7 @@ object Zipper: PixivHelperLogger {
                 }
                 logger.verbose("${info.toInfo()}已写入${filename}")
             }
+            zipOutputStream.flush()
         }
         logger.verbose("${filename}压缩完毕！")
     }
