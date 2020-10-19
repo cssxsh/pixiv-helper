@@ -169,9 +169,9 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
         val detail: UserDetail = userDetail(uid)
-        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts} 个作品")
+        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts}个作品")
 
-        (0 .. detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
+        (0 until detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
                 userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
