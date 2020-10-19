@@ -24,6 +24,11 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     var cachePath: String by value()
 
     /**
+     * 压缩文件保存目录
+     */
+    var zipPath: String by value()
+
+    /**
      * 缓存延迟时间
      */
     var delayTime: Long by value(1.secondsToMillis)
@@ -51,6 +56,15 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
         File(PixivHelperPlugin.dataFolder, "cache").apply { mkdir() }
     } else {
         File(cachePath).apply { mkdir() }
+    }
+
+    /**
+     * 压缩文件保存目录
+     */
+    val zipFolder: File get() = if (zipPath.isEmpty()) {
+        File(PixivHelperPlugin.dataFolder, "zip").apply { mkdir() }
+    } else {
+        File(zipPath).apply { mkdir() }
     }
 
     /**
