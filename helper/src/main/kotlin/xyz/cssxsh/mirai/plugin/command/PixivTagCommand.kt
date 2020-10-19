@@ -38,12 +38,13 @@ object PixivTagCommand: SimpleCommand(
             }
         }.flatten().filter {
             it.isEro()
-        }.also {
-            logger.verbose("${tag}共搜索到${it.size}个作品")
+        }.also { list ->
+            logger.verbose("${tag}共搜索到${list.size}个作品")
+            list.writeToCache()
         }.runCatching {
             forEach { info ->
                 getImages(info)
-                addRelated(pid = info.pid, map { it.pid })
+                // addRelated(pid = info.pid, map { it.pid })
             }
         }
     }.also {
@@ -69,8 +70,9 @@ object PixivTagCommand: SimpleCommand(
             }
         }.flatten().filter {
             it.isEro()
-        }.also {
-            logger.verbose("${pid}相关共获取到${it.size}个作品")
+        }.also { list ->
+            logger.verbose("[${pid}]相关共获取到${list.size}个作品")
+            list.writeToCache()
         }.forEach {
             getImages(it)
         }
