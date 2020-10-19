@@ -31,15 +31,15 @@ object PixivTagCommand: SimpleCommand(
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(PixivCacheData.update(it).values)
-                    logger.verbose("加载搜索列表第${offset / 30}页{${it.size}}成功")
+                    logger.verbose("加载(${tag})搜索列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.warning("加载搜索列表第${offset / 30}页失败", it)
+                    logger.warning("加载(${tag})搜索列表第${offset / 30}页失败", it)
                 }
             }
         }.flatten().filter {
             it.isEro()
         }.also {
-            logger.verbose("共搜索到${it.size}个作品")
+            logger.verbose("${tag}共搜索到${it.size}个作品")
         }.runCatching {
             forEach { info ->
                 getImages(info)
@@ -62,15 +62,15 @@ object PixivTagCommand: SimpleCommand(
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(PixivCacheData.update(it).values)
-                    logger.verbose("加载相关列表第${offset / 30}页{${it.size}}成功")
+                    logger.verbose("加载[${pid}]相关列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.warning("加载相关列表第${offset / 30}页失败", it)
+                    logger.warning("加载[${pid}]相关列表第${offset / 30}页失败", it)
                 }
             }
         }.flatten().filter {
             it.isEro()
         }.also {
-            logger.verbose("共获取到${it.size}个相关作品")
+            logger.verbose("${pid}相关共获取到${it.size}个作品")
         }.forEach {
             getImages(it)
         }
@@ -81,8 +81,8 @@ object PixivTagCommand: SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
-        PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag).also {
-            logger.verbose("${fromEvent.sender}第${it}次使用tag 检索$tag ")
+        PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag.trim()).also {
+            logger.verbose("${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'")
         }
         if (jobs.none { it.isActive }) {
             jobs.clear()
