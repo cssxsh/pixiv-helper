@@ -20,13 +20,16 @@ object PixivSearchCommand : SimpleCommand(
         ImageSearcher.postSearchResults(image.queryUrl()).maxByOrNull {
             it.similarity
         }?.let {
-            if (it.similarity > 0.9) getHelper().runCatching {
+            if (it.similarity > 0.85) getHelper().runCatching {
                 launch {
-                    logger.verbose("开始获取搜索结果${it.pid}")
+                    logger.verbose("开始获取搜索结果[${it.pid}]")
                     getImages(getIllustInfo(it.pid))
                 }
             }
-            "相似度: ${it.similarity * 100}% \n ${it.content}"
+            buildString {
+                appendLine("相似度: ${it.similarity * 100}%")
+                appendLine(it.content)
+            }
         }
     }.onSuccess { result ->
         quoteReply(result ?: "没有搜索结果")
