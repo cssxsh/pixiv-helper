@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -23,7 +25,10 @@ object PixivTagCommand: SimpleCommand(
 
     private val jobs : MutableList<Job> = mutableListOf()
 
-    private fun PixivHelper.searchTag(tag: String, limit: Long = 100) = launch {
+    private fun PixivHelper.searchTag(
+        tag: String,
+        limit: Long = 100
+    ) = launch(Dispatchers.IO + CoroutineName("SearchTag(${tag})")) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
@@ -51,7 +56,11 @@ object PixivTagCommand: SimpleCommand(
         jobs.add(it)
     }
 
-    private fun PixivHelper.addRelated(pid: Long, illusts: List<Long>, limit: Long = 100) = launch {
+    private fun PixivHelper.addRelated(
+        pid: Long,
+        illusts: List<Long>,
+        limit: Long = 100
+    ) = launch(Dispatchers.IO + CoroutineName("AddRelated(${pid})")) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
