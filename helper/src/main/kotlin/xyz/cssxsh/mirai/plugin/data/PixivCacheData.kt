@@ -44,11 +44,18 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
      */
     fun update(list: List<IllustInfo>): Map<Long, IllustInfo> = buildMap {
         synchronized(illusts) {
-            list.forEach {
-                if (it.pid !in illusts) {
-                    put(it.pid, it)
+            list.forEach { illust ->
+                if (illust.pid !in illusts) {
+                    put(illust.pid, illust)
                 } else {
-                    illusts[it.pid] = it.toBaseInfo()
+                    illusts[illust.pid] = illust.toBaseInfo()
+                    if (illust.isEro()) {
+                        if (illust.isR18()) {
+                            r18s_illusts.add(illust.pid)
+                        } else {
+                            eros_illusts.add(illust.pid)
+                        }
+                    }
                 }
             }
         }
