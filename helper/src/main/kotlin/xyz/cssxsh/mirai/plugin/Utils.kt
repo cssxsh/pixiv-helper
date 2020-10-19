@@ -204,10 +204,14 @@ suspend fun PixivHelper.getImages(
             File(dir, url.getFilename())
         }
     } else {
-        downloadImageUrl<ByteArray, File>(urls) { _, url, result ->
-            File(dir, url.getFilename()).apply {
-                writeBytes(result.getOrThrow())
+        downloadImageUrl<ByteArray, Result<File>>(urls) { _, url, result ->
+            runCatching {
+                File(dir, url.getFilename()).apply {
+                    writeBytes(result.getOrThrow())
+                }
             }
+        }.map {
+            it.getOrThrow()
         }
     }
 }
