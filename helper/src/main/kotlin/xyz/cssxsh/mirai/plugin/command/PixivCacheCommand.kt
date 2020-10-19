@@ -99,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.IO + CoroutineName("DoCache(${timeMillis}ms)")) {
             runCatching {
                 PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
