@@ -14,6 +14,9 @@ object Zipper: PixivHelperLogger {
 
     private val charMap = mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜")
 
+    private fun BaseInfo.toInfo() =
+        "(${pid})${getFullWidthTitle()}]{${pageCount}}"
+
     private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
         charMap.getOrDefault(it.value, "")
     }
@@ -32,6 +35,7 @@ object Zipper: PixivHelperLogger {
                     })
                     zipOutputStream.write(file.readBytes())
                 }
+                logger.verbose("${info.toInfo()}已写入${filename}")
             }
         }
         logger.verbose("${filename}压缩完毕！")
