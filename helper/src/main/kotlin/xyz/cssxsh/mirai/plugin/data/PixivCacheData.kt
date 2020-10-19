@@ -2,15 +2,11 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
-
-//    @ConsoleExperimentalApi
-//    override fun shouldPerformAutoSaveWheneverChanged() = false
 
     /**
      * 缓存
@@ -39,6 +35,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
         }
     }
 
+    private fun BaseInfo.toInfo() =
+        "(${pid})<${createDate.format("yyyy-MM-dd")}>[${title}][${type}][${pageCount}]{${totalBookmarks}}"
+
     /**
      * 筛选出不在缓存里的部分
      * @return 不包含在已缓存的数据中的部分
@@ -60,7 +59,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     private fun put0(illust: IllustInfo) = illusts.put(illust.pid, illust.toBaseInfo()).also {
-        logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已设置, 目前共${illusts.size}条信息")
+        logger.info("作品${illust.toBaseInfo().toInfo()}信息已设置, 目前共${illusts.size}条信息")
         if (illust.isEro()) {
             if (illust.isR18()) {
                 r18s_illusts.add(illust.pid)
@@ -82,7 +81,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun remove(pid: Long) = synchronized(illusts) {
         illusts.remove(pid)?.also { illust ->
-            logger.info("作品(${illust.pid})<${illust.createDate.format("yyyy-MM-dd")}>[${illust.title}]{${illust.totalBookmarks}}信息已移除, 目前共${illusts.size}条信息")
+            logger.info("作品${illust.toInfo()}信息已移除, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
                 eros_illusts.remove(illust.pid)
                 r18s_illusts.remove(illust.pid)
