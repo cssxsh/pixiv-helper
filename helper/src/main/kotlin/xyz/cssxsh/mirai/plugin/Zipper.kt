@@ -11,15 +11,16 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 object Zipper: PixivHelperLogger {
+
+    private val charMap = mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜")
+
     private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
-        mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜").run {
-            getOrDefault(it.value, "")
-        }
+        charMap.getOrDefault(it.value, "")
     }
 
-    fun CoroutineScope.compress(list: List<BaseInfo>, path: String) = launch(Dispatchers.IO) {
-        logger.verbose("共${list.size} 个作品将写入文件${path}")
-        ZipOutputStream(BufferedOutputStream(File(path).apply {
+    fun CoroutineScope.compress(list: List<BaseInfo>, filename: String) = launch(Dispatchers.IO) {
+        logger.verbose("共${list.size} 个作品将写入文件${filename}")
+        ZipOutputStream(BufferedOutputStream(File(PixivHelperSettings.cacheFolder, filename).apply {
             createNewFile()
         }.outputStream(), 64 * 1024 * 1024)).use { zipOutputStream ->
             zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
@@ -33,6 +34,6 @@ object Zipper: PixivHelperLogger {
                 }
             }
         }
-        logger.verbose("${path}压缩完毕！")
+        logger.verbose("${filename}压缩完毕！")
     }
 }
