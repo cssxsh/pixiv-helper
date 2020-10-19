@@ -270,35 +270,37 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         PixivCacheData.caches().values.also {
             logger.verbose("共有 ${it.size} 个作品需要检查")
-        }.count { info ->
-            runCatching {
-                val dir = PixivHelperSettings.imagesFolder(info.pid)
-                File(dir, "${info.pid}.json").run {
-                    if (canRead().not()) {
-                        delete()
-                        illustDetail(info.pid).illust.writeTo(this)
+        }.run {
+            size to count { info ->
+                runCatching {
+                    val dir = PixivHelperSettings.imagesFolder(info.pid)
+                    File(dir, "${info.pid}.json").run {
+                        if (canRead().not()) {
+                            logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
+                            illustDetail(info.pid).illust.writeTo(this)
+                        }
                     }
-                }
-                info.originUrl.filter { url ->
-                    File(dir, url.getFilename()).canRead().not()
-                }.let { urls ->
-                    downloadImageUrl<ByteArray, Unit>(urls) { _, url, result ->
-                        File(dir, url.getFilename()).run {
-                            result.onSuccess {
-                                logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
-                                writeBytes(it)
-                            }.onFailure {
-                                logger.warning("$url 下载失败", it)
+                    info.originUrl.filter { url ->
+                        File(dir, url.getFilename()).canRead().not()
+                    }.let { urls ->
+                        downloadImageUrl<ByteArray, Unit>(urls) { _, url, result ->
+                            File(dir, url.getFilename()).run {
+                                result.onSuccess {
+                                    logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
+                                    writeBytes(it)
+                                }.onFailure {
+                                    logger.warning("$url 下载失败", it)
+                                }
                             }
                         }
                     }
-                }
-            }.onFailure {
-                logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
-            }.isFailure
+                }.onFailure {
+                    logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
+                }.isSuccess
+            }
         }
-    }.onSuccess {
-        quoteReply("检查缓存完毕，无法修复错误数: $it")
+    }.onSuccess { (size, num) ->
+        quoteReply("检查缓存完毕，总计${size}, 修复成功数: $num")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
