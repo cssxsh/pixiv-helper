@@ -104,6 +104,8 @@ object PixivCacheCommand : CompositeCommand(
                 PixivCacheData.update(block()).values.also { list ->
                     list.writeToCache()
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
+                }.sortedBy {
+                    it.pid
                 }.run {
                     size to count { illust: IllustInfo ->
                         isActive && illust.pid !in PixivCacheData && runCatching {
@@ -198,7 +200,7 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }.toSet().let { list ->
                     list - PixivCacheData.caches().keys
-                }.also { list ->
+                }.sorted().also { list ->
                     logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
                 }.run {
                     size to count { pid ->
@@ -268,7 +270,9 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.caches().values.also {
+        PixivCacheData.caches().values.sortedBy {
+            it.pid
+        }.also {
             logger.verbose("共有 ${it.size} 个作品需要检查")
         }.run {
             size to count { info ->
