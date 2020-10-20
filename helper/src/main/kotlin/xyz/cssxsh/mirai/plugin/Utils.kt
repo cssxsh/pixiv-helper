@@ -57,7 +57,7 @@ fun BaseInfo.getMessage(): Message = buildString {
     appendLine("UID: $uid ")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("健全等级: $sanityLevel ")
-    appendLine("创作于: ${createDate.format("yyyy-MM-dd'T'HH:mm:ssXXX")} ")
+    appendLine("创作于: ${getCreateDateText()} ")
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
