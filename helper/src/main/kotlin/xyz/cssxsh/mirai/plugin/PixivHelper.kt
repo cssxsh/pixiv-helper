@@ -47,9 +47,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     var minBookmarks: Long = 0
 
     var simpleInfo: Boolean
-        get() = PixivConfigData.simpleInfo.getOrPut(contact.id, { true })
+        get() = PixivConfigData.simpleInfo.getOrPut(contact.toString(), { true })
         set(value) {
-            PixivConfigData.simpleInfo[contact.id] = value
+            PixivConfigData.simpleInfo[contact.toString()] = value
         }
 
     var cacheJob: Job? = null
