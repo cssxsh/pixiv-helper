@@ -12,7 +12,6 @@ import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 
-
 @AutoService(JvmPlugin::class)
 object PixivHelperPlugin : KotlinPlugin(
     JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "0.5.0-dev-1") {
@@ -35,7 +34,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivCacheData.reload()
         PixivConfigData.reload()
         PixivStatisticalData.reload()
-        // cmd
+        // Command
         PixivMethodCommand.register()
         PixivEroCommand.register()
         PixivCacheCommand.register()
@@ -47,8 +46,8 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivIllustratorCommand.register()
         PixivInfoCommand.register()
 
-        //
-        listener.subscribeAll()
+        // Listener
+        listener.listen()
     }
 
 
