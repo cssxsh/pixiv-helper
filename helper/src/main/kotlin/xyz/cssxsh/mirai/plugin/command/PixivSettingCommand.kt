@@ -3,15 +3,11 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelper.Companion.DATE_FORMAT_CHINESE
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
@@ -27,8 +23,8 @@ object PixivSettingCommand: CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info("proxy: ${PixivConfigData.config.proxy} -> $proxy")
-        PixivConfigData.config.proxy = proxy
+        logger.info("proxy: ${PixivConfigData.default.proxy} -> $proxy")
+        PixivConfigData.default.proxy = proxy
     }
 
     /**
