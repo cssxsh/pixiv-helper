@@ -47,18 +47,21 @@ object Zipper: PixivHelperLogger {
     }
 
     fun backup() = PixivHelperPlugin.launch(Dispatchers.IO) {
+        val zipFile = File("date-${WDateTimeTz.nowLocal().format(FORMAT_DATE)}.zip")
         PixivHelperPlugin.dataFolder.run {
-            logger.verbose("将备份数据目录${absolutePath}")
-            ZipOutputStream(BufferedOutputStream(File("date-${WDateTimeTz.nowLocal().format(FORMAT_DATE)}.zip").apply {
+            logger.verbose("将备份数据目录${absolutePath}到${zipFile.absolutePath}")
+            ZipOutputStream(BufferedOutputStream(zipFile.apply {
                 createNewFile()
             }.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
                 zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
                 listFiles { file -> file.isFile }?.forEach { file ->
                     zipOutputStream.putNextEntry(ZipEntry(file.name))
                     zipOutputStream.write(file.readBytes())
+                    logger.verbose("${file.name}已写入")
                 }
                 zipOutputStream.flush()
             }
+            logger.verbose("${zipFile.absolutePath}压缩完毕！")
         }
     }
 }
