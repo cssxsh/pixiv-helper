@@ -10,7 +10,6 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.description.*
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperManager.expiresTime
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
@@ -39,9 +38,11 @@ object PixivMethodCommand : CompositeCommand(
         username: String,
         password: String
     ) = getHelper().runCatching {
-        login(username, password)
+        login(username, password).let {
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}"
+        }
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
+        quoteReply(it)
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
@@ -54,9 +55,11 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.refresh(
         token: String
     ) = getHelper().runCatching {
-        refresh(token)
+        refresh(token).let {
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}"
+        }
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
+        quoteReply(it)
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
@@ -69,7 +72,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
         autoAuth()
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
+        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${getHelper().expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
