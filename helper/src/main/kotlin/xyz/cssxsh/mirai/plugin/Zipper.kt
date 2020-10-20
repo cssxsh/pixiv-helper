@@ -57,7 +57,7 @@ object Zipper: PixivHelperLogger {
                 listFiles { file -> file.isFile }?.forEach { file ->
                     zipOutputStream.putNextEntry(ZipEntry(file.name))
                     zipOutputStream.write(file.readBytes())
-                    logger.verbose("${file.name}已写入")
+                    logger.verbose("${file.name}已写入${zipFile.name}")
                 }
                 zipOutputStream.flush()
             }
