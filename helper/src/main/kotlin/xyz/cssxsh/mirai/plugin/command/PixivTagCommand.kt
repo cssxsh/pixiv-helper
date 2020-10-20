@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
@@ -22,8 +20,6 @@ object PixivTagCommand: SimpleCommand(
     description = "pixiv 标签",
     prefixOptional = true
 ), PixivHelperLogger {
-
-    private val jobs : MutableList<Job> = mutableListOf()
 
     private fun PixivHelper.searchTag(
         tag: String,
@@ -53,7 +49,7 @@ object PixivTagCommand: SimpleCommand(
             }
         }
     }.also {
-        jobs.add(it)
+        tagJob = it
     }
 
     private fun PixivHelper.addRelated(
@@ -86,7 +82,7 @@ object PixivTagCommand: SimpleCommand(
             getImages(it)
         }
     }.also {
-        jobs.add(it)
+        tagJob = it
     }
 
     @Handler
@@ -95,8 +91,7 @@ object PixivTagCommand: SimpleCommand(
         PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag.trim()).also {
             logger.verbose("${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'")
         }
-        if (jobs.none { it.isActive }) {
-            jobs.clear()
+        if (cacheJob?.isActive != true) {
             PixivCacheData.caches().values.filter { info ->
                  tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
