@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import com.google.auto.service.AutoService
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
@@ -64,5 +65,8 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivInfoCommand.unregister()
 
         listener.stop()
+        runBlocking {
+            Zipper.backup().join()
+        }
     }
 }
