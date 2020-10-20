@@ -255,8 +255,10 @@ object PixivCacheCommand : CompositeCommand(
                     size to count { info ->
                         runCatching {
                             getIllustInfo(info.pid, true)
+                        }.onSuccess {
+                            logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
                         }.onFailure {
-                            logger.warning("刷新失败", it)
+                            logger.warning("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败", it)
                         }.isSuccess
                     }
                 }

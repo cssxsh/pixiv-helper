@@ -38,6 +38,9 @@ data class BaseInfo(
     @SerialName("origin_url")
     val originUrl: List<String>
 ) {
+    fun getCreateDateText(): String =
+        createDate.format(IllustInfo.Companion.CreateDateSerializer.dateFormat)
+
     companion object {
         fun IllustInfo.toBaseInfo() = BaseInfo(
             pid = pid,
