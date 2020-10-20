@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
+import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
+import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
@@ -23,8 +25,8 @@ object Zipper: PixivHelperLogger {
         charMap.getOrDefault(it.value, "")
     }
 
-    fun CoroutineScope.compress(list: List<BaseInfo>, filename: String) = launch(Dispatchers.IO) {
-        logger.verbose("共${list.size} 个作品将写入文件${filename}")
+    fun compress(list: List<BaseInfo>, filename: String) = PixivHelperPlugin.launch(Dispatchers.IO) {
+        logger.verbose("共${list.size}个作品将写入文件${filename}")
         ZipOutputStream(BufferedOutputStream(File(PixivHelperSettings.zipFolder, filename).apply {
             createNewFile()
         }.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
@@ -42,5 +44,21 @@ object Zipper: PixivHelperLogger {
             zipOutputStream.flush()
         }
         logger.verbose("${filename}压缩完毕！")
+    }
+
+    fun backup() = PixivHelperPlugin.launch(Dispatchers.IO) {
+        PixivHelperPlugin.dataFolder.run {
+            logger.verbose("将备份数据目录${absolutePath}")
+            ZipOutputStream(BufferedOutputStream(File("date-${WDateTimeTz.nowLocal().format(FORMAT_DATE)}.zip").apply {
+                createNewFile()
+            }.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
+                zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
+                listFiles { file -> file.isFile }?.forEach { file ->
+                    zipOutputStream.putNextEntry(ZipEntry(file.name))
+                    zipOutputStream.write(file.readBytes())
+                }
+                zipOutputStream.flush()
+            }
+        }
     }
 }

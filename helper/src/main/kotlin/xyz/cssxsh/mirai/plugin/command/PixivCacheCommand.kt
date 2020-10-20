@@ -10,7 +10,7 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PanUpdater.update
-import xyz.cssxsh.mirai.plugin.Zipper.compress
+import xyz.cssxsh.mirai.plugin.Zipper
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.RankMode
@@ -32,6 +32,8 @@ object PixivCacheCommand : CompositeCommand(
 
     private var panJob: Job? = null
 
+    private var backupJob: Job? = null
+
     private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) = buildList {
         modes.map { mode ->
             runCatching {
@@ -52,9 +54,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载关注(${uid})用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载[${uid}]关注用户作品预览第${offset / 30}页失败", it)
+                logger.warning("加载(${uid})关注用户作品预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -66,9 +68,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载关注用户作品时间线第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载${getAuthInfo().user.uid}关注用户作品时间线第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载关注用户作品时间线第${offset / 30}页失败", it)
+                logger.warning("加载${getAuthInfo().user.uid}关注用户作品时间线第${offset / 30}页失败", it)
             }
         }
     }
@@ -80,9 +82,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载推荐用户预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载${getAuthInfo().user.uid}推荐用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载推荐用户预览第${offset / 30}页失败", it)
+                logger.warning("加载${getAuthInfo().user.uid}推荐用户预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -95,10 +97,10 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess { (list, nextUrl) ->
                 if (nextUrl == null) return@buildList
                 add(PixivCacheData.update(list).values)
-                logger.verbose("加载用户收藏页{${list.size}} ${url}成功")
+                logger.verbose("加载用户(${uid})收藏页{${list.size}} ${url}成功")
                 url = nextUrl
             }.onFailure {
-                logger.warning("加载用户收藏页${url}失败", it)
+                logger.warning("加载用户(${uid})收藏页${url}失败", it)
             }
         }
     }
@@ -393,8 +395,14 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.filter {
             it.uid == uid
         }.let {
-            compressJob = PixivHelperPlugin.compress(it, "USER(${uid}).zip")
+            compressJob = Zipper.compress(it, "USER(${uid}).zip")
         }
+    }
+
+    @SubCommand
+    fun ConsoleCommandSender.backup() {
+        check(backupJob?.isActive != true) { "正在压缩中, ${backupJob}..." }
+        backupJob = Zipper.backup()
     }
 
     @SubCommand
