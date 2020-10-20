@@ -44,6 +44,7 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
+        logger.warning("登陆失败", it)
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
@@ -61,6 +62,7 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
+        logger.warning("登陆失败", it)
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
@@ -76,6 +78,7 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
+        logger.warning("登陆失败", it)
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
 
