@@ -47,7 +47,7 @@ object Zipper: PixivHelperLogger {
     }
 
     fun backup() = PixivHelperPlugin.launch(Dispatchers.IO) {
-        val zipFile = File("date-${WDateTimeTz.nowLocal().format(FORMAT_DATE)}.zip")
+        val zipFile = File(PixivHelperSettings.zipFolder, "DATA(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).zip")
         PixivHelperPlugin.dataFolder.run {
             logger.verbose("将备份数据目录${absolutePath}到${zipFile.absolutePath}")
             ZipOutputStream(BufferedOutputStream(zipFile.apply {
