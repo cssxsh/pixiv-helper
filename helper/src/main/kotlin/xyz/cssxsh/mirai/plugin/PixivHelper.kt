@@ -2,13 +2,11 @@
 
 package xyz.cssxsh.mirai.plugin
 
-import com.soywiz.klock.DateFormat
 import com.soywiz.klock.KlockLocale
 import com.soywiz.klock.PatternDateFormat
-import com.soywiz.klock.TimezoneNames
 import com.soywiz.klock.locale.chinese
-import com.soywiz.klock.wrapped.WDateTime
 import com.soywiz.klock.wrapped.WDateTimeTz
+import kotlinx.coroutines.Job
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
@@ -24,24 +22,18 @@ import java.util.concurrent.ArrayBlockingQueue
 class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     coroutineName = "PixivHelper:${contact}",
-    config = PixivConfigData.config
+    config = PixivConfig()
 ), PixivHelperLogger {
 
     companion object {
         val DATE_FORMAT_CHINESE = PatternDateFormat("YYYY-MM-dd HH:mm:ss", KlockLocale.chinese)
     }
 
-    override var config: PixivConfig
-        get() = PixivConfigData.config
-        set(value) { PixivConfigData.config = value }
+    override var config: PixivConfig by ConfigDelegate(contact)
 
-    override var authInfo: AuthResult.AuthInfo?
-        get() = PixivHelperManager.authInfo
-        set(value) { PixivHelperManager.authInfo = value }
+    override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
 
-    public override var expiresTime: WDateTimeTz
-        get() = PixivHelperManager.expiresTime
-        set(value) { PixivHelperManager.expiresTime = value }
+    public override var expiresTime: WDateTimeTz by ExpiresTimeDelegate(contact)
 
     val historyQueue by lazy {
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
@@ -58,8 +50,12 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             PixivConfigData.simpleInfo[contact.id] = value
         }
 
+    var cacheJob: Job? = null
+
+    var tagJob: Job? = null
+
     override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { PixivConfigData.config = it }
+        config.apply(block).also { config = it }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info("$it by RefreshToken: $token, ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}")
