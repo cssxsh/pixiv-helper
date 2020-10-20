@@ -39,7 +39,7 @@ object PixivMethodCommand : CompositeCommand(
         password: String
     ) = getHelper().runCatching {
         login(username, password).let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
         }
     }.onSuccess {
         quoteReply(it)
@@ -56,7 +56,7 @@ object PixivMethodCommand : CompositeCommand(
         token: String
     ) = getHelper().runCatching {
         refresh(token).let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
         }
     }.onSuccess {
         quoteReply(it)
@@ -70,9 +70,11 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
-        autoAuth()
+        autoAuth().let {
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
+        }
     }.onSuccess {
-        quoteReply("${it.user.name} 登陆成功, Token ${it.accessToken}, ExpiresTime: ${getHelper().expiresTime.format(PixivHelper.DATE_FORMAT_CHINESE)}")
+        quoteReply(it)
     }.onFailure {
         quoteReply("登陆失败， ${it.message}")
     }.isSuccess
