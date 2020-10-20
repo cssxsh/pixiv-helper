@@ -251,6 +251,8 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 PixivCacheData.caches().values.filter {
                     (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
+                }.also {
+                    logger.verbose("共有${it.size}个作品需要刷新")
                 }.run {
                     size to count { info ->
                         runCatching {
@@ -376,7 +378,7 @@ object PixivCacheCommand : CompositeCommand(
         }.let {
             it.size to File(PixivHelperSettings.cachePath, "tags.json").apply {
                 writeText(json.encodeToString(TagData.serializer(), TagData(it)))
-            }.absolutePath.toString()
+            }.absolutePath
         }
     }.onSuccess { (size, path) ->
         logger.info("共有tag: ${size}, 保存至${path}")
@@ -432,13 +434,31 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.remove(pid: Long) {
         PixivCacheData.remove(pid)?.let {
-            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除, 目前共${PixivCacheData.caches().size}条缓存")
+            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除")
         }
         PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
                 it.delete()
             }
-            logger.info("色图(${pid})文件夹将删除，结果${delete()}")
+            logger.info("色图作品(${pid})文件夹将删除，结果${delete()}")
+        }
+    }
+
+    @SubCommand
+    fun ConsoleCommandSender.delete(uid: Long) {
+        PixivCacheData.caches().values.filter {
+            it.uid == uid
+        }.also {
+            logger.verbose("USER(${uid})共${it.size}个作品需要删除")
+        }.forEach {
+            PixivCacheData.remove(it.pid)
+            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除")
+            PixivHelperSettings.imagesFolder(it.pid).apply {
+                listFiles()?.forEach { file ->
+                    file.delete()
+                }
+                logger.info("色图作品(${it.pid})[${it.title}]文件夹将删除，结果${delete()}")
+            }
         }
     }
 }
