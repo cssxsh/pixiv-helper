@@ -33,7 +33,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
 
-    public override var expiresTime: WDateTimeTz by ExpiresTimeDelegate(contact)
+    override var expiresTime: WDateTimeTz by ExpiresTimeDelegate(contact)
+
+    fun getExpiresTimeText() = expiresTime.format(DATE_FORMAT_CHINESE)
 
     val historyQueue by lazy {
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
