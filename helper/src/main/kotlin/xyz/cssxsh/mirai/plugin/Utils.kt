@@ -13,7 +13,6 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.illustDetail
-import xyz.cssxsh.pixiv.api.app.userFollowAdd
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
@@ -181,15 +180,6 @@ suspend fun PixivHelper.getImages(
 ).apply {
     if (save) {
         illust.save()
-        if (illust.user.isFollowed != true && illust.isEro()) {
-            runCatching {
-                userFollowAdd(illust.user.id)
-            }.onSuccess {
-                logger.info("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${illust.user.id})[${illust.user.name}]成功, $it")
-            }.onFailure {
-                logger.warning("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加(${illust.user.id})[${illust.user.name}]失败", it)
-            }
-        }
     }
 }
 
