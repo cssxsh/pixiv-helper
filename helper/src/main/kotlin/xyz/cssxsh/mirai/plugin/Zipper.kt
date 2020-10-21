@@ -61,7 +61,7 @@ object Zipper: PixivHelperLogger {
                 }
                 zipOutputStream.flush()
             }
-            logger.verbose("${zipFile.absolutePath}压缩完毕！")
+            logger.verbose("${zipFile.name}压缩完毕！")
         }
     }
 }
