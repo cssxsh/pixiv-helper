@@ -107,7 +107,7 @@ tasks {
                     project.name in it.name
                 }.forEach {
                     delete(it)
-                    println("Deleted ${it.toURI()}")
+                    println("Deleted ${it.absolutePath}")
                 }
             }
             copy {
@@ -120,7 +120,7 @@ tasks {
                     include {
                         "${project.name}-${version}-all" in it.name
                     }.eachFile {
-                        println("Copy ${file.toURI()}")
+                        println("Copy ${file.absolutePath}")
                     }
                 }
             }
