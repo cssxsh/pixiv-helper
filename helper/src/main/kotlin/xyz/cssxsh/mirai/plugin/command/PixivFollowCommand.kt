@@ -45,7 +45,7 @@ object PixivFollowCommand : CompositeCommand(
             info.isEro()
         }.map { info ->
             info.uid
-        }.toSet().let {
+        }.sorted().toSet().let {
             it - followed
         }.also {
             logger.verbose("已关注${followed.size}, 共有${it.size}个用户等待关注")
