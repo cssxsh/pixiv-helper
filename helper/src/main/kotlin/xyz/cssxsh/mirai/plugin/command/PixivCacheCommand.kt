@@ -106,7 +106,6 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun CommandSenderOnMessage<MessageEvent>.doCache(
-        timeMillis: Long = delayTime,
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
@@ -122,7 +121,7 @@ object PixivCacheCommand : CompositeCommand(
                         isActive && illust.pid !in PixivCacheData && runCatching {
                             getImages(illust)
                         }.onSuccess {
-                            delay(timeMillis)
+                            delay(delayTime)
                         }.onFailure {
                             logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
                         }.isSuccess
@@ -239,7 +238,6 @@ object PixivCacheCommand : CompositeCommand(
                 cacheJob = it
             }
         }
-
     }.onSuccess { (total, job) ->
         quoteReply("共${total}个新作品等待缓存, 添加任务完成${job}")
     }.onFailure {
