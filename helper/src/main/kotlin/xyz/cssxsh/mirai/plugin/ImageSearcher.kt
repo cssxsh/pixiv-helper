@@ -44,22 +44,22 @@ object ImageSearcher: PixivHelperLogger {
     suspend fun postSearchResults(
         picUrl: String
     ): List<SearchResult> = httpClient.use { client ->
-        postSearchResults(client.get<ByteArray>(picUrl))
-    }
-
-    suspend fun postSearchResults(
-        file: ByteArray
-    ): List<SearchResult> = httpClient.use { client ->
-        client.post<String>(API) {
-            body = MultiPartFormDataContent(formData {
-                append("database", DB_INDEX)
-                append("file", "file.jpg") {
-                    writeFully(file)
-                }
-            })
+        runCatching {
+            client.get<ByteArray>(picUrl.replace("http", "https"))
+        }.onFailure {
+            logger.warning("图片下载失败, $picUrl", it)
+        }.getOrThrow().let {
+            client.post<String>(API) {
+                body = MultiPartFormDataContent(formData {
+                    append("database", DB_INDEX)
+                    append("file", "file.jpg") {
+                        writeFully(it)
+                    }
+                })
+            }
+        }.let { html ->
+            parse(html)
         }
-    }.let { html ->
-        parse(html)
     }
 
     data class SearchResult(
