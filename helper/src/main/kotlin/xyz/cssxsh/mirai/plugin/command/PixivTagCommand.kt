@@ -40,7 +40,7 @@ object PixivTagCommand: SimpleCommand(
         }.flatten().filter {
             it.isEro()
         }.also { list ->
-            logger.verbose("${tag}共搜索到${list.size}个作品")
+            logger.verbose("'${tag}'共搜索到${list.size}个作品")
             list.writeToCache()
         }.runCatching {
             forEach { info ->
