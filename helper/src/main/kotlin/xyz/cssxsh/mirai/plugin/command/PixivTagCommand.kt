@@ -32,9 +32,9 @@ object PixivTagCommand: SimpleCommand(
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(PixivCacheData.update(it).values)
-                    logger.verbose("加载(${tag})搜索列表第${offset / 30}页{${it.size}}成功")
+                    logger.verbose("加载'${tag}'搜索列表第${offset / 30}页{${it.size}}成功")
                 }.onFailure {
-                    logger.warning("加载(${tag})搜索列表第${offset / 30}页失败", it)
+                    logger.warning("加载'${tag}'搜索列表第${offset / 30}页失败", it)
                 }
             }
         }.flatten().filter {
@@ -91,7 +91,7 @@ object PixivTagCommand: SimpleCommand(
         PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag.trim()).also {
             logger.verbose("${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'")
         }
-        if (cacheJob?.isActive != true) {
+        if (tagJob?.isActive != true) {
             PixivCacheData.caches().values.filter { info ->
                  tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
