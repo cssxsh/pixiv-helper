@@ -56,6 +56,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     var tagJob: Job? = null
 
+    var followJob: Job? = null
+
     override fun config(block: PixivConfig.() -> Unit) =
         config.apply(block).also { config = it }
 
