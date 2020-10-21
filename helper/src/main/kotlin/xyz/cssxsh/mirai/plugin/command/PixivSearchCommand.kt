@@ -28,12 +28,13 @@ object PixivSearchCommand : SimpleCommand(
             }
             buildString {
                 appendLine("相似度: ${it.similarity * 100}%")
-                appendLine(it.content)
+                appendLine(it.content + "#${it.uid}")
             }
         }
     }.onSuccess { result ->
         quoteReply(result ?: "没有搜索结果")
     }.onFailure {
+        logger.verbose("搜索失败$image", it)
         quoteReply("搜索失败， ${it.message}")
     }.isSuccess
 }

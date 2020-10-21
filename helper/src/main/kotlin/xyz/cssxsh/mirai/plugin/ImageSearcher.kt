@@ -26,7 +26,8 @@ object ImageSearcher: PixivHelperLogger {
             similarity = it.select(".resultsimilarityinfo")
                 .text().replace("%", "").toDouble() / 100,
             content = it.select(".resultcontent").text(),
-            pid = it.select(".resultcontent a").first().text().toLong()
+            pid = it.select(".resultcontent a")[0].text().toLong(),
+            uid = it.select(".resultcontent a")[1].text().toLong()
         )
     }
 
@@ -65,6 +66,7 @@ object ImageSearcher: PixivHelperLogger {
     data class SearchResult(
         val similarity: Double,
         val content: String,
-        val pid: Long
+        val pid: Long,
+        val uid: Long
     )
 }
