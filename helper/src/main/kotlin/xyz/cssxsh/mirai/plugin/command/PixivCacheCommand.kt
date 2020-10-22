@@ -34,18 +34,19 @@ object PixivCacheCommand : CompositeCommand(
 
     private var backupJob: Job? = null
 
-    private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) = buildList {
-        modes.map { mode ->
-            runCatching {
-                illustRanking(date = date, mode = mode).illusts
-            }.onSuccess {
-                add(PixivCacheData.update(it).values)
-                logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
-            }.onFailure {
-                logger.warning("加载排行榜[${mode}]失败", it)
+    private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) =
+        buildList {
+            modes.map { mode ->
+                runCatching {
+                    illustRanking(date = date, mode = mode).illusts
+                }.onSuccess {
+                    add(PixivCacheData.update(it).values)
+                    logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
+                }.onFailure {
+                    logger.warning("加载排行榜[${mode}]失败", it)
+                }
             }
         }
-    }
 
     private suspend fun PixivHelper.getUserFollowingPreviews(uid: Long, limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
@@ -105,38 +106,37 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun CommandSenderOnMessage<MessageEvent>.doCache(
+    suspend fun CommandSenderOnMessage<MessageEvent>.doCache(
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        PixivCacheData.update(block()).values.apply {
-            writeToCache()
-            logger.verbose("共${size}个作品信息将会被尝试添加")
-        }.sortedBy {
-            it.pid
-        }.run {
-            size to launch(Dispatchers.IO) {
-                runCatching {
-                    size to count { illust: IllustInfo ->
-                        isActive && illust.pid !in PixivCacheData && runCatching {
-                            getImages(illust)
-                        }.onSuccess {
-                            delay(delayTime)
-                        }.onFailure {
-                            logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
-                        }.isSuccess
-                    }
-                }.onSuccess { (total, success) ->
-                    quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
-                }.onFailure {
-                    quoteReply("缓存失败, ${it.message}")
+        launch(Dispatchers.IO) {
+            PixivCacheData.update(block()).values.apply {
+                writeToCache()
+                logger.verbose("共${size}个作品信息将会被尝试添加")
+            }.sortedBy {
+                it.pid
+            }.runCatching {
+                quoteReply("共${size}个新作品等待缓存")
+                size to count { illust: IllustInfo ->
+                    isActive && illust.pid !in PixivCacheData && runCatching {
+                        getImages(illust)
+                    }.onSuccess {
+                        delay(delayTime)
+                    }.onFailure {
+                        logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                    }.isSuccess
                 }
-            }.also {
-                cacheJob = it
+            }.onSuccess { (total, success) ->
+                quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
+            }.onFailure {
+                quoteReply("缓存失败, ${it.message}")
             }
+        }.also {
+            cacheJob = it
         }
-    }.onSuccess { (total, job) ->
-        quoteReply("共${total}个新作品等待缓存, 添加任务完成${job}")
+    }.onSuccess { job ->
+        quoteReply("新作品等待缓存, 添加任务完成${job}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -193,9 +193,9 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
-                logger.verbose("加载用户作品第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载用户(${uid})作品第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载用户作品第${offset / 30}页失败", it)
+                logger.warning("加载用户(${uid})作品第${offset / 30}页失败", it)
             }.getOrNull()
         }.flatten()
     }
@@ -206,40 +206,38 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        PixivHelperSettings.cacheFolder.also {
-            logger.verbose("从 ${it.absolutePath} 加载作品信息")
-        }.walk().maxDepth(3).mapNotNull { file ->
-            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                file.name.toLong()
-            } else {
-                null
-            }
-        }.toSet().let { list ->
-            list - PixivCacheData.caches().keys
-        }.sorted().also { list ->
-            logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
-        }.run {
-            size to launch(Dispatchers.IO) {
-                runCatching {
-                    size to count { pid ->
-                        isActive && pid !in PixivCacheData && runCatching {
-                            getImages(getIllustInfo(pid))
-                        }.onFailure {
-                            logger.warning("获取作品(${pid})错误", it)
-                        }.isSuccess
-                    }
-                }.onSuccess { (total, success) ->
-                    quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
-                }.onFailure {
-                    logger.warning("缓存失败", it)
-                    quoteReply("缓存失败, ${it.message}")
+        launch(Dispatchers.IO) {
+            PixivHelperSettings.cacheFolder.also {
+                logger.verbose("从 ${it.absolutePath} 加载作品信息")
+            }.walk().maxDepth(3).mapNotNull { file ->
+                if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
+                    file.name.toLong()
+                } else {
+                    null
                 }
-            }.also {
-                cacheJob = it
+            }.toSet().let { list ->
+                list - PixivCacheData.caches().keys
+            }.sorted().also { list ->
+                logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
+            }.runCatching {
+                size to count { pid ->
+                    isActive && pid !in PixivCacheData && runCatching {
+                        getImages(getIllustInfo(pid))
+                    }.onFailure {
+                        logger.warning("获取作品(${pid})错误", it)
+                    }.isSuccess
+                }
+            }.onSuccess { (total, success) ->
+                quoteReply("缓存完毕共${total}个新作品, 缓存成功${success}个")
+            }.onFailure {
+                logger.warning("缓存失败", it)
+                quoteReply("缓存失败, ${it.message}")
             }
+        }.also {
+            cacheJob = it
         }
-    }.onSuccess { (total, job) ->
-        quoteReply("共${total}个新作品等待缓存, 添加任务完成${job}")
+    }.onSuccess { job ->
+        quoteReply("从缓存加载作品, 添加任务完成${job}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -248,33 +246,31 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.flush() = getHelper().runCatching {
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        PixivCacheData.caches().values.filter {
-            (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
-        }.also {
-            logger.verbose("共有${it.size}个作品需要刷新")
-        }.run {
-            size to launch(Dispatchers.IO) {
-                runCatching {
-                    size to count { info ->
-                        runCatching {
-                            getIllustInfo(info.pid, true)
-                        }.onSuccess {
-                            logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
-                        }.onFailure {
-                            logger.warning("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败", it)
-                        }.isSuccess
-                    }
-                }.onSuccess { (total, success) ->
-                    quoteReply("缓存完毕需要更新${total}个作品, 缓存成功${success}个")
-                }.onFailure {
-                    quoteReply("缓存失败, ${it.message}")
-                }
+        launch(Dispatchers.IO) {
+            PixivCacheData.caches().values.filter {
+                (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
             }.also {
-                cacheJob = it
+                logger.verbose("共有${it.size}个作品需要刷新")
+            }.runCatching {
+                size to count { info ->
+                    runCatching {
+                        getIllustInfo(info.pid, true)
+                    }.onSuccess {
+                        logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
+                    }.onFailure {
+                        logger.warning("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败", it)
+                    }.isSuccess
+                }
+            }.onSuccess { (total, success) ->
+                quoteReply("缓存完毕需要更新${total}个作品, 缓存成功${success}个")
+            }.onFailure {
+                quoteReply("缓存失败, ${it.message}")
             }
+        }.also {
+            cacheJob = it
         }
-    }.onSuccess { (total, job) ->
-        quoteReply("共${total}个新作品等待缓存, 添加任务完成${job}")
+    }.onSuccess { job ->
+        quoteReply("作品信息等待缓存, 添加任务完成${job}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess

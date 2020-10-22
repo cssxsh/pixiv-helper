@@ -1,13 +1,16 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.totalBookmarks
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.api.app.*
 
@@ -38,44 +41,49 @@ object PixivFollowCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.ero() = getHelper().runCatching {
-         val followed = getFollowed(uid = getAuthInfo().user.uid)
-
         check(followJob?.isActive != true) { "正在关注中, ${cacheJob}..." }
-        PixivCacheData.caches().values.filter { info ->
-            info.isEro()
-        }.map { info ->
-            info.uid
-        }.sorted().toSet().let {
-            it - followed
-        }.also {
-            logger.verbose("已关注${followed.size}, 共有${it.size}个用户等待关注")
-        }.run {
-            size to launch {
-                runCatching {
-                    size to count { uid ->
-                        isActive && runCatching {
-                            delay(delayTime)
-                            userFollowAdd(uid)
-                        }.onSuccess {
-                            logger.info("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${uid})成功, $it")
-                        }.onFailure {
-                            delay(delayTime)
-                            delay(delayTime)
-                            delay(delayTime)
-                            logger.warning("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${uid})失败", it)
-                        }.isSuccess
+        launch(Dispatchers.IO) {
+            val followed = getFollowed(uid = getAuthInfo().user.uid)
+            PixivCacheData.caches().values.fold(mutableMapOf<Long, Pair<Int, Long>>()) { map, info ->
+                map.apply {
+                    compute(info.uid) { _, value ->
+                        (value ?: (0 to 0L)).let { (num, total) ->
+                            num + 1 to total + info.totalBookmarks
+                        }
                     }
-                }.onSuccess { (total, success) ->
-                    quoteReply("关注完毕共${total}个画师, 关注成功${success}个")
-                }.onFailure {
-                    quoteReply("关注失败, ${it.message}")
                 }
-            }.also {
-                followJob = it
+            }.mapNotNull { (uid, count) ->
+                uid.takeIf {
+                    count.let { (num, total) -> total > totalBookmarks * num }
+                }
+            }.toSet().let {
+                logger.verbose("共统计了${it.size}名画师")
+                it - followed
+            }.sorted().also {
+                logger.info("用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注")
+            }.runCatching {
+                quoteReply("共${size}个画师等待关注")
+                size to count { uid ->
+                    isActive && runCatching {
+                        userFollowAdd(uid)
+                    }.onSuccess {
+                        logger.info("用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it")
+                        delay(delayTime)
+                    }.onFailure {
+                        logger.warning("用户(${getAuthInfo().user.uid})添加关注(${uid})失败", it)
+                        delay(1.minutesToMillis)
+                    }.isSuccess
+                }
+            }.onSuccess { (total, success) ->
+                quoteReply("关注完毕共${total}个画师, 关注成功${success}个")
+            }.onFailure {
+                quoteReply("关注失败, ${it.message}")
             }
+        }.also {
+            followJob = it
         }
-    }.onSuccess { (total, job) ->
-        quoteReply("共${total}个画师等待关注, 添加任务完成${job}")
+    }.onSuccess { job ->
+        quoteReply("关注任务添加完成${job}")
     }.onFailure {
         quoteReply("关注添加失败， ${it.message}")
     }.isSuccess
