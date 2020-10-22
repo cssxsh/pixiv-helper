@@ -199,7 +199,9 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.alias() = doCache {
-        PixivAliasData.aliases.values.toSet().map { uid ->
+        PixivAliasData.aliases.values.toSet().sorted().also {
+            logger.verbose("{${it.first()}...${it.last()}}共${it.size}个画师需要缓存")
+        }.map { uid ->
             PixivCacheData.update(getUserIllusts(uid)).values
         }.flatten()
     }
