@@ -61,8 +61,8 @@ object PixivFollowCommand : CompositeCommand(
                 it - followed
             }.sorted().also {
                 logger.info("用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注")
+                quoteReply("{${it.first()}...${it.last()}}共${it.size}个画师等待关注")
             }.runCatching {
-                quoteReply("共${size}个画师等待关注")
                 size to count { uid ->
                     isActive && runCatching {
                         userFollowAdd(uid)

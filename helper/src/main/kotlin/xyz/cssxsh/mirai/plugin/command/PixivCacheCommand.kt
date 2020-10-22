@@ -116,8 +116,9 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("共${size}个作品信息将会被尝试添加")
             }.sortedBy {
                 it.pid
+            }.also {
+                quoteReply("{${it.first()}...${it.last()}}共${it.size}个新作品等待缓存")
             }.runCatching {
-                quoteReply("共${size}个新作品等待缓存")
                 size to count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
                         getImages(illust)
@@ -217,8 +218,8 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }.toSet().let { list ->
                 list - PixivCacheData.caches().keys
-            }.sorted().also { list ->
-                logger.verbose("共 ${list.size} 个作品信息将会被尝试添加")
+            }.sorted().also {
+                quoteReply("{${it.first()}...${it.last()}}共${it.size}个作品信息将会被尝试添加")
             }.runCatching {
                 size to count { pid ->
                     isActive && pid !in PixivCacheData && runCatching {
@@ -249,9 +250,8 @@ object PixivCacheCommand : CompositeCommand(
         launch(Dispatchers.IO) {
             PixivCacheData.caches().values.filter {
                 (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
-            }.also {
-                logger.verbose("共有${it.size}个作品需要刷新")
             }.runCatching {
+                logger.verbose("{${first()}...${last()}}共有${size}个作品需要刷新")
                 size to count { info ->
                     runCatching {
                         getIllustInfo(info.pid, true)
@@ -297,7 +297,7 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.sortedBy {
             it.pid
         }.also {
-            logger.verbose("共有 ${it.size} 个作品需要检查")
+            logger.verbose("{${it.first()}...${it.last()}}共有 ${it.size} 个作品需要检查")
         }.run {
             size to count { info ->
                 runCatching {
