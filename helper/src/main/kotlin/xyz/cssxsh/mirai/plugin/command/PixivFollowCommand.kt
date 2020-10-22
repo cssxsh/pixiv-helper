@@ -11,7 +11,6 @@ import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.totalBookmarks
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
@@ -61,17 +60,26 @@ object PixivFollowCommand : CompositeCommand(
                 it - followed
             }.sorted().also {
                 logger.info("用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注")
-                reply("{${it.first()}...${it.last()}}共${it.size}个画师等待关注")
+                it.runCatching {
+                    reply("{${first()}...${last()}}共${size}个画师等待关注")
+                }
             }.runCatching {
+                var num = 0
                 size to count { uid ->
                     isActive && runCatching {
                         userFollowAdd(uid)
                     }.onSuccess {
                         logger.info("用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it")
-                        delay(delayTime)
+                        if (num >= 8) {
+                            logger.verbose("用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时")
+                            delay(1.minutesToMillis)
+                            num = 0
+                        } else {
+                            num++
+                        }
                     }.onFailure {
-                        logger.warning("用户(${getAuthInfo().user.uid})添加关注(${uid})失败", it)
-                        delay(1.minutesToMillis)
+                        logger.warning("用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时", it)
+                        delay(3.minutesToMillis)
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
