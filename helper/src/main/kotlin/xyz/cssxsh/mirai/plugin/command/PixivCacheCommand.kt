@@ -198,14 +198,44 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.alias() = doCache {
-        PixivAliasData.aliases.values.toSet().sorted().also {
-            logger.verbose("{${it.first()}...${it.last()}}共${it.size}个画师需要缓存")
-        }.map { uid ->
-            PixivCacheData.update(getUserIllusts(uid)).values
-        }.flatten()
-    }
-
+    suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
+        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
+        launch(Dispatchers.IO) {
+            PixivAliasData.aliases.values.toSet().sorted().also {
+                logger.verbose("{${it.first()}...${it.last()}}共${it.size}个画师需要缓存")
+                reply("列表中共${it.size}个画师需要缓存")
+            }.forEach { uid ->
+                runCatching {
+                    PixivCacheData.update(getUserIllusts(uid)).values.sortedBy {
+                        it.pid
+                    }.apply {
+                        writeToCache()
+                        logger.verbose("用户(${uid}), 共有{${first().pid}...${last().pid}}共${size}个作品需要缓存")
+                    }.runCatching {
+                        size to count { illust ->
+                            isActive && illust.pid !in PixivCacheData && runCatching {
+                                getImages(illust)
+                            }.onSuccess {
+                                delay(delayTime)
+                            }.onFailure {
+                                logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                            }.isSuccess
+                        }
+                    }.onSuccess { (total, success) ->
+                        reply("用户($uid)缓存完毕共${total}个新作品, 缓存成功${success}个")
+                    }.onFailure {
+                        reply("用户($uid)缓存失败, ${it.message}")
+                    }
+                }
+            }
+        }.also {
+            cacheJob = it
+        }
+    }.onSuccess { job ->
+        quoteReply("从别名列表加载作品, 添加任务完成${job}")
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
     /**
      * 从用户详情加载信息
      */
@@ -314,7 +344,7 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.sortedBy {
             it.pid
         }.also {
-            logger.verbose("{${it.first()}...${it.last()}}共有 ${it.size} 个作品需要检查")
+            logger.verbose("{${it.first().pid}...${it.last().pid}}共有 ${it.size} 个作品需要检查")
         }.run {
             size to count { info ->
                 runCatching {
