@@ -29,9 +29,9 @@ object PixivFollowCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(it)
-                logger.verbose("加载关注用户作品预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载(${uid})关注用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载关注用户作品预览第${offset / 30}页失败", it)
+                logger.warning("加载(${uid})关注用户预览第${offset / 30}页失败", it)
             }
         }
     }.flatten().toSet()
@@ -61,7 +61,7 @@ object PixivFollowCommand : CompositeCommand(
                 it - followed
             }.sorted().also {
                 logger.info("用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注")
-                quoteReply("{${it.first()}...${it.last()}}共${it.size}个画师等待关注")
+                reply("{${it.first()}...${it.last()}}共${it.size}个画师等待关注")
             }.runCatching {
                 size to count { uid ->
                     isActive && runCatching {
@@ -75,9 +75,9 @@ object PixivFollowCommand : CompositeCommand(
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
-                quoteReply("关注完毕共${total}个画师, 关注成功${success}个")
+                reply("关注完毕共${total}个画师, 关注成功${success}个")
             }.onFailure {
-                quoteReply("关注失败, ${it.message}")
+                reply("关注失败, ${it.message}")
             }
         }.also {
             followJob = it
