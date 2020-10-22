@@ -21,14 +21,14 @@ object ImageSearcher: PixivHelperLogger {
         }
     }
 
-    private fun parse(html: String): List<SearchResult> = Jsoup.parse(html).select(".resulttablecontent").map { it ->
+    private fun parse(html: String): List<SearchResult> = Jsoup.parse(html).select(".resulttablecontent").map { content ->
         SearchResult(
-            similarity = it.select(".resultsimilarityinfo")
+            similarity = content.select(".resultsimilarityinfo")
                 .text().replace("%", "").toDouble() / 100,
-            content = it.select(".resultcontent").text(),
-            pid = it.select(".resultcontent a")[0].text().toLong(),
-            uid = it.select(".resultcontent a")[1].attr("href").let {
-                """\d+""".toRegex().matchEntire(it)?.value?.toLong() ?: 0
+            content = content.select(".resultcontent").text(),
+            pid = content.select(".resultcontent a.linkify").first().text().toLong(),
+            uid = content.select(".resultcontent a.linkify").last().attr("href").run {
+                substring(lastIndexOf("=") + 1).toLong()
             }
         )
     }
