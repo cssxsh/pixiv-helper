@@ -16,7 +16,6 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
 
@@ -117,7 +116,9 @@ object PixivCacheCommand : CompositeCommand(
             }.sortedBy {
                 it.pid
             }.also {
-                reply("{${it.first()}...${it.last()}}共${it.size}个新作品等待缓存")
+                it.runCatching {
+                    reply("{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
+                }
             }.runCatching {
                 size to count { illust: IllustInfo ->
                     isActive && illust.pid !in PixivCacheData && runCatching {
@@ -182,12 +183,7 @@ object PixivCacheCommand : CompositeCommand(
         getUserFollowingPreviews(uid).flatten().filter { it.isEro() }
     }
 
-    /**
-     * 从用户详情加载信息
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
-        val detail: UserDetail = userDetail(uid)
+    private suspend fun PixivHelper.getUserIllusts(uid: Long) = userDetail(uid).let { detail ->
         logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts}个作品")
 
         (0 until detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
@@ -199,6 +195,21 @@ object PixivCacheCommand : CompositeCommand(
                 logger.warning("加载用户(${uid})作品第${offset / 30}页失败", it)
             }.getOrNull()
         }.flatten()
+    }
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.alias() = doCache {
+        PixivAliasData.aliases.values.toSet().map { uid ->
+            PixivCacheData.update(getUserIllusts(uid)).values
+        }.flatten()
+    }
+
+    /**
+     * 从用户详情加载信息
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
+        getUserIllusts(uid)
     }
 
     /**
@@ -219,7 +230,9 @@ object PixivCacheCommand : CompositeCommand(
             }.toSet().let { list ->
                 list - PixivCacheData.caches().keys
             }.sorted().also {
-                reply("{${it.first()}...${it.last()}}共${it.size}个作品信息将会被尝试添加")
+                it.runCatching {
+                    reply("{${first()}...${last()}}共${size}个作品信息将会被尝试添加")
+                }
             }.runCatching {
                 size to count { pid ->
                     isActive && pid !in PixivCacheData && runCatching {
@@ -250,8 +263,9 @@ object PixivCacheCommand : CompositeCommand(
         launch(Dispatchers.IO) {
             PixivCacheData.caches().values.filter {
                 (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
+            }.also {
+                logger.verbose("{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新")
             }.runCatching {
-                logger.verbose("{${first()}...${last()}}共有${size}个作品需要刷新")
                 size to count { info ->
                     runCatching {
                         getIllustInfo(info.pid, true)
@@ -391,7 +405,7 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.filter {
             it.uid == uid
         }.let {
-            compressJob = Zipper.compress(it, "USER(${uid}).zip")
+            compressJob = Zipper.compress(it, "user")
         }
     }
 
