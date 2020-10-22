@@ -47,16 +47,16 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getUserPreviews(uid: Long, limit: Long = 10_000) = buildList {
+    private suspend fun PixivHelper.getUserFollowingPreviews(uid: Long, limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
                 userFollowing(uid = uid, offset = offset).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载关注(${uid})用户作品预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载用户(${uid})关注用户作品预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载(${uid})关注用户作品预览第${offset / 30}页失败", it)
+                logger.warning("加载用户(${uid})关注用户作品预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -68,9 +68,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载${getAuthInfo().user.uid}关注用户作品时间线第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载${getAuthInfo().user.uid}关注用户作品时间线第${offset / 30}页失败", it)
+                logger.warning("加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页失败", it)
             }
         }
     }
@@ -82,9 +82,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载${getAuthInfo().user.uid}推荐用户预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose("加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页{${it.size}}成功")
             }.onFailure {
-                logger.warning("加载${getAuthInfo().user.uid}推荐用户预览第${offset / 30}页失败", it)
+                logger.warning("加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页失败", it)
             }
         }
     }
@@ -146,7 +146,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache {
-        (getFollow() + getUserPreviews(getAuthInfo().user.uid)).flatten()
+        (getFollow() + getUserFollowingPreviews(getAuthInfo().user.uid)).flatten()
     }
 
     /**
@@ -178,7 +178,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = doCache {
-        getUserPreviews(uid).flatten().filter { it.isEro() }
+        getUserFollowingPreviews(uid).flatten().filter { it.isEro() }
     }
 
     /**
