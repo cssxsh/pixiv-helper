@@ -4,9 +4,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.BaseInfo
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
+import xyz.cssxsh.mirai.plugin.data.*
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(

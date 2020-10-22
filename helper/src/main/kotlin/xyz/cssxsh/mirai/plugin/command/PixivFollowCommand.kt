@@ -59,6 +59,9 @@ object PixivFollowCommand : CompositeCommand(
                         }.onSuccess {
                             logger.info("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${uid})成功, $it")
                         }.onFailure {
+                            delay(delayTime)
+                            delay(delayTime)
+                            delay(delayTime)
                             logger.warning("用户(${getAuthInfo().user.name})[${getAuthInfo().user.uid}]添加关注(${uid})失败", it)
                         }.isSuccess
                     }

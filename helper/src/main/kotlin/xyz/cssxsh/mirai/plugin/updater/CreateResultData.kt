@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.updater
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

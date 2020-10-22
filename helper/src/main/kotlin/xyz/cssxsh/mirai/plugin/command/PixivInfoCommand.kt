@@ -4,7 +4,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelper
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
