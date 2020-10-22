@@ -1,6 +1,3 @@
 [submodule "client"]
 	path = client
 	url = git@github.com:cssxsh/pixiv-client.git
-[submodule "permission"]
-	path = permission
-	url = git@github.com:cssxsh/dog-permission.git
