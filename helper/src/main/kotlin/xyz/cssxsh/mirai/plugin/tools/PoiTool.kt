@@ -4,15 +4,10 @@ import com.soywiz.klock.jvm.toDate
 import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import org.apache.poi.ss.usermodel.Row
-import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.*
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.BaseInfo
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.isR18
 import java.io.File
 
@@ -22,6 +17,15 @@ object PoiTool: PixivHelperLogger {
         PixivHelperSettings.zipFolder,
         "PixivData(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).xlsx"
     )
+
+    private fun XSSFSheet.writeHeader(header: List<String>) = apply {
+        createRow(0).apply {
+            header.forEachIndexed { column, text ->
+                createCell(column).setCellValue(text)
+                autoSizeColumn(column)
+            }
+        }
+    }
 
     private val PIXIV_CACHE_DATA_HEADER = listOf(
         "PID",
@@ -38,38 +42,28 @@ object PoiTool: PixivHelperLogger {
         "TOTAL_BOOKMARKS"
     )
 
-    private fun XSSFRow.writeInfo(info: BaseInfo, dateTimeStyle: XSSFCellStyle) {
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE")).apply {
-            setCellValue(info.createDate.local.toDate())
-            cellStyle = dateTimeStyle
-        }
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("SANITY_LEVEL")).setCellValue(info.sanityLevel.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TYPE")).setCellValue(info.type.name)
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("IS_R18")).setCellValue(info.isR18())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("WIDTH")).setCellValue(info.width.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("HEIGHT")).setCellValue(info.height.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_ID")).setCellValue(info.uid.toDouble())
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_NAME")).setCellValue(info.uname)
-        createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TOTAL_BOOKMARKS")).setCellValue(info.totalBookmarks.toDouble())
-    }
-
     private fun XSSFSheet.writeInfos(dateTimeStyle: XSSFCellStyle) = apply {
         setDefaultColumnStyle(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE"), dateTimeStyle)
         PixivCacheData.caches().values.forEachIndexed { row, info ->
-            createRow(row + 1).writeInfo(info, dateTimeStyle)
-        }
-        createRow(0).apply {
-            PIXIV_CACHE_DATA_HEADER.forEachIndexed { column, text ->
-                createCell(column).setCellValue(text)
-                autoSizeColumn(column)
+            createRow(row + 1).apply {
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE")).apply {
+                    setCellValue(info.createDate.local.toDate())
+                    cellStyle = dateTimeStyle
+                }
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("SANITY_LEVEL")).setCellValue(info.sanityLevel.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TYPE")).setCellValue(info.type.name)
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("IS_R18")).setCellValue(info.isR18())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("WIDTH")).setCellValue(info.width.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("HEIGHT")).setCellValue(info.height.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_ID")).setCellValue(info.uid.toDouble())
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_NAME")).setCellValue(info.uname)
+                createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TOTAL_BOOKMARKS")).setCellValue(info.totalBookmarks.toDouble())
             }
         }
-        setDefaultColumnStyle(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE"), workbook.createCellStyle().apply {
-            dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
-        })
+        writeHeader(PIXIV_CACHE_DATA_HEADER)
     }
 
     private val PIXIV_TAG_DATA_HEADER = listOf("TAG", "TOTAL")
@@ -86,18 +80,13 @@ object PoiTool: PixivHelperLogger {
                     put(it, getOrDefault(it, 0) + 1)
                 }
             }
-        }.entries.forEachIndexed { row, (tag, num) ->
+        }.entries.forEachIndexed { row, (tag, total) ->
             createRow(row + 1).apply {
                 createCell(PIXIV_TAG_DATA_HEADER.indexOf("TAG")).setCellValue(tag)
-                createCell(PIXIV_TAG_DATA_HEADER.indexOf("TOTAL")).setCellValue(num.toDouble())
+                createCell(PIXIV_TAG_DATA_HEADER.indexOf("TOTAL")).setCellValue(total.toDouble())
             }
         }
-        createRow(0).apply {
-            PIXIV_TAG_DATA_HEADER.forEachIndexed { column, text ->
-                createCell(column).setCellValue(text)
-                autoSizeColumn(column)
-            }
-        }
+        writeHeader(PIXIV_TAG_DATA_HEADER)
     }
 
     private val PIXIV_STATISTICAL_DATA_HEADER = listOf("QQ", "ERO", "TAG")
@@ -112,12 +101,19 @@ object PoiTool: PixivHelperLogger {
                 }
             }
         }
-        createRow(0).apply {
-            PIXIV_STATISTICAL_DATA_HEADER.forEachIndexed { column, text ->
-                createCell(column).setCellValue(text)
-                autoSizeColumn(column)
+        writeHeader(PIXIV_STATISTICAL_DATA_HEADER)
+    }
+
+    private val PIXIV_ALIAS_DATA_HEADER = listOf("NAME", "UID")
+
+    private fun XSSFSheet.writeAlias() = apply {
+        PixivAliasData.aliases.toMap().entries.forEachIndexed { row, (name, uid) ->
+            createRow(row + 1).apply {
+                createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("NAME")).setCellValue(name)
+                createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("UID")).setCellValue(uid.toDouble())
             }
         }
+        writeHeader(PIXIV_ALIAS_DATA_HEADER)
     }
 
     fun saveCacheToXlsxAsync() = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -128,6 +124,7 @@ object PoiTool: PixivHelperLogger {
                 })
                 createSheet("PIXIV_TAG_DATA").writeTags()
                 createSheet("PIXIV_STATISTICAL_DATA").writeStatistical()
+                createSheet("PIXIV_ALIAS_DATA").writeAlias()
             }
             xlsxFile().apply {
                 outputStream().use {
