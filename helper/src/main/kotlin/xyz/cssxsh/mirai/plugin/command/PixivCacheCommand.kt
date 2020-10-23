@@ -372,6 +372,7 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }
                 }.onFailure {
+                    quoteReply("作品(${info.pid})[${info.title}]缓存出错, ${it.message}")
                     logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
                 }.isFailure
             }
@@ -390,7 +391,6 @@ object PixivCacheCommand : CompositeCommand(
         check(saveJob?.isActive != true) { "正在压缩中, ${saveJob}..." }
         saveJob = saveCacheToXlsxAsync()
     }
-
 
     @SubCommand
     fun ConsoleCommandSender.tozip(uid: Long) {
