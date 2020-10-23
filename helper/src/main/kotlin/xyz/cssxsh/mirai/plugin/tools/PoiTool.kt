@@ -45,7 +45,9 @@ object PoiTool: PixivHelperLogger {
 
     private fun XSSFWorkbook.writeInfos(dateTimeStyle: XSSFCellStyle) = createSheet("PIXIV_CACHE_DATA").apply {
         setDefaultColumnStyle(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE"), dateTimeStyle)
-        PixivCacheData.caches().values.forEachIndexed { row, info ->
+        PixivCacheData.caches().values.sortedByDescending {
+            it.totalBookmarks
+        }.forEachIndexed { row, info ->
             createRow(row + 1).apply {
                 createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
                 createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
