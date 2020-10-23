@@ -6,6 +6,7 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 @Suppress("unused")
 object PixivSearchCommand : SimpleCommand(

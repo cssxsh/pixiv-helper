@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -13,10 +13,6 @@ import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
-import xyz.cssxsh.mirai.plugin.updater.CreateResultData
-import xyz.cssxsh.mirai.plugin.updater.PanConfig
-import xyz.cssxsh.mirai.plugin.updater.PreCreateData
-import xyz.cssxsh.mirai.plugin.updater.SuperFileData
 import java.io.File
 import java.io.RandomAccessFile
 import kotlin.io.use

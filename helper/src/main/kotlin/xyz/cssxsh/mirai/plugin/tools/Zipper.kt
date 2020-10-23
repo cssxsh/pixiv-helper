@@ -1,8 +1,9 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.tools
 
-import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
 import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
+import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.BufferedOutputStream
@@ -12,21 +13,34 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-object Zipper: PixivHelperLogger {
+object Zipper : PixivHelperLogger {
 
-    private val charMap = mapOf("\\" to "＼", "/" to "／", ":" to "：", "*" to "＊", "?" to "？", "\"" to "＂", "<" to "＜", ">" to "＞", "|" to "｜")
+    private val charMap = mapOf(
+        "\\" to "＼",
+        "/" to "／",
+        ":" to "：",
+        "*" to "＊",
+        "?" to "？",
+        "\"" to "＂",
+        "<" to "＜",
+        ">" to "＞",
+        "|" to "｜"
+    )
 
     private const val BUFFER_SIZE = 64 * 1024 * 1024
 
-    private fun BaseInfo.toInfo() =
-        "(${pid})${getFullWidthTitle()}]{${pageCount}}"
+    private fun BaseInfo.toText() =
+        "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
 
     private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
         charMap.getOrDefault(it.value, "")
     }
 
     private fun zipFile(type: String) =
-        File(PixivHelperSettings.zipFolder, "${type.toUpperCase()}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).zip")
+        File(
+            PixivHelperSettings.zipFolder,
+            "${type.toUpperCase()}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).zip"
+        )
 
     fun compress(list: List<BaseInfo>, type: String) = PixivHelperPlugin.launch(Dispatchers.IO) {
         val zip = zipFile(type).apply { createNewFile() }
@@ -41,7 +55,7 @@ object Zipper: PixivHelperLogger {
                     })
                     zipOutputStream.write(file.readBytes())
                 }
-                logger.verbose("${info.toInfo()}已写入${zip.name}")
+                logger.verbose("${info.toText()}已写入${zip.name}")
             }
             zipOutputStream.flush()
         }

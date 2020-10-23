@@ -12,6 +12,7 @@ import net.mamoe.mirai.utils.hoursToMillis
 import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.tools.Zipper
 
 @AutoService(JvmPlugin::class)
 object PixivHelperPlugin : KotlinPlugin(

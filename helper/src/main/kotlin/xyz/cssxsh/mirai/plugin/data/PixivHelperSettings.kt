@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.utils.secondsToMillis
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.updater.PanConfig
+import xyz.cssxsh.mirai.plugin.tools.PanConfig
 import java.io.File
 
 object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {

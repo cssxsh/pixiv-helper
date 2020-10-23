@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -7,6 +7,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
 import org.jsoup.Jsoup
+import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import kotlin.io.use
 
 @Suppress("unused")

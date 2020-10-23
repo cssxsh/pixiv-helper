@@ -3,16 +3,15 @@ package xyz.cssxsh.mirai.plugin.command
 import com.soywiz.klock.wrapped.WDateTimeSpan
 import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PanUpdater.update
-import xyz.cssxsh.mirai.plugin.Zipper
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
+import xyz.cssxsh.mirai.plugin.tools.*
+import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
@@ -381,51 +380,13 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * 色图之王
+     * 统计
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.king() = getHelper().runCatching {
-        (PixivCacheData.eros() + PixivCacheData.r18s()).map {
-            getIllustInfo(it.pid, true)
-        }.maxByOrNull {
-            it.totalBookmarks ?: 0
-        }.let {
-            buildMessage(requireNotNull(it) { "缓存为空" })
-        }
-    }.onSuccess { lists ->
-        lists.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
-
-    /**
-     * 标签统计
-     */
-    @SubCommand
-    fun ConsoleCommandSender.tags() = runCatching {
-        val json = Json {
-            prettyPrint = true
-            isLenient = true
-            allowStructuredMapKeys = true
-        }
-        buildMap<String, Int> {
-            PixivCacheData.caches().values.flatMap {
-                it.tags
-            }.forEach { tag ->
-                tag.name.let {
-                    put(it, getOrDefault(it, 0) + 1)
-                }
-                tag.translatedName?.let {
-                    put(it, getOrDefault(it, 0) + 1)
-                }
-            }
-        }.let {
-            it.size to File(PixivHelperSettings.cachePath, "tags.json").apply {
-                writeText(json.encodeToString(TagData.serializer(), TagData(it)))
-            }.absolutePath
-        }
-    }.onSuccess { (size, path) ->
-        logger.info("共有tag: ${size}, 保存至${path}")
+    fun ConsoleCommandSender.xlsx() = runCatching {
+        PoiTool.saveCacheToXlsx()
+    }.onSuccess { file ->
+        logger.info("数据保存至${file.absolutePath}")
     }.onFailure {
         logger.warning("统计失败", it)
     }.isSuccess

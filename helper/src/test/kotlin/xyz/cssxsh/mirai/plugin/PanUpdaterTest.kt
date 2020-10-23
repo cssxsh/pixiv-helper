@@ -5,8 +5,8 @@ import com.soywiz.klock.toTimeString
 import com.soywiz.klock.wrapped.WDateTime
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import xyz.cssxsh.mirai.plugin.PanUpdater.update
-import xyz.cssxsh.mirai.plugin.updater.PanConfig
+import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
+import xyz.cssxsh.mirai.plugin.tools.PanConfig
 
 internal class PanUpdaterTest {
 
