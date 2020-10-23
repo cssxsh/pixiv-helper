@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import com.soywiz.klock.jvm.toDate
 import com.soywiz.klock.wrapped.WDateTimeTz
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import org.apache.poi.xssf.usermodel.*
@@ -96,8 +97,10 @@ object PoiTool: PixivHelperLogger {
             createRow(row + 1).apply {
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("QQ")).setCellValue(qq.toDouble())
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("ERO")).setCellValue(data.eroCount.toDouble())
-                data.tagCount.entries.forEachIndexed { row, (tag, total) ->
-                    createCell(row + 2).setCellValue("$tag: $total")
+                data.tagCount.entries.sortedBy {
+                    it.value
+                }.forEachIndexed { row, (tag, total) ->
+                    createCell(row + PIXIV_STATISTICAL_DATA_HEADER.size - 1).setCellValue("$tag: $total")
                 }
             }
         }
@@ -109,33 +112,37 @@ object PoiTool: PixivHelperLogger {
     private fun XSSFWorkbook.writeAlias() = createSheet("PIXIV_ALIAS_DATA").apply {
         PixivAliasData.aliases.toMap().entries.forEachIndexed { row, (name, uid) ->
             createRow(row + 1).apply {
-                createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("NAME")).setCellValue(name)
-                createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("UID")).setCellValue(uid.toDouble())
+                createCell(PIXIV_ALIAS_DATA_HEADER.indexOf("NAME")).setCellValue(name)
+                createCell(PIXIV_ALIAS_DATA_HEADER.indexOf("UID")).setCellValue(uid.toDouble())
             }
         }
         writeHeader(PIXIV_ALIAS_DATA_HEADER)
     }
 
-    fun saveCacheToXlsxAsync() = PixivHelperPlugin.async(Dispatchers.IO) {
-        XSSFWorkbookFactory.createWorkbook().use { workbook ->
-            workbook.apply {
-                writeInfos(createCellStyle().apply {
-                    dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
-                })
-                logger.verbose("PIXIV_CACHE_DATA 已写入到 XLSX")
-                writeTags()
-                logger.verbose("PIXIV_TAG_DATA 已写入到 XLSX")
-                writeStatistical()
-                logger.verbose("PIXIV_STATISTICAL_DATA 已写入到 XLSX")
-                writeAlias()
-                logger.verbose("PIXIV_ALIAS_DATA 已写入到 XLSX")
-            }
-            xlsxFile().apply {
-                outputStream().use {
-                    workbook.write(it)
+    fun saveCacheToXlsxAsync(): Deferred<File> = PixivHelperPlugin.async(Dispatchers.IO) {
+        runCatching {
+            XSSFWorkbookFactory.createWorkbook().use { workbook ->
+                workbook.apply {
+                    writeInfos(createCellStyle().apply {
+                        dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
+                    })
+                    logger.verbose("PIXIV_CACHE_DATA 已写入到 XLSX")
+                    writeTags()
+                    logger.verbose("PIXIV_TAG_DATA 已写入到 XLSX")
+                    writeStatistical()
+                    logger.verbose("PIXIV_STATISTICAL_DATA 已写入到 XLSX")
+                    writeAlias()
+                    logger.verbose("PIXIV_ALIAS_DATA 已写入到 XLSX")
                 }
-                logger.verbose("数据将保存至${absolutePath}")
+                xlsxFile().apply {
+                    outputStream().use {
+                        workbook.write(it)
+                    }
+                    logger.verbose("数据将保存至${absolutePath}")
+                }
             }
-        }
+        }.onFailure {
+            logger.warning("XLSX 生成失败", it)
+        }.getOrThrow()
     }
 }
