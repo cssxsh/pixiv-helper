@@ -2,8 +2,8 @@ package mirai
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import mirai.TTS.getAmrFile
 import net.mamoe.mirai.console.MiraiConsole
+import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
 import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
@@ -11,7 +11,6 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.event.subscribeAlways
-import net.mamoe.mirai.event.subscribeGroupMessages
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -50,11 +49,6 @@ object RunMirai {
         subscribeAlways<BotInvitedJoinGroupRequestEvent> {
             accept()
         }
-        subscribeGroupMessages {
-            """(?:说：|say:)(.+)""".toRegex() matchingReply { result ->
-                val text = if (result.groupValues[1].length < 128) result.groupValues[1] else "太长不说"
-                group.uploadVoice(getAmrFile(text).inputStream())
-            }
-        }
+        TTSCommand.register()
     }
 }
