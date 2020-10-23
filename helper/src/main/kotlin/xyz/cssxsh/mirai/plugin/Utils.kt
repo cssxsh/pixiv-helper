@@ -70,7 +70,7 @@ suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     save: Boolean = true
 ): List<Message> = buildList {
-    getIllustInfo(illust.pid) { illust }
+    illust.writeToCache()
     if (simpleInfo) {
         add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}, 健全等级: ${illust.sanityLevel} "))
     } else {
