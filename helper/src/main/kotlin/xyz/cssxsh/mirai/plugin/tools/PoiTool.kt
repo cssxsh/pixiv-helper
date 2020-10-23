@@ -42,7 +42,7 @@ object PoiTool: PixivHelperLogger {
         "TOTAL_BOOKMARKS"
     )
 
-    private fun XSSFSheet.writeInfos(dateTimeStyle: XSSFCellStyle) = apply {
+    private fun XSSFWorkbook.writeInfos(dateTimeStyle: XSSFCellStyle) = createSheet("PIXIV_CACHE_DATA").apply {
         setDefaultColumnStyle(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE"), dateTimeStyle)
         PixivCacheData.caches().values.forEachIndexed { row, info ->
             createRow(row + 1).apply {
@@ -68,7 +68,7 @@ object PoiTool: PixivHelperLogger {
 
     private val PIXIV_TAG_DATA_HEADER = listOf("TAG", "TOTAL")
 
-    private fun XSSFSheet.writeTags() = apply {
+    private fun XSSFWorkbook.writeTags() = createSheet("PIXIV_TAG_DATA").apply {
         buildMap<String, Int> {
             PixivCacheData.caches().values.flatMap {
                 it.tags
@@ -91,7 +91,7 @@ object PoiTool: PixivHelperLogger {
 
     private val PIXIV_STATISTICAL_DATA_HEADER = listOf("QQ", "ERO", "TAG")
 
-    private fun XSSFSheet.writeStatistical() = apply {
+    private fun XSSFWorkbook.writeStatistical() = createSheet("PIXIV_STATISTICAL_DATA").apply {
         PixivStatisticalData.getMap().entries.forEachIndexed { row, (qq, data) ->
             createRow(row + 1).apply {
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("QQ")).setCellValue(qq.toDouble())
@@ -106,7 +106,7 @@ object PoiTool: PixivHelperLogger {
 
     private val PIXIV_ALIAS_DATA_HEADER = listOf("NAME", "UID")
 
-    private fun XSSFSheet.writeAlias() = apply {
+    private fun XSSFWorkbook.writeAlias() = createSheet("PIXIV_ALIAS_DATA").apply {
         PixivAliasData.aliases.toMap().entries.forEachIndexed { row, (name, uid) ->
             createRow(row + 1).apply {
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("NAME")).setCellValue(name)
@@ -119,12 +119,12 @@ object PoiTool: PixivHelperLogger {
     fun saveCacheToXlsxAsync() = PixivHelperPlugin.async(Dispatchers.IO) {
         XSSFWorkbookFactory.createWorkbook().use { workbook ->
             workbook.apply {
-                createSheet("PIXIV_CACHE_DATA").writeInfos(createCellStyle().apply {
+                writeInfos(createCellStyle().apply {
                     dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
                 })
-                createSheet("PIXIV_TAG_DATA").writeTags()
-                createSheet("PIXIV_STATISTICAL_DATA").writeStatistical()
-                createSheet("PIXIV_ALIAS_DATA").writeAlias()
+                writeTags()
+                writeStatistical()
+                writeAlias()
             }
             xlsxFile().apply {
                 outputStream().use {
