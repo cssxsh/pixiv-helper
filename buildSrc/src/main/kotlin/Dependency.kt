@@ -17,3 +17,6 @@ fun okhttp3(module: String, version: String = Versions.okhttp) =
 
 fun jsoup(version: String = Versions.jsoup) =
     "org.jsoup:jsoup:$version"
+
+fun poi(module: String, version: String = Versions.poi) =
+    "org.apache.poi:${module}:$version"

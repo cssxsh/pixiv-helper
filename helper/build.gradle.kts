@@ -39,6 +39,7 @@ dependencies {
     implementation(ktor("client-encoding", Versions.ktor))
     implementation(ktor("client-okhttp", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
+    implementation(poi("poi-ooxml", Versions.poi))
     implementation(project(":client"))
     // test
     testImplementation(mirai("core-qqandroid", Versions.core))

@@ -4,7 +4,7 @@ object Versions {
     const val latest = "+"
     // mirai
     const val core = "1.3.2"
-    const val console = "1.0-RC-dev-29"
+    const val console = "1.0-RC-dev-31"
     // kotlin
     const val kotlin = "1.4.10"
     const val coroutines = "1.4.0-M1"
@@ -17,4 +17,5 @@ object Versions {
     const val autoService = "1.0-rc7"
     const val okhttp = "4.9.0"
     const val jsoup = "1.13.1"
+    const val poi = "4.1.2"
 }

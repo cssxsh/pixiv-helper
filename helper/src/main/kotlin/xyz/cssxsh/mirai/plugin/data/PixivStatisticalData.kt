@@ -9,6 +9,8 @@ object PixivStatisticalData : AutoSavePluginData("PixivStatistics"), PixivHelper
 
     private val data: MutableMap<Long, UserData> by value(mutableMapOf())
 
+    fun getMap() = data.toMap()
+
     fun eroAdd(user: User): Int = data.compute(user.id) { _, userData ->
         (userData ?: UserData()).run {
             copy(eroCount = eroCount + 1)
