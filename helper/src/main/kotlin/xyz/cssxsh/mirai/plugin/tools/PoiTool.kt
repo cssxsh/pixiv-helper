@@ -97,7 +97,7 @@ object PoiTool: PixivHelperLogger {
             createRow(row + 1).apply {
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("QQ")).setCellValue(qq.toDouble())
                 createCell(PIXIV_STATISTICAL_DATA_HEADER.indexOf("ERO")).setCellValue(data.eroCount.toDouble())
-                data.tagCount.entries.sortedBy {
+                data.tagCount.entries.sortedByDescending {
                     it.value
                 }.forEachIndexed { row, (tag, total) ->
                     createCell(row + PIXIV_STATISTICAL_DATA_HEADER.size - 1).setCellValue("$tag: $total")
