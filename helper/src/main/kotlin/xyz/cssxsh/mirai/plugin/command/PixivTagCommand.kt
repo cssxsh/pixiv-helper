@@ -15,7 +15,7 @@ import xyz.cssxsh.pixiv.api.app.illustRelated
 import xyz.cssxsh.pixiv.api.app.searchIllust
 
 object PixivTagCommand: SimpleCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "tag", "标签",
     description = "pixiv 标签",
     prefixOptional = true

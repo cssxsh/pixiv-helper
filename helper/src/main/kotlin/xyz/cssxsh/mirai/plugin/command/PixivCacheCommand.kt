@@ -21,7 +21,7 @@ import java.io.File
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "cache",
     description = "缓存指令",
     prefixOptional = true

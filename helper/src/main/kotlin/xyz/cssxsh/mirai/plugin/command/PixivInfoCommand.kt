@@ -12,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
 object PixivInfoCommand : CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "info",
     description = "信息指令",
     prefixOptional = true

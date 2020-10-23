@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 @Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
     description = "搜索指令",
     prefixOptional = true

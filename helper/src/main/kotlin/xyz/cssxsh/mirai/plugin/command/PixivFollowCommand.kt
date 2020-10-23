@@ -15,7 +15,7 @@ import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "follow",
     description = "关注指令",
     prefixOptional = true

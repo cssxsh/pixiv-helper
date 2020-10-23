@@ -16,7 +16,7 @@ import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "pixiv",
     description = "pixiv 基本方法",
     prefixOptional = true,

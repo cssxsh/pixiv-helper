@@ -12,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
 object PixivSettingCommand: CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "set",
     description = "pixiv 设置",
     prefixOptional = true

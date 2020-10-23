@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
 
 object PixivIllustratorCommand : CompositeCommand(
-    PixivHelperPlugin,
+    owner = PixivHelperPlugin,
     "illustrator", "画师",
     description = "画师指令",
     prefixOptional = true
