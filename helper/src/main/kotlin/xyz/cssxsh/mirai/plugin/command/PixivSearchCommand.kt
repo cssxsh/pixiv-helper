@@ -16,20 +16,22 @@ object PixivSearchCommand : SimpleCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
+    private const val MIN_SIMILARITY = 0.85
+
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
-        ImageSearcher.postSearchResults(image.queryUrl()).maxByOrNull {
+        ImageSearcher.getSearchResults(image.queryUrl()).maxByOrNull {
             it.similarity
-        }?.let {
-            if (it.similarity > 0.85) getHelper().runCatching {
+        }?.let { result ->
+            if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
                 launch {
-                    logger.verbose("开始获取搜索结果[${it.pid}]")
-                    getImages(getIllustInfo(it.pid))
+                    logger.verbose("相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}")
+                    getImages(getIllustInfo(result.pid))
                 }
             }
             buildString {
-                appendLine("相似度: ${it.similarity * 100}%")
-                appendLine(it.content + "#${it.uid}")
+                appendLine("相似度: ${result.similarity * 100}%")
+                appendLine(result.content + "#${result.uid}")
             }
         }
     }.onSuccess { result ->
