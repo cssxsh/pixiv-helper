@@ -12,6 +12,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
+import xyz.cssxsh.mirai.plugin.tools.PoiTool.saveCacheToXlsxAsync
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
@@ -26,11 +27,13 @@ object PixivCacheCommand : CompositeCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private var compressJob: Job? = null
+    private var compressJob:  Deferred<File>? = null
 
     private var panJob: Job? = null
 
-    private var backupJob: Job? = null
+    private var backupJob:  Deferred<List<File>>? = null
+
+    private var saveJob:  Deferred<File>? = null
 
     private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) =
         buildList {
@@ -383,13 +386,10 @@ object PixivCacheCommand : CompositeCommand(
      * 统计
      */
     @SubCommand
-    fun ConsoleCommandSender.xlsx() = runCatching {
-        PoiTool.saveCacheToXlsx()
-    }.onSuccess { file ->
-        logger.info("数据保存至${file.absolutePath}")
-    }.onFailure {
-        logger.warning("统计失败", it)
-    }.isSuccess
+    fun ConsoleCommandSender.xlsx() {
+        check(saveJob?.isActive != true) { "正在压缩中, ${saveJob}..." }
+        saveJob = saveCacheToXlsxAsync()
+    }
 
 
     @SubCommand
@@ -398,14 +398,14 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.filter {
             it.uid == uid
         }.let {
-            compressJob = Zipper.compress(it, "user")
+            compressJob = Zipper.compressAsync(it, "user")
         }
     }
 
     @SubCommand
     fun ConsoleCommandSender.backup() {
         check(backupJob?.isActive != true) { "正在压缩中, ${backupJob}..." }
-        backupJob = Zipper.backup()
+        backupJob = Zipper.backupAsync()
     }
 
     @SubCommand

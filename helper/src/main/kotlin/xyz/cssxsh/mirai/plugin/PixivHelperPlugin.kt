@@ -68,7 +68,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         listener.stop()
         runBlocking {
-            Zipper.backup().join()
+            Zipper.backupAsync().await()
         }
     }
 }

@@ -2,9 +2,12 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import com.soywiz.klock.DateFormat
 import com.soywiz.klock.wrapped.WDateTimeTz
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
@@ -101,13 +104,15 @@ object PoiTool {
         }
     }
 
-    fun saveCacheToXlsx(): File = XSSFWorkbookFactory.createWorkbook().use { workbook ->
-        workbook.createSheet("PIXIV_CACHE_DATA").writeInfos()
-        workbook.createSheet("PIXIV_TAG_DATA").writeTags()
-        workbook.createSheet("PIXIV_STATISTICAL_DATA").writeStatistical()
-        xlsxFile().apply {
-            outputStream().use {
-                workbook.write(it)
+    fun saveCacheToXlsxAsync() = PixivHelperPlugin.async(Dispatchers.IO) {
+        XSSFWorkbookFactory.createWorkbook().use { workbook ->
+            workbook.createSheet("PIXIV_CACHE_DATA").writeInfos()
+            workbook.createSheet("PIXIV_TAG_DATA").writeTags()
+            workbook.createSheet("PIXIV_STATISTICAL_DATA").writeStatistical()
+            xlsxFile().apply {
+                outputStream().use {
+                    workbook.write(it)
+                }
             }
         }
     }

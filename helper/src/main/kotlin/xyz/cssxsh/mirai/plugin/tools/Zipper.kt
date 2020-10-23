@@ -42,45 +42,49 @@ object Zipper : PixivHelperLogger {
             "${type.toUpperCase()}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).zip"
         )
 
-    fun compress(list: List<BaseInfo>, type: String) = PixivHelperPlugin.launch(Dispatchers.IO) {
-        val zip = zipFile(type).apply { createNewFile() }
-        logger.verbose("共${list.size}个作品将写入文件${zip.name}")
-        ZipOutputStream(BufferedOutputStream(zip.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
-            zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
-            list.forEach { info ->
-                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
-                        creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                        lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                    })
-                    zipOutputStream.write(file.readBytes())
-                }
-                logger.verbose("${info.toText()}已写入${zip.name}")
-            }
-            zipOutputStream.flush()
-        }
-        logger.verbose("${zip.name}压缩完毕！")
-    }
-
-    fun backup() = PixivHelperPlugin.launch(Dispatchers.IO) {
-        mapOf(
-            PixivHelperPlugin.dataFolder to zipFile("data").apply { createNewFile() },
-            PixivHelperPlugin.configFolder to zipFile("config").apply { createNewFile() }
-        ).forEach { (dir, zip) ->
-            logger.verbose("将备份数据目录${dir.absolutePath}到${zip.absolutePath}")
-            ZipOutputStream(BufferedOutputStream(zip.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
+    fun compressAsync(list: List<BaseInfo>, type: String) = PixivHelperPlugin.async(Dispatchers.IO) {
+        zipFile(type).apply {
+            createNewFile()
+            logger.verbose("共${list.size}个作品将写入文件${absolutePath}")
+            ZipOutputStream(BufferedOutputStream(outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
                 zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
-                dir.listFiles { file -> file.isFile }?.forEach { file ->
-                    zipOutputStream.putNextEntry(ZipEntry(file.name).apply {
-                        lastModifiedTime = FileTime.fromMillis(file.lastModified())
-
-                    })
-                    zipOutputStream.write(file.readBytes())
-                    logger.verbose("${file.name}已写入${zip.name}")
+                list.forEach { info ->
+                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                        zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
+                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                            lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                        })
+                        zipOutputStream.write(file.readBytes())
+                    }
+                    logger.verbose("${info.toText()}已写入${name}")
                 }
                 zipOutputStream.flush()
             }
-            logger.verbose("${zip.name}压缩完毕！")
+            logger.verbose("${absolutePath}压缩完毕！")
+        }
+    }
+
+    fun backupAsync() = PixivHelperPlugin.async(Dispatchers.IO) {
+        mapOf(
+            PixivHelperPlugin.dataFolder to zipFile("data").apply { createNewFile() },
+            PixivHelperPlugin.configFolder to zipFile("config").apply { createNewFile() }
+        ).map { (dir, zip) ->
+            zip.apply {
+                logger.verbose("将备份数据目录${dir.absolutePath}到${absolutePath}")
+                ZipOutputStream(BufferedOutputStream(zip.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
+                    zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
+                    dir.listFiles { file -> file.isFile }?.forEach { file ->
+                        zipOutputStream.putNextEntry(ZipEntry(file.name).apply {
+                            lastModifiedTime = FileTime.fromMillis(file.lastModified())
+
+                        })
+                        zipOutputStream.write(file.readBytes())
+                        logger.verbose("${file.name}已写入${name}")
+                    }
+                    zipOutputStream.flush()
+                }
+                logger.verbose("${absolutePath}压缩完毕！")
+            }
         }
     }
 }
