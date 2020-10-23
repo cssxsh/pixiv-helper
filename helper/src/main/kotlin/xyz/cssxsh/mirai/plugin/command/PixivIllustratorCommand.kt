@@ -20,7 +20,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("artwork", "作品")
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.artwork(name: String) = getHelper().runCatching {
-        requireNotNull(PixivAliasData.aliases[name]) { "找不到别名${name}" }.let { pid ->
+        requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { pid ->
             PixivCacheData.caches().values.filter {
                 it.uid == pid
             }.also { list ->
