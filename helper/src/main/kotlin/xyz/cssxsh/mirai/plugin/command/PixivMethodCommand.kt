@@ -148,7 +148,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
         pid: Long
     ) = getHelper().runCatching {
-        buildMessage(getIllustInfo(pid))
+        buildMessage(illustDetail(pid).illust)
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

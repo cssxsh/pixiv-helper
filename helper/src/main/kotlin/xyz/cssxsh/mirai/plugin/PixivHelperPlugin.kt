@@ -48,6 +48,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivRecallCommand.register()
         PixivIllustratorCommand.register()
         PixivInfoCommand.register()
+        PixivGetCommand.register()
 
         // Listener
         listener.listen()
@@ -65,6 +66,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivRecallCommand.unregister()
         PixivIllustratorCommand.unregister()
         PixivInfoCommand.unregister()
+        PixivGetCommand.unregister()
 
         listener.stop()
         runBlocking {
