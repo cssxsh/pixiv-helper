@@ -8,9 +8,8 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.utils.io.core.*
-import mirai.data.AccInfo
+import mirai.data.BiliAccInfo
 import mirai.data.BiliSearchResult
-import mirai.data.RoomInfo
 
 object Bilibili {
     private const val SEARCH_URL = "https://api.bilibili.com/x/space/arc/search"
@@ -32,10 +31,7 @@ object Bilibili {
             deflate()
             identity()
         }
-    }.use {
-        block(it)
-    }
-
+    }.use { block(it) }
 
     suspend fun searchVideo(
         uid: Long,
@@ -55,19 +51,11 @@ object Bilibili {
 
     suspend fun accInfo(
         uid: Long
-    ): AccInfo = useHttpClient { client ->
+    ): BiliAccInfo = useHttpClient { client ->
         client.get(ACC_INFO) {
             parameter("mid", uid)
             parameter("jsonp", "jsonp")
             parameter("tid", 0)
-        }
-    }
-
-    suspend fun getRoomInfo(
-        uid: Long
-    ): RoomInfo = useHttpClient { client ->
-        client.get(ROOM_INFO) {
-            parameter("mid", uid)
         }
     }
 

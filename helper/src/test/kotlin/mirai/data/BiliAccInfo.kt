@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
-data class AccInfo(
+data class BiliAccInfo(
     @SerialName("code")
     val code: Int,
     @SerialName("data")
