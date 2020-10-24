@@ -15,6 +15,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.sendImage
+import net.mamoe.mirai.utils.hoursToMillis
 import net.mamoe.mirai.utils.minutesToMillis
 import kotlin.coroutines.CoroutineContext
 
@@ -38,15 +39,17 @@ object BiliBiliCommand : CompositeCommand(
 
     override val coroutineContext: CoroutineContext = CoroutineName("Bilibili-Listener")
 
+    private val delayIntervalMillis = 3.minutesToMillis..1.hoursToMillis
+
     private val videoJobs = mutableMapOf<Long, Job>()
 
     private val liveJobs = mutableMapOf<Long, Job>()
 
-    private val videoContact = mutableMapOf<Long, List<Contact>>()
+    private val videoContact = mutableMapOf<Long, Set<Contact>>()
 
-    private val liveContact = mutableMapOf<Long, List<Contact>>()
+    private val liveContact = mutableMapOf<Long, Set<Contact>>()
 
-    private fun addVideoListener(uid: Long, delayTime: Long = (10).minutesToMillis): Job = launch {
+    private fun addVideoListener(uid: Long): Job = launch {
         while (isActive) {
             runCatching {
                 Bilibili.searchVideo(uid).searchData.list.vList.apply {
@@ -69,43 +72,55 @@ object BiliBiliCommand : CompositeCommand(
                             videoContact.getValue(uid).forEach { contact ->
                                 contact.runCatching {
                                     sendMessage(info)
+                                    sendImage(Bilibili.getPic(video.pic).inputStream())
                                 }
                             }
                         }
                     }
                 }
             }.onSuccess { list ->
-                logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video[uid]}, 共有${list.size}个视频更新, 即将进入延时delay(${delayTime}ms)。")
-                delay(delayTime)
+                (if (list.isEmpty()) delayIntervalMillis.first else delayIntervalMillis.last).let {
+                    logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video[uid]}, 共有${list.size}个视频更新, 即将进入延时delay(${it}ms)。")
+                    delay(it)
+                }
+            }.onFailure {
+                logger.warning("(${uid})视频监听任务执行失败", it)
+                delay(delayIntervalMillis.first)
             }
         }
     }
 
-    private fun addLiveListener(uid: Long, delayTime: Long = (10).minutesToMillis): Job = launch {
+    private fun addLiveListener(uid: Long): Job = launch {
+        BilibiliTaskData.live[uid] = false
         while (isActive) {
             runCatching {
-                Bilibili.getRoomInfo(uid).roomData.also { room ->
-                    BilibiliTaskData.live.put(uid, room.liveStatus == 1).let {
-                        if (it != true && room.liveStatus == 1) {
+                Bilibili.accInfo(uid).userData.also { user ->
+                    logger.verbose("(${uid})最新直播间状态为${user.liveRoom}")
+                    BilibiliTaskData.live.put(uid, user.liveRoom.liveStatus == 1).let {
+                        if (it != true && user.liveRoom.liveStatus == 1) {
                             buildString {
-                                appendLine("主播: $uid")
-                                appendLine("标题: ${room.title}")
-                                appendLine("人气: ${room.online}")
-                                appendLine("链接: ${room.url}")
+                                appendLine("主播: ${user.name}")
+                                appendLine("标题: ${user.liveRoom.title}")
+                                appendLine("人气: ${user.liveRoom.online}")
+                                appendLine("链接: ${user.liveRoom.url}")
                             }.let { info ->
-                                videoContact.getValue(uid).forEach { contact ->
+                                liveContact.getValue(uid).forEach { contact ->
                                     contact.runCatching {
                                         sendMessage(info)
-                                        sendImage(Bilibili.getRoomCover(room.cover).inputStream())
+                                        sendImage(Bilibili.getPic(user.liveRoom.cover).inputStream())
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }.onSuccess { room ->
-                logger.verbose("(${uid})直播监听任务完成一次, 目前直播状态为${room.liveStatus}, 即将进入延时delay(${delayTime}ms)。")
-                delay(delayTime)
+            }.onSuccess { user ->
+                (if (user.liveRoom.liveStatus == 0) delayIntervalMillis.first else delayIntervalMillis.last).let {
+                    logger.verbose("(${uid})直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
+                    delay(it)
+                }
+            }.onFailure {
+                logger.warning("(${uid})直播监听任务执行失败", it)
             }
         }
     }
@@ -114,13 +129,13 @@ object BiliBiliCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.video(uid: Long) = runCatching {
         videoContact.compute(uid) { _, list ->
-            (list ?: emptyList()) + fromEvent.subject
+            (list ?: emptySet()) + fromEvent.subject
         }
         videoJobs.compute(uid) { _, job ->
             job?.takeIf { it.isActive } ?: addVideoListener(uid)
         }
     }.onSuccess { job ->
-        quoteReply("添加对${uid}的视频监听任务完成${job}")
+        quoteReply("添加对${uid}的视频监听任务, 添加完成${job}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -129,13 +144,13 @@ object BiliBiliCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.live(uid: Long) = runCatching {
         liveContact.compute(uid) { _, list ->
-            (list ?: emptyList()) + fromEvent.subject
+            (list ?: emptySet()) + fromEvent.subject
         }
         liveJobs.compute(uid) { _, job ->
-            job?.takeIf { it.isActive } ?: addVideoListener(uid)
+            job?.takeIf { it.isActive } ?: addLiveListener(uid)
         }
     }.onSuccess { job ->
-        quoteReply("添加对${uid}的直播监听任务完成${job}")
+        quoteReply("添加对${uid}的直播监听任务, 添加完成${job}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess

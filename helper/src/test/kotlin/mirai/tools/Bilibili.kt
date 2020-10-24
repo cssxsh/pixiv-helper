@@ -8,12 +8,14 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.utils.io.core.*
+import mirai.data.AccInfo
 import mirai.data.BiliSearchResult
 import mirai.data.RoomInfo
 
 object Bilibili {
     private const val SEARCH_URL = "https://api.bilibili.com/x/space/arc/search"
     private const val ROOM_INFO = "http://api.live.bilibili.com/room/v1/Room/getRoomInfoOld"
+    private const val ACC_INFO = "https://api.bilibili.com/x/space/acc/info"
 
     private suspend fun <T> useHttpClient(block: suspend (HttpClient) -> T): T = HttpClient(OkHttp) {
         install(JsonFeature) {
@@ -22,7 +24,7 @@ object Bilibili {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             connectTimeoutMillis = 60_000
-            requestTimeoutMillis = 60_000
+            requestTimeoutMillis = 180_000
         }
         BrowserUserAgent()
         ContentEncoding {
@@ -51,6 +53,16 @@ object Bilibili {
         }
     }
 
+    suspend fun accInfo(
+        uid: Long
+    ): AccInfo = useHttpClient { client ->
+        client.get(ACC_INFO) {
+            parameter("mid", uid)
+            parameter("jsonp", "jsonp")
+            parameter("tid", 0)
+        }
+    }
+
     suspend fun getRoomInfo(
         uid: Long
     ): RoomInfo = useHttpClient { client ->
@@ -59,7 +71,7 @@ object Bilibili {
         }
     }
 
-    suspend fun getRoomCover(url: String): ByteArray = useHttpClient { client ->
+    suspend fun getPic(url: String): ByteArray = useHttpClient { client ->
         client.get(url)
     }
 }
