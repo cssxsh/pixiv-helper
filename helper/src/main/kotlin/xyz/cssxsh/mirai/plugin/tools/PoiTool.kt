@@ -83,7 +83,9 @@ object PoiTool: PixivHelperLogger {
                     put(it, getOrDefault(it, 0) + 1)
                 }
             }
-        }.entries.forEachIndexed { row, (tag, total) ->
+        }.entries.sortedByDescending {
+            it.value
+        }.forEachIndexed { row, (tag, total) ->
             createRow(row + 1).apply {
                 createCell(PIXIV_TAG_DATA_HEADER.indexOf("TAG")).setCellValue(tag)
                 createCell(PIXIV_TAG_DATA_HEADER.indexOf("TOTAL")).setCellValue(total.toDouble())
