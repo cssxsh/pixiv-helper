@@ -22,7 +22,7 @@ object PixivIllustratorCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.artwork(name: String) = getHelper().runCatching {
         requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { pid ->
             PixivCacheData.caches().values.filter {
-                it.uid == pid
+                it.uid == pid && it.pageCount <= 3
             }.also { list ->
                 logger.verbose("画师(${pid})[${name}] 共找到${list.size}个作品")
             }.random().let { info ->
