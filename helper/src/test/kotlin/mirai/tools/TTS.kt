@@ -1,4 +1,4 @@
-package mirai
+package mirai.tools
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import mirai.data.AmrFileData
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.io.File
@@ -40,20 +41,7 @@ object TTS {
         MiraiConsole.createLogger("TTS")
     }
 
-    @Serializable
-    data class FileAlias(
-        val files: MutableMap<String, String>
-    )
-
     private val rootPath = File("amrs").apply { mkdir() }
-
-    private val fileMap: FileAlias by lazy {
-        File(rootPath, "map.json").takeIf {
-            it.exists()
-        }?.let {
-            Json.decodeFromString(FileAlias.serializer(), it.readText())
-        } ?: FileAlias(files = mutableMapOf())
-    }
 
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
         logger.verbose("开始tts '$text'")
@@ -79,10 +67,9 @@ object TTS {
         client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}").let {
             File(rootPath, filename).writeBytes(it)
         }
-        fileMap.files[text] = filename
-        File(rootPath, "map.json").writeText(Json.encodeToString(FileAlias.serializer(), fileMap))
+        AmrFileData.files[text] = filename
         filename
     }
 
-    suspend fun getAmrFile(text: String): File = File(rootPath, fileMap.files[text] ?: getAmr(text))
+    suspend fun getAmrFile(text: String): File = File(rootPath, AmrFileData.files[text] ?: getAmr(text))
 }

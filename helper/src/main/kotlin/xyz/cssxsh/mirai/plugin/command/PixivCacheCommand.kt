@@ -393,7 +393,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    fun ConsoleCommandSender.tozip(uid: Long) {
+    fun ConsoleCommandSender.zip(uid: Long) {
         check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
         PixivCacheData.caches().values.filter {
             it.uid == uid

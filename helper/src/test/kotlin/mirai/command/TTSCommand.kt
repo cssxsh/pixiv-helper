@@ -1,5 +1,6 @@
-package mirai
+package mirai.command
 
+import mirai.tools.TTS
 import net.mamoe.mirai.console.command.CommandOwner
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
