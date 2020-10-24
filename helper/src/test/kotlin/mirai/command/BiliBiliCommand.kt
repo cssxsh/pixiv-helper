@@ -182,7 +182,7 @@ object BiliBiliCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.live(uid: Long) = runCatching {
         liveContact.compute(uid) { _, list ->
             (list ?: emptySet()) + fromEvent.subject.also {
-                BilibiliTaskData.video.compute(uid) { _, info ->
+                BilibiliTaskData.live.compute(uid) { _, info ->
                     (info ?: BilibiliTaskData.TaskInfo()).run {
                         when(fromEvent.subject) {
                             is Friend -> copy(friends = friends + fromEvent.subject.id)
