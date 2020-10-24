@@ -27,27 +27,26 @@ object PixivCacheCommand : CompositeCommand(
     prefixOptional = true
 ), PixivHelperLogger {
 
-    private var compressJob:  Deferred<File>? = null
+    private var compressJob: Deferred<File>? = null
 
     private var panJob: Job? = null
 
-    private var backupJob:  Deferred<List<File>>? = null
+    private var backupJob: Deferred<List<File>>? = null
 
-    private var saveJob:  Deferred<File>? = null
+    private var saveJob: Deferred<File>? = null
 
-    private suspend fun PixivHelper.getRank(date: String? = null, modes: Array<RankMode> = RankMode.values()) =
-        buildList {
-            modes.map { mode ->
-                runCatching {
-                    illustRanking(date = date, mode = mode).illusts
-                }.onSuccess {
-                    add(PixivCacheData.update(it).values)
-                    logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
-                }.onFailure {
-                    logger.warning("加载排行榜[${mode}]失败", it)
-                }
+    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
+        modes.map { mode ->
+            runCatching {
+                illustRanking(mode = mode).illusts
+            }.onSuccess {
+                add(PixivCacheData.update(it).values)
+                logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
+            }.onFailure {
+                logger.warning("加载排行榜[${mode}]失败", it)
             }
         }
+    }
 
     private suspend fun PixivHelper.getUserFollowingPreviews(uid: Long, limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
@@ -238,6 +237,7 @@ object PixivCacheCommand : CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
+
     /**
      * 从用户详情加载信息
      */
