@@ -23,17 +23,19 @@ import kotlin.coroutines.CoroutineContext
 
 @ConsoleExperimentalApi
 object BiliBiliCommand : CompositeCommand(
-    owner = object : CommandOwner {
-        override val parentPermission: Permission
-            get() = RootPermission
-
-        override fun permissionId(name: String): PermissionId =
-            PermissionId("bilibili", name)
-    },
+    owner = BiliBiliCommandOwner,
     "bilibili", "B站",
     description = "缓存指令",
     prefixOptional = true
 ), CoroutineScope {
+
+    private object BiliBiliCommandOwner : CommandOwner {
+        override val parentPermission: Permission
+        get() = RootPermission
+
+        override fun permissionId(name: String): PermissionId =
+            PermissionId("bilibili", name)
+    }
 
     private val logger by lazy {
         MiraiConsole.createLogger("bilibili")

@@ -12,17 +12,20 @@ import net.mamoe.mirai.message.GroupMessageEvent
 import net.mamoe.mirai.message.uploadAsGroupVoice
 
 object TTSCommand : SimpleCommand(
-    owner = object : CommandOwner {
+    owner = TTSCommandOwner,
+    "tts", "say", "说",
+    description = "TTS指令",
+    prefixOptional = true
+) {
+
+    private object TTSCommandOwner : CommandOwner {
         override val parentPermission: Permission
             get() = RootPermission
 
         override fun permissionId(name: String): PermissionId =
             PermissionId("tts", name)
-    },
-    "tts", "say", "说",
-    description = "TTS指令",
-    prefixOptional = true
-) {
+    }
+
     @ConsoleExperimentalApi
     @Handler
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.handle(text: String) {
