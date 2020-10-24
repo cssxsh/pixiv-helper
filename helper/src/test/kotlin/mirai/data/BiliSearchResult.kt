@@ -8,7 +8,7 @@ data class BiliSearchResult(
     @SerialName("code")
     val code: Int,
     @SerialName("data")
-    val result: SearchData,
+    val searchData: SearchData,
     @SerialName("message")
     val message: String,
     @SerialName("ttl")
@@ -39,7 +39,7 @@ data class BiliSearchResult(
         @SerialName("author")
         val author: String,
         @SerialName("bvid")
-        val bVid: String,
+        val bvId: String,
         @SerialName("comment")
         val comment: Int,
         @SerialName("copyright")
