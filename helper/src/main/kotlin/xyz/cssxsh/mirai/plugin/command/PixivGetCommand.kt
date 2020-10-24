@@ -19,7 +19,7 @@ object PixivGetCommand: SimpleCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
-        logger.verbose("读取色图失败", it)
+        logger.warning("读取色图失败", it)
         quoteReply("读取色图失败， ${it.message}")
     }.isSuccess
 }
