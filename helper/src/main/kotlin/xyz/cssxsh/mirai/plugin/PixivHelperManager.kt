@@ -71,6 +71,5 @@ object PixivHelperManager : PixivHelperLogger {
         else -> throw IllegalAccessException("未知类型联系人!")
     }?.apply {
         cancel()
-
     }
 }
