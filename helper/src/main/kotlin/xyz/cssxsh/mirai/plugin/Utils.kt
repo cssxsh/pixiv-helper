@@ -189,7 +189,9 @@ suspend fun PixivHelper.getImages(
 ): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     if (File(dir, urls.first().getFilename()).canRead()) {
         urls.map { url ->
-            File(dir, url.getFilename())
+            File(dir, url.getFilename()).apply {
+                check(canRead()) { "警告${absolutePath}不可读！" }
+            }
         }
     } else {
         downloadImageUrl<ByteArray, Result<File>>(urls) { _, url, result ->
