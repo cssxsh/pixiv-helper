@@ -57,6 +57,12 @@ object RunMirai {
             accept()
         }
         TTSCommand.register()
+        BiliBiliCommand.onInit()
         BiliBiliCommand.register()
+//        runBlocking {
+//            Bot.botInstances.flatMap { it.groups }.forEach { group ->
+//                group.sendMessage("我上线啦啊啊啊(此为消息为测试机器人上线自动发送消息)")
+//            }
+//        }
     }
 }

@@ -1,9 +1,9 @@
 package mirai.command
 
-import com.soywiz.klock.wrapped.WDateTime
 import kotlinx.coroutines.*
 import mirai.data.BilibiliTaskData
 import mirai.tools.Bilibili
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.command.CommandOwner
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -43,11 +43,30 @@ object BiliBiliCommand : CompositeCommand(
 
     private val videoJobs = mutableMapOf<Long, Job>()
 
-    private val liveJobs = mutableMapOf<Long, Job>()
-
     private val videoContact = mutableMapOf<Long, Set<Contact>>()
 
+    private val liveJobs = mutableMapOf<Long, Job>()
+
+    private val liveState = mutableMapOf<Long, Boolean>()
+
     private val liveContact = mutableMapOf<Long, Set<Contact>>()
+
+    private fun BilibiliTaskData.TaskInfo.getGroups(): Set<Contact> =
+        Bot.botInstances.flatMap { it.groups }.filter { it.id in groups }.toSet()
+
+    private fun BilibiliTaskData.TaskInfo.getFriends(): Set<Contact> =
+        Bot.botInstances.flatMap { it.friends }.filter { it.id in friends }.toSet()
+
+    fun onInit() {
+        BilibiliTaskData.video.forEach { (uid, info) ->
+            videoContact[uid] = info.getGroups() + info.getFriends()
+            addVideoListener(uid)
+        }
+        BilibiliTaskData.live.forEach { (uid, info) ->
+            liveContact[uid] = info.getGroups() + info.getFriends()
+            addLiveListener(uid)
+        }
+    }
 
     private fun addVideoListener(uid: Long): Job = launch {
         while (isActive) {
@@ -57,10 +76,12 @@ object BiliBiliCommand : CompositeCommand(
                         logger.verbose("(${uid})最新视频为${video}")
                     }
                 }.filter {
-                    it.created >= BilibiliTaskData.video.getOrPut(uid) { WDateTime.nowUnixLong() }
+                    it.created >= BilibiliTaskData.video.getOrPut(uid) { BilibiliTaskData.TaskInfo() }.last
                 }.apply {
                     maxByOrNull { it.created }?.let { video ->
-                        BilibiliTaskData.video[uid] = video.created
+                        BilibiliTaskData.video.compute(uid) { _, info ->
+                            info?.copy(last = video.created)
+                        }
                     }
                     forEach { video ->
                         buildString {
@@ -88,15 +109,17 @@ object BiliBiliCommand : CompositeCommand(
                 delay(delayIntervalMillis.first)
             }
         }
+    }.also {
+        logger.verbose("添加对${uid}的视频监听任务, 添加完成${it}")
     }
 
     private fun addLiveListener(uid: Long): Job = launch {
-        BilibiliTaskData.live[uid] = false
+        liveState[uid] = false
         while (isActive) {
             runCatching {
                 Bilibili.accInfo(uid).userData.also { user ->
                     logger.verbose("(${uid})最新直播间状态为${user.liveRoom}")
-                    BilibiliTaskData.live.put(uid, user.liveRoom.liveStatus == 1).let {
+                    liveState.put(uid, user.liveRoom.liveStatus == 1).let {
                         if (it != true && user.liveRoom.liveStatus == 1) {
                             buildString {
                                 appendLine("主播: ${user.name}")
@@ -123,6 +146,8 @@ object BiliBiliCommand : CompositeCommand(
                 logger.warning("(${uid})直播监听任务执行失败", it)
             }
         }
+    }.also {
+        logger.verbose("添加对${uid}的直播监听任务, 添加完成${it}")
     }
 
     @SubCommand("video", "视频")
