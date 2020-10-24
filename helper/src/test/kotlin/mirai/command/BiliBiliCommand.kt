@@ -13,6 +13,8 @@ import net.mamoe.mirai.console.permission.PermissionId
 import net.mamoe.mirai.console.permission.RootPermission
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.contact.Friend
+import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.sendImage
 import net.mamoe.mirai.utils.hoursToMillis
@@ -58,11 +60,11 @@ object BiliBiliCommand : CompositeCommand(
         Bot.botInstances.flatMap { it.friends }.filter { it.id in friends }.toSet()
 
     fun onInit() {
-        BilibiliTaskData.video.forEach { (uid, info) ->
+        BilibiliTaskData.video.toMap().forEach { (uid, info) ->
             videoContact[uid] = info.getGroups() + info.getFriends()
             addVideoListener(uid)
         }
-        BilibiliTaskData.live.forEach { (uid, info) ->
+        BilibiliTaskData.live.toMap().forEach { (uid, info) ->
             liveContact[uid] = info.getGroups() + info.getFriends()
             addLiveListener(uid)
         }
@@ -154,7 +156,17 @@ object BiliBiliCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.video(uid: Long) = runCatching {
         videoContact.compute(uid) { _, list ->
-            (list ?: emptySet()) + fromEvent.subject
+            (list ?: emptySet()) + fromEvent.subject.also {
+                BilibiliTaskData.video.compute(uid) { _, info ->
+                    (info ?: BilibiliTaskData.TaskInfo()).run {
+                        when(fromEvent.subject) {
+                            is Friend -> copy(friends = friends + fromEvent.subject.id)
+                            is Group -> copy(groups = groups + fromEvent.subject.id)
+                            else -> this
+                        }
+                    }
+                }
+            }
         }
         videoJobs.compute(uid) { _, job ->
             job?.takeIf { it.isActive } ?: addVideoListener(uid)
@@ -169,7 +181,17 @@ object BiliBiliCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.live(uid: Long) = runCatching {
         liveContact.compute(uid) { _, list ->
-            (list ?: emptySet()) + fromEvent.subject
+            (list ?: emptySet()) + fromEvent.subject.also {
+                BilibiliTaskData.video.compute(uid) { _, info ->
+                    (info ?: BilibiliTaskData.TaskInfo()).run {
+                        when(fromEvent.subject) {
+                            is Friend -> copy(friends = friends + fromEvent.subject.id)
+                            is Group -> copy(groups = groups + fromEvent.subject.id)
+                            else -> this
+                        }
+                    }
+                }
+            }
         }
         liveJobs.compute(uid) { _, job ->
             job?.takeIf { it.isActive } ?: addLiveListener(uid)
