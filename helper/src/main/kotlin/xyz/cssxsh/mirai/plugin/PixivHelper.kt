@@ -47,7 +47,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     var minBookmarks: Long = 0
 
     var simpleInfo: Boolean
-        get() = PixivConfigData.simpleInfo.getOrPut(contact.toString(), { true })
+        get() = PixivConfigData.simpleInfo.getOrPut(contact.toString(), { contact !is Friend })
         set(value) {
             PixivConfigData.simpleInfo[contact.toString()] = value
         }
