@@ -61,7 +61,6 @@ fun BaseInfo.getMessage(): Message = buildString {
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
-    getPixivCatUrls().forEach { appendLine(it) }
 }.let {
     PlainText(it)
 }
@@ -75,6 +74,7 @@ suspend fun PixivHelper.buildMessage(
         add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}, 健全等级: ${illust.sanityLevel} "))
     } else {
         add(illust.getMessage())
+        add(PlainText("原图连接: \n" + illust.getPixivCatUrls().joinToString("\n")))
     }
     if (!illust.isR18()) {
         addAll(getImages(illust, save).map {
@@ -102,7 +102,7 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
-fun BaseInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
+fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
     (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
 } else {
     listOf("https://pixiv.cat/${pid}.jpg")
