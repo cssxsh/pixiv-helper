@@ -36,25 +36,46 @@ object TTS {
         block(it)
     }
 
-
     private val logger by lazy {
-        MiraiConsole.createLogger("TTS")
+        MiraiConsole.createLogger("tts")
     }
 
     private val rootPath = File("amrs").apply { mkdir() }
 
+    private const val SPEED = 5
+
+    private const val GET_TTS = "https://fanyi.baidu.com/gettts"
+
+    private const val LANG_SELECT = "https://fanyi.baidu.com/langdetect"
+
+    private const val CONVERT_BATCH = "https://s19.aconvert.com/convert/convert-batch.php"
+
+    private const val CONVERT_RESULT = "https://s19.aconvert.com/convert/p3r68-cdx67/"
+
+
+    @Serializable
+    private data class LangSelect(
+        val error: Int,
+        val msg: String,
+        val lan: String
+    )
+
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
-        logger.verbose("开始tts '$text'")
-        val file = client.get<ByteArray>("https://fanyi.baidu.com/gettts") {
-            parameter("lan", "zh")
+        val language = client.get<LangSelect>(LANG_SELECT) {
+            parameter("query", text)
+        }.takeIf { it.msg == "success" }?.lan ?: "zh"
+
+        logger.verbose("开始tts, language: $language, test: '$text'")
+        val file = client.get<ByteArray>(GET_TTS) {
+            parameter("lan", language)
             parameter("text", text)
-            parameter("spd", 5)
+            parameter("spd", SPEED)
             parameter("source", "web")
         }
-        // File("tts.mp3").writeBytes(file)
+
         logger.verbose("开始mp3(${file.size}) -> amr")
         val json = client.submitFormWithBinaryData<String>(
-            url = "https://s19.aconvert.com/convert/convert-batch.php",
+            url = CONVERT_BATCH,
             formData = formData {
                 append(key = "file", filename = "blob", size = file.size.toLong(), contentType = ContentType.Audio.MPEG) {
                     writeFully(file)
@@ -62,9 +83,10 @@ object TTS {
                 append(key = "targetformat", value = "amr")
             }
         )
+
         logger.verbose("转换结果: $json")
         val filename = Json.parseToJsonElement(json).jsonObject["filename"]!!.jsonPrimitive.content
-        client.get<ByteArray>("https://s19.aconvert.com/convert/p3r68-cdx67/${filename}").let {
+        client.get<ByteArray>(CONVERT_RESULT + filename).let {
             File(rootPath, filename).writeBytes(it)
         }
         AmrFileData.files[text] = filename
