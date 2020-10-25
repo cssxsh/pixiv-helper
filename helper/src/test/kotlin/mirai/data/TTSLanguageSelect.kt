@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TTSLangSelect(
+data class TTSLanguageSelect(
     @SerialName("error")
     val error: Int,
     @SerialName("msg")

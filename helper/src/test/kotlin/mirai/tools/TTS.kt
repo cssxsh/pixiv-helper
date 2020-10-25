@@ -12,7 +12,7 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import mirai.data.AmrFileData
 import mirai.data.TTSConvertResult
-import mirai.data.TTSLangSelect
+import mirai.data.TTSLanguageSelect
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.io.File
@@ -49,7 +49,7 @@ object TTS {
     private const val CONVERT_RESULT = "https://s19.aconvert.com/convert/p3r68-cdx67/"
 
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
-        val language = client.get<TTSLangSelect>(LANG_SELECT) {
+        val language = client.get<TTSLanguageSelect>(LANG_SELECT) {
             parameter("query", text)
         }.takeIf { it.message == "success" }?.language ?: "zh"
 
