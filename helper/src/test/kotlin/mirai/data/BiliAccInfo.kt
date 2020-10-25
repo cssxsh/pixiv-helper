@@ -54,9 +54,9 @@ data class BiliAccInfo(
         @SerialName("silence")
         val silence: Int,
         @SerialName("sys_notice")
-        val sysNotice: Map<String, JsonElement>,
+        val sysNotice: JsonElement,
         @SerialName("theme")
-        val theme: Map<String, JsonElement>,
+        val theme: JsonElement,
         @SerialName("top_photo")
         val topPhoto: String,
         @SerialName("vip")
