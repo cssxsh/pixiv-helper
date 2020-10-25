@@ -9,11 +9,12 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.utils.io.core.*
 import mirai.data.BiliAccInfo
+import mirai.data.BiliRoomInfo
 import mirai.data.BiliSearchResult
 
 object Bilibili {
     private const val SEARCH_URL = "https://api.bilibili.com/x/space/arc/search"
-    private const val ROOM_INFO = "http://api.live.bilibili.com/room/v1/Room/getRoomInfoOld"
+    private const val ROOM_INIT = "http://api.live.bilibili.com/room/v1/Room/room_init"
     private const val ACC_INFO = "https://api.bilibili.com/x/space/acc/info"
 
     private suspend fun <T> useHttpClient(block: suspend (HttpClient) -> T): T = HttpClient(OkHttp) {
@@ -56,6 +57,14 @@ object Bilibili {
             parameter("mid", uid)
             parameter("jsonp", "jsonp")
             parameter("tid", 0)
+        }
+    }
+
+    suspend fun roomInfo(
+        id: Long
+    ): BiliRoomInfo = useHttpClient { client ->
+        client.get(ROOM_INIT) {
+            parameter("id", id)
         }
     }
 
