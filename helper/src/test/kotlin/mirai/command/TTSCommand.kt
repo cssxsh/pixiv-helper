@@ -9,6 +9,7 @@ import net.mamoe.mirai.console.permission.PermissionId
 import net.mamoe.mirai.console.permission.RootPermission
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.GroupMessageEvent
+import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.message.uploadAsGroupVoice
 
 object TTSCommand : SimpleCommand(
@@ -28,9 +29,8 @@ object TTSCommand : SimpleCommand(
 
     @ConsoleExperimentalApi
     @Handler
-    suspend fun CommandSenderOnMessage<GroupMessageEvent>.handle(text: String) {
-        reply(TTS.getAmrFile(text.takeIf {
-            it.length < 256
-        } ?: "太长不说").inputStream().uploadAsGroupVoice(fromEvent.group))
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.handle() {
+        val text = message.content.replaceFirst("""(tts|say|说)""".toRegex(), "").trim().takeIf { it.length < 256 } ?: "太长不说"
+        reply(TTS.getAmrFile(text).inputStream().uploadAsGroupVoice(fromEvent.group))
     }
 }
