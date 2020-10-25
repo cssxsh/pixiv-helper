@@ -143,7 +143,7 @@ object BiliBiliCommand : CompositeCommand(
                 }
             }.onSuccess { user ->
                 (if (user.liveRoom.liveStatus == 0) delayIntervalMillis.first else delayIntervalMillis.last).let {
-                    logger.verbose("(${uid})直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
+                    logger.verbose("(${uid})[${user.name}]直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
             }.onFailure {
