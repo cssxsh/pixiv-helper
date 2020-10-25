@@ -61,9 +61,7 @@ fun BaseInfo.getMessage(): Message = buildString {
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
-}.let {
-    PlainText(it)
-}
+}.let { PlainText(it) }
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
@@ -189,9 +187,7 @@ suspend fun PixivHelper.getImages(
 ): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     if (File(dir, urls.first().getFilename()).canRead()) {
         urls.map { url ->
-            File(dir, url.getFilename()).apply {
-                check(canRead()) { "警告${absolutePath}不可读！" }
-            }
+            File(dir, url.getFilename())
         }
     } else {
         downloadImageUrl<ByteArray, Result<File>>(urls) { _, url, result ->
