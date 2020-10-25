@@ -23,6 +23,7 @@ object TTS {
     private suspend fun <T> useHttpClient(block: suspend (HttpClient) -> T): T = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
+            acceptContentTypes = acceptContentTypes + ContentType.Text.Html
         }
         BrowserUserAgent()
         ContentEncoding {
@@ -38,8 +39,6 @@ object TTS {
 
     private val rootPath = File("amrs").apply { mkdir() }
 
-    private const val SPEED = 5
-
     private const val GET_TTS = "https://fanyi.baidu.com/gettts"
 
     private const val LANG_SELECT = "https://fanyi.baidu.com/langdetect"
@@ -48,7 +47,7 @@ object TTS {
 
     private const val CONVERT_RESULT = "https://s19.aconvert.com/convert/p3r68-cdx67/"
 
-    private suspend fun getAmr(text: String): String = useHttpClient { client ->
+    private suspend fun getAmr(text: String, speed: Int = 5): String = useHttpClient { client ->
         val language = client.get<TTSLanguageSelect>(LANG_SELECT) {
             parameter("query", text)
         }.takeIf { it.message == "success" }?.language ?: "zh"
@@ -57,7 +56,7 @@ object TTS {
         val file = client.get<ByteArray>(GET_TTS) {
             parameter("lan", language)
             parameter("text", text)
-            parameter("spd", SPEED)
+            parameter("spd", speed)
             parameter("source", "web")
         }
 
