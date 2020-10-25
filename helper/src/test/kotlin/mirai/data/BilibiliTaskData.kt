@@ -12,9 +12,9 @@ object BilibiliTaskData : AutoSavePluginData("BilibiliTaskData") {
 
     val live: MutableMap<Long, TaskInfo> by value()
 
-    val minIntervalMillis: Long by value(10.minutesToMillis)
+    val minIntervalMillis: Long by value(5.minutesToMillis)
 
-    val maxIntervalMillis: Long by value(6.hoursToMillis)
+    val maxIntervalMillis: Long by value(1.hoursToMillis)
 
     @Serializable
     data class TaskInfo(

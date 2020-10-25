@@ -31,7 +31,7 @@ object BiliBiliCommand : CompositeCommand(
 
     private object BiliBiliCommandOwner : CommandOwner {
         override val parentPermission: Permission
-        get() = RootPermission
+            get() = RootPermission
 
         override fun permissionId(name: String): PermissionId =
             PermissionId("bilibili", name)
@@ -52,6 +52,8 @@ object BiliBiliCommand : CompositeCommand(
     private val liveState = mutableMapOf<Long, Boolean>()
 
     private val liveContact = mutableMapOf<Long, Set<Contact>>()
+
+    private val intervalMillis = minIntervalMillis..maxIntervalMillis
 
     private fun BilibiliTaskData.TaskInfo.getGroups(): Set<Contact> =
         Bot.botInstances.flatMap { it.groups }.filter { it.id in groups }.toSet()
@@ -102,7 +104,7 @@ object BiliBiliCommand : CompositeCommand(
                     }
                 }
             }.onSuccess { list ->
-                (if (list.isEmpty()) minIntervalMillis else maxIntervalMillis).let {
+                (intervalMillis.random()).let {
                     logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video[uid]}, 共有${list.size}个视频更新, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
@@ -111,9 +113,7 @@ object BiliBiliCommand : CompositeCommand(
                 delay(minIntervalMillis)
             }
         }
-    }.also {
-        logger.verbose("添加对${uid}的视频监听任务, 添加完成${it}")
-    }
+    }.also { logger.verbose("添加对${uid}的视频监听任务, 添加完成${it}") }
 
     private fun addLiveListener(uid: Long): Job = launch {
         liveState[uid] = false
@@ -140,7 +140,7 @@ object BiliBiliCommand : CompositeCommand(
                     }
                 }
             }.onSuccess { user ->
-                (if (user.liveRoom.liveStatus == 0) minIntervalMillis else maxIntervalMillis).let {
+                (intervalMillis.random()).let {
                     logger.verbose("(${uid})[${user.name}]直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
@@ -149,9 +149,7 @@ object BiliBiliCommand : CompositeCommand(
                 delay(minIntervalMillis)
             }
         }
-    }.also {
-        logger.verbose("添加对${uid}的直播监听任务, 添加完成${it}")
-    }
+    }.also { logger.verbose("添加对${uid}的直播监听任务, 添加完成${it}") }
 
     @SubCommand("video", "视频")
     @Suppress("unused")
@@ -160,7 +158,7 @@ object BiliBiliCommand : CompositeCommand(
             (list ?: emptySet()) + fromEvent.subject.also {
                 BilibiliTaskData.video.compute(uid) { _, info ->
                     (info ?: BilibiliTaskData.TaskInfo()).run {
-                        when(fromEvent.subject) {
+                        when (fromEvent.subject) {
                             is Friend -> copy(friends = friends + fromEvent.subject.id)
                             is Group -> copy(groups = groups + fromEvent.subject.id)
                             else -> this
@@ -185,7 +183,7 @@ object BiliBiliCommand : CompositeCommand(
             (list ?: emptySet()) + fromEvent.subject.also {
                 BilibiliTaskData.live.compute(uid) { _, info ->
                     (info ?: BilibiliTaskData.TaskInfo()).run {
-                        when(fromEvent.subject) {
+                        when (fromEvent.subject) {
                             is Friend -> copy(friends = friends + fromEvent.subject.id)
                             is Group -> copy(groups = groups + fromEvent.subject.id)
                             else -> this
