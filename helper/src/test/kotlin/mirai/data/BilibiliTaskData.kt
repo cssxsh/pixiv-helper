@@ -4,12 +4,17 @@ import com.soywiz.klock.wrapped.WDateTime
 import kotlinx.serialization.Serializable
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.utils.hoursToMillis
+import net.mamoe.mirai.utils.minutesToMillis
 
 object BilibiliTaskData : AutoSavePluginData("BilibiliTaskData") {
     val video: MutableMap<Long, TaskInfo> by value()
 
     val live: MutableMap<Long, TaskInfo> by value()
 
+    val minIntervalMillis: Long by value(10.minutesToMillis)
+
+    val maxIntervalMillis: Long by value(6.hoursToMillis)
 
     @Serializable
     data class TaskInfo(

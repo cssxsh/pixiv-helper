@@ -2,6 +2,8 @@ package mirai.command
 
 import kotlinx.coroutines.*
 import mirai.data.BilibiliTaskData
+import mirai.data.BilibiliTaskData.maxIntervalMillis
+import mirai.data.BilibiliTaskData.minIntervalMillis
 import mirai.tools.Bilibili
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.MiraiConsole
@@ -17,8 +19,6 @@ import net.mamoe.mirai.contact.Friend
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.sendImage
-import net.mamoe.mirai.utils.hoursToMillis
-import net.mamoe.mirai.utils.minutesToMillis
 import kotlin.coroutines.CoroutineContext
 
 @ConsoleExperimentalApi
@@ -42,8 +42,6 @@ object BiliBiliCommand : CompositeCommand(
     }
 
     override val coroutineContext: CoroutineContext = CoroutineName("Bilibili-Listener")
-
-    private val delayIntervalMillis = 3.minutesToMillis..1.hoursToMillis
 
     private val videoJobs = mutableMapOf<Long, Job>()
 
@@ -104,13 +102,13 @@ object BiliBiliCommand : CompositeCommand(
                     }
                 }
             }.onSuccess { list ->
-                (if (list.isEmpty()) delayIntervalMillis.first else delayIntervalMillis.last).let {
+                (if (list.isEmpty()) minIntervalMillis else maxIntervalMillis).let {
                     logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video[uid]}, 共有${list.size}个视频更新, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
             }.onFailure {
                 logger.warning("(${uid})视频监听任务执行失败", it)
-                delay(delayIntervalMillis.first)
+                delay(minIntervalMillis)
             }
         }
     }.also {
@@ -142,12 +140,13 @@ object BiliBiliCommand : CompositeCommand(
                     }
                 }
             }.onSuccess { user ->
-                (if (user.liveRoom.liveStatus == 0) delayIntervalMillis.first else delayIntervalMillis.last).let {
+                (if (user.liveRoom.liveStatus == 0) minIntervalMillis else maxIntervalMillis).let {
                     logger.verbose("(${uid})[${user.name}]直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
             }.onFailure {
                 logger.warning("(${uid})直播监听任务执行失败", it)
+                delay(minIntervalMillis)
             }
         }
     }.also {
