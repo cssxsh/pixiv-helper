@@ -43,19 +43,17 @@ object BiliBiliCommand : CompositeCommand(
 
     private val intervalMillis = minIntervalMillis..maxIntervalMillis
 
-    private fun BilibiliTaskData.TaskInfo.getGroups(): Set<Contact> =
-        Bot.botInstances.flatMap { it.groups }.filter { it.id in groups }.toSet()
-
-    private fun BilibiliTaskData.TaskInfo.getFriends(): Set<Contact> =
-        Bot.botInstances.flatMap { it.friends }.filter { it.id in friends }.toSet()
+    private fun BilibiliTaskData.TaskInfo.getContacts(): Set<Contact> = Bot.botInstances.flatMap { bot ->
+        bot.groups.filter { it.id in groups } + bot.friends.filter { it.id in friends }
+    }.toSet()
 
     fun onInit() {
         BilibiliTaskData.video.toMap().forEach { (uid, info) ->
-            videoContact[uid] = info.getGroups() + info.getFriends()
+            videoContact[uid] = info.getContacts()
             addVideoListener(uid)
         }
         BilibiliTaskData.live.toMap().forEach { (uid, info) ->
-            liveContact[uid] = info.getGroups() + info.getFriends()
+            liveContact[uid] = info.getContacts()
             addLiveListener(uid)
         }
     }
@@ -65,7 +63,7 @@ object BiliBiliCommand : CompositeCommand(
             runCatching {
                 Bilibili.searchVideo(uid).searchData.list.vList.apply {
                     maxByOrNull { it.created }?.let { video ->
-                        logger.verbose("(${uid})最新视频为${video}")
+                        logger.verbose("(${uid})最新视频为${video.toString().replace("\n", "\\n")}")
                     }
                 }.filter {
                     it.created >= BilibiliTaskData.video.getOrPut(uid) { BilibiliTaskData.TaskInfo() }.last
