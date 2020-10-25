@@ -120,7 +120,7 @@ object BiliBiliCommand : CompositeCommand(
         while (isActive) {
             runCatching {
                 Bilibili.accInfo(uid).userData.also { user ->
-                    logger.verbose("(${uid})最新直播间状态为${user.liveRoom}")
+                    logger.verbose("(${uid})[${user.name}]最新直播间状态为${user.liveRoom}")
                     liveState.put(uid, user.liveRoom.liveStatus == 1).let {
                         if (it != true && user.liveRoom.liveStatus == 1) {
                             buildString {
