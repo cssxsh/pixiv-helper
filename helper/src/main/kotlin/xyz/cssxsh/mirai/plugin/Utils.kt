@@ -107,10 +107,10 @@ fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
 }
 
 fun IllustInfo.isR18(): Boolean =
-    tags.any { """R-?18""".toRegex() in it.name }
+    tags.any { """R-?18""".toRegex() in it.name || "精液" in it.name || "中出" in it.name }
 
 fun BaseInfo.isR18(): Boolean =
-    tags.any { """R-?18""".toRegex() in it.name }
+    tags.any { """R-?18""".toRegex() in it.name || "精液" in it.name || "中出" in it.name }
 
 fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
