@@ -63,7 +63,7 @@ object BiliBiliCommand : CompositeCommand(
             runCatching {
                 Bilibili.searchVideo(uid).searchData.list.vList.apply {
                     maxByOrNull { it.created }?.let { video ->
-                        logger.verbose("(${uid})最新视频为${video.toString().replace("\n", "\\n")}")
+                        logger.verbose("(${uid})最新视频为[${video.title}](${video.bvId})")
                     }
                 }.filter {
                     it.created >= BilibiliTaskData.video.getOrPut(uid) { BilibiliTaskData.TaskInfo() }.last
@@ -91,7 +91,7 @@ object BiliBiliCommand : CompositeCommand(
                 }
             }.onSuccess { list ->
                 (intervalMillis.random()).let {
-                    logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video[uid]}, 共有${list.size}个视频更新, 即将进入延时delay(${it}ms)。")
+                    logger.verbose("(${uid})视频监听任务完成一次, 目前时间戳为${BilibiliTaskData.video.getValue(uid).last}, 共有${list.size}个视频更新, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
             }.onFailure {
@@ -106,7 +106,7 @@ object BiliBiliCommand : CompositeCommand(
         while (isActive) {
             runCatching {
                 Bilibili.accInfo(uid).userData.also { user ->
-                    logger.verbose("(${uid})[${user.name}]最新直播间状态为${user.liveRoom}")
+                    logger.verbose("(${uid})[${user.name}][${user.liveRoom.title}]最新开播状态为${user.liveRoom.liveStatus == 1}")
                     liveState.put(uid, user.liveRoom.liveStatus == 1).let {
                         if (it != true && user.liveRoom.liveStatus == 1) {
                             buildString {
@@ -127,7 +127,7 @@ object BiliBiliCommand : CompositeCommand(
                 }
             }.onSuccess { user ->
                 (intervalMillis.random()).let {
-                    logger.verbose("(${uid})[${user.name}]直播监听任务完成一次, 目前直播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
+                    logger.verbose("(${uid})[${user.name}]直播监听任务完成一次, 目前开播状态为${user.liveRoom.liveStatus}, 即将进入延时delay(${it}ms)。")
                     delay(it)
                 }
             }.onFailure {
