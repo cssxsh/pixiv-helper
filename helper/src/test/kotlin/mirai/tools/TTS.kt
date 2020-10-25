@@ -23,7 +23,7 @@ object TTS {
     private suspend fun <T> useHttpClient(block: suspend (HttpClient) -> T): T = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
-            acceptContentTypes = acceptContentTypes + ContentType.Text.Html
+            accept(ContentType.Text.Html)
         }
         BrowserUserAgent()
         ContentEncoding {
