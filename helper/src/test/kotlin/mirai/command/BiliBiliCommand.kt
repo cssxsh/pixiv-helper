@@ -7,12 +7,8 @@ import mirai.data.BilibiliTaskData.minIntervalMillis
 import mirai.tools.Bilibili
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.MiraiConsole
-import net.mamoe.mirai.console.command.CommandOwner
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.permission.Permission
-import net.mamoe.mirai.console.permission.PermissionId
-import net.mamoe.mirai.console.permission.RootPermission
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Friend
@@ -23,19 +19,11 @@ import kotlin.coroutines.CoroutineContext
 
 @ConsoleExperimentalApi
 object BiliBiliCommand : CompositeCommand(
-    owner = BiliBiliCommandOwner,
+    owner = TempCommandOwner,
     "bilibili", "B站",
     description = "缓存指令",
     prefixOptional = true
 ), CoroutineScope {
-
-    private object BiliBiliCommandOwner : CommandOwner {
-        override val parentPermission: Permission
-            get() = RootPermission
-
-        override fun permissionId(name: String): PermissionId =
-            PermissionId("bilibili", name)
-    }
 
     private val logger by lazy {
         MiraiConsole.createLogger("bilibili")
