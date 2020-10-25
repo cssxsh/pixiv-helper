@@ -10,11 +10,9 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import mirai.data.AmrFileData
+import mirai.data.TTSConvertResult
+import mirai.data.TTSLangSelect
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.io.File
@@ -32,9 +30,7 @@ object TTS {
             deflate()
             identity()
         }
-    }.use {
-        block(it)
-    }
+    }.use { block(it) }
 
     private val logger by lazy {
         MiraiConsole.createLogger("tts")
@@ -52,18 +48,10 @@ object TTS {
 
     private const val CONVERT_RESULT = "https://s19.aconvert.com/convert/p3r68-cdx67/"
 
-
-    @Serializable
-    private data class LangSelect(
-        val error: Int,
-        val msg: String,
-        val lan: String
-    )
-
     private suspend fun getAmr(text: String): String = useHttpClient { client ->
-        val language = client.get<LangSelect>(LANG_SELECT) {
+        val language = client.get<TTSLangSelect>(LANG_SELECT) {
             parameter("query", text)
-        }.takeIf { it.msg == "success" }?.lan ?: "zh"
+        }.takeIf { it.message == "success" }?.language ?: "zh"
 
         logger.verbose("开始tts, language: $language, test: '$text'")
         val file = client.get<ByteArray>(GET_TTS) {
@@ -73,25 +61,28 @@ object TTS {
             parameter("source", "web")
         }
 
-        logger.verbose("开始mp3(${file.size}) -> amr")
-        val json = client.submitFormWithBinaryData<String>(
+        logger.verbose("开始mp3(${text}, ${file.size}) -> amr")
+        val result = client.submitFormWithBinaryData<TTSConvertResult>(
             url = CONVERT_BATCH,
             formData = formData {
-                append(key = "file", filename = "blob", size = file.size.toLong(), contentType = ContentType.Audio.MPEG) {
+                append(
+                    key = "file",
+                    filename = "blob",
+                    size = file.size.toLong(),
+                    contentType = ContentType.Audio.MPEG
+                ) {
                     writeFully(file)
                 }
                 append(key = "targetformat", value = "amr")
             }
         )
 
-        logger.verbose("转换结果: $json")
-        val filename = Json.parseToJsonElement(json).jsonObject["filename"]!!.jsonPrimitive.content
-        client.get<ByteArray>(CONVERT_RESULT + filename).let {
-            File(rootPath, filename).writeBytes(it)
+        logger.verbose("转换结果: $result")
+        client.get<ByteArray>(CONVERT_RESULT + result.filename).let {
+            File(rootPath, result.filename).writeBytes(it)
         }
-        AmrFileData.files[text] = filename
-        filename
+        result.filename
     }
 
-    suspend fun getAmrFile(text: String): File = File(rootPath, AmrFileData.files[text] ?: getAmr(text))
+    suspend fun getAmrFile(text: String): File = File(rootPath, AmrFileData.files.getOrPut(text) { getAmr(text) })
 }
