@@ -21,6 +21,10 @@ object PixivMethodCommand : CompositeCommand(
     description = "pixiv 基本方法",
     prefixOptional = true,
     overrideContext = buildCommandArgumentContext {
+        RankMode::class with object : CommandArgumentParser<RankMode> {
+            override fun parse(raw: String, sender: CommandSender): RankMode =
+                enumValueOf(raw.toUpperCase())
+        }
         WDate::class with object : CommandArgumentParser<WDate> {
             override fun parse(raw: String, sender: CommandSender): WDate =
                 PatternDateFormat("y-M-d").parseDate(raw).wrapped
@@ -84,22 +88,18 @@ object PixivMethodCommand : CompositeCommand(
 
     /**
      * 排行榜
-     * @param type 模式名 [RankMode]
+     * @param mode 模式名 [RankMode]
      * @param date 日期 yyyy-MM-dd
      * @param index 排名
      */
     @SubCommand
     @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
     suspend fun CommandSenderOnMessage<MessageEvent>.rank(
-        type: String,
+        mode: RankMode,
         date: WDate,
         index: Long
     ) = getHelper().runCatching {
-        val rankMode: RankMode = enumValueOf(type.also {
-            require("18" !in it) { "R18禁止！" }
-        })
-
-        buildMessage(illustRanking(date = date, mode = rankMode, offset = index).illusts.first())
+        buildMessage(illustRanking(date = date, mode = mode, offset = index).illusts.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
