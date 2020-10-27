@@ -2,10 +2,8 @@ package mirai
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import mirai.command.BiliBiliCommand
 import mirai.command.TTSCommand
 import mirai.data.AmrFileData
-import mirai.data.BilibiliTaskData
 import mirai.data.TempPluginDataHolder
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
@@ -49,7 +47,6 @@ object RunMirai {
 
     private fun MiraiConsole.setCustomize() {
         JvmPluginLoader.dataStorage.load(TempPluginDataHolder, AmrFileData)
-        JvmPluginLoader.dataStorage.load(TempPluginDataHolder, BilibiliTaskData)
         subscribeAlways<NewFriendRequestEvent> {
             accept()
         }
@@ -57,8 +54,6 @@ object RunMirai {
             accept()
         }
         TTSCommand.register()
-        BiliBiliCommand.onInit()
-        BiliBiliCommand.register()
 //        runBlocking {
 //            Bot.botInstances.flatMap { it.groups }.forEach { group ->
 //                group.sendMessage("我上线啦啊啊啊(此为消息为测试机器人上线自动发送消息)")
