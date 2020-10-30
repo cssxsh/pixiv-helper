@@ -17,9 +17,10 @@ import xyz.cssxsh.pixiv.api.app.searchIllust
 object PixivTagCommand: SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",
-    description = "pixiv 标签",
-    prefixOptional = true
+    description = "pixiv 标签"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     private fun PixivHelper.searchTag(
         tag: String,

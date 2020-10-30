@@ -12,9 +12,10 @@ import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
-    description = "搜索指令",
-    prefixOptional = true
+    description = "搜索指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     private const val MIN_SIMILARITY = 0.85
 

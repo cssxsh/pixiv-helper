@@ -8,9 +8,10 @@ import xyz.cssxsh.mirai.plugin.*
 object PixivGetCommand: SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点",
-    description = "获取指令",
-    prefixOptional = true
+    description = "获取指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     @Handler
     @Suppress("unused")

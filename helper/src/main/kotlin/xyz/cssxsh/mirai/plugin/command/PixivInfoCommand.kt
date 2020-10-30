@@ -14,9 +14,11 @@ import xyz.cssxsh.mirai.plugin.getHelper
 object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",
-    description = "信息指令",
-    prefixOptional = true
+    description = "信息指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
+
     /**
      * 获取助手信息
      */

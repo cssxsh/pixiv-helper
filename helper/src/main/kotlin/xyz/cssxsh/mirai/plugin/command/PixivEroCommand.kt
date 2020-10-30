@@ -10,9 +10,10 @@ import xyz.cssxsh.mirai.plugin.data.*
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "ero", "色图", "涩图",
-    description = "色图指令",
-    prefixOptional = true
+    description = "色图指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {

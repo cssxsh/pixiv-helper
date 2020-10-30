@@ -23,9 +23,10 @@ import java.io.File
 object PixivCacheCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
-    description = "缓存指令",
-    prefixOptional = true
+    description = "缓存指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     private var compressJob: Deferred<File>? = null
 

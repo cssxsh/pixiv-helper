@@ -17,9 +17,10 @@ import xyz.cssxsh.pixiv.api.app.*
 object PixivFollowCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "follow",
-    description = "关注指令",
-    prefixOptional = true
+    description = "关注指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
         (0L until maxNum step AppApi.PAGE_SIZE).forEach { offset ->

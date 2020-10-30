@@ -14,9 +14,10 @@ import xyz.cssxsh.mirai.plugin.getHelper
 object PixivSettingCommand: CompositeCommand(
     owner = PixivHelperPlugin,
     "set",
-    description = "pixiv 设置",
-    prefixOptional = true
+    description = "pixiv 设置"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
     /**
      * 设置代理 pixiv proxy http://10.21.159.95:7890
      * @param proxy 代理URL

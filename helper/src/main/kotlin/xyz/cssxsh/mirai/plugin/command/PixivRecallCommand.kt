@@ -11,9 +11,10 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 object PixivRecallCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "recall", "撤回",
-    description = "撤回指令",
-    prefixOptional = true
+    description = "撤回指令"
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     @Handler
     @Suppress("unused")

@@ -19,7 +19,6 @@ object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "pixiv",
     description = "pixiv 基本方法",
-    prefixOptional = true,
     overrideContext = buildCommandArgumentContext {
         RankMode::class with object : CommandArgumentParser<RankMode> {
             override fun parse(raw: String, sender: CommandSender): RankMode =
@@ -31,6 +30,8 @@ object PixivMethodCommand : CompositeCommand(
         }
     }
 ), PixivHelperLogger {
+
+    override val prefixOptional: Boolean = true
 
     /**
      * 登录 通过 用户名，密码
