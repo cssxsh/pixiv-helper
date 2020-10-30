@@ -19,9 +19,20 @@ object PixivSearchCommand : SimpleCommand(
 
     private const val MIN_SIMILARITY = 0.85
 
+    private const val MAX_REPEAT = 10
+
+    private suspend fun search(url: String, repeat: Int = 0): List<ImageSearcher.SearchResult> = runCatching {
+        ImageSearcher.getSearchResults(url)
+    }.onFailure {
+        logger.warning("搜索[$url]失败", it)
+        if (repeat >= MAX_REPEAT) {
+            throw IllegalStateException("搜索次数超过${MAX_REPEAT}", it)
+        }
+    }.getOrNull() ?: search(url, repeat + 1)
+
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
-        ImageSearcher.getSearchResults(image.queryUrl()).maxByOrNull {
+        search(image.queryUrl()).maxByOrNull {
             it.similarity
         }?.let { result ->
             if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
