@@ -9,9 +9,9 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
-    /**
-     * 缓存
-     */
+    override fun shouldPerformAutoSaveWheneverChanged(): Boolean = false
+
+    @ValueName("illusts")
     private val illusts: MutableMap<Long, BaseInfo> by value(mutableMapOf())
 
     @ValueName("ero_illusts")
