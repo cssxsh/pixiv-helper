@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
+import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
@@ -13,14 +14,16 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
      */
     private val illusts: MutableMap<Long, BaseInfo> by value(mutableMapOf())
 
-    private val eros_illusts: MutableSet<Long> by value(mutableSetOf())
+    @ValueName("ero_illusts")
+    private val eroIllusts: MutableSet<Long> by value(mutableSetOf())
 
-    private val r18s_illusts: MutableSet<Long> by value(mutableSetOf())
+    @ValueName("r18_illusts")
+    private val r18Illusts: MutableSet<Long> by value(mutableSetOf())
 
     fun caches() = synchronized(illusts) { illusts.toMap() }
 
     fun eros(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
-        eros_illusts.mapNotNull { pid ->
+        eroIllusts.mapNotNull { pid ->
             requireNotNull(illusts[pid]) { "${pid}缓存错误" }.takeIf {
                 predicate(it)
             }
@@ -28,7 +31,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     fun r18s(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
-        r18s_illusts.mapNotNull { pid ->
+        r18Illusts.mapNotNull { pid ->
             requireNotNull(illusts[pid]) { "${pid}缓存错误" }.takeIf {
                 predicate(it)
             }
@@ -51,9 +54,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
                     illusts[illust.pid] = illust.toBaseInfo()
                     if (illust.isEro()) {
                         if (illust.isR18()) {
-                            r18s_illusts.add(illust.pid)
+                            r18Illusts.add(illust.pid)
                         } else {
-                            eros_illusts.add(illust.pid)
+                            eroIllusts.add(illust.pid)
                         }
                     }
                 }
@@ -69,9 +72,9 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
         logger.info("作品${illust.toBaseInfo().toInfo()}信息已${if (it == null) "设置" else "刷新"} , 目前共${illusts.size}条信息")
         if (illust.isEro()) {
             if (illust.isR18()) {
-                r18s_illusts.add(illust.pid)
+                r18Illusts.add(illust.pid)
             } else {
-                eros_illusts.add(illust.pid)
+                eroIllusts.add(illust.pid)
             }
         }
     }
@@ -90,8 +93,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
         illusts.remove(pid)?.also { illust ->
             logger.info("作品${illust.toInfo()}信息已移除, 目前共${illusts.size}条信息")
             if (illust.isEro()) {
-                eros_illusts.remove(illust.pid)
-                r18s_illusts.remove(illust.pid)
+                eroIllusts.remove(illust.pid)
+                r18Illusts.remove(illust.pid)
             }
         }
     }

@@ -1,12 +1,14 @@
 package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.AutoSavePluginData
+import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.contact.User
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 
 object PixivStatisticalData : AutoSavePluginData("PixivStatistics"), PixivHelperLogger {
 
+    @ValueName("data")
     private val data: MutableMap<Long, UserData> by value(mutableMapOf())
 
     fun getMap() = data.toMap()
