@@ -11,9 +11,10 @@ import net.mamoe.mirai.message.uploadAsGroupVoice
 object TTSCommand : SimpleCommand(
     owner = TempCommandOwner,
     "tts", "say", "说",
-    description = "TTS指令",
-    prefixOptional = true
+    description = "TTS指令"
 ) {
+
+    override val prefixOptional: Boolean = true
 
     @ConsoleExperimentalApi
     @Handler
