@@ -6,6 +6,8 @@ import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -26,6 +28,8 @@ object PixivCacheCommand : CompositeCommand(
     description = "缓存指令"
 ), PixivHelperLogger {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private var compressJob: Deferred<File>? = null

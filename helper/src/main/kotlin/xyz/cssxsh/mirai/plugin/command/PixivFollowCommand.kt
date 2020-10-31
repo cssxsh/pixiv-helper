@@ -6,6 +6,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.*
@@ -20,6 +22,8 @@ object PixivFollowCommand : CompositeCommand(
     description = "关注指令"
 ), PixivHelperLogger {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {

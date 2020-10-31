@@ -7,9 +7,6 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.utils.hoursToMillis
-import net.mamoe.mirai.utils.minutesToMillis
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.Zipper
@@ -22,11 +19,7 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    @ConsoleExperimentalApi
-    override val autoSaveIntervalMillis: LongRange
-        get() = 3.minutesToMillis..30.hoursToMillis
-
-    private val listener = PixivHelperListener(this.coroutineContext)
+    private val listener = PixivHelperListener(coroutineContext)
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {

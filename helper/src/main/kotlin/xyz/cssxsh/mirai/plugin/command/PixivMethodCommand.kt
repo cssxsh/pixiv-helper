@@ -7,7 +7,9 @@ import com.soywiz.klock.wrapped.wrapped
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.description.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.RankMode
@@ -20,17 +22,19 @@ object PixivMethodCommand : CompositeCommand(
     "pixiv",
     description = "pixiv 基本方法",
     overrideContext = buildCommandArgumentContext {
-        RankMode::class with object : CommandArgumentParser<RankMode> {
+        RankMode::class with object : CommandValueArgumentParser<RankMode> {
             override fun parse(raw: String, sender: CommandSender): RankMode =
                 enumValueOf(raw.toUpperCase())
         }
-        WDate::class with object : CommandArgumentParser<WDate> {
+        WDate::class with object : CommandValueArgumentParser<WDate> {
             override fun parse(raw: String, sender: CommandSender): WDate =
                 PatternDateFormat("y-M-d").parseDate(raw).wrapped
         }
     }
 ), PixivHelperLogger {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     /**

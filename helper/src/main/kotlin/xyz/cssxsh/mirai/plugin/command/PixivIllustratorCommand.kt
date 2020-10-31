@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
@@ -16,6 +18,8 @@ object PixivIllustratorCommand : CompositeCommand(
     description = "画师指令"
 ), PixivHelperLogger {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     @SubCommand("artwork", "作品")

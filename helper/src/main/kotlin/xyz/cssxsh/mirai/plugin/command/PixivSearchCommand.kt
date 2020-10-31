@@ -3,6 +3,8 @@ package xyz.cssxsh.mirai.plugin.command
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
@@ -15,6 +17,8 @@ object PixivSearchCommand : SimpleCommand(
     description = "搜索指令"
 ), PixivHelperLogger {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private const val MIN_SIMILARITY = 0.85

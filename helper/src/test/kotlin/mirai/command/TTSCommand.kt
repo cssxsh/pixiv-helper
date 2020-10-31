@@ -3,6 +3,7 @@ package mirai.command
 import mirai.tools.TTS
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.GroupMessageEvent
 import net.mamoe.mirai.message.data.content
@@ -14,6 +15,8 @@ object TTSCommand : SimpleCommand(
     description = "TTS指令"
 ) {
 
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     @ConsoleExperimentalApi
