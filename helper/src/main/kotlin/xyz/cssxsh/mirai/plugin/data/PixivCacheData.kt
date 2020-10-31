@@ -3,12 +3,14 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
+    @ConsoleExperimentalApi
     override fun shouldPerformAutoSaveWheneverChanged(): Boolean = false
 
     @ValueName("illusts")
