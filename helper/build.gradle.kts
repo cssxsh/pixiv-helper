@@ -69,13 +69,13 @@ tasks {
         useJUnitPlatform()
     }
 
-
     shadowJar {
         val block: DependencyFilter.() -> Unit = {
             exclude { "org.jetbrains" in it.moduleGroup }
             exclude { "net.mamoe" in it.moduleGroup }
         }
         dependencies(block)
+        archiveBaseName.set(rootProject.name)
     }
 
     compileKotlin {
@@ -88,7 +88,7 @@ tasks {
         kotlinOptions.jvmTarget = "11"
     }
 
-    val testConsoleDir = File(parent?.projectDir ?: projectDir, "test").apply { mkdir() }
+    val testConsoleDir = File(rootProject.projectDir, "test").apply { mkdir() }
 
     create("copyFile") {
         group = "mirai"
@@ -98,13 +98,11 @@ tasks {
 
 
         doFirst {
-            delete {
-                File(testConsoleDir, "plugins/").walk().filter {
-                    project.name in it.name
-                }.forEach {
-                    delete(it)
-                    println("Deleted ${it.absolutePath}")
-                }
+            File(testConsoleDir, "plugins/").walk().filter {
+                rootProject.name in it.name
+            }.forEach {
+                delete(it)
+                println("Deleted ${it.absolutePath}")
             }
             copy {
                 into(File(testConsoleDir, "plugins/").walk().maxBy {
