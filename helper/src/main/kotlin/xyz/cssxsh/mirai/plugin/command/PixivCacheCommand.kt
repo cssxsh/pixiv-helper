@@ -126,8 +126,8 @@ object PixivCacheCommand : CompositeCommand(
                     reply("{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
                 }
             }.runCatching {
-                size to count { illust: IllustInfo ->
-                    isActive && illust.pid !in PixivCacheData && runCatching {
+                size to count { illust ->
+                    illust.pid !in PixivCacheData || isActive && runCatching {
                         getImages(illust)
                     }.onSuccess {
                         delay(delayTime)
@@ -219,7 +219,7 @@ object PixivCacheCommand : CompositeCommand(
                         logger.verbose("用户(${uid}), 共有{${first().pid}...${last().pid}}共${size}个作品需要缓存")
                     }.runCatching {
                         size to count { illust ->
-                            isActive && illust.pid !in PixivCacheData && runCatching {
+                            illust.pid !in PixivCacheData || isActive && runCatching {
                                 getImages(illust)
                             }.onSuccess {
                                 delay(delayTime)
@@ -274,7 +274,7 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }.runCatching {
                 size to count { pid ->
-                    isActive && pid !in PixivCacheData && runCatching {
+                    pid !in PixivCacheData || isActive && runCatching {
                         getImages(getIllustInfo(pid))
                     }.onFailure {
                         logger.warning("获取作品(${pid})错误", it)
@@ -306,7 +306,7 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose("{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新")
             }.runCatching {
                 size to count { info ->
-                    runCatching {
+                    isActive && runCatching {
                         getIllustInfo(info.pid, true)
                     }.onSuccess {
                         logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
