@@ -32,7 +32,7 @@ object PixivSearchCommand : SimpleCommand(
         if (repeat >= MAX_REPEAT) {
             throw IllegalStateException("搜索次数超过${MAX_REPEAT}", it)
         }
-    }.getOrNull() ?: search(url, repeat + 1)
+    }.getOrElse { search(url, repeat + 1) }
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
