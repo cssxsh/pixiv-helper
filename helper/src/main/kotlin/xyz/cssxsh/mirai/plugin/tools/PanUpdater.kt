@@ -22,6 +22,7 @@ object PanUpdater {
     private const val SUPER_FILE = "https://c3.pcs.baidu.com/rest/2.0/pcs/superfile2"
     private const val CREATE_FILE = "https://pan.baidu.com/api/create"
     private const val BLOCK_SIZE = 4L * 1024 * 1024
+    private const val MAX_ASYNC = 8
     private fun httpClient(): HttpClient = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
@@ -106,7 +107,7 @@ object PanUpdater {
         superFile(data, index, uploadId, path, config)
     }.onFailure {
         if (it !is ClientRequestException) throw it
-    }.getOrNull() ?: superFileOrNull(data, index, uploadId, path, config)
+    }.getOrElse { superFileOrNull(data, index, uploadId, path, config) }
 
     private suspend fun HttpClient.createFile(
         length: Long,
@@ -142,7 +143,7 @@ object PanUpdater {
         sourcePath: String,
         updatePath: String,
         config: PanConfig,
-        block: (SuperFileData, Pair<Int, Int>) -> Unit = { _, _ -> }
+        block: (SuperFileData, Int, Int) -> Unit = { _, _, _ -> }
     ) = launch(Dispatchers.IO) {
         val file = File(sourcePath)
         val length = file.length()
@@ -157,7 +158,7 @@ object PanUpdater {
                 localMtime = localMtime,
                 config = config
             )
-            val channel = Channel<Int>(8)
+            val channel = Channel<Int>(MAX_ASYNC)
             var count = 0
             val md5List = blocks.mapIndexed { index, range ->
                 async {
@@ -176,7 +177,7 @@ object PanUpdater {
                             config = config
                         ).also {
                             channel.receive()
-                            block(it, ++count to blocks.size)
+                            block(it, ++count, blocks.size)
                         }.md5
                     }
                 }

@@ -23,8 +23,8 @@ internal class PanUpdaterTest {
                     targetPath = "/Pixiv",
                     cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
                 )
-            ) { data, (count, size) ->
-                println("${WDateTime.now().format("yyyy-MM-dd'T'HH:mm:ss")} ${count}/${size}  $data")
+            ) { data, count, size ->
+                println("${WDateTime.now().format("yyyy-MM-dd'T'HH:mm:ss")} ${count}/${size} $data")
             }.join()
         }.let {
             println(it.toTimeString())
