@@ -31,15 +31,13 @@ object RunMirai {
     )
 
     @JvmStatic
-    fun main(args: Array<String>) {
+    fun main(args: Array<String>): Unit = runBlocking {
         // 默认在 /test 目录下运行
         MiraiConsoleTerminalLoader.parse(args, exitProcess = true)
         MiraiConsoleTerminalLoader.startAsDaemon(miraiConsoleImpl(Paths.get(".").toAbsolutePath()))
         MiraiConsole.setCustomize()
         try {
-            runBlocking {
-                MiraiConsole.job.join()
-            }
+            MiraiConsole.job.join()
         } catch (e: CancellationException) {
             // ignored
         }
@@ -54,10 +52,5 @@ object RunMirai {
             accept()
         }
         TTSCommand.register()
-//        runBlocking {
-//            Bot.botInstances.flatMap { it.groups }.forEach { group ->
-//                group.sendMessage("我上线啦啊啊啊(此为消息为测试机器人上线自动发送消息)")
-//            }
-//        }
     }
 }
