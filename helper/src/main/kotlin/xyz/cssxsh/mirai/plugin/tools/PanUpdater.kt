@@ -14,7 +14,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.RandomAccessFile
 import kotlin.io.use
@@ -28,6 +27,7 @@ object PanUpdater {
     private fun httpClient(): HttpClient = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
+            accept(ContentType.Text.Html)
         }
         BrowserUserAgent()
         ContentEncoding {
@@ -74,7 +74,7 @@ object PanUpdater {
         uploadId: String,
         path: String,
         config: PanConfig
-    ) = post<String>(SUPER_FILE) {
+    ) = post<SuperFileData>(SUPER_FILE) {
         header(HttpHeaders.Origin, "https://pan.baidu.com")
         header(HttpHeaders.Referrer, "https://pan.baidu.com/")
         header(HttpHeaders.Cookie, config.cookies)
@@ -95,8 +95,6 @@ object PanUpdater {
                 writeFully(data)
             }
         })
-    }.let {
-        Json.decodeFromString(SuperFileData.serializer(), it)
     }
 
     private suspend fun HttpClient.superFileOrNull(
