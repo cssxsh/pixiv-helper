@@ -12,6 +12,8 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.RandomAccessFile
@@ -192,4 +194,58 @@ object PanUpdater {
             )
         }
     }
+
+    @Serializable
+    data class CreateResultData(
+        @SerialName("category")
+        val category: Int,
+        @SerialName("ctime")
+        val ctime: Int,
+        @SerialName("errno")
+        val errno: Int,
+        @SerialName("fs_id")
+        val fsId: Long,
+        @SerialName("isdir")
+        val isDir: Int,
+        @SerialName("md5")
+        val md5: String,
+        @SerialName("mtime")
+        val mtime: Int,
+        @SerialName("name")
+        val name: String,
+        @SerialName("path")
+        val path: String,
+        @SerialName("server_filename")
+        val serverFilename: String? = null,
+        @SerialName("size")
+        val size: Int
+    )
+
+    @Serializable
+    data class PreCreateData(
+        @SerialName("block_list")
+        val blockList: List<Int> = emptyList(),
+        @SerialName("path")
+        val path: String? = null,
+        @SerialName("errno")
+        val errno: Int,
+        @SerialName("request_id")
+        val requestId: Long,
+        @SerialName("return_type")
+        val returnType: Int,
+        @SerialName("uploadid")
+        val uploadId: String
+    )
+
+    @Serializable
+    data class SuperFileData(
+        @SerialName("md5")
+        val md5: String,
+        @SerialName("partseq")
+        val partSeq: String,
+        @SerialName("request_id")
+        val requestId: Long,
+        @SerialName("uploadid")
+        val uploadId: String
+    )
 }
