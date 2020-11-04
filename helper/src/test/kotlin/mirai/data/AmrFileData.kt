@@ -4,5 +4,5 @@ import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 
 object AmrFileData : AutoSavePluginData("AmrFile") {
-    val files: MutableMap<String, String> by value()
+    val files: MutableMap<String, String> by value(mutableMapOf())
 }
