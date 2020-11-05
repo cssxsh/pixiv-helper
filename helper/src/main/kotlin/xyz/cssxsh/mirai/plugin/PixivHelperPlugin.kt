@@ -30,6 +30,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivConfigData.reload()
         PixivStatisticalData.reload()
         PixivAliasData.reload()
+        PixivSearchData.reload()
         // Command
         PixivMethodCommand.register()
         PixivEroCommand.register()

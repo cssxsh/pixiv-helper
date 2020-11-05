@@ -8,6 +8,7 @@ import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
 import org.jsoup.Jsoup
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import xyz.cssxsh.mirai.plugin.data.SearchResult
 import kotlin.io.use
 
 @Suppress("unused")
@@ -65,11 +66,4 @@ object ImageSearcher: PixivHelperLogger {
             parse(html)
         }
     }
-
-    data class SearchResult(
-        val similarity: Double,
-        val content: String,
-        val pid: Long,
-        val uid: Long
-    )
 }
