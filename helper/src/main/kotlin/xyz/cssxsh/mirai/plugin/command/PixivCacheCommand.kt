@@ -416,8 +416,8 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.pan(file: String) {
         check(panJob?.isActive != true) { "正在上传中, ${panJob}..." }
-        PixivHelperPlugin.update(file, file, PixivHelperSettings.panConfig) { data, (count, size) ->
-            logger.verbose("MD5将记录 ${count}/${size}  $data")
+        PixivHelperPlugin.update(file, file, PixivHelperSettings.panConfig) { data, count, size ->
+            logger.verbose("MD5将记录 ${count}/${size} $data")
         }.also {
             panJob = it
         }
