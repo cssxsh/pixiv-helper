@@ -40,19 +40,15 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
         PixivSearchData.resultMap.getOrPut(image.md5.joinToString("") { it.toUByte().toString(16) }) {
-            search(image.queryUrl()).maxByOrNull {
-                it.similarity
-            }?.takeIf { result ->
-                result.similarity > MIN_SIMILARITY
-            }?.also { result ->
-                getHelper().runCatching {
+            search(image.queryUrl()).run {
+                requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
+            }.also { result ->
+                if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
                     launch {
                         logger.verbose("相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}")
                         getImages(getIllustInfo(result.pid))
                     }
                 }
-            }.let {
-                requireNotNull(it) { "没有搜索结果" }
             }
         }
     }.onSuccess { result ->
