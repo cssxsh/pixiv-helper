@@ -365,7 +365,7 @@ object PixivCacheCommand : CompositeCommand(
                     info.originUrl.filter { url ->
                         File(dir, url.getFilename()).canRead().not()
                     }.let { urls ->
-                        downloadImageUrl<ByteArray, Unit>(urls) { _, url, result ->
+                        downloadImageUrl<ByteArray, Result<ByteArray>>(urls) { _, url, result ->
                             File(dir, url.getFilename()).run {
                                 result.onSuccess {
                                     logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
@@ -374,11 +374,13 @@ object PixivCacheCommand : CompositeCommand(
                                     logger.warning("$url 下载失败", it)
                                 }
                             }
+                        }.forEach {
+                            it.getOrThrow()
                         }
                     }
                 }.onFailure {
-                    quoteReply("作品(${info.pid})[${info.title}]缓存出错, ${it.message}")
-                    logger.warning("作品(${info.pid})[${info.title}]缓存出错", it)
+                    quoteReply("作品(${info.pid})[${info.title}]修复出错, ${it.message}")
+                    logger.warning("作品(${info.pid})[${info.title}]修复出错", it)
                 }.isFailure
             }
         }
