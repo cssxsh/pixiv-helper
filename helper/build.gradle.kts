@@ -1,4 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.internal.DependencyFilter
 
 plugins {
     kotlin("jvm") version Versions.kotlin
@@ -28,7 +27,6 @@ repositories {
     gradlePluginPortal()
 }
 
-
 dependencies {
     kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
     compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
@@ -47,7 +45,6 @@ dependencies {
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
     // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
 }
-
 
 kotlin {
     sourceSets {
@@ -70,11 +67,10 @@ tasks {
     }
 
     shadowJar {
-        val block: DependencyFilter.() -> Unit = {
+        dependencies {
             exclude { "org.jetbrains" in it.moduleGroup }
             exclude { "net.mamoe" in it.moduleGroup }
         }
-        dependencies(block)
         archiveBaseName.set(rootProject.name)
     }
 
