@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
@@ -50,12 +51,18 @@ object PixivSearchCommand : SimpleCommand(
                     }
                 }
             }
+        }.let { result ->
+            buildString {
+                appendLine("相似度: ${result.similarity * 100}%")
+                appendLine(result.content + "#${result.uid}")
+            }
         }
-    }.onSuccess { result ->
-        quoteReply(buildString {
-            appendLine("相似度: ${result.similarity * 100}%")
-            appendLine(result.content + "#${result.uid}")
-        })
+    }.onSuccess {
+        if (fromEvent.subject is Group) {
+            quoteReply(it)
+        } else {
+            reply(it)
+        }
     }.onFailure {
         logger.verbose("搜索失败$image", it)
         quoteReply("搜索失败， ${it.message}")
