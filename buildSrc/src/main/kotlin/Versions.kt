@@ -1,9 +1,7 @@
-@file:Suppress("unused")
 
 object Versions {
-    const val latest = "+"
     // mirai
-    const val core = "1.3.2"
+    const val core = "1.3.3"
     const val console = "1.0-RC-1"
     // kotlin
     const val kotlin = "1.4.10"
