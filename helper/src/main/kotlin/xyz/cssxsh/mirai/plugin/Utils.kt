@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
+import io.ktor.client.features.*
+import io.ktor.network.sockets.*
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.message.MessageEvent
@@ -7,6 +9,7 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
+import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -14,8 +17,11 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.tool.downloadImageUrl
+import xyz.cssxsh.pixiv.tool.downloadImageUrls
+import java.io.EOFException
 import java.io.File
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * 获取对应subject的助手
@@ -181,6 +187,32 @@ suspend fun PixivHelper.getImages(
     }
 }
 
+suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
+    urls = urls,
+    ignore = { url, throwable ->
+        when (throwable) {
+            is SSLHandshakeException,
+            is SSLException,
+            is EOFException,
+            is StreamResetException,
+            is SocketTimeoutException,
+            is ConnectTimeoutException,
+            is HttpRequestTimeoutException -> {
+                logger.verbose("${url}下载错误: ${throwable.message}, 已忽略")
+                true
+            }
+            else -> false
+        }
+    },
+    block = { _, url, result ->
+        runCatching {
+            File(dir, url.getFilename()).apply {
+                writeBytes(result.getOrThrow())
+            }
+        }
+    }
+)
+
 suspend fun PixivHelper.getImages(
     pid: Long,
     urls: List<String>
@@ -190,13 +222,7 @@ suspend fun PixivHelper.getImages(
             File(dir, url.getFilename())
         }
     } else {
-        downloadImageUrl<ByteArray, Result<File>>(urls) { _, url, result ->
-            runCatching {
-                File(dir, url.getFilename()).apply {
-                    writeBytes(result.getOrThrow())
-                }
-            }
-        }.map {
+        downloadImageUrls(urls = urls, dir = dir).map {
             it.getOrThrow()
         }
     }

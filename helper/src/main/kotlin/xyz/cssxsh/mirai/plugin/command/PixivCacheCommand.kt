@@ -18,7 +18,6 @@ import xyz.cssxsh.mirai.plugin.tools.PoiTool.saveCacheToXlsxAsync
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.tool.downloadImageUrl
 import java.io.File
 
 @Suppress("unused")
@@ -365,16 +364,7 @@ object PixivCacheCommand : CompositeCommand(
                     info.originUrl.filter { url ->
                         File(dir, url.getFilename()).canRead().not()
                     }.let { urls ->
-                        downloadImageUrl<ByteArray, Result<ByteArray>>(urls) { _, url, result ->
-                            File(dir, url.getFilename()).run {
-                                result.onSuccess {
-                                    logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
-                                    writeBytes(it)
-                                }.onFailure {
-                                    logger.warning("$url 下载失败", it)
-                                }
-                            }
-                        }.forEach {
+                        downloadImageUrls(urls = urls, dir = dir).forEach {
                             it.getOrThrow()
                         }
                     }
