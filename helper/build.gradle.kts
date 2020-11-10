@@ -30,8 +30,8 @@ repositories {
 dependencies {
     kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
     compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
-    implementation(mirai("core", Versions.core))
-    implementation(mirai("console", Versions.console))
+    compileOnly(mirai("core", Versions.core))
+    compileOnly(mirai("console", Versions.console))
     implementation(ktor("client-core", Versions.ktor))
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
@@ -40,6 +40,8 @@ dependencies {
     implementation(poi("poi-ooxml", Versions.poi))
     implementation(project(":client"))
     // test
+    testImplementation(mirai("core", Versions.core))
+    testImplementation(mirai("console", Versions.console))
     testImplementation(mirai("core-qqandroid", Versions.core))
     testImplementation(mirai("console-terminal", Versions.console))
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
@@ -116,8 +118,8 @@ tasks {
             }
             File(testConsoleDir, "start.bat").writeText(
                 buildString {
-                    appendln("cd ${testConsoleDir.absolutePath}")
                     appendln("@echo off")
+                    appendln("cd ${testConsoleDir.absolutePath}")
                     appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} ^")
                     appendln("-Dfile.encoding=UTF-8 ^")
                     appendln("mirai.RunMirai")
