@@ -132,6 +132,7 @@ object PixivCacheCommand : CompositeCommand(
                         delay(delayTime)
                     }.onFailure {
                         logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                        reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
@@ -224,6 +225,7 @@ object PixivCacheCommand : CompositeCommand(
                                 delay(delayTime)
                             }.onFailure {
                                 logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                                reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
                             }.isSuccess
                         }
                     }.onSuccess { (total, success) ->
@@ -277,6 +279,7 @@ object PixivCacheCommand : CompositeCommand(
                         getImages(getIllustInfo(pid))
                     }.onFailure {
                         logger.warning("获取作品(${pid})错误", it)
+                        reply("获取作品(${pid})错误, ${it.message}")
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
@@ -311,6 +314,7 @@ object PixivCacheCommand : CompositeCommand(
                         logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
                     }.onFailure {
                         logger.warning("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败", it)
+                        reply("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败, ${it.message}")
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
@@ -369,8 +373,8 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }
                 }.onFailure {
-                    quoteReply("作品(${info.pid})[${info.title}]修复出错, ${it.message}")
                     logger.warning("作品(${info.pid})[${info.title}]修复出错", it)
+                    reply("作品(${info.pid})[${info.title}]修复出错, ${it.message}")
                 }.isFailure
             }
         }
