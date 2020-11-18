@@ -399,7 +399,7 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.filter {
             it.uid == uid
         }.let {
-            compressJob = Zipper.compressAsync(it, "user")
+            compressJob = Zipper.compressAsync(it, "USER[${uid}]")
         }
     }
 
