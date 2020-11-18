@@ -22,14 +22,30 @@ object PixivIllustratorCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    @SubCommand("artwork", "作品")
+    private fun getArtWorkByUid(uid: Long) = PixivCacheData.caches().values.filter {
+        it.uid == uid && it.pageCount <= 3
+    }
+
+    @SubCommand("uid", "ID")
     @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.artwork(name: String) = getHelper().runCatching {
-        requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { pid ->
-            PixivCacheData.caches().values.filter {
-                it.uid == pid && it.pageCount <= 3
-            }.also { list ->
-                logger.verbose("画师(${pid})[${name}] 共找到${list.size}个作品")
+    suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
+        getArtWorkByUid(uid).also { list ->
+            logger.verbose("画师(${uid})共找到${list.size}个作品")
+        }.random().let { info ->
+            buildMessage(info)
+        }
+    }.onSuccess { list ->
+        list.forEach { quoteReply(it) }
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    @SubCommand("name", "名称")
+    @Suppress("unused")
+    suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
+        requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { uid ->
+            getArtWorkByUid(uid).also { list ->
+                logger.verbose("画师(${uid})[${name}]共找到${list.size}个作品")
             }.random().let { info ->
                 buildMessage(info)
             }
@@ -45,7 +61,7 @@ object PixivIllustratorCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.alias(name: String, uid: Long) = getHelper().runCatching {
         PixivAliasData.aliases[name] = uid
     }.onSuccess {
-        quoteReply("设置 $name -> $uid")
+        quoteReply("设置 [$name] -> ($uid)")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -54,7 +70,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.list() = getHelper().runCatching {
         PixivAliasData.aliases.map { (name, uid) ->
-            "$name -> $uid"
+            "[$name] -> ($uid)"
         }.joinToString("\n")
     }.onSuccess {
         quoteReply(it)
