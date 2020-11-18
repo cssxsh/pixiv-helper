@@ -71,7 +71,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     private fun put0(illust: IllustInfo) = illusts.put(illust.pid, illust.toBaseInfo()).also {
-        logger.info("作品${illust.toBaseInfo().toInfo()}信息已${if (it == null) "设置" else "刷新"} , 目前共${illusts.size}条信息")
+        logger.info("作品${illust.toBaseInfo().toInfo()}信息已${if (it == null) "设置" else "刷新"}, 目前共${illusts.size}条信息")
         if (illust.isEro()) {
             if (illust.isR18()) {
                 r18Illusts.add(illust.pid)

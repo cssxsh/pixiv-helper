@@ -60,7 +60,7 @@ object Zipper : PixivHelperLogger {
                 }
                 zipOutputStream.flush()
             }
-            logger.verbose("${absolutePath}压缩完毕！")
+            logger.info("${absolutePath}压缩完毕！")
         }
     }
 
@@ -76,14 +76,13 @@ object Zipper : PixivHelperLogger {
                     dir.listFiles { file -> file.isFile }?.forEach { file ->
                         zipOutputStream.putNextEntry(ZipEntry(file.name).apply {
                             lastModifiedTime = FileTime.fromMillis(file.lastModified())
-
                         })
                         zipOutputStream.write(file.readBytes())
                         logger.verbose("${file.name}已写入${name}")
                     }
                     zipOutputStream.flush()
                 }
-                logger.verbose("${absolutePath}压缩完毕！")
+                logger.info("${absolutePath}压缩完毕！")
             }
         }
     }
