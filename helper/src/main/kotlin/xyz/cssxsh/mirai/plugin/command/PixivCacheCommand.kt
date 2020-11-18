@@ -37,7 +37,7 @@ object PixivCacheCommand : CompositeCommand(
 
     private var backupJob: Deferred<List<File>>? = null
 
-    private var saveJob: Deferred<File>? = null
+    private var xlsxJob: Deferred<File>? = null
 
     private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
         modes.map { mode ->
@@ -389,8 +389,8 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.xlsx() {
-        check(saveJob?.isActive != true) { "正在压缩中, ${saveJob}..." }
-        saveJob = saveCacheToXlsxAsync()
+        check(xlsxJob?.isActive != true) { "正在压缩中, ${xlsxJob}..." }
+        xlsxJob = saveCacheToXlsxAsync()
     }
 
     @SubCommand

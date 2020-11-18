@@ -124,29 +124,25 @@ object PoiTool: PixivHelperLogger {
     }
 
     fun saveCacheToXlsxAsync(): Deferred<File> = PixivHelperPlugin.async(Dispatchers.IO) {
-        runCatching {
-            XSSFWorkbookFactory.createWorkbook().use { workbook ->
-                workbook.apply {
-                    writeInfos(createCellStyle().apply {
-                        dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
-                    })
-                    logger.verbose("PIXIV_CACHE_DATA 已写入到 XLSX")
-                    writeTags()
-                    logger.verbose("PIXIV_TAG_DATA 已写入到 XLSX")
-                    writeStatistical()
-                    logger.verbose("PIXIV_STATISTICAL_DATA 已写入到 XLSX")
-                    writeAlias()
-                    logger.verbose("PIXIV_ALIAS_DATA 已写入到 XLSX")
-                }
-                xlsxFile().apply {
-                    outputStream().use {
-                        workbook.write(it)
-                    }
-                    logger.verbose("数据将保存至${absolutePath}")
-                }
+        XSSFWorkbookFactory.createWorkbook().use { workbook ->
+            workbook.apply {
+                writeInfos(createCellStyle().apply {
+                    dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
+                })
+                logger.verbose("PIXIV_CACHE_DATA 已写入到 XLSX")
+                writeTags()
+                logger.verbose("PIXIV_TAG_DATA 已写入到 XLSX")
+                writeStatistical()
+                logger.verbose("PIXIV_STATISTICAL_DATA 已写入到 XLSX")
+                writeAlias()
+                logger.verbose("PIXIV_ALIAS_DATA 已写入到 XLSX")
             }
-        }.onFailure {
-            logger.warning("XLSX 生成失败", it)
-        }.getOrThrow()
+            xlsxFile().apply {
+                outputStream().use {
+                    workbook.write(it)
+                }
+                logger.info("数据将保存至${absolutePath}")
+            }
+        }
     }
 }
