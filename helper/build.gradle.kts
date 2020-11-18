@@ -56,9 +56,6 @@ kotlin {
             languageSettings.useExperimentalAnnotation("com.soywiz.klock.annotations.KlockExperimental")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
         }
-        test {
-            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.ConsoleFrontEndImplementation")
-        }
     }
 }
 
@@ -84,71 +81,5 @@ tasks {
     compileTestKotlin {
         kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
         kotlinOptions.jvmTarget = "11"
-    }
-
-    val testConsoleDir = File(rootProject.projectDir, "test").apply { mkdir() }
-
-    create("copyFile") {
-        group = "mirai"
-
-        dependsOn(shadowJar)
-        dependsOn(testClasses)
-
-
-        doFirst {
-            File(testConsoleDir, "plugins/").walk().filter {
-                rootProject.name in it.name
-            }.forEach {
-                delete(it)
-                println("Deleted ${it.absolutePath}")
-            }
-            copy {
-                into(File(testConsoleDir, "plugins/").walk().maxBy {
-                    it.lastModified()
-                }.let {
-                    requireNotNull(it) { "没有要复制的文件" }
-                })
-                from(File(project.buildDir, "libs/")) {
-                    include {
-                        "${project.name}-${version}-all" in it.name
-                    }.eachFile {
-                        println("Copy ${file.absolutePath}")
-                    }
-                }
-            }
-            File(testConsoleDir, "start.bat").writeText(
-                buildString {
-                    appendln("@echo off")
-                    appendln("cd ${testConsoleDir.absolutePath}")
-                    appendln("java -classpath ${sourceSets["test"].runtimeClasspath.asPath} ^")
-                    appendln("-Dfile.encoding=UTF-8 ^")
-                    appendln("mirai.RunMirai")
-                }
-            )
-        }
-    }
-
-
-    create("runMiraiConsole", JavaExec::class.java) {
-        group = "mirai"
-
-        dependsOn(named("copyFile"))
-
-        main = "mirai.RunMirai"
-
-        // debug = true
-
-        defaultCharacterEncoding = "UTF-8"
-
-        workingDir = testConsoleDir
-
-        standardInput = System.`in`
-
-        // jvmArgs("-Djavax.net.debug=all")
-
-        doFirst {
-            classpath = sourceSets["test"].runtimeClasspath
-            println("WorkingDir: ${workingDir.absolutePath}, Args: $args")
-        }
     }
 }

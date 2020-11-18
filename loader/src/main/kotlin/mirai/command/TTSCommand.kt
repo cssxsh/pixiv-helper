@@ -21,6 +21,7 @@ object TTSCommand : SimpleCommand(
 
     @ConsoleExperimentalApi
     @Handler
+    @Suppress("unused")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.handle() {
         val text = message.content.replaceFirst("""(tts|say|说)""".toRegex(), "").trim().takeIf { it.length < 256 } ?: "太长不说"
         if (text.isNotEmpty()) reply(TTS.getAmrFile(text).inputStream().uploadAsGroupVoice(fromEvent.group))
