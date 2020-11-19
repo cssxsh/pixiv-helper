@@ -29,13 +29,11 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.helper() = getHelper().runCatching {
         buildString {
-            appendLine("账户: ${getAuthInfo().user.account}")
+            appendLine("Uid: ${getAuthInfo().user.uid}")
+            appendLine("Account: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
             appendLine("ExpiresTime: ${getExpiresTimeText()}")
             appendLine("简略信息: $simpleInfo")
-            appendLine("缓存数: ${PixivCacheData.caches().size}")
-            appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
-            appendLine("R18色图数: ${PixivCacheData.r18s().size}")
         }
     }.onSuccess {
         quoteReply(it)
@@ -54,6 +52,22 @@ object PixivInfoCommand : CompositeCommand(
                 appendLine("使用色图指令次数: $ero")
                 appendLine("使用标签指令次数: $tags")
             }
+        }
+    }.onSuccess {
+        quoteReply(it)
+    }.onFailure {
+        quoteReply(it.toString())
+    }.isSuccess
+
+    /**
+     * 获取缓存信息
+     */
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
+        buildString {
+            appendLine("缓存数: ${PixivCacheData.caches().size}")
+            appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
+            appendLine("R18色图数: ${PixivCacheData.r18s().size}")
         }
     }.onSuccess {
         quoteReply(it)
