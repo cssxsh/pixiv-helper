@@ -16,7 +16,7 @@ import xyz.cssxsh.pixiv.api.app.AppApi
 import xyz.cssxsh.pixiv.api.app.illustRelated
 import xyz.cssxsh.pixiv.api.app.searchIllust
 
-object PixivTagCommand: SimpleCommand(
+object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",
     description = "pixiv 标签"
@@ -98,7 +98,7 @@ object PixivTagCommand: SimpleCommand(
         }
         if (tagJob?.isActive != true) {
             PixivCacheData.caches().values.filter { info ->
-                 tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+                tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
                 logger.verbose("根据TAG: $tag 在缓存中找到${list.size}个作品")
                 list.filter { info ->

@@ -78,12 +78,17 @@ suspend fun PixivHelper.buildMessage(
         add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}, 健全等级: ${illust.sanityLevel} "))
     } else {
         add(illust.getMessage())
-        add(PlainText("原图连接: \n" + illust.getPixivCatUrls().joinToString("\n")))
+        add(PlainText(buildString {
+            appendLine("原图连接: ")
+            illust.getPixivCatUrls().forEach {
+                appendLine(it)
+            }
+        }))
     }
     if (!illust.isR18()) {
-        addAll(getImages(illust, save).map {
-            it.uploadAsImage(contact)
-        })
+        getImages(illust, save).map {
+            add(it.uploadAsImage(contact))
+        }
     } else {
         add(PlainText("R18禁止！"))
     }
@@ -106,10 +111,14 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
-fun IllustInfo.getPixivCatUrls(): List<String> = if (pageCount > 1) {
-    (1..pageCount).map { "https://pixiv.cat/${pid}-${it}.jpg" }
-} else {
-    listOf("https://pixiv.cat/${pid}.jpg")
+fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
+    if (pageCount > 1) {
+        (1..pageCount).forEach {
+            add("https://pixiv.cat/${pid}-${it}.jpg")
+        }
+    } else {
+        add("https://pixiv.cat/${pid}.jpg")
+    }
 }
 
 fun IllustInfo.isR18(): Boolean =
@@ -178,10 +187,7 @@ suspend fun PixivHelper.getImages(
 suspend fun PixivHelper.getImages(
     illust: IllustInfo,
     save: Boolean = true
-): List<File> = getImages(
-    pid = illust.pid,
-    urls = illust.getOriginUrl()
-).apply {
+): List<File> = getImages(pid = illust.pid, urls = illust.getOriginUrl()).apply {
     if (save) {
         illust.save()
     }
@@ -198,7 +204,7 @@ suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<R
             is SocketTimeoutException,
             is ConnectTimeoutException,
             is HttpRequestTimeoutException -> {
-                logger.verbose("${url}下载错误: ${throwable.message}, 已忽略")
+                logger.warning { "${url}下载错误, 已忽略: ${throwable.message}" }
                 true
             }
             else -> false

@@ -22,5 +22,4 @@ class AuthInfoDelegate(private val contact: Contact) : ReadWriteProperty<PixivHe
         is Group -> PixivHelperManager.defaultAuthInfos
         else -> throw IllegalAccessException("未知类型联系人!")
     }
-
 }

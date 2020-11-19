@@ -7,7 +7,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 
-object PixivGetCommand: SimpleCommand(
+object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点",
     description = "获取指令"

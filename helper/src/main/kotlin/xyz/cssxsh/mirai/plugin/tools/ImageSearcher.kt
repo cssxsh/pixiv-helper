@@ -12,28 +12,30 @@ import xyz.cssxsh.mirai.plugin.data.SearchResult
 import kotlin.io.use
 
 @Suppress("unused")
-object ImageSearcher: PixivHelperLogger {
+object ImageSearcher : PixivHelperLogger {
     private const val API = "https://saucenao.com/search.php"
     private const val DB_INDEX = 5 // Index #5: pixiv Images
-    private val httpClient: HttpClient get() = HttpClient(OkHttp) {
-        install(HttpTimeout) {
-            socketTimeoutMillis = 60_000
-            connectTimeoutMillis = 60_000
-            requestTimeoutMillis = 60_000
-        }
-    }
-
-    private fun parse(html: String): List<SearchResult> = Jsoup.parse(html).select(".resulttablecontent").map { content ->
-        SearchResult(
-            similarity = content.select(".resultsimilarityinfo")
-                .text().replace("%", "").toDouble() / 100,
-            content = content.select(".resultcontent").text(),
-            pid = content.select(".resultcontent a.linkify").first().text().toLong(),
-            uid = content.select(".resultcontent a.linkify").last().attr("href").run {
-                substring(lastIndexOf("=") + 1).toLong()
+    private val httpClient: HttpClient
+        get() = HttpClient(OkHttp) {
+            install(HttpTimeout) {
+                socketTimeoutMillis = 60_000
+                connectTimeoutMillis = 60_000
+                requestTimeoutMillis = 60_000
             }
-        )
-    }
+        }
+
+    private fun parse(html: String): List<SearchResult> =
+        Jsoup.parse(html).select(".resulttablecontent").map { content ->
+            SearchResult(
+                similarity = content.select(".resultsimilarityinfo")
+                    .text().replace("%", "").toDouble() / 100,
+                content = content.select(".resultcontent").text(),
+                pid = content.select(".resultcontent a.linkify").first().text().toLong(),
+                uid = content.select(".resultcontent a.linkify").last().attr("href").run {
+                    substring(lastIndexOf("=") + 1).toLong()
+                }
+            )
+        }
 
     suspend fun getSearchResults(
         picUrl: String
