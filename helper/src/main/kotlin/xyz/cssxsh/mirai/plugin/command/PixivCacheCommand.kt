@@ -39,7 +39,7 @@ object PixivCacheCommand : CompositeCommand(
 
     private var xlsxJob: Deferred<File>? = null
 
-    private suspend fun PixivHelper.getRank(modes: Array<RankMode> = RankMode.values()) = buildList {
+    private suspend fun PixivHelper.getRank(modes: List<RankMode> = RankMode.values().asList()) = buildList {
         modes.map { mode ->
             runCatching {
                 illustRanking(mode = mode).illusts
