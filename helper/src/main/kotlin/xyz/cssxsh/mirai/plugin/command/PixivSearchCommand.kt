@@ -9,11 +9,10 @@ import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivSearchData
+import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
 import xyz.cssxsh.mirai.plugin.data.SearchResult
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
-@Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
@@ -24,7 +23,7 @@ object PixivSearchCommand : SimpleCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private const val MIN_SIMILARITY = 0.85
+    private const val MIN_SIMILARITY = 0.80
 
     private const val MAX_REPEAT = 10
 
@@ -37,16 +36,24 @@ object PixivSearchCommand : SimpleCommand(
         }
     }.getOrElse { search(url, repeat + 1) }
 
-    @ExperimentalUnsignedTypes
+    private fun Image.getMd5Hex(): String = when {
+        imageId matches FRIEND_IMAGE_ID_REGEX_1 -> imageId
+        imageId matches FRIEND_IMAGE_ID_REGEX_2 -> imageId.substring(imageId.lastIndexOf("-"))
+        imageId matches GROUP_IMAGE_ID_REGEX -> imageId
+        else -> throw IllegalArgumentException("未知ID格式")
+    }.replace("""[-/{}]""".toRegex(), "").substring(0..31).toUpperCase()
+
     @Handler
+    @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
-        PixivSearchData.resultMap.getOrPut(image.md5.joinToString("") { it.toUByte().toString(16) }) {
+        resultMap.getOrElse(image.getMd5Hex()) {
             search(image.queryUrl()).run {
                 requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
             }.also { result ->
                 if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
                     launch {
-                        logger.verbose("相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}")
+                        logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
+                        resultMap[image.getMd5Hex()] = result
                         getImages(getIllustInfo(result.pid))
                     }
                 }
