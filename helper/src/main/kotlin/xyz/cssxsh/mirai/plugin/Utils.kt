@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
+import net.mamoe.mirai.utils.warning
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo

@@ -8,6 +8,8 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
 import xyz.cssxsh.mirai.plugin.data.SearchResult
@@ -30,7 +32,7 @@ object PixivSearchCommand : SimpleCommand(
     private suspend fun search(url: String, repeat: Int = 0): List<SearchResult> = runCatching {
         ImageSearcher.getSearchResults(url)
     }.onFailure {
-        logger.warning("搜索[$url]第${repeat}次失败", it)
+        logger.warning({ "搜索[$url]第${repeat}次失败" }, it)
         if (repeat >= MAX_REPEAT) {
             throw IllegalStateException("搜索次数超过${MAX_REPEAT}", it)
         }
@@ -71,7 +73,7 @@ object PixivSearchCommand : SimpleCommand(
             reply(it)
         }
     }.onFailure {
-        logger.verbose("搜索失败$image", it)
+        logger.verbose({ "搜索失败$image" }, it)
         quoteReply("搜索失败， ${it.message}")
     }.isSuccess
 }

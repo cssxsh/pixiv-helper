@@ -8,6 +8,8 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
@@ -37,15 +39,15 @@ object PixivTagCommand : SimpleCommand(
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(PixivCacheData.update(it).values)
-                    logger.verbose("加载'${tag}'搜索列表第${offset / 30}页{${it.size}}成功")
+                    logger.verbose { "加载'${tag}'搜索列表第${offset / 30}页{${it.size}}成功" }
                 }.onFailure {
-                    logger.warning("加载'${tag}'搜索列表第${offset / 30}页失败", it)
+                    logger.warning({ "加载'${tag}'搜索列表第${offset / 30}页失败" }, it)
                 }
             }
         }.flatten().filter {
             it.isEro()
         }.also { list ->
-            logger.verbose("'${tag}'共搜索到${list.size}个作品")
+            logger.verbose { "'${tag}'共搜索到${list.size}个作品" }
             list.writeToCache()
         }.runCatching {
             forEach { info ->
@@ -73,15 +75,15 @@ object PixivTagCommand : SimpleCommand(
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(PixivCacheData.update(it).values)
-                    logger.verbose("加载[${pid}]相关列表第${offset / 30}页{${it.size}}成功")
+                    logger.verbose { "加载[${pid}]相关列表第${offset / 30}页{${it.size}}成功" }
                 }.onFailure {
-                    logger.warning("加载[${pid}]相关列表第${offset / 30}页失败", it)
+                    logger.warning({ "加载[${pid}]相关列表第${offset / 30}页失败" }, it)
                 }
             }
         }.flatten().filter {
             it.isEro()
         }.also { list ->
-            logger.verbose("[${pid}]相关共获取到${list.size}个作品")
+            logger.verbose { "[${pid}]相关共获取到${list.size}个作品" }
             list.writeToCache()
         }.forEach {
             getImages(it)
@@ -94,13 +96,13 @@ object PixivTagCommand : SimpleCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
         PixivStatisticalData.tagAdd(user = fromEvent.sender, tag = tag.trim()).also {
-            logger.verbose("${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'")
+            logger.verbose { "${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'" }
         }
         if (tagJob?.isActive != true) {
             PixivCacheData.caches().values.filter { info ->
                 tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
             }.let { list ->
-                logger.verbose("根据TAG: $tag 在缓存中找到${list.size}个作品")
+                logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
                 list.filter { info ->
                     info.isR18().not() && info.pageCount < 4
                 }.random().also { info ->

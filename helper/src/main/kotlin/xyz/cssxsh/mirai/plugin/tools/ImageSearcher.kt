@@ -6,6 +6,7 @@ import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
+import net.mamoe.mirai.utils.warning
 import org.jsoup.Jsoup
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.data.SearchResult
@@ -54,7 +55,7 @@ object ImageSearcher : PixivHelperLogger {
         runCatching {
             client.get<ByteArray>(picUrl.replace("http", "https"))
         }.onFailure {
-            logger.warning("图片下载失败, $picUrl", it)
+            logger.warning({ "图片下载失败, $picUrl" }, it)
         }.getOrThrow().let {
             client.post<String>(API) {
                 body = MultiPartFormDataContent(formData {

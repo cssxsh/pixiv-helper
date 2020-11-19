@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
+import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.BaseInfo
@@ -45,7 +47,7 @@ object Zipper : PixivHelperLogger {
     fun compressAsync(list: List<BaseInfo>, type: String) = PixivHelperPlugin.async(Dispatchers.IO) {
         zipFile(type).apply {
             createNewFile()
-            logger.verbose("共${list.size}个作品将写入文件${absolutePath}")
+            logger.verbose { "共${list.size}个作品将写入文件${absolutePath}" }
             ZipOutputStream(BufferedOutputStream(outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
                 zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
                 list.forEach { info ->
@@ -56,11 +58,11 @@ object Zipper : PixivHelperLogger {
                         })
                         zipOutputStream.write(file.readBytes())
                     }
-                    logger.verbose("${info.toText()}已写入${name}")
+                    logger.verbose { "${info.toText()}已写入${name}" }
                 }
                 zipOutputStream.flush()
             }
-            logger.info("${absolutePath}压缩完毕！")
+            logger.info { "${absolutePath}压缩完毕！" }
         }
     }
 
@@ -70,7 +72,7 @@ object Zipper : PixivHelperLogger {
             PixivHelperPlugin.configFolder to zipFile("config").apply { createNewFile() }
         ).map { (dir, zip) ->
             zip.apply {
-                logger.verbose("将备份数据目录${dir.absolutePath}到${absolutePath}")
+                logger.verbose { "将备份数据目录${dir.absolutePath}到${absolutePath}" }
                 ZipOutputStream(BufferedOutputStream(zip.outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
                     zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
                     dir.listFiles { file -> file.isFile }?.forEach { file ->
@@ -78,11 +80,11 @@ object Zipper : PixivHelperLogger {
                             lastModifiedTime = FileTime.fromMillis(file.lastModified())
                         })
                         zipOutputStream.write(file.readBytes())
-                        logger.verbose("${file.name}已写入${name}")
+                        logger.verbose { "${file.name}已写入${name}" }
                     }
                     zipOutputStream.flush()
                 }
-                logger.info("${absolutePath}压缩完毕！")
+                logger.info { "${absolutePath}压缩完毕！" }
             }
         }
     }

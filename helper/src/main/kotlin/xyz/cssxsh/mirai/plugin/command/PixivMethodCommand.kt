@@ -11,6 +11,7 @@ import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
@@ -53,8 +54,8 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
-        logger.warning("登陆失败", it)
-        quoteReply("登陆失败， ${it.message}")
+        logger.warning({ "[$username]登陆失败" }, it)
+        quoteReply("[$username]登陆失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -71,8 +72,8 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
-        logger.warning("登陆失败", it)
-        quoteReply("登陆失败， ${it.message}")
+        logger.warning({ "[$token]登陆失败" }, it)
+        quoteReply("[$token]登陆失败， ${it.message}")
     }.isSuccess
 
 
@@ -87,8 +88,8 @@ object PixivMethodCommand : CompositeCommand(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
-        logger.warning("登陆失败", it)
-        quoteReply("登陆失败， ${it.message}")
+        logger.warning({ "自动登陆失败" }, it)
+        quoteReply("自动登陆失败， ${it.message}")
     }.isSuccess
 
     /**
@@ -184,7 +185,7 @@ object PixivMethodCommand : CompositeCommand(
         word: String,
         index: Int
     ) = getHelper().runCatching {
-        require(index in 1..30) {  "index 的范围在1~30" }
+        require(index in 1..30) { "index 的范围在1~30" }
         buildMessage(searchIllust(word).illusts[index - 1])
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }

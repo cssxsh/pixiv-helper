@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 
@@ -33,7 +34,7 @@ object PixivEroCommand : SimpleCommand(
             info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
         }.apply {
             PixivStatisticalData.eroAdd(user = fromEvent.sender).let {
-                logger.verbose("${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图")
+                logger.verbose { "${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图" }
             }
         }.random().also { info ->
             minSanityLevel = info.sanityLevel

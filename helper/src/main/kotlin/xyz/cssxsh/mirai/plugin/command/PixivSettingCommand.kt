@@ -6,6 +6,7 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.info
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
@@ -29,7 +30,7 @@ object PixivSettingCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.proxy(proxy: String) {
-        logger.info("proxy: ${PixivConfigData.default.proxy} -> $proxy")
+        logger.info { "proxy: ${PixivConfigData.default.proxy} -> $proxy" }
         PixivConfigData.default.proxy = proxy
     }
 
@@ -38,7 +39,7 @@ object PixivSettingCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.interval(interval: Int) {
-        logger.info("interval: ${PixivHelperSettings.minInterval} -> $interval")
+        logger.info { "interval: ${PixivHelperSettings.minInterval} -> $interval" }
         PixivHelperSettings.minInterval = interval
     }
 
@@ -55,7 +56,7 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     fun CommandSenderOnMessage<MessageEvent>.bookmark(total: Long) {
-        logger.info("totalBookmarks: ${PixivHelperSettings.totalBookmarks} -> $total")
+        logger.info { "totalBookmarks: ${PixivHelperSettings.totalBookmarks} -> $total" }
         PixivHelperSettings.totalBookmarks = total
     }
 }

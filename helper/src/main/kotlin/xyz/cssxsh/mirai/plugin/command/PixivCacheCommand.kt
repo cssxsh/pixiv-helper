@@ -9,6 +9,9 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
@@ -45,9 +48,9 @@ object PixivCacheCommand : CompositeCommand(
                 illustRanking(mode = mode).illusts
             }.onSuccess {
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载排行榜[${mode}]{${it.size}}成功")
+                logger.verbose { "加载排行榜[${mode}]{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载排行榜[${mode}]失败", it)
+                logger.warning({ "加载排行榜[${mode}]失败" }, it)
             }
         }
     }
@@ -59,9 +62,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载用户(${uid})关注用户作品预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose { "加载用户(${uid})关注用户作品预览第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载用户(${uid})关注用户作品预览第${offset / 30}页失败", it)
+                logger.warning({ "加载用户(${uid})关注用户作品预览第${offset / 30}页失败" }, it)
             }
         }
     }
@@ -73,9 +76,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页{${it.size}}成功")
+                logger.verbose { "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页失败", it)
+                logger.warning({ "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页失败" }, it)
             }
         }
     }
@@ -87,9 +90,9 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(PixivCacheData.update(it).values)
-                logger.verbose("加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页失败", it)
+                logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页失败" }, it)
             }
         }
     }
@@ -102,10 +105,10 @@ object PixivCacheCommand : CompositeCommand(
             }.onSuccess { (list, nextUrl) ->
                 if (nextUrl == null) return@buildList
                 add(PixivCacheData.update(list).values)
-                logger.verbose("加载用户(${uid})收藏页{${list.size}} ${url}成功")
+                logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
                 url = nextUrl
             }.onFailure {
-                logger.warning("加载用户(${uid})收藏页${url}失败", it)
+                logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
             }
         }
     }
@@ -117,7 +120,7 @@ object PixivCacheCommand : CompositeCommand(
         launch(Dispatchers.IO) {
             PixivCacheData.update(block()).values.apply {
                 writeToCache()
-                logger.verbose("共${size}个作品信息将会被尝试添加")
+                logger.verbose { "共${size}个作品信息将会被尝试添加" }
             }.sortedBy {
                 it.pid
             }.also {
@@ -131,7 +134,7 @@ object PixivCacheCommand : CompositeCommand(
                     }.onSuccess {
                         delay(delayTime)
                     }.onFailure {
-                        logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                        logger.warning({ "获取作品(${illust.pid})[${illust.title}]错误" }, it)
                         reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
                     }.isSuccess
                 }
@@ -190,15 +193,15 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun PixivHelper.getUserIllusts(uid: Long) = userDetail(uid).let { detail ->
-        logger.verbose("用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts}个作品")
+        logger.verbose { "用户(${detail.user.id})[${detail.user.name}], 共有${detail.profile.totalIllusts}个作品" }
 
         (0 until detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
                 userIllusts(uid = uid, offset = offset).illusts
             }.onSuccess {
-                logger.verbose("加载用户(${uid})作品第${offset / 30}页{${it.size}}成功")
+                logger.verbose { "加载用户(${uid})作品第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载用户(${uid})作品第${offset / 30}页失败", it)
+                logger.warning({ "加载用户(${uid})作品第${offset / 30}页失败" }, it)
             }.getOrNull()
         }.flatten()
     }
@@ -208,7 +211,7 @@ object PixivCacheCommand : CompositeCommand(
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
         launch(Dispatchers.IO) {
             PixivAliasData.aliases.values.toSet().sorted().also {
-                logger.verbose("{${it.first()}...${it.last()}}共${it.size}个画师需要缓存")
+                logger.verbose { "{${it.first()}...${it.last()}}共${it.size}个画师需要缓存" }
                 reply("列表中共${it.size}个画师需要缓存")
             }.forEach { uid ->
                 runCatching {
@@ -216,7 +219,7 @@ object PixivCacheCommand : CompositeCommand(
                         it.pid
                     }.apply {
                         writeToCache()
-                        logger.verbose("用户(${uid}), 共有{${first().pid}...${last().pid}}共${size}个作品需要缓存")
+                        logger.verbose { "用户(${uid}), 共有{${first().pid}...${last().pid}}共${size}个作品需要缓存" }
                     }.runCatching {
                         size to count { illust ->
                             illust.pid in PixivCacheData || isActive && runCatching {
@@ -224,7 +227,7 @@ object PixivCacheCommand : CompositeCommand(
                             }.onSuccess {
                                 delay(delayTime)
                             }.onFailure {
-                                logger.warning("获取作品(${illust.pid})[${illust.title}]错误", it)
+                                logger.warning({ "获取作品(${illust.pid})[${illust.title}]错误" }, it)
                                 reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
                             }.isSuccess
                         }
@@ -260,7 +263,7 @@ object PixivCacheCommand : CompositeCommand(
         check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
         launch(Dispatchers.IO) {
             PixivHelperSettings.cacheFolder.also {
-                logger.verbose("从 ${it.absolutePath} 加载作品信息")
+                logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
             }.walk().maxDepth(3).mapNotNull { file ->
                 if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
                     file.name.toLong()
@@ -278,14 +281,14 @@ object PixivCacheCommand : CompositeCommand(
                     pid in PixivCacheData || isActive && runCatching {
                         getImages(getIllustInfo(pid))
                     }.onFailure {
-                        logger.warning("获取作品(${pid})错误", it)
+                        logger.warning({ "获取作品(${pid})错误" }, it)
                         reply("获取作品(${pid})错误, ${it.message}")
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
                 reply("缓存完毕共${total}个新作品, 缓存成功${success}个")
             }.onFailure {
-                logger.warning("缓存失败", it)
+                logger.warning({ "缓存失败" }, it)
                 reply("缓存失败, ${it.message}")
             }
         }.also {
@@ -305,22 +308,22 @@ object PixivCacheCommand : CompositeCommand(
             PixivCacheData.caches().values.filter {
                 (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
             }.also {
-                logger.verbose("{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新")
+                logger.verbose { "{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新" }
             }.runCatching {
                 size to count { info ->
                     isActive && runCatching {
                         getIllustInfo(info.pid, true)
                     }.onSuccess {
-                        logger.verbose("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功")
+                        logger.verbose { "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功" }
                     }.onFailure {
-                        logger.warning("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败", it)
+                        logger.warning({ "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败" }, it)
                         reply("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败, ${it.message}")
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
                 reply("缓存完毕需要更新${total}个作品, 缓存成功${success}个")
             }.onFailure {
-                logger.warning("缓存失败", it)
+                logger.warning({ "缓存失败" }, it)
                 reply("缓存失败, ${it.message}")
             }
         }.also {
@@ -354,14 +357,14 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.sortedBy {
             it.pid
         }.also {
-            logger.verbose("{${it.first().pid}...${it.last().pid}}共有 ${it.size} 个作品需要检查")
+            logger.verbose { "{${it.first().pid}...${it.last().pid}}共有 ${it.size} 个作品需要检查" }
         }.run {
             size to count { info ->
                 runCatching {
                     val dir = PixivHelperSettings.imagesFolder(info.pid)
                     File(dir, "${info.pid}.json").run {
                         if (canRead().not()) {
-                            logger.warning("$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}")
+                            logger.warning { "$absolutePath 不可读， 文件将删除重新下载，删除结果：${delete()}" }
                             illustDetail(info.pid).illust.writeTo(this)
                         }
                     }
@@ -373,7 +376,7 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }
                 }.onFailure {
-                    logger.warning("作品(${info.pid})[${info.title}]修复出错", it)
+                    logger.warning({ "作品(${info.pid})[${info.title}]修复出错" }, it)
                     reply("作品(${info.pid})[${info.title}]修复出错, ${it.message}")
                 }.isFailure
             }
@@ -413,7 +416,7 @@ object PixivCacheCommand : CompositeCommand(
     fun ConsoleCommandSender.pan(file: String) {
         check(panJob?.isActive != true) { "正在上传中, ${panJob}..." }
         PixivHelperPlugin.update(file, file, PixivHelperSettings.panConfig) { data, count, size ->
-            logger.verbose("MD5将记录 ${count}/${size} $data")
+            logger.verbose { "MD5将记录 ${count}/${size} $data" }
         }.also {
             panJob = it
         }
@@ -436,7 +439,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     fun ConsoleCommandSender.delay(timeMillis: Long) {
-        logger.info("delay: $delayTime -> $timeMillis")
+        logger.info { "delay: $delayTime -> $timeMillis" }
         delayTime = timeMillis
     }
 
@@ -446,13 +449,13 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.remove(pid: Long) {
         PixivCacheData.remove(pid)?.let {
-            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除")
+            logger.info { "色图作品(${it.pid})[${it.title}]信息将从缓存移除" }
         }
         PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
                 it.delete()
             }
-            logger.info("色图作品(${pid})文件夹将删除，结果${delete()}")
+            logger.info { "色图作品(${pid})文件夹将删除，结果${delete()}" }
         }
     }
 
@@ -461,15 +464,15 @@ object PixivCacheCommand : CompositeCommand(
         PixivCacheData.caches().values.filter {
             it.uid == uid
         }.also {
-            logger.verbose("USER(${uid})共${it.size}个作品需要删除")
+            logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
         }.forEach {
             PixivCacheData.remove(it.pid)
-            logger.info("色图作品(${it.pid})[${it.title}]信息将从缓存移除")
+            logger.info { "色图作品(${it.pid})[${it.title}]信息将从缓存移除" }
             PixivHelperSettings.imagesFolder(it.pid).apply {
                 listFiles()?.forEach { file ->
                     file.delete()
                 }
-                logger.info("色图作品(${it.pid})[${it.title}]文件夹将删除，结果${delete()}")
+                logger.info { "色图作品(${it.pid})[${it.title}]文件夹将删除，结果${delete()}" }
             }
         }
     }

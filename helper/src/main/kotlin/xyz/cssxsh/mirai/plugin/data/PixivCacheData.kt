@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.utils.info
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
@@ -71,7 +72,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     private fun put0(illust: IllustInfo) = illusts.put(illust.pid, illust.toBaseInfo()).also {
-        logger.info("作品${illust.toBaseInfo().toInfo()}信息已${if (it == null) "设置" else "刷新"}, 目前共${illusts.size}条信息")
+        logger.info { "作品${illust.toBaseInfo().toInfo()}信息已${if (it == null) "设置" else "刷新"}, 目前共${illusts.size}条信息" }
         if (illust.isEro()) {
             if (illust.isR18()) {
                 r18Illusts.add(illust.pid)
@@ -93,7 +94,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun remove(pid: Long) = synchronized(illusts) {
         illusts.remove(pid)?.also { illust ->
-            logger.info("作品${illust.toInfo()}信息已移除, 目前共${illusts.size}条信息")
+            logger.info { "作品${illust.toInfo()}信息已移除, 目前共${illusts.size}条信息" }
             if (illust.isEro()) {
                 eroIllusts.remove(illust.pid)
                 r18Illusts.remove(illust.pid)

@@ -5,6 +5,8 @@ import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
 import org.apache.poi.xssf.usermodel.*
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
@@ -13,7 +15,7 @@ import xyz.cssxsh.mirai.plugin.isR18
 import java.io.File
 
 @Suppress("unused")
-object PoiTool: PixivHelperLogger {
+object PoiTool : PixivHelperLogger {
     private fun xlsxFile() = File(
         PixivHelperSettings.zipFolder,
         "PixivData(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).xlsx"
@@ -129,19 +131,19 @@ object PoiTool: PixivHelperLogger {
                 writeInfos(createCellStyle().apply {
                     dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
                 })
-                logger.verbose("PIXIV_CACHE_DATA 已写入到 XLSX")
+                logger.verbose { "PIXIV_CACHE_DATA 已写入到 XLSX" }
                 writeTags()
-                logger.verbose("PIXIV_TAG_DATA 已写入到 XLSX")
+                logger.verbose { "PIXIV_TAG_DATA 已写入到 XLSX" }
                 writeStatistical()
-                logger.verbose("PIXIV_STATISTICAL_DATA 已写入到 XLSX")
+                logger.verbose { "PIXIV_STATISTICAL_DATA 已写入到 XLSX" }
                 writeAlias()
-                logger.verbose("PIXIV_ALIAS_DATA 已写入到 XLSX")
+                logger.verbose { "PIXIV_ALIAS_DATA 已写入到 XLSX" }
             }
             xlsxFile().apply {
                 outputStream().use {
                     workbook.write(it)
                 }
-                logger.info("数据将保存至${absolutePath}")
+                logger.info { "数据将保存至${absolutePath}" }
             }
         }
     }

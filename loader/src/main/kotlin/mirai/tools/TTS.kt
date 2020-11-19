@@ -15,6 +15,7 @@ import mirai.data.TTSConvertResult
 import mirai.data.TTSLanguageSelect
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.utils.verbose
 import java.io.File
 
 @ConsoleExperimentalApi
@@ -52,7 +53,7 @@ object TTS {
             parameter("query", text)
         }.takeIf { it.message == "success" }?.language ?: "zh"
 
-        logger.verbose("开始tts, language: $language, test: '$text'")
+        logger.verbose { "开始tts, language: $language, test: '$text'" }
         val file = client.get<ByteArray>(GET_TTS) {
             parameter("lan", language)
             parameter("text", text)
@@ -60,7 +61,7 @@ object TTS {
             parameter("source", "web")
         }
 
-        logger.verbose("开始mp3(${text}, ${file.size}) -> amr")
+        logger.verbose { "开始mp3(${text}, ${file.size}) -> amr" }
         val result = client.submitFormWithBinaryData<TTSConvertResult>(
             url = CONVERT_BATCH,
             formData = formData {
@@ -76,7 +77,7 @@ object TTS {
             }
         )
 
-        logger.verbose("转换结果: $result")
+        logger.verbose { "转换结果: $result" }
         client.get<ByteArray>(CONVERT_RESULT + result.filename).let {
             File(rootPath, result.filename).writeBytes(it)
         }

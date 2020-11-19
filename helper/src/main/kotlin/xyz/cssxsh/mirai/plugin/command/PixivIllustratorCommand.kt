@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.buildMessage
@@ -30,7 +31,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
         getArtWorkByUid(uid).also { list ->
-            logger.verbose("画师(${uid})共找到${list.size}个作品")
+            logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random().let { info ->
             buildMessage(info)
         }
@@ -45,7 +46,7 @@ object PixivIllustratorCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
         requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { uid ->
             getArtWorkByUid(uid).also { list ->
-                logger.verbose("画师(${uid})[${name}]共找到${list.size}个作品")
+                logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
                 buildMessage(info)
             }

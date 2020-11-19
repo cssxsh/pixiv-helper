@@ -10,6 +10,9 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.minutesToMillis
+import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.totalBookmarks
@@ -33,9 +36,9 @@ object PixivFollowCommand : CompositeCommand(
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(it)
-                logger.verbose("加载(${uid})关注用户预览第${offset / 30}页{${it.size}}成功")
+                logger.verbose { "加载(${uid})关注用户预览第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning("加载(${uid})关注用户预览第${offset / 30}页失败", it)
+                logger.warning({ "加载(${uid})关注用户预览第${offset / 30}页失败" }, it)
             }
         }
     }.flatten().toSet()
@@ -61,10 +64,10 @@ object PixivFollowCommand : CompositeCommand(
                     count.let { (num, total) -> total > totalBookmarks * num }
                 }
             }.toSet().let {
-                logger.verbose("共统计了${it.size}名画师")
+                logger.verbose { "共统计了${it.size}名画师" }
                 it - followed
             }.sorted().also {
-                logger.info("用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注")
+                logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
                 it.runCatching {
                     reply("{${first()}...${last()}}共${size}个画师等待关注")
                 }
@@ -74,16 +77,16 @@ object PixivFollowCommand : CompositeCommand(
                     isActive && runCatching {
                         userFollowAdd(uid)
                     }.onSuccess {
-                        logger.info("用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it")
+                        logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
                         if (num >= 8) {
-                            logger.verbose("用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时")
+                            logger.verbose { "用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时" }
                             delay(1.minutesToMillis)
                             num = 0
                         } else {
                             num++
                         }
                     }.onFailure {
-                        logger.warning("用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时", it)
+                        logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
                         delay(3.minutesToMillis)
                     }.isSuccess
                 }

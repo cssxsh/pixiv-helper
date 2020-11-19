@@ -7,6 +7,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.recall
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.QuoteReply
+import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 
@@ -22,9 +23,9 @@ object PixivRecallCommand : SimpleCommand(
 
     @Handler
     @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle()  {
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle() {
         message[QuoteReply]?.runCatching {
-            logger.verbose("尝试对${source}进行撤回")
+            logger.verbose { "尝试对${source}进行撤回" }
             fromEvent.subject.recall(source)
         }
     }
