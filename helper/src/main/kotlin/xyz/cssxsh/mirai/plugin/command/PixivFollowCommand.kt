@@ -48,7 +48,7 @@ object PixivFollowCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.ero() = getHelper().runCatching {
-        check(followJob?.isActive != true) { "正在关注中, ${cacheJob}..." }
+        check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
             PixivCacheData.caches().values.fold(mutableMapOf<Long, Pair<Int, Long>>()) { map, info ->
