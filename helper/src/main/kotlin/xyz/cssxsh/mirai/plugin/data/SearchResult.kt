@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 data class SearchResult(
     @SerialName("similarity")
     val similarity: Double,
-    @SerialName("content")
-    val content: String,
     @SerialName("pid")
     val pid: Long,
     @SerialName("uid")
-    val uid: Long
+    val uid: Long,
+    @SerialName("content")
+    val content: String
 )
