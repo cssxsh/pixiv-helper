@@ -2,6 +2,7 @@ package mirai
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import mirai.command.RecallCommand
 import mirai.command.TTSCommand
 import mirai.data.AmrFileData
 import mirai.data.TempPluginDataHolder
@@ -53,5 +54,6 @@ object RunMirai {
             accept()
         }
         TTSCommand.register()
+        RecallCommand.register()
     }
 }
