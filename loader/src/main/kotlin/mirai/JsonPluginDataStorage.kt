@@ -62,7 +62,6 @@ class JsonPluginDataStorage(
     override fun store(holder: PluginDataHolder, instance: PluginData) {
         runCatching {
             getPluginDataFile(holder, instance).run {
-                check(System.currentTimeMillis() - lastModified() > 3.minutesToMillis) { "修改频繁" }
                 writeText(json.encodeToString(instance.updaterSerializer, {}()).also {
                     check(it.isNotBlank()) { "写入为空" }
                 })
