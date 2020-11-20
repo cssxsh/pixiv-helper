@@ -1,7 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import com.soywiz.klock.wrapped.WDateTimeSpan
-import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -114,40 +112,16 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     private suspend fun CommandSenderOnMessage<MessageEvent>.doCache(
+        name: String,
         block: suspend PixivHelper.() -> List<IllustInfo>
     ) = getHelper().runCatching {
-        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO) {
-            PixivCacheData.update(block()).values.apply {
-                writeToCache()
-                logger.verbose { "共${size}个作品信息将会被尝试添加" }
-            }.sortedBy {
-                it.pid
-            }.also {
-                it.runCatching {
-                    reply("{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
-                }
-            }.runCatching {
-                size to count { illust ->
-                    illust.pid in PixivCacheData || isActive && runCatching {
-                        getImages(illust)
-                    }.onSuccess {
-                        delay(delayTime)
-                    }.onFailure {
-                        logger.warning({ "获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                        reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                    }.isSuccess
-                }
-            }.onSuccess { (total, success) ->
-                reply("缓存完毕共${total}个新作品, 缓存成功${success}个")
-            }.onFailure {
-                reply("缓存失败, ${it.message}")
-            }
-        }.also {
-            cacheJob = it
+        PixivCacheData.update(block()).values.run {
+            writeToCache()
+            logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
+            size to addCacheJob(name, toList())
         }
-    }.onSuccess { job ->
-        quoteReply("新作品等待缓存, 添加任务完成${job}")
+    }.onSuccess { (num, result) ->
+        quoteReply("任务<$name>共${num}个作品等待缓存, 添加${result}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -156,7 +130,7 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存关注列表
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = doCache("FOLLOW") {
         (getFollow() + getUserFollowingPreviews(getAuthInfo().user.uid)).flatten()
     }
 
@@ -164,7 +138,7 @@ object PixivCacheCommand : CompositeCommand(
      *
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank() = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank() = doCache("RANK") {
         getRank().flatten()
     }
 
@@ -172,7 +146,7 @@ object PixivCacheCommand : CompositeCommand(
      *
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() = doCache("RECOMMENDED") {
         getRecommended().flatten().filter { it.isEro() }
     }
 
@@ -180,7 +154,7 @@ object PixivCacheCommand : CompositeCommand(
      *
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) = doCache("BOOKMARKS") {
         getBookmarks(uid).flatten()
     }
 
@@ -188,7 +162,7 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存指定用户关注的用户的预览作品
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.preview(uid: Long) = doCache("PREVIEW($uid)") {
         getUserFollowingPreviews(uid).flatten().filter { it.isEro() }
     }
 
@@ -208,41 +182,16 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
-        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO) {
-            PixivAliasData.aliases.values.toSet().sorted().also {
-                logger.verbose { "{${it.first()}...${it.last()}}共${it.size}个画师需要缓存" }
-                reply("列表中共${it.size}个画师需要缓存")
-            }.forEach { uid ->
-                runCatching {
-                    PixivCacheData.update(getUserIllusts(uid)).values.sortedBy {
-                        it.pid
-                    }.apply {
-                        writeToCache()
-                        logger.verbose { "用户(${uid}), 共有{${first().pid}...${last().pid}}共${size}个作品需要缓存" }
-                    }.runCatching {
-                        size to count { illust ->
-                            illust.pid in PixivCacheData || isActive && runCatching {
-                                getImages(illust)
-                            }.onSuccess {
-                                delay(delayTime)
-                            }.onFailure {
-                                logger.warning({ "获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                                reply("获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                            }.isSuccess
-                        }
-                    }.onSuccess { (total, success) ->
-                        reply("用户($uid)缓存完毕共${total}个新作品, 缓存成功${success}个")
-                    }.onFailure {
-                        reply("用户($uid)缓存失败, ${it.message}")
-                    }
-                }
-            }
-        }.also {
-            cacheJob = it
+        PixivAliasData.aliases.values.toSet().sorted().also {
+            logger.verbose { "别名中{${it.first()}...${it.last()}}共${it.size}个画师需要缓存" }
+            reply("别名列表中共${it.size}个画师需要缓存")
+        }.count { uid ->
+            runCatching {
+                user(uid)
+            }.getOrNull() ?: false
         }
-    }.onSuccess { job ->
-        quoteReply("从别名列表加载作品, 添加任务完成${job}")
+    }.onSuccess { num ->
+        quoteReply("别名列表加载作品, 添加任务共${num}个")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
@@ -251,7 +200,7 @@ object PixivCacheCommand : CompositeCommand(
      * 从用户详情加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache {
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = doCache("USER(${uid})") {
         getUserIllusts(uid)
     }
 
@@ -260,89 +209,66 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().runCatching {
-        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO) {
-            PixivHelperSettings.cacheFolder.also {
-                logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
-            }.walk().maxDepth(3).mapNotNull { file ->
-                if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
-                    file.name.toLong()
-                } else {
-                    null
-                }
-            }.toSet().let { list ->
-                list - PixivCacheData.caches().keys
-            }.sorted().also {
-                it.runCatching {
-                    reply("{${first()}...${last()}}共${size}个作品信息将会被尝试添加")
-                }
-            }.runCatching {
-                size to count { pid ->
-                    pid in PixivCacheData || isActive && runCatching {
-                        getImages(getIllustInfo(pid))
-                    }.onFailure {
-                        logger.warning({ "获取作品(${pid})错误" }, it)
-                        reply("获取作品(${pid})错误, ${it.message}")
-                    }.isSuccess
-                }
-            }.onSuccess { (total, success) ->
-                reply("缓存完毕共${total}个新作品, 缓存成功${success}个")
-            }.onFailure {
-                logger.warning({ "缓存失败" }, it)
-                reply("缓存失败, ${it.message}")
+        PixivHelperSettings.cacheFolder.also {
+            logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
+        }.walk().maxDepth(3).mapNotNull { file ->
+            if (file.isDirectory && file.name.matches("""^[0-9]+$""".toRegex())) {
+                file.name.toLong()
+            } else {
+                null
             }
-        }.also {
-            cacheJob = it
+        }.toSet().let { list ->
+            list - PixivCacheData.caches().keys
+        }.map { getIllustInfo(it) }.let {
+            it.size to addCacheJob("LOAD", it)
         }
-    }.onSuccess { job ->
-        quoteReply("从缓存加载作品, 添加任务完成${job}")
+    }.onSuccess { (num, result) ->
+        quoteReply("任务<LOAD>共${num}个作品等待缓存, 添加${result}")
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
 
 
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.flush() = getHelper().runCatching {
-        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
-        launch(Dispatchers.IO) {
-            PixivCacheData.caches().values.filter {
-                (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
-            }.also {
-                logger.verbose { "{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新" }
-            }.runCatching {
-                size to count { info ->
-                    isActive && runCatching {
-                        getIllustInfo(info.pid, true)
-                    }.onSuccess {
-                        logger.verbose { "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功" }
-                    }.onFailure {
-                        logger.warning({ "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败" }, it)
-                        reply("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败, ${it.message}")
-                    }.isSuccess
-                }
-            }.onSuccess { (total, success) ->
-                reply("缓存完毕需要更新${total}个作品, 缓存成功${success}个")
-            }.onFailure {
-                logger.warning({ "缓存失败" }, it)
-                reply("缓存失败, ${it.message}")
-            }
-        }.also {
-            cacheJob = it
-        }
-    }.onSuccess { job ->
-        quoteReply("作品信息等待缓存, 添加任务完成${job}")
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+//    @SubCommand
+//    suspend fun CommandSenderOnMessage<MessageEvent>.flush() = getHelper().runCatching {
+//        check(cacheJob?.isActive != true) { "正在缓存中, ${cacheJob}..." }
+//        launch(Dispatchers.IO) {
+//            PixivCacheData.caches().values.filter {
+//                (WDateTimeTz.nowLocal() - it.createDate) < WDateTimeSpan(weeks = 1).timeSpan
+//            }.also {
+//                logger.verbose { "{${it.first()}...${it.last()}}共有${it.size}个作品需要刷新" }
+//            }.runCatching {
+//                size to count { info ->
+//                    isActive && runCatching {
+//                        getIllustInfo(info.pid, true)
+//                    }.onSuccess {
+//                        logger.verbose { "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新成功" }
+//                    }.onFailure {
+//                        logger.warning({ "(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败" }, it)
+//                        reply("(${info.pid})<${info.getCreateDateText()}>[${info.title}]刷新失败, ${it.message}")
+//                    }.isSuccess
+//                }
+//            }.onSuccess { (total, success) ->
+//                reply("缓存完毕需要更新${total}个作品, 缓存成功${success}个")
+//            }.onFailure {
+//                logger.warning({ "缓存失败" }, it)
+//                reply("缓存失败, ${it.message}")
+//            }
+//        }.also {
+//            cacheJob = it
+//        }
+//    }.onSuccess { job ->
+//        quoteReply("作品信息等待缓存, 添加任务完成${job}")
+//    }.onFailure {
+//        quoteReply(it.toString())
+//    }.isSuccess
 
     /**
      * 强制停止缓存
      */
     @SubCommand("cancel", "stop")
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = getHelper().runCatching {
-        cacheJob?.apply {
-            cancelAndJoin()
-        }
+        cacheStop()
     }.onSuccess {
         quoteReply("任务${it}已停止")
     }.onFailure {
