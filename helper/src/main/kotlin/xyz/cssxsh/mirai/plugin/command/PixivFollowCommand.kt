@@ -29,6 +29,8 @@ object PixivFollowCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
+    private const val MIN_NUM = 8
+
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
         (0L until maxNum step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
@@ -51,18 +53,14 @@ object PixivFollowCommand : CompositeCommand(
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
-            PixivCacheData.caches().values.fold(mutableMapOf<Long, Pair<Int, Long>>()) { map, info ->
+            PixivCacheData.caches().values.fold(mutableMapOf<Long, Int>()) { map, info ->
                 map.apply {
                     compute(info.uid) { _, value ->
-                        (value ?: (0 to 0L)).let { (num, total) ->
-                            num + 1 to total + info.totalBookmarks
-                        }
+                        (value ?: 0) + (if (info.isEro()) 1 else 0)
                     }
                 }
             }.mapNotNull { (uid, count) ->
-                uid.takeIf {
-                    count.let { (num, total) -> total > totalBookmarks * num }
-                }
+                if (count > MIN_NUM) uid else null
             }.toSet().let {
                 logger.verbose { "共统计了${it.size}名画师" }
                 it - followed
