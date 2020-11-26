@@ -99,9 +99,9 @@ object PixivTagCommand : SimpleCommand(
             logger.verbose { "${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'" }
         }
         if (tagJob?.isActive != true) {
-            PixivCacheData.caches().values.filter { info ->
-                tag in info.caption || tag in info.title || info.tags.any { tag in it.name || tag in it.translatedName ?: "" }
-            }.let { list ->
+            PixivCacheData.filter { (_, illusts) ->
+                tag in illusts.caption || tag in illusts.title || illusts.tags.any { tag in it.name || tag in it.translatedName ?: "" }
+            }.values.let { list ->
                 logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
                 list.filter { info ->
                     info.isR18().not() && info.pageCount < 4

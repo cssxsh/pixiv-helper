@@ -29,10 +29,10 @@ object PixivZipCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.zip(uid: Long) {
         check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
-        PixivCacheData.caches().values.filter {
-            it.uid == uid
-        }.let {
-            compressJob = Zipper.compressAsync(it, "USER[${uid}]")
+        PixivCacheData.filter { (_, illusts) ->
+            illusts.uid == uid
+        }.values.let {
+            compressJob = Zipper.compressAsync(it.toList(), "USER[${uid}]")
         }
     }
 

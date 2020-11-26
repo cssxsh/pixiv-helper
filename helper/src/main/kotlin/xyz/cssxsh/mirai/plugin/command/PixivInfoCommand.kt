@@ -65,7 +65,7 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
         buildString {
-            appendLine("缓存数: ${PixivCacheData.caches().size}")
+            appendLine("缓存数: ${PixivCacheData.size}")
             appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
             appendLine("R18色图数: ${PixivCacheData.r18s().size}")
         }

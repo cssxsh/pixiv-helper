@@ -23,9 +23,9 @@ object PixivIllustratorCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun getArtWorkByUid(uid: Long) = PixivCacheData.caches().values.filter {
-        it.uid == uid && it.pageCount <= 3
-    }
+    private fun getArtWorkByUid(uid: Long) = PixivCacheData.filter { (_, illust) ->
+        illust.uid == uid && illust.pageCount <= 3
+    }.values
 
     @SubCommand("uid", "ID")
     @Suppress("unused")

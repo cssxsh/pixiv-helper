@@ -58,7 +58,7 @@ object PoiTool : PixivHelperLogger {
                     val dateStyle = createCellStyle().apply {
                         dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
                     }
-                    PixivCacheData.caches().values.sortedByDescending {
+                    PixivCacheData.toMap().values.sortedByDescending {
                         it.totalBookmarks
                     }.forEachIndexed { row, info ->
                         createRow(row + 1).apply {
@@ -84,7 +84,7 @@ object PoiTool : PixivHelperLogger {
                 logger.verbose { "PIXIV_CACHE_DATA 已写入到 XLSX" }
                 createSheet("PIXIV_TAG_DATA").apply {
                     buildMap<String, Int> {
-                        PixivCacheData.caches().values.flatMap {
+                        PixivCacheData.toMap().values.flatMap {
                             it.tags
                         }.forEach { tag ->
                             tag.name.let {

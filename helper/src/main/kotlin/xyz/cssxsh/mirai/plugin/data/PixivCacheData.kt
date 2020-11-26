@@ -23,7 +23,11 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     @ValueName("r18_illusts")
     private val r18Illusts: MutableSet<Long> by value(mutableSetOf())
 
-    fun caches() = synchronized(illusts) { illusts.toMap() }
+    val size get() = illusts.size
+
+    fun toMap() = synchronized(illusts) { illusts.toMap() }
+
+    fun filter(predicate: (Map.Entry<Long, BaseInfo>) -> Boolean) = synchronized(illusts) { illusts.filter(predicate) }
 
     fun eros(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
         eroIllusts.mapNotNull { pid ->

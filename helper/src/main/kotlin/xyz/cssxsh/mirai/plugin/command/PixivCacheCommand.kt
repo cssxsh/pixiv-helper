@@ -205,8 +205,8 @@ object PixivCacheCommand : CompositeCommand(
                 } else {
                     null
                 }
-            }.toSet().let { list ->
-                list - PixivCacheData.caches().keys
+            }.toSet().filter {
+                it !in PixivCacheData
             }.map { getIllustInfo(it) }
         }
 
@@ -227,7 +227,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        PixivCacheData.caches().values.sortedBy {
+        PixivCacheData.toMap().values.sortedBy {
             it.pid
         }.also {
             logger.verbose { "{${it.first().pid}...${it.last().pid}}共有 ${it.size} 个作品需要检查" }
@@ -313,9 +313,9 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     fun ConsoleCommandSender.delete(uid: Long) {
-        PixivCacheData.caches().values.filter {
-            it.uid == uid
-        }.also {
+        PixivCacheData.filter { (_, illust) ->
+            illust.uid == uid
+        }.values.also {
             logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
         }.forEach {
             PixivCacheData.remove(it.pid)
@@ -331,9 +331,9 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     fun ConsoleCommandSender.nomanga() {
-        PixivCacheData.caches().values.filter {
-            it.type == WorkContentType.MANGA
-        }.also {
+        PixivCacheData.filter { (_, illust) ->
+            illust.type == WorkContentType.MANGA
+        }.values.also {
             logger.verbose { "共${it.size}个漫画作品需要删除" }
         }.forEach {
             PixivCacheData.remove(it.pid)

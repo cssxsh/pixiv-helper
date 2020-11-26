@@ -15,7 +15,6 @@ import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.totalBookmarks
 import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
@@ -53,7 +52,7 @@ object PixivFollowCommand : CompositeCommand(
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
-            PixivCacheData.caches().values.fold(mutableMapOf<Long, Int>()) { map, info ->
+            PixivCacheData.toMap().values.fold(mutableMapOf<Long, Int>()) { map, info ->
                 map.apply {
                     compute(info.uid) { _, value ->
                         (value ?: 0) + (if (info.isEro()) 1 else 0)
