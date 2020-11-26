@@ -21,6 +21,7 @@ import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.tool.downloadImageUrls
 import java.io.EOFException
 import java.io.File
+import java.net.ConnectException
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 
@@ -87,7 +88,7 @@ suspend fun PixivHelper.buildMessage(
         }))
     }
     if (!illust.isR18()) {
-        getImages(illust, save).map {
+        getImages(illust, save).forEach {
             add(it.uploadAsImage(contact))
         }
     } else {
@@ -104,9 +105,9 @@ suspend fun PixivHelper.buildMessage(
         add(info.getMessage())
     }
     if (!info.isR18()) {
-        addAll(getImages(info).map {
-            it.uploadAsImage(contact)
-        })
+        getImages(info).forEach {
+            add(it.uploadAsImage(contact))
+        }
     } else {
         add(PlainText("R18禁止！"))
     }
@@ -201,11 +202,12 @@ suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<R
             is SSLHandshakeException,
             is SSLException,
             is EOFException,
+            is ConnectException,
             is StreamResetException,
             is SocketTimeoutException,
             is ConnectTimeoutException,
             is HttpRequestTimeoutException -> {
-                logger.warning { "${url}下载错误, 已忽略: ${throwable.message}" }
+                logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
                 true
             }
             else -> false
