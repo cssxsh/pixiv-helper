@@ -244,8 +244,12 @@ object PixivCacheCommand : CompositeCommand(
                     info.originUrl.filter { url ->
                         File(dir, url.getFilename()).canRead().not()
                     }.let { urls ->
-                        downloadImageUrls(urls = urls, dir = dir).forEach {
-                            it.getOrThrow()
+                        downloadImageUrls(urls = urls, dir = dir).forEachIndexed { index, result ->
+                            result.onFailure {
+                                logger.warning({ "[${urls[index]}]修复出错" }, it)
+                            }.onSuccess {
+                                logger.info { "[${urls[index]}]修复成功" }
+                            }
                         }
                     }
                 }.onFailure {
