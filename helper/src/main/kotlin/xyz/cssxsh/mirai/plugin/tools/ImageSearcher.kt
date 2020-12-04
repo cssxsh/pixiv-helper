@@ -53,7 +53,7 @@ object ImageSearcher : PixivHelperLogger {
         picUrl: String
     ): List<SearchResult> = httpClient.use { client ->
         runCatching {
-            client.get<ByteArray>(picUrl.replace("http", "https"))
+            client.get<ByteArray>(picUrl)
         }.onFailure {
             logger.warning({ "图片下载失败, $picUrl" }, it)
         }.getOrThrow().let {
