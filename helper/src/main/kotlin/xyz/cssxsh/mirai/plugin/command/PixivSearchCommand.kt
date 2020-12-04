@@ -12,7 +12,7 @@ import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
-import xyz.cssxsh.mirai.plugin.data.SearchResult
+import xyz.cssxsh.pixiv.data.SearchResult
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 object PixivSearchCommand : SimpleCommand(

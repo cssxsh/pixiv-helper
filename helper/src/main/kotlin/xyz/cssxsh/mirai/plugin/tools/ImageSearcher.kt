@@ -9,7 +9,7 @@ import io.ktor.utils.io.core.*
 import net.mamoe.mirai.utils.warning
 import org.jsoup.Jsoup
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
-import xyz.cssxsh.mirai.plugin.data.SearchResult
+import xyz.cssxsh.pixiv.data.SearchResult
 import kotlin.io.use
 
 @Suppress("unused")

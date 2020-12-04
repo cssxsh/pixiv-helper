@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.contact.User
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import xyz.cssxsh.pixiv.data.UserData
 
 object PixivStatisticalData : AutoSavePluginData("PixivStatistics"), PixivHelperLogger {
 

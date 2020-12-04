@@ -6,7 +6,7 @@ import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.BaseInfo
+import xyz.cssxsh.pixiv.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.BufferedOutputStream
 import java.io.File

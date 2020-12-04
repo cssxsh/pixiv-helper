@@ -11,8 +11,8 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.uploadAsImage
 import net.mamoe.mirai.utils.warning
 import okhttp3.internal.http2.StreamResetException
-import xyz.cssxsh.mirai.plugin.data.BaseInfo
-import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
+import xyz.cssxsh.pixiv.data.BaseInfo
+import xyz.cssxsh.pixiv.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.WorkContentType

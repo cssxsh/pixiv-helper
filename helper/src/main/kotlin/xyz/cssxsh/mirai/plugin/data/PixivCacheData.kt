@@ -6,7 +6,8 @@ import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.info
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.BaseInfo.Companion.toBaseInfo
+import xyz.cssxsh.pixiv.data.BaseInfo
+import xyz.cssxsh.pixiv.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 
 object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {

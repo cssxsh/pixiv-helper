@@ -1,10 +1,11 @@
-package xyz.cssxsh.mirai.plugin.data
+package xyz.cssxsh.pixiv.data
 
 import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.data.app.IllustInfo
+import xyz.cssxsh.pixiv.data.app.IllustInfo.Companion.CreateDateSerializer
 
 @Serializable
 data class BaseInfo(
@@ -15,7 +16,7 @@ data class BaseInfo(
     @SerialName("caption")
     val caption: String,
     @SerialName("create_date")
-    @Serializable(with = IllustInfo.Companion.CreateDateSerializer::class)
+    @Serializable(with = CreateDateSerializer::class)
     val createDate: WDateTimeTz,
     @SerialName("page_count")
     val pageCount: Int,
@@ -39,7 +40,7 @@ data class BaseInfo(
     val originUrl: List<String>
 ) {
     fun getCreateDateText(): String =
-        createDate.format(IllustInfo.Companion.CreateDateSerializer.dateFormat)
+        createDate.format(CreateDateSerializer.dateFormat)
 
     companion object {
         fun IllustInfo.toBaseInfo() = BaseInfo(

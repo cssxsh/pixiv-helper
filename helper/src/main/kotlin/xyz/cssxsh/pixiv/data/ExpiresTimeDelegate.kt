@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin.data
+package xyz.cssxsh.pixiv.data
 
 import com.soywiz.klock.wrapped.WDateTimeTz
 import net.mamoe.mirai.contact.Contact

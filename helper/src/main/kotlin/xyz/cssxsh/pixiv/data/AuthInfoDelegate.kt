@@ -1,11 +1,10 @@
-package xyz.cssxsh.mirai.plugin.data
+package xyz.cssxsh.pixiv.data
 
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
 import xyz.cssxsh.mirai.plugin.PixivHelper
 import xyz.cssxsh.mirai.plugin.PixivHelperManager
-import xyz.cssxsh.pixiv.data.AuthResult
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 

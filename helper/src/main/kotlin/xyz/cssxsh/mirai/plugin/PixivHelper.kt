@@ -16,7 +16,10 @@ import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.client.*
+import xyz.cssxsh.pixiv.data.AuthInfoDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
+import xyz.cssxsh.pixiv.data.ConfigDelegate
+import xyz.cssxsh.pixiv.data.ExpiresTimeDelegate
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import java.util.concurrent.ArrayBlockingQueue
 
@@ -62,6 +65,40 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private val cacheList: MutableList<Pair<String, suspend PixivHelper.() -> List<IllustInfo>>> = mutableListOf()
 
+    private suspend fun loadCache(name: String, list: List<IllustInfo>) {
+        list.sortedBy { it.pid }.takeIf { it.isNotEmpty() }?.apply {
+            writeToCache()
+            logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
+            runCatching {
+                reply("任务<$name>有{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
+            }
+            runCatching {
+                size to count { illust ->
+                    illust.pid in PixivCacheData || isActive && runCatching {
+                        getImages(illust)
+                    }.onSuccess {
+                        delay(PixivHelperSettings.delayTime)
+                    }.onFailure {
+                        logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
+                        runCatching {
+                            reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
+                        }
+                    }.isSuccess
+                }
+            }.onSuccess { (total, success) ->
+                logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
+                runCatching {
+                    reply("任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个")
+                }
+            }.onFailure {
+                logger.warning({ "任务<$name>缓存失败" }, it)
+                runCatching {
+                    reply("任务<$name>缓存失败, ${it.message}")
+                }
+            }
+        }
+    }
+
     fun addCacheJob(name: String, block: suspend PixivHelper.() -> List<IllustInfo>): Boolean =
         cacheList.add(name to block).also {
             logger.verbose { "任务<$name>已添加" }
@@ -69,45 +106,18 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 cacheJob = launch(Dispatchers.IO) {
                     while (isActive && cacheList.isNotEmpty()) {
                         cacheList.removeFirst().let { (name, getIllusts) ->
-                            this@PixivHelper.getIllusts().sortedBy { it.pid }.takeIf { it.isNotEmpty() }?.apply {
-                                writeToCache()
-                                logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
-                                runCatching {
-                                    reply("任务<$name>有{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
-                                }
-                                runCatching {
-                                    size to count { illust ->
-                                        illust.pid in PixivCacheData || isActive && runCatching {
-                                            getImages(illust)
-                                        }.onSuccess {
-                                            delay(PixivHelperSettings.delayTime)
-                                        }.onFailure {
-                                            logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                                            reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                                        }.isSuccess
-                                    }
-                                }.onSuccess { (total, success) ->
-                                    logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
-                                    runCatching {
-                                        reply("任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个")
-                                    }
-                                }.onFailure {
-                                    logger.warning({ "任务<$name>缓存失败" }, it)
-                                    runCatching {
-                                        reply("任务<$name>缓存失败, ${it.message}")
-                                    }
-                                }
-                            }
+                            loadCache(name, this@PixivHelper.getIllusts())
                         }
                     }
                 }
             }
         }
 
-    suspend fun cacheStop() = cacheJob?.apply {
-        cacheList.clear()
-        cancelAndJoin()
-    }
+    suspend fun cacheStop() =
+        cacheJob?.apply {
+            cacheList.clear()
+            cancelAndJoin()
+        }
 
     var tagJob: Job? = null
 
