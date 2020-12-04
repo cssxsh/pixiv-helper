@@ -6,8 +6,8 @@ import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.message.data.Message
-import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.message.data.buildMessageChain
 import net.mamoe.mirai.message.uploadAsImage
 import net.mamoe.mirai.utils.warning
 import okhttp3.internal.http2.StreamResetException
@@ -30,37 +30,11 @@ import javax.net.ssl.SSLHandshakeException
  */
 fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
 
-/**
- * 运行助手
- */
-suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.runHelper(block: PixivHelper.(MessageChain) -> Any) {
-    getHelper().runCatching {
-        block(message)
-    }.onSuccess { result ->
-        when (result) {
-            is MessageChain -> quoteReply(result)
-            is Message -> quoteReply(result)
-            is String -> quoteReply(result)
-            is Iterable<*> -> result.forEach {
-                when (it) {
-                    is MessageChain -> quoteReply(it)
-                    is Message -> quoteReply(it)
-                    is String -> quoteReply(it)
-                    else -> quoteReply(it.toString())
-                }
-            }
-            else -> quoteReply(result.toString())
-        }
-    }.onFailure {
-        quoteReply("执行失败， ${it.message}")
-    }
-}
-
 fun String.getFilename() = substring(lastIndexOfAny(listOf("/", "\\")))
 
 fun IllustInfo.getMessage(): Message = toBaseInfo().getMessage()
 
-fun BaseInfo.getMessage(): Message = buildString {
+fun BaseInfo.getMessage(): Message = buildMessageChain {
     appendLine("作者: $uname ")
     appendLine("UID: $uid ")
     appendLine("收藏数: $totalBookmarks ")
@@ -69,7 +43,7 @@ fun BaseInfo.getMessage(): Message = buildString {
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.name }}")
-}.let { PlainText(it) }
+}
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
@@ -80,12 +54,12 @@ suspend fun PixivHelper.buildMessage(
         add(PlainText("作品ID: ${illust.pid}, 收藏数: ${illust.totalBookmarks}, 健全等级: ${illust.sanityLevel} "))
     } else {
         add(illust.getMessage())
-        add(PlainText(buildString {
+        add(buildMessageChain {
             appendLine("原图连接: ")
             illust.getPixivCatUrls().forEach {
                 appendLine(it)
             }
-        }))
+        })
     }
     if (!illust.isR18()) {
         getImages(illust, save).forEach {
@@ -148,7 +122,7 @@ fun IllustInfo.writeTo(
     }.encodeToString(IllustInfo.serializer(), this)
 )
 
-fun IllustInfo.writeToCache() = writeTo(File(PixivHelperSettings.imagesFolder(pid), "${pid}.json"))
+fun IllustInfo.writeToCache() = writeTo(PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json"))
 
 fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
@@ -168,7 +142,7 @@ suspend fun PixivHelper.getIllustInfo(
     flush: Boolean = false,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust }
 ): IllustInfo = PixivHelperSettings.imagesFolder(pid).let { dir ->
-    File(dir, "${pid}.json").let { file ->
+    dir.resolve( "${pid}.json").let { file ->
         if (!flush && file.canRead()) {
             file.readIllustInfo()
         } else {
@@ -215,7 +189,7 @@ suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<R
     },
     block = { _, url, result ->
         runCatching {
-            File(dir, url.getFilename()).apply {
+            dir.resolve(url.getFilename()).apply {
                 writeBytes(result.getOrThrow())
             }
         }
@@ -226,9 +200,9 @@ suspend fun PixivHelper.getImages(
     pid: Long,
     urls: List<String>
 ): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
-    if (File(dir, urls.first().getFilename()).canRead()) {
+    if (dir.resolve(urls.first().getFilename()).canRead()) {
         urls.map { url ->
-            File(dir, url.getFilename())
+            dir.resolve(url.getFilename())
         }
     } else {
         downloadImageUrls(urls = urls, dir = dir).map {

@@ -33,6 +33,9 @@ object Zipper : PixivHelperLogger {
     private fun BaseInfo.toText() =
         "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
 
+    private fun nowTimeText() =
+        WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")
+
     private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
         charMap.getOrDefault(it.value, "")
     }

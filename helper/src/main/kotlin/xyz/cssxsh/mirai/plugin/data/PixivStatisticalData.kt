@@ -14,21 +14,17 @@ object PixivStatisticalData : AutoSavePluginData("PixivStatistics"), PixivHelper
 
     fun getMap() = data.toMap()
 
-    fun eroAdd(user: User): Int = data.compute(user.id) { _, userData ->
-        (userData ?: UserData()).run {
-            copy(eroCount = eroCount + 1)
-        }
-    }!!.eroCount
+    fun eroAdd(user: User): Int = data.getOrElse(user.id) { UserData() }.run {
+        copy(eroCount = eroCount + 1).also { data[user.id] = it }
+    }.eroCount
 
-    fun tagAdd(user: User, tag: String): Int = data.compute(user.id) { _, userData ->
-        (userData ?: UserData()).run {
-            copy(tagCount = tagCount.toMutableMap().apply {
-                compute(tag) { _, old ->
-                    (old ?: 0) + 1
-                }
-            }.toMap())
-        }
-    }!!.tagCount[tag]!!
+    fun tagAdd(user: User, tag: String): Int = data.getOrElse(user.id) { UserData() }.run {
+        copy(tagCount = tagCount.toMutableMap().apply {
+            compute(tag) { _, old ->
+                (old ?: 0) + 1
+            }
+        }.toMap())
+    }.tagCount.getValue(tag)
 
     fun getCount(user: User) = data.getOrPut(user.id) { UserData() }
 }
