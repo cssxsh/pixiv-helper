@@ -29,6 +29,8 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
 
     fun filter(predicate: (Map.Entry<Long, BaseInfo>) -> Boolean) = synchronized(illusts) { illusts.filter(predicate) }
 
+    fun count(predicate: (Map.Entry<Long, BaseInfo>) -> Boolean) = synchronized(illusts) { illusts.count(predicate) }
+
     fun eros(predicate: (BaseInfo) -> Boolean = { true }) = synchronized(illusts) {
         eroIllusts.mapNotNull { pid ->
             requireNotNull(illusts[pid]) { "${pid}缓存错误" }.takeIf {
