@@ -10,7 +10,6 @@ import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.pixiv.RankMode
@@ -23,7 +22,7 @@ import java.io.File
 object PixivCacheCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
-    description = "缓存指令"
+    description = "PIXIV缓存指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors
@@ -304,27 +303,6 @@ object PixivCacheCommand : CompositeCommand(
         }.also {
             panJob = it
         }
-    }
-
-    /**
-     * 设置缓存目录 cache path /storage/emulated/0/PixivCache
-     * @param path 缓存目录
-     */
-    @SubCommand
-    fun ConsoleCommandSender.path(path: String) {
-        runCatching {
-            if (File(path).exists().not()) File(PixivHelperSettings.cachePath).renameTo(File(path))
-        }
-        PixivHelperSettings.cachePath = path
-    }
-
-    /**
-     * 设置缓存延迟时间
-     */
-    @SubCommand
-    fun ConsoleCommandSender.delay(timeMillis: Long) {
-        logger.info { "delay: $delayTime -> $timeMillis" }
-        delayTime = timeMillis
     }
 
     @SubCommand

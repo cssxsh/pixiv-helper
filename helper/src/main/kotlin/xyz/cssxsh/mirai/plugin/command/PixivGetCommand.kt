@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.*
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点",
-    description = "获取指令"
+    description = "PIXIV获取指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors

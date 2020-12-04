@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.plugin.data
 
-import net.mamoe.mirai.console.data.AutoSavePluginConfig
+import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.utils.secondsToMillis
@@ -8,48 +8,48 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
 import java.io.File
 
-object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
+object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     /**
      * 色图间隔
      */
     @ValueName("min_interval")
-    var minInterval: Int by value(16)
+    val minInterval: Int by value(16)
 
     /**
      * tag总计最大
      */
     @ValueName("max_tag_count")
-    var maxTagCount: Int by value(16)
+    val maxTagCount: Int by value(16)
 
     /**
      * 图片缓存位置
      */
     @ValueName("cache_path")
-    var cachePath: String by value("")
+    val cachePath: String by value("")
 
     /**
      * 压缩文件保存目录
      */
     @ValueName("zip_path")
-    var zipPath: String by value("")
+    val backupPath: String by value("")
 
     /**
      * 缓存延迟时间
      */
     @ValueName("delay_time")
-    var delayTime: Long by value(1.secondsToMillis)
+    val delayTime: Long by value(1.secondsToMillis)
 
     /**
      * 涩图标准
      */
     @ValueName("total_bookmarks")
-    var totalBookmarks: Long by value(10_000L)
+    val totalBookmarks: Long by value(10_000L)
 
     /**
      * 百度云
      */
     @ValueName("pan_config")
-    var panConfig: PanConfig by value(PanConfig(
+    val panConfig: PanConfig by value(PanConfig(
         bdsToken = "a25846e85d9ae2b6356b1c78d31c9ef3",
         logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",
         targetPath = "/Pixiv",
@@ -69,10 +69,10 @@ object PixivHelperSettings : AutoSavePluginConfig("HelperSettings") {
     /**
      * 压缩文件保存目录
      */
-    val zipFolder: File get() = if (zipPath.isEmpty()) {
+    val backupFolder: File get() = if (backupPath.isEmpty()) {
         File(PixivHelperPlugin.dataFolder, "zip").apply { mkdir() }
     } else {
-        File(zipPath).apply { mkdir() }
+        File(backupPath).apply { mkdir() }
     }
 
     /**

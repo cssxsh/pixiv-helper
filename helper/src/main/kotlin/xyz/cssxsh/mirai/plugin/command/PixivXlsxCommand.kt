@@ -12,7 +12,7 @@ import java.io.File
 object PixivXlsxCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
-    description = "压缩指令"
+    description = "PIXIV压缩指令"
 ), PixivHelperLogger {
 
     private var xlsxJob: Deferred<File>? = null

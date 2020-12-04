@@ -9,7 +9,6 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.pixiv.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.BufferedOutputStream
-import java.io.File
 import java.nio.file.attribute.FileTime
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
@@ -39,10 +38,7 @@ object Zipper : PixivHelperLogger {
     }
 
     private fun zipFile(type: String) =
-        File(
-            PixivHelperSettings.zipFolder,
-            "${type.toUpperCase()}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).zip"
-        )
+        PixivHelperSettings.backupFolder.resolve("${type.toUpperCase()}(${nowTimeText()}).zip")
 
     fun compressAsync(list: List<BaseInfo>, type: String) = PixivHelperPlugin.async(Dispatchers.IO) {
         zipFile(type).apply {

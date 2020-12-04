@@ -13,7 +13,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "ero", "色图", "涩图",
-    description = "色图指令"
+    description = "PIXIV色图指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors

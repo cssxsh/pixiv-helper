@@ -17,7 +17,7 @@ import java.io.File
 @Suppress("unused")
 object PoiTool : PixivHelperLogger {
     private fun xlsxFile(name: String) = File(
-        PixivHelperSettings.zipFolder,
+        PixivHelperSettings.backupFolder,
         "${name}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).xlsx"
     )
 

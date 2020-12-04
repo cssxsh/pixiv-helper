@@ -21,7 +21,7 @@ import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "pixiv",
-    description = "pixiv 基本方法",
+    description = "PIXIV基本方法",
     overrideContext = buildCommandArgumentContext {
         RankMode::class with object : CommandValueArgumentParser<RankMode> {
             override fun parse(raw: String, sender: CommandSender): RankMode =

@@ -16,7 +16,7 @@ import xyz.cssxsh.mirai.plugin.getHelper
 object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",
-    description = "信息指令"
+    description = "PIXIV信息指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors

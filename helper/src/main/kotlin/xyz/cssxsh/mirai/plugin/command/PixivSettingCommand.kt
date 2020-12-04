@@ -10,14 +10,13 @@ import net.mamoe.mirai.utils.info
 import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivConfigData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.getHelper
 
 @Suppress("unused")
 object PixivSettingCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "set",
-    description = "pixiv 设置"
+    description = "PIXIV设置"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors
@@ -34,15 +33,6 @@ object PixivSettingCommand : CompositeCommand(
         PixivConfigData.default.proxy = proxy
     }
 
-    /**
-     * 设置色图更新间隔
-     */
-    @SubCommand
-    fun ConsoleCommandSender.interval(interval: Int) {
-        logger.info { "interval: ${PixivHelperSettings.minInterval} -> $interval" }
-        PixivHelperSettings.minInterval = interval
-    }
-
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.simple(
         isSimple: Boolean
@@ -53,10 +43,4 @@ object PixivSettingCommand : CompositeCommand(
     }.onFailure {
         quoteReply(it.toString())
     }.isSuccess
-
-    @SubCommand
-    fun CommandSenderOnMessage<MessageEvent>.bookmark(total: Long) {
-        logger.info { "totalBookmarks: ${PixivHelperSettings.totalBookmarks} -> $total" }
-        PixivHelperSettings.totalBookmarks = total
-    }
 }

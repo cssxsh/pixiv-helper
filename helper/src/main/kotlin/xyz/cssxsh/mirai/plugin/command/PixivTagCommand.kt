@@ -21,7 +21,7 @@ import xyz.cssxsh.pixiv.api.app.searchIllust
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",
-    description = "pixiv 标签"
+    description = "PIXIV标签"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors

@@ -15,7 +15,7 @@ import java.io.File
 object PixivZipCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
-    description = "压缩指令"
+    description = "PIXIV压缩指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors

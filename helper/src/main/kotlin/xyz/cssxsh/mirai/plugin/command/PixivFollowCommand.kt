@@ -21,7 +21,7 @@ import xyz.cssxsh.pixiv.api.app.*
 object PixivFollowCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "follow",
-    description = "关注指令"
+    description = "PIXIV关注指令"
 ), PixivHelperLogger {
 
     @ExperimentalCommandDescriptors
