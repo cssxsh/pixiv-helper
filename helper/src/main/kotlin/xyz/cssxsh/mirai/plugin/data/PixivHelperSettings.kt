@@ -61,7 +61,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
      * 缓存目录
      */
     val cacheFolder: File get() = if (cachePath.isEmpty()) {
-        File(PixivHelperPlugin.dataFolder, "cache").apply { mkdir() }
+        dataFolder.resolve( "cache").apply { mkdir() }
     } else {
         File(cachePath).apply { mkdir() }
     }
@@ -70,7 +70,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
      * 压缩文件保存目录
      */
     val backupFolder: File get() = if (backupPath.isEmpty()) {
-        File(PixivHelperPlugin.dataFolder, "zip").apply { mkdir() }
+        dataFolder.resolve("backup").apply { mkdir() }
     } else {
         File(backupPath).apply { mkdir() }
     }
