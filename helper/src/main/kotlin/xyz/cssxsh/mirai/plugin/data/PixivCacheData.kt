@@ -49,7 +49,7 @@ object PixivCacheData : AutoSavePluginData("PixivCache"), PixivHelperLogger {
     }
 
     private fun BaseInfo.toInfo() =
-        "(${pid})<${getCreateDateText()}>[${title}][${type}][${pageCount}]{${totalBookmarks}}"
+        "(${pid})[${uid}]<${getCreateDateText()}>[${type}][${title}][${pageCount}]{${totalBookmarks}}"
 
     /**
      * 筛选出不在缓存里的部分

@@ -1,11 +1,10 @@
 package xyz.cssxsh.pixiv.data
 
-import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.data.app.IllustInfo
-import xyz.cssxsh.pixiv.data.app.IllustInfo.Companion.CreateDateSerializer
+import java.time.OffsetDateTime
 
 @Serializable
 data class BaseInfo(
@@ -16,8 +15,8 @@ data class BaseInfo(
     @SerialName("caption")
     val caption: String,
     @SerialName("create_date")
-    @Serializable(with = CreateDateSerializer::class)
-    val createDate: WDateTimeTz,
+    @Serializable(with = JapanDateTimeSerializer::class)
+    val createDate: OffsetDateTime,
     @SerialName("page_count")
     val pageCount: Int,
     @SerialName("sanity_level")
@@ -40,7 +39,7 @@ data class BaseInfo(
     val originUrl: List<String>
 ) {
     fun getCreateDateText(): String =
-        createDate.format(CreateDateSerializer.dateFormat)
+        createDate.format(JapanDateTimeSerializer.dateFormat)
 
     companion object {
         fun IllustInfo.toBaseInfo() = BaseInfo(
