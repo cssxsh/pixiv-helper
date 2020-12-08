@@ -7,8 +7,16 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.utils.minutesToMillis
+import org.apache.ibatis.io.Resources
+import org.apache.ibatis.mapping.Environment
+import org.apache.ibatis.session.SqlSessionFactory
+import org.apache.ibatis.session.SqlSessionFactoryBuilder
+import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
 import xyz.cssxsh.mirai.plugin.tools.Zipper
 
 @AutoService(JvmPlugin::class)
@@ -19,7 +27,17 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
+    private val sqlSessionFactory: SqlSessionFactory by lazy {
+        Resources.getResourceAsStream("mybatis-config.xml").use {
+            SqlSessionFactoryBuilder().build(it)
+        }
+    }
+
     private val listener = PixivHelperListener(coroutineContext)
+
+    @ConsoleExperimentalApi
+    override val autoSaveIntervalMillis: LongRange
+        get() = 10.minutesToMillis..30.minutesToMillis
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
@@ -43,10 +61,14 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivInfoCommand.register()
         PixivGetCommand.register()
 
+        sqlSessionFactory.configuration.apply {
+            environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
+                url = sqliteUrl
+            })
+        }
         // Listener
         listener.listen()
     }
-
 
     override fun onDisable() {
         PixivMethodCommand.unregister()

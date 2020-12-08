@@ -1,7 +1,5 @@
 package xyz.cssxsh.mirai.plugin.tools
 
-import com.soywiz.klock.jvm.toDate
-import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -13,13 +11,20 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.isR18
 import java.io.File
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Suppress("unused")
 object PoiTool : PixivHelperLogger {
+
     private fun xlsxFile(name: String) = File(
         PixivHelperSettings.backupFolder,
-        "${name}(${WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")}).xlsx"
+        "${name}(${nowTimeText()}).xlsx"
     )
+
+    private fun nowTimeText() =
+        OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
     private fun XSSFSheet.writeHeader(header: List<String>) = apply {
         createRow(0).apply {
@@ -65,7 +70,7 @@ object PoiTool : PixivHelperLogger {
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE")).apply {
-                                setCellValue(info.createDate.local.toDate())
+                                setCellValue(Date.from(info.createDate.toInstant()))
                                 cellStyle = dateStyle
                             }
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())

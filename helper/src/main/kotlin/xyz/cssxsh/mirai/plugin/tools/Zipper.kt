@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.tools
 
-import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.utils.verbose
@@ -10,6 +9,8 @@ import xyz.cssxsh.pixiv.data.BaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import java.io.BufferedOutputStream
 import java.nio.file.attribute.FileTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -34,7 +35,7 @@ object Zipper : PixivHelperLogger {
         "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
 
     private fun nowTimeText() =
-        WDateTimeTz.nowLocal().format("yyyy-MM-dd-HH-mm-ss")
+        OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
     private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
         charMap.getOrDefault(it.value, "")
@@ -52,8 +53,8 @@ object Zipper : PixivHelperLogger {
                 list.forEach { info ->
                     PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
                         zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
-                            creationTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
-                            lastModifiedTime = FileTime.fromMillis(info.createDate.utc.unixMillisLong)
+                            creationTime = FileTime.fromMillis(info.createDate.toInstant().toEpochMilli())
+                            lastModifiedTime = FileTime.fromMillis(info.createDate.toInstant().toEpochMilli())
                         })
                         zipOutputStream.write(file.readBytes())
                     }

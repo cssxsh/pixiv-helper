@@ -2,10 +2,6 @@
 
 package xyz.cssxsh.mirai.plugin
 
-import com.soywiz.klock.KlockLocale
-import com.soywiz.klock.PatternDateFormat
-import com.soywiz.klock.locale.chinese
-import com.soywiz.klock.wrapped.WDateTimeTz
 import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
@@ -21,6 +17,9 @@ import xyz.cssxsh.pixiv.data.AuthResult
 import xyz.cssxsh.pixiv.data.ConfigDelegate
 import xyz.cssxsh.pixiv.data.ExpiresTimeDelegate
 import xyz.cssxsh.pixiv.data.app.IllustInfo
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 
 /**
@@ -32,17 +31,13 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     config = PixivConfig()
 ), PixivHelperLogger {
 
-    companion object {
-        val DATE_FORMAT_CHINESE = PatternDateFormat("YYYY-MM-dd HH:mm:ss", KlockLocale.chinese)
-    }
-
     override var config: PixivConfig by ConfigDelegate(contact)
 
     override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
 
-    override var expiresTime: WDateTimeTz by ExpiresTimeDelegate(contact)
+    override var expiresTime: OffsetDateTime by ExpiresTimeDelegate(contact)
 
-    fun getExpiresTimeText() = expiresTime.format(DATE_FORMAT_CHINESE)
+    fun getExpiresTimeText() = expiresTime.format(DateTimeFormatter.ISO_DATE_TIME)
 
     val historyQueue by lazy {
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
@@ -127,11 +122,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         config.apply(block).also { config = it }
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info { "$it by RefreshToken: $token, ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}" }
+        logger.info { "$it by RefreshToken: $token, ExpiresTime: ${getExpiresTimeText()}" }
     }
 
     override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info { "$it by Account: $mailOrPixivID, ExpiresTime: ${expiresTime.format(DATE_FORMAT_CHINESE)}" }
+        logger.info { "$it by Account: $mailOrPixivID, ExpiresTime: ${getExpiresTimeText()}" }
     }
 
     /**

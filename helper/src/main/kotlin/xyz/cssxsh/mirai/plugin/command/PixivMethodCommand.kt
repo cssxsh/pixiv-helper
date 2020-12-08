@@ -1,9 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import com.soywiz.klock.PatternDateFormat
-import com.soywiz.klock.parseDate
-import com.soywiz.klock.wrapped.WDate
-import com.soywiz.klock.wrapped.wrapped
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -11,11 +7,14 @@ import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.utils.minutesToMillis
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
@@ -27,9 +26,9 @@ object PixivMethodCommand : CompositeCommand(
             override fun parse(raw: String, sender: CommandSender): RankMode =
                 enumValueOf(raw.toUpperCase())
         }
-        WDate::class with object : CommandValueArgumentParser<WDate> {
-            override fun parse(raw: String, sender: CommandSender): WDate =
-                PatternDateFormat("y-M-d").parseDate(raw).wrapped
+        LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
+            override fun parse(raw: String, sender: CommandSender): LocalDate =
+                LocalDate.parse(raw, DateTimeFormatter.ISO_DATE)
         }
     }
 ), PixivHelperLogger {
@@ -102,7 +101,7 @@ object PixivMethodCommand : CompositeCommand(
     @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
     suspend fun CommandSenderOnMessage<MessageEvent>.rank(
         mode: RankMode,
-        date: WDate,
+        date: LocalDate,
         index: Long
     ) = getHelper().runCatching {
         buildMessage(illustRanking(date = date, mode = mode, offset = index).illusts.first())
@@ -210,7 +209,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.listen() = getHelper().runCatching {
-        addIllustFollowListener {
+        addIllustFollowListener(delay = (10).minutesToMillis) {
             buildMessage(it).forEach { message -> reply(message) }
         }
     }.onSuccess {
