@@ -101,16 +101,18 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getUserFollowing(detail: UserDetail) =
+    private suspend fun PixivHelper.getUserFollowing(detail: UserDetail) = buildList {
         (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
                 userFollowing(uid = detail.user.id, offset = offset).userPreviews.map { it.user }
             }.onSuccess {
+                addAll(it)
                 logger.verbose { "加载用户(${detail.user.id})关注用户第${offset / 30}页{${it.size}}成功" }
             }.onFailure {
                 logger.warning({ "加载用户(${detail.user.id})关注用户第${offset / 30}页失败" }, it)
-            }.getOrNull()
-        }.flatten()
+            }
+        }
+    }
 
     /**
      * 缓存关注列表
@@ -140,7 +142,7 @@ object PixivCacheCommand : CompositeCommand(
             runCatching {
                 userDetail(uid).let { detail ->
                     logger.verbose { "USER(${uid})有${detail.profile.totalIllusts}个作品尝试" }
-                    delay(detail.profile.totalIllusts * 100)
+                    delay(detail.profile.totalIllusts * 10)
                     if (detail.profile.totalIllusts > PixivCacheData.count { it.value.uid == uid }) {
                         addCacheJob("USER(${uid})") {
                             getUserIllusts(detail)
