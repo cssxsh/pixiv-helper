@@ -10,7 +10,7 @@ import java.io.File
 @Suppress("unused")
 object PixivXlsxCommand : CompositeCommand(
     owner = PixivHelperPlugin,
-    "cache",
+    "xlsx",
     description = "PIXIV压缩指令"
 ) {
 

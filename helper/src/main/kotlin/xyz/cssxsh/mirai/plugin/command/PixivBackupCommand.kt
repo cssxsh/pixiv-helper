@@ -12,11 +12,11 @@ import xyz.cssxsh.mirai.plugin.tools.Zipper
 import java.io.File
 
 @Suppress("unused")
-object PixivZipCommand : CompositeCommand(
+object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
-    "cache",
-    description = "PIXIV压缩指令"
-), PixivHelperLogger {
+    "backup",
+    description = "PIXIV备份指令"
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
