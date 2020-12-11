@@ -5,10 +5,8 @@ import kotlinx.coroutines.launch
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.User
-import xyz.cssxsh.pixiv.data.AuthResult
-import java.time.OffsetDateTime
 
-object PixivHelperManager : PixivHelperLogger {
+object PixivHelperManager {
     /**
      * 用于存储用户关联的助手
      */
@@ -18,14 +16,6 @@ object PixivHelperManager : PixivHelperLogger {
      * 用于存储群关联的助手
      */
     private val groups: MutableMap<Long, PixivHelper> = mutableMapOf()
-
-    val userAuthInfos: MutableMap<Long, AuthResult.AuthInfo?> = mutableMapOf()
-
-    val userExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
-
-    var defaultAuthInfos: AuthResult.AuthInfo? = null
-
-    var defaultExpiresTime: OffsetDateTime = OffsetDateTime.now()
 
     /**
      * 通过联系人获取
