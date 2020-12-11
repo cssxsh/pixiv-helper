@@ -7,12 +7,13 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点",
     description = "PIXIV获取指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi

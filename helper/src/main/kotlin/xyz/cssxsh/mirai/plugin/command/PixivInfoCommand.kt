@@ -6,7 +6,6 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.message.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
@@ -17,7 +16,7 @@ object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",
     description = "PIXIV信息指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi

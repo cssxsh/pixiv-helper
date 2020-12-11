@@ -8,13 +8,14 @@ import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "ero", "色图", "涩图",
     description = "PIXIV色图指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi

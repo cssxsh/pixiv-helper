@@ -15,6 +15,9 @@ import xyz.cssxsh.pixiv.data.BaseInfo
 import xyz.cssxsh.pixiv.data.BaseInfo.Companion.toBaseInfo
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.data.app.IllustInfo

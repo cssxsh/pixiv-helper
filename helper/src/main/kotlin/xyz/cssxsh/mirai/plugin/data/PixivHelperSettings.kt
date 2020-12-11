@@ -4,7 +4,8 @@ import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.utils.secondsToMillis
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import org.sqlite.JDBC
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
 import java.io.File
 

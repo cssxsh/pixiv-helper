@@ -7,10 +7,9 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthInfoDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
@@ -29,7 +28,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     coroutineName = "PixivHelper:${contact}",
     config = PixivConfig()
-), PixivHelperLogger {
+) {
 
     override var config: PixivConfig by ConfigDelegate(contact)
 

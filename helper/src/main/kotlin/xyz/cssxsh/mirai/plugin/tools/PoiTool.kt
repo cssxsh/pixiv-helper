@@ -3,20 +3,19 @@ package xyz.cssxsh.mirai.plugin.tools
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.*
 import org.apache.poi.xssf.usermodel.*
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.isR18
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Suppress("unused")
-object PoiTool : PixivHelperLogger {
+object PoiTool {
 
     private fun xlsxFile(name: String) = File(
         PixivHelperSettings.backupFolder,

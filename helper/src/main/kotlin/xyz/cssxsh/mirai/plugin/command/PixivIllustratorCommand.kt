@@ -6,8 +6,8 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.verbose
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.buildMessage
 import xyz.cssxsh.mirai.plugin.data.PixivAliasData
 import xyz.cssxsh.mirai.plugin.data.PixivCacheData
@@ -17,7 +17,7 @@ object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "illustrator", "画师",
     description = "PIXIV画师指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi

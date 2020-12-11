@@ -1,12 +1,11 @@
 package xyz.cssxsh.mirai.plugin.tools
 
 import kotlinx.coroutines.*
-import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.pixiv.data.BaseInfo
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.pixiv.model.ArtWorkInfo
 import java.io.BufferedOutputStream
 import java.nio.file.attribute.FileTime
 import java.time.OffsetDateTime
@@ -15,7 +14,7 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-object Zipper : PixivHelperLogger {
+object Zipper {
 
     private val charMap = mapOf(
         "\\" to "＼",
@@ -31,20 +30,20 @@ object Zipper : PixivHelperLogger {
 
     private const val BUFFER_SIZE = 64 * 1024 * 1024
 
-    private fun BaseInfo.toText() =
+    private fun ArtWorkInfo.toText() =
         "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
 
     private fun nowTimeText() =
         OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
-    private fun BaseInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
+    private fun ArtWorkInfo.getFullWidthTitle() = title.replace("""[\\/:*?"<>|]""".toRegex()) {
         charMap.getOrDefault(it.value, "")
     }
 
     private fun zipFile(type: String) =
         PixivHelperSettings.backupFolder.resolve("${type.toUpperCase()}(${nowTimeText()}).zip")
 
-    fun compressAsync(list: List<BaseInfo>, type: String) = PixivHelperPlugin.async(Dispatchers.IO) {
+    fun compressAsync(list: List<ArtWorkInfo>, type: String) = PixivHelperPlugin.async(Dispatchers.IO) {
         zipFile(type).apply {
             createNewFile()
             logger.verbose { "共${list.size}个作品将写入文件${absolutePath}" }

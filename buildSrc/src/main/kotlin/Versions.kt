@@ -17,7 +17,6 @@ object Versions {
     const val junit = "5.6.2"
     const val korlibs = "1.12.0"
     const val autoService = "1.0-rc7"
-    const val okhttp = "4.9.0"
-    const val jsoup = "1.13.1"
-    const val poi = "4.1.2"
+    const val mybatis = "3.5.6"
+    const val sqliteJdbc = "3.32.3.2"
 }

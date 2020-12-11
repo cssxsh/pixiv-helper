@@ -1,15 +1,17 @@
 package xyz.cssxsh.mirai.plugin
 
-import com.soywiz.klock.measureTime
-import com.soywiz.klock.toTimeString
-import com.soywiz.klock.wrapped.WDateTime
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 internal class PanUpdaterTest {
 
+    @ExperimentalTime
     @Test
     fun update(): Unit = runBlocking {
         val filepath = "D:\\Downloads\\Linux\\PixivCache.json"
@@ -24,10 +26,10 @@ internal class PanUpdaterTest {
                     cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
                 )
             ) { data, count, size ->
-                println("${WDateTime.now().format("yyyy-MM-dd'T'HH:mm:ss")} ${count}/${size} $data")
+                println("${OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)} ${count}/${size} $data")
             }.join()
         }.let {
-            println(it.toTimeString())
+            println("${it.inMilliseconds} ms")
         }
     }
 }

@@ -10,6 +10,7 @@ import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.minutesToMillis
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
@@ -31,7 +32,7 @@ object PixivMethodCommand : CompositeCommand(
                 LocalDate.parse(raw, DateTimeFormatter.ISO_DATE)
         }
     }
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi

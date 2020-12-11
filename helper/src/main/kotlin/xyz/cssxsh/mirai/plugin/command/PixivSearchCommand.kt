@@ -12,6 +12,7 @@ import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.data.SearchResult
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
@@ -19,7 +20,7 @@ object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
     description = "PIXIV搜索指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
@@ -56,7 +57,11 @@ object PixivSearchCommand : SimpleCommand(
                     launch {
                         logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
                         runCatching {
-                            getImages(getIllustInfo(result.pid))
+                            getIllustInfo(pid = result.pid, flush = true).apply {
+                                writeToCache()
+                                getImages(pid, getOriginUrl())
+                                saveToSQLite()
+                            }
                         }.onSuccess {
                             resultMap[image.getMd5Hex()] = result
                         }.onFailure {

@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin.command
 import kotlinx.coroutines.Deferred
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.tools.PoiTool
 import java.io.File
@@ -13,7 +12,7 @@ object PixivXlsxCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
     description = "PIXIV压缩指令"
-), PixivHelperLogger {
+) {
 
     private var xlsxJob: Deferred<File>? = null
 

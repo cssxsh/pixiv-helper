@@ -10,11 +10,9 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.minutesToMillis
-import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
@@ -22,7 +20,7 @@ object PixivFollowCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "follow",
     description = "PIXIV关注指令"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
@@ -52,15 +50,9 @@ object PixivFollowCommand : CompositeCommand(
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
-            PixivCacheData.toMap().values.fold(mutableMapOf<Long, Int>()) { map, info ->
-                map.apply {
-                    compute(info.uid) { _, value ->
-                        (value ?: 0) + (if (info.isEro()) 1 else 0)
-                    }
-                }
-            }.mapNotNull { (uid, count) ->
-                if (count > MIN_NUM) uid else null
-            }.toSet().let {
+            useArtWorkInfoMapper { it.userEroCount() }.filter { (_, count) ->
+                count > MIN_NUM
+            }.keys.let {
                 logger.verbose { "共统计了${it.size}名画师" }
                 it - followed
             }.sorted().also {

@@ -11,7 +11,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 import xyz.cssxsh.pixiv.api.app.AppApi
@@ -22,7 +22,7 @@ object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",
     description = "PIXIV标签"
-), PixivHelperLogger {
+) {
 
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
@@ -30,7 +30,7 @@ object PixivTagCommand : SimpleCommand(
 
     private fun PixivHelper.searchTag(
         tag: String,
-        limit: Long = 100
+        limit: Long = 1000
     ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
@@ -38,7 +38,7 @@ object PixivTagCommand : SimpleCommand(
                     searchIllust(word = tag, offset = offset).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
-                    add(PixivCacheData.update(it).values)
+                    add(it)
                     logger.verbose { "加载'${tag}'搜索列表第${offset / 30}页{${it.size}}成功" }
                 }.onFailure {
                     logger.warning({ "加载'${tag}'搜索列表第${offset / 30}页失败" }, it)
@@ -51,7 +51,10 @@ object PixivTagCommand : SimpleCommand(
             list.writeToCache()
         }.runCatching {
             forEach { info ->
-                getImages(info)
+                info.apply {
+                    getImages(pid, getOriginUrl())
+                    saveToSQLite()
+                }
                 // addRelated(pid = info.pid, map { it.pid })
             }
         }
@@ -62,7 +65,7 @@ object PixivTagCommand : SimpleCommand(
     private fun PixivHelper.addRelated(
         pid: Long,
         illusts: List<Long>,
-        limit: Long = 100
+        limit: Long = 1000
     ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
@@ -74,7 +77,7 @@ object PixivTagCommand : SimpleCommand(
                     ).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
-                    add(PixivCacheData.update(it).values)
+                    add(it)
                     logger.verbose { "加载[${pid}]相关列表第${offset / 30}页{${it.size}}成功" }
                 }.onFailure {
                     logger.warning({ "加载[${pid}]相关列表第${offset / 30}页失败" }, it)
@@ -86,7 +89,10 @@ object PixivTagCommand : SimpleCommand(
             logger.verbose { "[${pid}]相关共获取到${list.size}个作品" }
             list.writeToCache()
         }.forEach {
-            getImages(it)
+            it.apply {
+                getImages(pid, getOriginUrl())
+                saveToSQLite()
+            }
         }
     }.also {
         tagJob = it
@@ -99,16 +105,12 @@ object PixivTagCommand : SimpleCommand(
             logger.verbose { "${fromEvent.sender}第${it}次使用tag 检索'${tag.trim()}'" }
         }
         if (tagJob?.isActive != true) {
-            PixivCacheData.filter { (_, illusts) ->
-                tag in illusts.caption || tag in illusts.title || illusts.tags.any { tag in it.name || tag in it.translatedName ?: "" }
-            }.values.let { list ->
-                logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
-                list.filter { info ->
-                    info.isR18().not() && info.pageCount < 4
-                }.random().also { info ->
+            useTagInfoMapper { it.findByName(tag) }.apply {
+                logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
+            }.let { list ->
+                list.random().let { info ->
                     if (list.size < PixivHelperSettings.maxTagCount) addRelated(info.pid, list.map { it.pid })
-                }.let {
-                    buildMessage(it)
+                    buildMessage(useArtWorkInfoMapper { it.findByPid(info.pid)!! })
                 }
             }
         } else {
