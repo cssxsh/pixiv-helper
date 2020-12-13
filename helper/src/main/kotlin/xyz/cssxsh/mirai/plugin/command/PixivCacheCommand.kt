@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.ktor.client.features.*
+import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -17,7 +19,10 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.WorkContentType
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.UserDetail
+import java.io.EOFException
 import java.io.File
+import java.net.ConnectException
+import javax.net.ssl.SSLException
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -32,10 +37,26 @@ object PixivCacheCommand : CompositeCommand(
 
     private var panJob: Job? = null
 
+    private val ignore: (Throwable) -> Boolean = { throwable ->
+        when (throwable) {
+            is SSLException,
+            is EOFException,
+            is ConnectException,
+            is SocketTimeoutException,
+            is ConnectTimeoutException,
+            is HttpRequestTimeoutException,
+            -> {
+                logger.warning { "API错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            else -> false
+        }
+    }
+
     private suspend fun PixivHelper.getRank(modes: List<RankMode> = RankMode.values().toList()) = buildList {
         modes.forEach { mode ->
             runCatching {
-                illustRanking(mode = mode).illusts
+                illustRanking(mode = mode, ignore = ignore).illusts
             }.onSuccess {
                 addAll(PixivCacheData.update(it).values)
                 logger.verbose { "加载排行榜[${mode}]{${it.size}}成功" }
@@ -48,7 +69,7 @@ object PixivCacheCommand : CompositeCommand(
     private suspend fun PixivHelper.getFollowIllusts(limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
-                illustFollow(offset = offset).illusts
+                illustFollow(offset = offset, ignore = ignore).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(PixivCacheData.update(it).values)
@@ -62,7 +83,7 @@ object PixivCacheCommand : CompositeCommand(
     private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
-                userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
+                userRecommended(offset = offset, ignore = ignore).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(PixivCacheData.update(it).values)
@@ -77,7 +98,7 @@ object PixivCacheCommand : CompositeCommand(
         var url = AppApi.USER_BOOKMARKS_ILLUST
         (0 until limit step AppApi.PAGE_SIZE).forEach { _ ->
             runCatching {
-                userBookmarksIllust(uid = uid, url = url)
+                userBookmarksIllust(uid = uid, url = url, ignore = ignore)
             }.onSuccess { (list, nextUrl) ->
                 if (nextUrl == null) return@buildList
                 addAll(PixivCacheData.update(list).values)
@@ -92,7 +113,7 @@ object PixivCacheCommand : CompositeCommand(
     private suspend fun PixivHelper.getUserIllusts(detail: UserDetail) = buildList {
         (0 until detail.profile.totalIllusts step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
-                userIllusts(uid = detail.user.id, offset = offset).illusts
+                userIllusts(uid = detail.user.id, offset = offset, ignore = ignore).illusts
             }.onSuccess {
                 addAll(PixivCacheData.update(it).values)
                 logger.verbose { "加载用户(${detail.user.id})作品第${offset / 30}页{${it.size}}成功" }
@@ -105,7 +126,7 @@ object PixivCacheCommand : CompositeCommand(
     private suspend fun PixivHelper.getUserFollowing(detail: UserDetail) = buildList {
         (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).mapNotNull { offset ->
             runCatching {
-                userFollowing(uid = detail.user.id, offset = offset).userPreviews.map { it.user }
+                userFollowing(uid = detail.user.id, offset = offset, ignore = ignore).userPreviews.map { it.user }
             }.onSuccess {
                 addAll(it)
                 logger.verbose { "加载用户(${detail.user.id})关注用户第${offset / 30}页{${it.size}}成功" }
@@ -141,7 +162,7 @@ object PixivCacheCommand : CompositeCommand(
             reply("别名列表中共${it.size}个画师需要缓存")
         }.count { uid ->
             isActive && runCatching {
-                userDetail(uid).let { detail ->
+                userDetail(uid = uid, ignore = ignore).let { detail ->
                     logger.verbose { "USER(${uid})有${detail.profile.totalIllusts}个作品尝试" }
                     delay(detail.profile.totalIllusts * 10)
                     if (detail.profile.totalIllusts > PixivCacheData.count { it.value.uid == uid }) {
@@ -164,12 +185,12 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followAll() = getHelper().runCatching {
-        getUserFollowing(userDetail(getAuthInfo().user.uid)).sortedBy { it.id }.also {
+        getUserFollowing(userDetail(uid = getAuthInfo().user.uid, ignore = ignore)).sortedBy { it.id }.also {
             logger.verbose { "关注中{${it.first().id}...${it.last().id}}共${it.size}个画师需要缓存" }
             reply("关注列表中共${it.size}个画师需要缓存")
         }.count { user ->
             isActive && runCatching {
-                userDetail(user.id).let { detail ->
+                userDetail(uid = user.id, ignore = ignore).let { detail ->
                     logger.verbose { "USER(${user.id})有${detail.profile.totalIllusts}个作品" }
                     delay(detail.profile.totalIllusts * 10)
                     if (detail.profile.totalIllusts > PixivCacheData.count { it.value.uid == user.id }) {
@@ -197,7 +218,7 @@ object PixivCacheCommand : CompositeCommand(
             reply("关注列表中共${it.size}个画师需要缓存")
         }.count { user ->
             isActive && runCatching {
-                userDetail(user.id).let { detail ->
+                userDetail(uid = user.id, ignore = ignore).let { detail ->
                     logger.verbose { "USER(${user.id})有${detail.profile.totalIllusts}个作品" }
                     delay(detail.profile.totalIllusts * 10)
                     if (detail.profile.totalIllusts > PixivCacheData.count { it.value.uid == user.id }) {
@@ -223,7 +244,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
-        getHelper().addCacheJob("USER(${uid})") { getUserIllusts(userDetail(uid)) }
+        getHelper().addCacheJob("USER(${uid})") { getUserIllusts(userDetail(uid = uid, ignore = ignore)) }
 
     /**
      * 从文件夹中加载信息
