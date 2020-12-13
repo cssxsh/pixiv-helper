@@ -128,7 +128,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
-        getHelper().addCacheJob("RECOMMENDED") { getRecommended().filter { it.isEro() } }
+        getHelper().addCacheJob("RECOMMENDED") { getRecommended() }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =
@@ -140,7 +140,7 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose { "别名中{${it.first()}...${it.last()}}共${it.size}个画师需要缓存" }
             reply("别名列表中共${it.size}个画师需要缓存")
         }.count { uid ->
-            runCatching {
+            isActive && runCatching {
                 userDetail(uid).let { detail ->
                     logger.verbose { "USER(${uid})有${detail.profile.totalIllusts}个作品尝试" }
                     delay(detail.profile.totalIllusts * 10)
@@ -168,7 +168,7 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose { "关注中{${it.first().id}...${it.last().id}}共${it.size}个画师需要缓存" }
             reply("关注列表中共${it.size}个画师需要缓存")
         }.count { user ->
-            runCatching {
+            isActive && runCatching {
                 userDetail(user.id).let { detail ->
                     logger.verbose { "USER(${user.id})有${detail.profile.totalIllusts}个作品" }
                     delay(detail.profile.totalIllusts * 10)
@@ -196,7 +196,7 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose { "关注中{${it.first().id}...${it.last().id}}共${it.size}个画师需要缓存" }
             reply("关注列表中共${it.size}个画师需要缓存")
         }.count { user ->
-            runCatching {
+            isActive && runCatching {
                 userDetail(user.id).let { detail ->
                     logger.verbose { "USER(${user.id})有${detail.profile.totalIllusts}个作品" }
                     delay(detail.profile.totalIllusts * 10)
