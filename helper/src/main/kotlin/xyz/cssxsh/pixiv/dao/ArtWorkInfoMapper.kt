@@ -1,0 +1,18 @@
+package xyz.cssxsh.pixiv.dao
+
+import xyz.cssxsh.pixiv.model.ArtWorkInfo
+
+interface ArtWorkInfoMapper {
+    fun findByPid(pid: Long): ArtWorkInfo?
+    fun countByUid(uid: Long): Long
+    fun insertArtWork(info: ArtWorkInfo)
+    fun keys(interval: LongRange): Set<Long>
+    fun count(): Long
+    fun deleteByPid(pid: Long)
+    fun userArtWork(uid: Long): List<ArtWorkInfo>
+    fun userEroCount(): Map<Long, Long>
+    fun eroRandom(limit: Int): List<ArtWorkInfo>
+    fun eroCount(): Long
+    fun r18Count(): Long
+    fun contains(pid: Long): Boolean
+}

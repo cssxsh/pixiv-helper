@@ -11,8 +11,10 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.minutesToMillis
 import org.apache.ibatis.io.Resources
 import org.apache.ibatis.mapping.Environment
+import org.apache.ibatis.session.SqlSession
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
+import org.sqlite.SQLiteConfig.*
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -33,6 +35,12 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
+    fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
+        sqlSessionFactory.openSession(false).use { session ->
+            session.let(block).also { session.commit() }
+        }
+    }
+
     private val listener = PixivHelperListener(coroutineContext)
 
     @ConsoleExperimentalApi
@@ -44,7 +52,6 @@ object PixivHelperPlugin : KotlinPlugin(
         // Settings
         PixivHelperSettings.reload()
         // Data
-        PixivCacheData.reload()
         PixivConfigData.reload()
         PixivStatisticalData.reload()
         PixivAliasData.reload()
@@ -63,6 +70,16 @@ object PixivHelperPlugin : KotlinPlugin(
 
         sqlSessionFactory.configuration.apply {
             environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
+                config.apply {
+                    enforceForeignKeys(true)
+                    setCacheSize(8196)
+                    setPageSize(8196)
+                    setJournalMode(JournalMode.MEMORY)
+                    enableCaseSensitiveLike(true)
+                    setTempStore(TempStore.MEMORY)
+                    setSynchronous(SynchronousMode.OFF)
+                    setEncoding(Encoding.UTF8)
+                }
                 url = sqliteUrl
             })
         }
@@ -83,6 +100,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivGetCommand.unregister()
 
         listener.stop()
+        useSession { it.commit() }
         runBlocking {
             Zipper.backupAsync().await()
         }

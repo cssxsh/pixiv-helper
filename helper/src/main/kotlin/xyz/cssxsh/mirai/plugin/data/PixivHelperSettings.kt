@@ -25,7 +25,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     /**
      * 压缩文件保存目录
      */
-    @ValueName("zip_path")
+    @ValueName("backup_path")
     val backupPath: String by value("")
 
     /**
@@ -76,7 +76,11 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
      * 图片目录
      */
     fun imagesFolder(pid: Long): File = cacheFolder
-        .resolve("%03d______".format(pid / 1_000_000)).apply { mkdir() }
-        .resolve("%06d___".format(pid / 1_000)).apply { mkdir() }
-        .resolve("$pid").apply { mkdir() }
+        .resolve("%03d______".format(pid / 1_000_000))
+        .resolve("%06d___".format(pid / 1_000))
+        .resolve("$pid")
+
+    val sqliteUrl: String
+        get() =
+            "${JDBC.PREFIX}${File(".").resolve("pixiv.sqlite").absolutePath}"
 }

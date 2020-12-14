@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.cssxsh.pixiv.dao.ArtWorkInfoMapper">
+    <insert id="insertArtWork">
+        REPLACE INTO artworks("pid",
+                             "uid",
+                             "title",
+                             "caption",
+                             "create_date",
+                             "page_count",
+                             "sanity_level",
+                             "type", "width",
+                             "height",
+                             "total_bookmarks",
+                             "total_comments",
+                             "total_view",
+                             "is_r18",
+                             "is_ero")
+        VALUES (${pid},
+                ${uid},
+                #{title},
+                #{caption},
+                #{createDate},
+                ${pageCount},
+                ${sanityLevel},
+                #{type},
+                ${width},
+                ${height},
+                ${totalBookmarks},
+                ${totalComments},
+                ${totalView},
+                ${isR18},
+                ${isEro});
+    </insert>
+    <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+        SELECT *
+        FROM artworks
+        WHERE pid = ${pid};
+    </select>
+    <select id="countByUid" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM artworks
+        WHERE uid = ${uid};
+    </select>
+    <select id="keys" resultType="java.lang.Long">
+        SELECT DISTINCT artworks.pid
+        FROM artworks
+            INNER JOIN files f ON artworks.pid = f.pid
+        WHERE artworks.pid BETWEEN ${first} AND ${last}
+    </select>
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM artworks;
+    </select>
+    <select id="eroCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM artworks
+        WHERE is_ero = TRUE AND is_r18 = FALSE;
+    </select>
+    <select id="r18Count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM artworks
+        WHERE is_ero = TRUE AND is_r18 = TRUE;
+    </select>
+    <select id="deleteByPid">
+        DELETE
+        FROM artworks
+        WHERE pid = ${pid};
+    </select>
+    <select id="userArtWork" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+        SELECT *
+        FROM artworks
+        WHERE uid = ${uid};
+    </select>
+    <select id="userEroCount" >
+        SELECT uid, COUNT(*)
+        FROM artworks
+        GROUP BY uid;
+    </select>
+    <select id="eroRandom" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+        SELECT *
+        FROM artworks
+        WHERE is_ero == TRUE AND is_r18 = FALSE
+        ORDER BY RANDOM()
+        LIMIT ${limit};
+    </select>
+    <select id="contains" resultType="java.lang.Boolean">
+        SELECT COUNT(*)
+        FROM artworks
+            INNER JOIN files f ON artworks.pid = f.pid
+        WHERE artworks.pid = ${pid}
+    </select>
+</mapper>

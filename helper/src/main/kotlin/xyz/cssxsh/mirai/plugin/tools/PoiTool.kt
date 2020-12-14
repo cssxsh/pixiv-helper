@@ -62,7 +62,8 @@ object PoiTool {
                     val dateStyle = createCellStyle().apply {
                         dataFormat = workbook.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss")
                     }
-                    PixivCacheData.toMap().values.sortedByDescending {
+                    // TODO
+                    useArtWorkInfoMapper { it.eroRandom(100) }.sortedByDescending {
                         it.totalBookmarks
                     }.forEachIndexed { row, info ->
                         createRow(row + 1).apply {
@@ -74,39 +75,17 @@ object PoiTool {
                             }
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("SANITY_LEVEL")).setCellValue(info.sanityLevel.toDouble())
-                            createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TYPE")).setCellValue(info.type.name)
-                            createCell(PIXIV_CACHE_DATA_HEADER.indexOf("IS_R18")).setCellValue(info.isR18())
+                            createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TYPE")).setCellValue(info.type)
+                            createCell(PIXIV_CACHE_DATA_HEADER.indexOf("IS_R18")).setCellValue(info.isR18)
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("WIDTH")).setCellValue(info.width.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("HEIGHT")).setCellValue(info.height.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_ID")).setCellValue(info.uid.toDouble())
-                            createCell(PIXIV_CACHE_DATA_HEADER.indexOf("USER_NAME")).setCellValue(info.uname)
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TOTAL_BOOKMARKS")).setCellValue(info.totalBookmarks.toDouble())
                         }
                     }
                     writeHeader(PIXIV_CACHE_DATA_HEADER)
                 }
                 logger.verbose { "PIXIV_CACHE_DATA 已写入到 XLSX" }
-                createSheet("PIXIV_TAG_DATA").apply {
-                    buildMap<String, Int> {
-                        PixivCacheData.toMap().values.flatMap {
-                            it.tags
-                        }.forEach { tag ->
-                            tag.name.let {
-                                put(it, getOrDefault(it, 0) + 1)
-                            }
-                            tag.translatedName?.let {
-                                put(it, getOrDefault(it, 0) + 1)
-                            }
-                        }
-                    }.entries.sortedByDescending { it.value }.forEachIndexed { row, (tag, total) ->
-                        createRow(row + 1).apply {
-                            createCell(PIXIV_TAG_DATA_HEADER.indexOf("TAG")).setCellValue(tag)
-                            createCell(PIXIV_TAG_DATA_HEADER.indexOf("TOTAL")).setCellValue(total.toDouble())
-                        }
-                    }
-                    writeHeader(PIXIV_TAG_DATA_HEADER)
-                }
-                logger.verbose { "PIXIV_TAG_DATA 已写入到 XLSX" }
                 createSheet("PIXIV_STATISTICAL_DATA").apply {
                     PixivStatisticalData.getMap().entries.forEachIndexed { row, (qq, data) ->
                         createRow(row + 1).apply {

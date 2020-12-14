@@ -7,9 +7,9 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.message.MessageEvent
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
 import xyz.cssxsh.mirai.plugin.getHelper
+import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 
 @Suppress("unused")
 object PixivInfoCommand : CompositeCommand(
@@ -31,7 +31,7 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("Uid: ${getAuthInfo().user.uid}")
             appendLine("Account: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
-            appendLine("ExpiresTime: ${getExpiresTimeText()}")
+            appendLine("ExpiresTime: $expiresTime")
             appendLine("简略信息: $simpleInfo")
         }
     }.onSuccess {
@@ -64,9 +64,11 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
         buildString {
-            appendLine("缓存数: ${PixivCacheData.size}")
-            appendLine("全年龄色图数: ${PixivCacheData.eros().size}")
-            appendLine("R18色图数: ${PixivCacheData.r18s().size}")
+            useArtWorkInfoMapper {
+                appendLine("缓存数: ${it.count()}")
+                appendLine("全年龄色图数: ${it.eroCount()}")
+                appendLine("R18色图数: ${it.r18Count()}")
+            }
         }
     }.onSuccess {
         quoteReply(it)

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.cssxsh.pixiv.dao.TagInfoMapper">
+    <insert id="insertTags" >
+        REPLACE INTO
+            tags("pid", "name", "translated_name")
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (${item.pid}, #{item.name}, #{item.translatedName})
+        </foreach>;
+    </insert>
+    <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.TagInfo">
+        SELECT *
+        FROM tags
+        WHERE pid = ${pid};
+    </select>
+    <select id="findByName" resultType="java.lang.Long" >
+        SELECT DISTINCT pid
+        FROM tags
+        WHERE name LIKE '%'||#{text}||'%' OR translated_name LIKE '%'||#{text}||'%';
+    </select>
+</mapper>

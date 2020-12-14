@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.cssxsh.pixiv.dao.FileInfoMapper">
+    <insert id="insertFiles">
+        REPLACE INTO files("pid", "index", "md5", "url", "size")
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (${item.pid}, ${item.index}, #{item.md5}, #{item.url}, #{item.size})
+        </foreach>;
+    </insert>
+    <select id="fileInfos" resultType="xyz.cssxsh.pixiv.model.FileInfo">
+        SELECT *
+        FROM files
+        WHERE pid = ${pid};
+    </select>
+    <select id="findByMd5" resultType="xyz.cssxsh.pixiv.model.FileInfo" >
+        SELECT *
+        FROM files
+        WHERE md5 = LOWER(#{md5})
+    </select>
+    <select id="files" resultType="xyz.cssxsh.pixiv.model.FileInfo" >
+        SELECT *
+        FROM files
+        WHERE pid BETWEEN ${first} AND ${last}
+    </select>
+</mapper>

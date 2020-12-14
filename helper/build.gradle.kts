@@ -38,6 +38,8 @@ dependencies {
     implementation(ktor("client-okhttp", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
     implementation(poi("poi-ooxml", Versions.poi))
+    implementation(mybatis("mybatis", Versions.mybatis))
+    implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
     // test
     testImplementation(mirai("core", Versions.core))
@@ -51,9 +53,9 @@ dependencies {
 kotlin {
     sourceSets {
         all {
+            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
-            languageSettings.useExperimentalAnnotation("com.soywiz.klock.annotations.KlockExperimental")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
         }
     }
@@ -69,6 +71,7 @@ tasks {
         dependencies {
             exclude { "org.jetbrains" in it.moduleGroup }
             exclude { "net.mamoe" in it.moduleGroup }
+            exclude { "org.slf4j" in it.moduleGroup }
         }
         archiveBaseName.set(rootProject.name)
     }

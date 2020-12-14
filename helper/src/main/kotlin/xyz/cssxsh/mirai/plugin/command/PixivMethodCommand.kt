@@ -49,7 +49,7 @@ object PixivMethodCommand : CompositeCommand(
         password: String
     ) = getHelper().runCatching {
         login(username, password).let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
         }
     }.onSuccess {
         quoteReply(it)
@@ -67,7 +67,7 @@ object PixivMethodCommand : CompositeCommand(
         token: String
     ) = getHelper().runCatching {
         refresh(token).let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
         }
     }.onSuccess {
         quoteReply(it)
@@ -83,7 +83,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
         autoAuth().let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${getExpiresTimeText()}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
         }
     }.onSuccess {
         quoteReply(it)
@@ -105,7 +105,7 @@ object PixivMethodCommand : CompositeCommand(
         date: LocalDate,
         index: Long
     ) = getHelper().runCatching {
-        buildMessage(illustRanking(date = date, mode = mode, offset = index).illusts.first())
+        buildMessage(illustRanking(date = date, mode = mode, offset = index).illusts.apply { writeToCache() }.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -126,7 +126,7 @@ object PixivMethodCommand : CompositeCommand(
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        buildMessage(illustRanking(mode = rankMode, offset = index).illusts.first())
+        buildMessage(illustRanking(mode = rankMode, offset = index).illusts.apply { writeToCache() }.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -138,8 +138,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.random() = getHelper().runCatching {
-        val rankMode: RankMode = RankMode.values().random()
-        buildMessage(illustRanking(mode = rankMode).illusts.random())
+        buildMessage(illustRanking(mode = RankMode.values().random()).illusts.apply { writeToCache() }.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -169,7 +168,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(
         uid: Long
     ) = getHelper().runCatching {
-        buildMessage(userIllusts(uid).illusts.first())
+        buildMessage(userIllusts(uid).illusts.apply { writeToCache() }.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -186,7 +185,7 @@ object PixivMethodCommand : CompositeCommand(
         index: Int
     ) = getHelper().runCatching {
         require(index in 1..30) { "index 的范围在1~30" }
-        buildMessage(searchIllust(word).illusts[index - 1])
+        buildMessage(searchIllust(word).illusts.apply { writeToCache() }[index - 1])
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -198,7 +197,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().runCatching {
-        buildMessage(illustFollow().illusts.random())
+        buildMessage(illustFollow().illusts.apply { writeToCache() }.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -224,7 +223,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessage(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.random())
+        buildMessage(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.apply { writeToCache() }.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

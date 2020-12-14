@@ -108,9 +108,9 @@ object PixivTagCommand : SimpleCommand(
             useTagInfoMapper { it.findByName(tag) }.apply {
                 logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
             }.let { list ->
-                list.random().let { info ->
-                    if (list.size < PixivHelperSettings.maxTagCount) addRelated(info.pid, list.map { it.pid })
-                    buildMessage(useArtWorkInfoMapper { it.findByPid(info.pid)!! })
+                list.random().let { pid ->
+                    if (list.size < PixivHelperSettings.minInterval) addRelated(pid, list.map { pid })
+                    buildMessage(illust = getIllustInfo(pid), save = false)
                 }
             }
         } else {

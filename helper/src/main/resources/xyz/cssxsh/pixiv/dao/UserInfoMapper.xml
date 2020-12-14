@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.cssxsh.pixiv.dao.UserInfoMapper">
+    <insert id="insertUser">
+        REPLACE INTO users("uid", "name", "account")
+        VALUES (${uid}, #{name}, #{account});
+    </insert>
+    <select id="findByUid" resultType="xyz.cssxsh.pixiv.model.UserInfo">
+        SELECT *
+        FROM users
+        WHERE uid = ${uid};
+    </select>
+    <insert id="insertUsers" >
+        REPLACE INTO users("uid", "name", "account")
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (${item.uid}, #{item.name}, #{item.account})
+        </foreach>;
+    </insert>
+</mapper>

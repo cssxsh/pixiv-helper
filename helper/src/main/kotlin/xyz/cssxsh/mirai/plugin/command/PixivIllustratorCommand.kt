@@ -10,8 +10,8 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.buildMessage
 import xyz.cssxsh.mirai.plugin.data.PixivAliasData
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.getHelper
+import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -23,14 +23,10 @@ object PixivIllustratorCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun getArtWorkByUid(uid: Long) = PixivCacheData.filter { (_, illust) ->
-        illust.uid == uid && illust.pageCount <= 3
-    }.values
-
     @SubCommand("uid", "ID")
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
-        getArtWorkByUid(uid).also { list ->
+        useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random().let { info ->
             buildMessage(info)
@@ -45,7 +41,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
         requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { uid ->
-            getArtWorkByUid(uid).also { list ->
+            useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
                 buildMessage(info)

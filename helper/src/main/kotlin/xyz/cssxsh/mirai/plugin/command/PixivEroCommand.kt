@@ -31,7 +31,7 @@ object PixivEroCommand : SimpleCommand(
         if ("更好" !in message.contentToString()) {
             minBookmarks = 0
         }
-        PixivCacheData.eros { info ->
+        useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval + 1) }.filter { info ->
             info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
         }.apply {
             PixivStatisticalData.eroAdd(user = fromEvent.sender).let {

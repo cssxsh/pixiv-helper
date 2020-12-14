@@ -5,10 +5,9 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import xyz.cssxsh.mirai.plugin.PixivHelperLogger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.PixivCacheData
 import xyz.cssxsh.mirai.plugin.tools.Zipper
+import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 import java.io.File
 
 @Suppress("unused")
@@ -29,10 +28,8 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
-        PixivCacheData.filter { (_, illusts) ->
-            illusts.uid == uid
-        }.values.let {
-            compressJob = Zipper.compressAsync(it.toList(), "USER[${uid}]")
+        useArtWorkInfoMapper { it.userArtWork(uid) }.let {
+            compressJob = Zipper.compressAsync(it, "USER[${uid}]")
         }
     }
 
