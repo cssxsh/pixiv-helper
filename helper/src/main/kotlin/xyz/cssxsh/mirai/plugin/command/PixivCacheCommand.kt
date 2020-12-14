@@ -10,6 +10,7 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.*
+import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -23,6 +24,7 @@ import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
 import javax.net.ssl.SSLException
+import javax.net.ssl.SSLProtocolException
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -40,11 +42,12 @@ object PixivCacheCommand : CompositeCommand(
     private val ignore: (Throwable) -> Boolean = { throwable ->
         when (throwable) {
             is SSLException,
+            is SSLProtocolException,
             is EOFException,
             is ConnectException,
             is SocketTimeoutException,
-            is ConnectTimeoutException,
             is HttpRequestTimeoutException,
+            is StreamResetException,
             -> {
                 logger.warning { "API错误, 已忽略: ${throwable.message}" }
                 true
