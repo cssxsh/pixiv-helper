@@ -26,7 +26,6 @@ import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
 import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
 
 /**
  * 获取对应subject的助手
@@ -156,34 +155,17 @@ suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-suspend fun PixivHelper.getImages(
-    info: BaseInfo
-): List<File> = getImages(
-    pid = info.pid,
-    urls = info.originUrl
-)
-
-suspend fun PixivHelper.getImages(
-    illust: IllustInfo,
-    save: Boolean = true
-): List<File> = getImages(pid = illust.pid, urls = illust.getOriginUrl()).apply {
-    if (save) {
-        illust.save()
-    }
-}
-
 suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
     urls = urls,
     ignore = { url, throwable ->
         when (throwable) {
-            is SSLHandshakeException,
             is SSLException,
             is EOFException,
             is ConnectException,
-            is StreamResetException,
             is SocketTimeoutException,
-            is ConnectTimeoutException,
-            is HttpRequestTimeoutException -> {
+            is HttpRequestTimeoutException,
+            is StreamResetException,
+            -> {
                 logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
                 true
             }
@@ -201,19 +183,19 @@ suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<R
 
 suspend fun PixivHelper.getImages(
     pid: Long,
-    urls: List<String>
-): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
-    if (dir.resolve(urls.first().getFilename()).canRead()) {
-        urls.map { url ->
-            dir.resolve(url.getFilename())
-        }
-    } else {
-        downloadImageUrls(urls = urls, dir = dir).map {
-            it.getOrThrow()
+    urls: List<String>,
+): List<File> = imagesFolder(pid).let { dir ->
+    urls.filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
+        dir.mkdirs()
+        downloadImageUrls(urls = downloads, dir = dir).all { result ->
+            result.onFailure {
+                logger.warning({ "作品(${pid})下载错误" }, it)
+            }.isSuccess
+        }.let {
+            check(it) { "作品(${pid})下载错误" }
         }
     }
+    urls.map { url ->
+        dir.resolve(url.getFilename())
+    }
 }
-
-
-
-
