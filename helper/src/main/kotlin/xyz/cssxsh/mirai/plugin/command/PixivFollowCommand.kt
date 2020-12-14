@@ -13,6 +13,7 @@ import net.mamoe.mirai.utils.minutesToMillis
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
 import xyz.cssxsh.pixiv.api.app.*
 
 @Suppress("unused")
@@ -25,8 +26,6 @@ object PixivFollowCommand : CompositeCommand(
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
-
-    private const val MIN_NUM = 8
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
         (0L until maxNum step AppApi.PAGE_SIZE).forEach { offset ->
@@ -51,7 +50,7 @@ object PixivFollowCommand : CompositeCommand(
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
             useArtWorkInfoMapper { it.userEroCount() }.filter { (_, count) ->
-                count > MIN_NUM
+                count > minInterval
             }.keys.let {
                 logger.verbose { "共统计了${it.size}名画师" }
                 it - followed

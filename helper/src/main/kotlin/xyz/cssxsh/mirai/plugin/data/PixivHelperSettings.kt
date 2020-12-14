@@ -17,12 +17,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     val minInterval: Int by value(16)
 
     /**
-     * tag总计最大
-     */
-    @ValueName("max_tag_count")
-    val maxTagCount: Int by value(16)
-
-    /**
      * 图片缓存位置
      */
     @ValueName("cache_path")
@@ -61,20 +55,22 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     /**
      * 缓存目录
      */
-    val cacheFolder: File get() = if (cachePath.isEmpty()) {
-        dataFolder.resolve( "cache").apply { mkdir() }
-    } else {
-        File(cachePath).apply { mkdir() }
-    }
+    val cacheFolder: File
+        get() = if (cachePath.isEmpty()) {
+            dataFolder.resolve("cache")
+        } else {
+            File(cachePath)
+        }.apply { mkdir() }
 
     /**
      * 压缩文件保存目录
      */
-    val backupFolder: File get() = if (backupPath.isEmpty()) {
-        dataFolder.resolve("backup").apply { mkdir() }
-    } else {
-        File(backupPath).apply { mkdir() }
-    }
+    val backupFolder: File
+        get() = if (backupPath.isEmpty()) {
+            dataFolder.resolve("backup")
+        } else {
+            File(backupPath)
+        }.apply { mkdir() }
 
     /**
      * 图片目录
