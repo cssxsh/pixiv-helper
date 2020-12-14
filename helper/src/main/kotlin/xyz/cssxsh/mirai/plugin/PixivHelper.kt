@@ -89,16 +89,20 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    fun addCacheJob(name: String, write: Boolean = true,  block: suspend PixivHelper.() -> List<IllustInfo>): Boolean =
+    fun addCacheJob(name: String, write: Boolean = true, block: suspend PixivHelper.() -> List<IllustInfo>): Boolean =
         cacheList.add(name to block).also {
             logger.verbose { "任务<$name>已添加" }
             if (cacheJob?.takeIf { it.isActive } == null) {
                 cacheJob = launch(Dispatchers.IO) {
                     while (isActive && cacheList.isNotEmpty()) {
                         cacheList.removeFirst().let { (name, getIllusts) ->
-                            getIllusts.invoke(this@PixivHelper).let {
-                                if (write) it.writeToCache()
-                                loadCache(name, it)
+                            getIllusts.invoke(this@PixivHelper).sortedBy { it.pid }.let { list ->
+                                if (write) list.writeToCache()
+                                useArtWorkInfoMapper { mapper ->
+                                    mapper.keys(list.first().pid..list.last().pid)
+                                }.let { keys ->
+                                    loadCache(name, list.filter { it.pid !in keys })
+                                }
                             }
                         }
                     }
