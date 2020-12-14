@@ -27,7 +27,7 @@ object PixivBackupCommand : CompositeCommand(
     private var backupJob: Deferred<List<File>>? = null
 
     @SubCommand
-    fun ConsoleCommandSender.zip(uid: Long) {
+    fun ConsoleCommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
         PixivCacheData.filter { (_, illusts) ->
             illusts.uid == uid
