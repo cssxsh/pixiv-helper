@@ -30,12 +30,12 @@ object PixivTagCommand : SimpleCommand(
 
     private fun PixivHelper.searchTag(
         tag: String,
-        limit: Long = 1000
+        limit: Long = 1000,
     ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
-                    searchIllust(word = tag, offset = offset).illusts
+                    searchIllust(word = tag, offset = offset, ignore = ignore).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(it)
@@ -48,14 +48,13 @@ object PixivTagCommand : SimpleCommand(
             it.isEro()
         }.also { list ->
             logger.verbose { "'${tag}'共搜索到${list.size}个作品" }
-            list.writeToCache()
         }.runCatching {
+            writeToCache()
             forEach { info ->
                 info.apply {
                     getImages(pid, getOriginUrl())
                     saveToSQLite()
                 }
-                // addRelated(pid = info.pid, map { it.pid })
             }
         }
     }.also {
@@ -65,16 +64,12 @@ object PixivTagCommand : SimpleCommand(
     private fun PixivHelper.addRelated(
         pid: Long,
         illusts: List<Long>,
-        limit: Long = 1000
+        limit: Long = 1000,
     ) = launch(Dispatchers.IO) {
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
-                    illustRelated(
-                        pid = pid,
-                        seedIllustIds = illusts,
-                        offset = offset
-                    ).illusts
+                    illustRelated(pid = pid, seedIllustIds = illusts, offset = offset, ignore = ignore).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(it)
@@ -87,11 +82,13 @@ object PixivTagCommand : SimpleCommand(
             it.isEro()
         }.also { list ->
             logger.verbose { "[${pid}]相关共获取到${list.size}个作品" }
-            list.writeToCache()
-        }.forEach {
-            it.apply {
-                getImages(pid, getOriginUrl())
-                saveToSQLite()
+        }.runCatching {
+            writeToCache()
+            forEach { info ->
+                info.apply {
+                    getImages(pid, getOriginUrl())
+                    saveToSQLite()
+                }
             }
         }
     }.also {
@@ -110,7 +107,7 @@ object PixivTagCommand : SimpleCommand(
             }.let { list ->
                 list.random().let { pid ->
                     if (list.size < PixivHelperSettings.minInterval) addRelated(pid, list.map { pid })
-                    buildMessage(illust = getIllustInfo(pid), save = false)
+                    buildMessage(illust = getIllustInfo(pid = pid), save = false)
                 }
             }
         } else {

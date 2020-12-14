@@ -24,6 +24,7 @@ import java.io.File
 import java.net.ConnectException
 import java.security.MessageDigest
 import javax.net.ssl.SSLException
+import javax.net.ssl.SSLProtocolException
 
 /**
  * 获取对应subject的助手
@@ -185,7 +186,7 @@ fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
 }
 
 fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
-    logger.verbose { "作品(${first().pid}..${last().pid})信息即将写入已设置" }
+    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将写入已设置" }
     session.getMapper(UserInfoMapper::class.java).insertUsers(buildMap<Long, UserInfo> {
         this@saveToSQLite.forEach { info ->
             putIfAbsent(info.user.id, UserInfo(
@@ -195,7 +196,7 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
             ))
         }
     }.values.toList())
-    logger.verbose { "作品{${first().pid}..${last().pid}}用户信息写入已设置" }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息写入已设置" }
     forEach { info ->
         session.getMapper(ArtWorkInfoMapper::class.java).insertArtWork(ArtWorkInfo(
             pid = info.pid,
@@ -215,7 +216,7 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
             isEro = info.isEro()
         ))
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}基础信息已写入设置" }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已写入设置" }
     forEach { info ->
         session.getMapper(FileInfoMapper::class.java).insertFiles(info.getOriginUrl().mapIndexed { index, url ->
             FileInfo(
@@ -227,7 +228,7 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
             )
         })
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}文件信息已写入设置" }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]文件信息已写入设置" }
     forEach { info ->
         if (info.tags.isNotEmpty()) {
             session.getMapper(TagInfoMapper::class.java).insertTags(info.tags.map {
@@ -239,8 +240,8 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
             })
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}标签信息已写入设置" }
-    logger.info { "作品{${first().pid}..${last().pid}}信息已写入设置" }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已写入设置" }
+    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已写入设置" }
 }
 
 fun ByteArray.getMd5(): String =
@@ -271,10 +272,33 @@ fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
 }
 
+val ignore: (Throwable) -> Boolean = { throwable ->
+    when(throwable) {
+        is SSLException,
+        is SSLProtocolException,
+        is EOFException,
+        is ConnectException,
+        is SocketTimeoutException,
+        is HttpRequestTimeoutException,
+        is StreamResetException,
+        -> {
+            logger.warning { "API错误, 已忽略: ${throwable.message}" }
+            true
+        }
+        else -> when(throwable.message) {
+            "Required SETTINGS preface not received" -> {
+                logger.warning { "API错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            else -> false
+        }
+    }
+}
+
 suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
-    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust },
+    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = ignore).illust },
 ): IllustInfo = imagesFolder(pid).let { dir ->
     dir.resolve("${pid}.json").let { file ->
         if (!flush && file.exists()) {
@@ -301,7 +325,13 @@ suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<R
                 logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
                 true
             }
-            else -> false
+            else -> when(throwable.message) {
+                "Required SETTINGS preface not received" -> {
+                    logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
+                    true
+                }
+                else -> false
+            }
         }
     },
     block = { _, url, result ->

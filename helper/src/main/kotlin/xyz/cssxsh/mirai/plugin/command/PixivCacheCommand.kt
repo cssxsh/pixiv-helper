@@ -10,7 +10,6 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.*
-import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -20,11 +19,7 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.data.app.UserPreview
-import java.io.EOFException
 import java.io.File
-import java.net.ConnectException
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLProtocolException
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
@@ -38,23 +33,6 @@ object PixivCacheCommand : CompositeCommand(
     override val prefixOptional: Boolean = true
 
     private var panJob: Job? = null
-
-    private val ignore: (Throwable) -> Boolean = { throwable ->
-        when (throwable) {
-            is SSLException,
-            is SSLProtocolException,
-            is EOFException,
-            is ConnectException,
-            is SocketTimeoutException,
-            is HttpRequestTimeoutException,
-            is StreamResetException,
-            -> {
-                logger.warning { "API错误, 已忽略: ${throwable.message}" }
-                true
-            }
-            else -> false
-        }
-    }
 
     private fun UserPreview.isLoaded(): Boolean = useArtWorkInfoMapper { mapper ->
         illusts.all { mapper.contains(it.pid) }
