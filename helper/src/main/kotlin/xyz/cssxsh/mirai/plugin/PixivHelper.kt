@@ -10,6 +10,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthInfoDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
@@ -60,14 +61,16 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         list.sortedBy { it.pid }.takeIf { it.isNotEmpty() }?.apply {
             logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
             runCatching {
-                reply("任务<$name>有{${first().pid}...${last().pid}}共${size}个新作品等待缓存")
+                (list.map { it.pid } - useArtWorkInfoMapper { it.keys(list.first().pid..list.last().pid) }).let { keys ->
+                    reply("任务<$name>有{${keys.first()}...${keys.last()}}共${size}个新作品等待缓存")
+                }
             }
             runCatching {
                 size to filter { illust ->
                     isActive && illust.runCatching {
                         getImages(pid, getOriginUrl())
                     }.onSuccess {
-                        delay(PixivHelperSettings.delayTime)
+                        delay(delayTime)
                     }.onFailure {
                         logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
                         runCatching {
@@ -98,11 +101,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                         cacheList.removeFirst().let { (name, getIllusts) ->
                             getIllusts.invoke(this@PixivHelper).sortedBy { it.pid }.let { list ->
                                 if (write) list.writeToCache()
-                                useArtWorkInfoMapper { mapper ->
-                                    mapper.keys(list.first().pid..list.last().pid)
-                                }.let { keys ->
-                                    loadCache(name, list.filter { it.pid !in keys })
-                                }
+                                loadCache(name, list)
                             }
                         }
                     }
