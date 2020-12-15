@@ -30,7 +30,7 @@ object PixivFollowCommand : CompositeCommand(
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
         (0L until maxNum step AppApi.PAGE_SIZE).forEach { offset ->
             runCatching {
-                userFollowing(uid = uid, offset = offset, ignore = ignore).userPreviews.map { it.user.id }
+                userFollowing(uid = uid, offset = offset, ignore = apiIgnore).userPreviews.map { it.user.id }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(it)
@@ -63,7 +63,7 @@ object PixivFollowCommand : CompositeCommand(
                 var num = 0
                 size to count { uid ->
                     isActive && runCatching {
-                        userFollowAdd(uid = uid, ignore = ignore)
+                        userFollowAdd(uid = uid, ignore = apiIgnore)
                     }.onSuccess {
                         logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
                         if (num >= 8) {

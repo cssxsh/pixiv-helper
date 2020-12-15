@@ -24,7 +24,6 @@ import java.io.File
 import java.net.ConnectException
 import java.security.MessageDigest
 import javax.net.ssl.SSLException
-import javax.net.ssl.SSLProtocolException
 
 /**
  * 获取对应subject的助手
@@ -73,7 +72,7 @@ fun ArtWorkInfo.getMessage(): Message = buildMessageChain {
 
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
-    save: Boolean = true
+    save: Boolean = true,
 ): List<Message> = buildList {
     if (simpleInfo) {
         add(buildMessageChain {
@@ -272,10 +271,9 @@ fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
 }
 
-val ignore: (Throwable) -> Boolean = { throwable ->
-    when(throwable) {
+val apiIgnore: (Throwable) -> Boolean = { throwable ->
+    when (throwable) {
         is SSLException,
-        is SSLProtocolException,
         is EOFException,
         is ConnectException,
         is SocketTimeoutException,
@@ -285,7 +283,7 @@ val ignore: (Throwable) -> Boolean = { throwable ->
             logger.warning { "API错误, 已忽略: ${throwable.message}" }
             true
         }
-        else -> when(throwable.message) {
+        else -> when (throwable.message) {
             "Required SETTINGS preface not received" -> {
                 logger.warning { "API错误, 已忽略: ${throwable.message}" }
                 true

@@ -11,6 +11,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
@@ -35,7 +36,7 @@ object PixivTagCommand : SimpleCommand(
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
-                    searchIllust(word = tag, offset = offset, ignore = ignore).illusts
+                    searchIllust(word = tag, offset = offset, ignore = apiIgnore).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(it)
@@ -69,7 +70,7 @@ object PixivTagCommand : SimpleCommand(
         buildList {
             (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
                 runCatching {
-                    illustRelated(pid = pid, seedIllustIds = illusts, offset = offset, ignore = ignore).illusts
+                    illustRelated(pid = pid, seedIllustIds = illusts, offset = offset, ignore = apiIgnore).illusts
                 }.onSuccess {
                     if (it.isEmpty()) return@buildList
                     add(it)
