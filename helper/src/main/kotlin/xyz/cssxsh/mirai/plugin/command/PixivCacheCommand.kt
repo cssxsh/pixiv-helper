@@ -11,6 +11,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.downloadImageUrls
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update

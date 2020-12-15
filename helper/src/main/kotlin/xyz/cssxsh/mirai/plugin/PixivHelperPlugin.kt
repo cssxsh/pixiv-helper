@@ -68,6 +68,10 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivInfoCommand.register()
         PixivGetCommand.register()
 
+        PixivHelperDownloader.apply {
+            // TODO
+            proxyUrl = PixivConfigData.default.proxy
+        }
         sqlSessionFactory.configuration.apply {
             environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
                 config.apply {

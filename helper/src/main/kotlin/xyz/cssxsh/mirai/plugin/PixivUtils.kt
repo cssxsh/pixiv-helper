@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.uploadAsImage
 import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
+import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -18,7 +19,6 @@ import xyz.cssxsh.pixiv.api.app.illustDetail
 import xyz.cssxsh.pixiv.dao.*
 import xyz.cssxsh.pixiv.data.app.IllustInfo
 import xyz.cssxsh.pixiv.model.*
-import xyz.cssxsh.pixiv.tool.downloadImageUrls
 import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
@@ -296,7 +296,7 @@ val apiIgnore: (Throwable) -> Boolean = { throwable ->
 suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
-    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = ignore).illust },
+    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = apiIgnore).illust },
 ): IllustInfo = imagesFolder(pid).let { dir ->
     dir.resolve("${pid}.json").let { file ->
         if (!flush && file.exists()) {
@@ -306,56 +306,5 @@ suspend fun PixivHelper.getIllustInfo(
                 writeTo(file)
             }
         }
-    }
-}
-
-suspend fun PixivHelper.downloadImageUrls(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
-    urls = urls,
-    ignore = { url, throwable ->
-        when (throwable) {
-            is SSLException,
-            is EOFException,
-            is ConnectException,
-            is SocketTimeoutException,
-            is HttpRequestTimeoutException,
-            is StreamResetException,
-            -> {
-                logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
-                true
-            }
-            else -> when(throwable.message) {
-                "Required SETTINGS preface not received" -> {
-                    logger.warning { "[${url}]下载错误, 已忽略: ${throwable.message}" }
-                    true
-                }
-                else -> false
-            }
-        }
-    },
-    block = { _, url, result ->
-        runCatching {
-            dir.resolve(url.getFilename()).apply {
-                writeBytes(result.getOrThrow())
-            }
-        }
-    }
-)
-
-suspend fun PixivHelper.getImages(
-    pid: Long,
-    urls: List<String>,
-): List<File> = imagesFolder(pid).let { dir ->
-    urls.filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
-        dir.mkdirs()
-        downloadImageUrls(urls = downloads, dir = dir).all { result ->
-            result.onFailure {
-                logger.warning({ "作品(${pid})下载错误" }, it)
-            }.isSuccess
-        }.let {
-            check(it) { "作品(${pid})下载错误" }
-        }
-    }
-    urls.map { url ->
-        dir.resolve(url.getFilename())
     }
 }
