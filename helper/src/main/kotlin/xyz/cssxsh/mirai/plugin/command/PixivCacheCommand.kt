@@ -271,7 +271,7 @@ object PixivCacheCommand : CompositeCommand(
                     it..(it + 999_999)
                 }
                 list - useArtWorkInfoMapper { it.keys(interval) }
-            }.toSet().let { list ->
+            }.let { list ->
                 if (list.isNotEmpty()) {
                     addCacheJob("LOAD(${first.name})", false) {
                         list.map {

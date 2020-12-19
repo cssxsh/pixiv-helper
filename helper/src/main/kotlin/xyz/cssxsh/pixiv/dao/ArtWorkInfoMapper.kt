@@ -5,7 +5,7 @@ import xyz.cssxsh.pixiv.model.ArtWorkInfo
 interface ArtWorkInfoMapper {
     fun findByPid(pid: Long): ArtWorkInfo?
     fun countByUid(uid: Long): Long
-    fun insertArtWork(info: ArtWorkInfo)
+    fun replaceArtWork(info: ArtWorkInfo)
     fun keys(interval: LongRange): Set<Long>
     fun count(): Long
     fun deleteByPid(pid: Long)

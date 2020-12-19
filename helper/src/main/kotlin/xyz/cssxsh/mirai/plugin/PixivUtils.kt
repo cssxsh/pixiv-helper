@@ -140,107 +140,121 @@ fun IllustInfo.isR18(): Boolean =
 fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
-fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
-    session.getMapper(UserInfoMapper::class.java).insertUser(UserInfo(
-        uid = user.id,
-        name = user.name,
-        account = user.account
-    ))
-    session.getMapper(ArtWorkInfoMapper::class.java).insertArtWork(ArtWorkInfo(
+fun IllustInfo.getUserInfo() = UserInfo(
+    uid = user.id,
+    name = user.name,
+    account = user.account
+)
+
+fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
+    pid = pid,
+    uid = user.id,
+    title = title,
+    caption = caption,
+    createDate = createDate,
+    pageCount = pageCount,
+    sanityLevel = sanityLevel,
+    type = type.value(),
+    width = width,
+    height = height,
+    totalBookmarks = totalBookmarks ?: 0,
+    totalComments = totalComments ?: 0,
+    totalView = totalView ?: 0,
+    isR18 = isR18(),
+    isEro = isEro()
+)
+
+fun IllustInfo.getFileInfos() = getOriginUrl().mapIndexed { index, url ->
+    FileInfo(
         pid = pid,
-        uid = user.id,
-        title = title,
-        caption = caption,
-        createDate = createDate,
-        pageCount = pageCount,
-        sanityLevel = sanityLevel,
-        type = type.value(),
-        width = width,
-        height = height,
-        totalBookmarks = totalBookmarks ?: 0,
-        totalComments = totalComments ?: 0,
-        totalView = totalView ?: 0,
-        isR18 = isR18(),
-        isEro = isEro()
-    ))
-    session.getMapper(FileInfoMapper::class.java).insertFiles(getOriginUrl().mapIndexed { index, url ->
-        FileInfo(
-            pid = pid,
-            index = index,
-            md5 = imagesFolder(pid).resolve(url.getFilename()).readBytes().getMd5(),
-            url = url,
-            size = imagesFolder(pid).resolve(url.getFilename()).length()
-        )
-    })
+        index = index,
+        md5 = imagesFolder(pid).resolve(url.getFilename()).readBytes().getMd5(),
+        url = url,
+        size = imagesFolder(pid).resolve(url.getFilename()).length()
+    )
+}
+
+fun IllustInfo.getTagInfo() = tags.map {
+    TagInfo(
+        pid = pid,
+        name = it.name,
+        translatedName = it.translatedName
+    )
+}
+
+fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
+    session.getMapper(UserInfoMapper::class.java).replaceUser(getUserInfo())
+    session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
+    session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
     if (tags.isNotEmpty()) {
-        session.getMapper(TagInfoMapper::class.java).insertTags(tags.map {
-            TagInfo(
-                pid = pid,
-                name = it.name,
-                translatedName = it.translatedName
-            )
-        })
+        session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
     }
     logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
 }
 
-fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
-    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将写入已设置" }
-    session.getMapper(UserInfoMapper::class.java).insertUsers(buildMap<Long, UserInfo> {
-        this@saveToSQLite.forEach { info ->
-            putIfAbsent(info.user.id, UserInfo(
-                uid = info.user.id,
-                name = info.user.name,
-                account = info.user.account
-            ))
+fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
+    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将更新" }
+    session.getMapper(UserInfoMapper::class.java).replaceUsers(buildMap<Long, UserInfo> {
+        this@updateToSQLite.forEach { info ->
+            putIfAbsent(info.user.id, info.getUserInfo())
         }
     }.values.toList())
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息写入已设置" }
-    forEach { info ->
-        session.getMapper(ArtWorkInfoMapper::class.java).insertArtWork(ArtWorkInfo(
-            pid = info.pid,
-            uid = info.user.id,
-            title = info.title,
-            caption = info.caption,
-            createDate = info.createDate,
-            pageCount = info.pageCount,
-            sanityLevel = info.sanityLevel,
-            type = info.type.value(),
-            width = info.width,
-            height = info.height,
-            totalBookmarks = info.totalBookmarks ?: 0,
-            totalComments = info.totalComments ?: 0,
-            totalView = info.totalView ?: 0,
-            isR18 = info.isR18(),
-            isEro = info.isEro()
-        ))
-    }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已写入设置" }
-    forEach { info ->
-        session.getMapper(FileInfoMapper::class.java).insertFiles(info.getOriginUrl().mapIndexed { index, url ->
-            FileInfo(
-                pid = info.pid,
-                index = index,
-                md5 = imagesFolder(info.pid).resolve(url.getFilename()).readBytes().getMd5(),
-                url = url,
-                size = imagesFolder(info.pid).resolve(url.getFilename()).length()
-            )
-        })
-    }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]文件信息已写入设置" }
-    forEach { info ->
-        if (info.tags.isNotEmpty()) {
-            session.getMapper(TagInfoMapper::class.java).insertTags(info.tags.map {
-                TagInfo(
-                    pid = info.pid,
-                    name = it.name,
-                    translatedName = it.translatedName
-                )
-            })
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息已更新" }
+
+    session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
+        this@updateToSQLite.forEach { info ->
+            mapper.replaceArtWork(info.getArtWorkInfo())
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已写入设置" }
-    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已写入设置" }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已更新" }
+
+    session.getMapper(TagInfoMapper::class.java).let { mapper ->
+        this@updateToSQLite.forEach { info ->
+            if (info.tags.isNotEmpty()) {
+                mapper.replaceTags(info.getTagInfo())
+            }
+        }
+    }
+
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已更新" }
+
+    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已更新" }
+}
+
+fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
+    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将插入" }
+
+    session.getMapper(UserInfoMapper::class.java).replaceUsers(buildMap<Long, UserInfo> {
+        this@saveToSQLite.forEach { info ->
+            putIfAbsent(info.user.id, info.getUserInfo())
+        }
+    }.values.toList())
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息已插入" }
+
+    session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
+        this@saveToSQLite.forEach { info ->
+            mapper.replaceArtWork(info.getArtWorkInfo())
+        }
+    }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已插入" }
+
+    session.getMapper(FileInfoMapper::class.java).let { mapper ->
+        this@saveToSQLite.forEach { info ->
+            mapper.replaceFiles(info.getFileInfos())
+        }
+    }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]文件信息已插入" }
+
+    session.getMapper(TagInfoMapper::class.java).let { mapper ->
+        this@saveToSQLite.forEach { info ->
+            if (info.tags.isNotEmpty()) {
+                mapper.replaceTags(info.getTagInfo())
+            }
+        }
+    }
+    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已插入" }
+
+    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已插入" }
 }
 
 fun ByteArray.getMd5(): String =
@@ -255,17 +269,14 @@ internal val Json_ = Json {
     allowStructuredMapKeys = true
 }
 
-fun IllustInfo.writeTo(
-    file: File,
-) = file.apply { parentFile.mkdirs() }.writeText(
-    Json_.encodeToString(IllustInfo.serializer(), this)
-)
+fun IllustInfo.writeTo(file: File, ) =
+    file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
 
-fun File.readIllustInfo(): IllustInfo = readText().let {
-    Json_.decodeFromString(IllustInfo.serializer(), it)
-}
+fun File.readIllustInfo(): IllustInfo =
+    Json_.decodeFromString(IllustInfo.serializer(), readText())
 
-fun IllustInfo.writeToCache() = writeTo(imagesFolder(pid).resolve("${pid}.json"))
+fun IllustInfo.writeToCache() =
+    writeTo(imagesFolder(pid).resolve("${pid}.json"))
 
 fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()

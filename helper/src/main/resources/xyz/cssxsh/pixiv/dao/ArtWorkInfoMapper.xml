@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="xyz.cssxsh.pixiv.dao.ArtWorkInfoMapper">
-    <insert id="insertArtWork">
+    <insert id="replaceArtWork">
         REPLACE INTO artworks("pid",
                              "uid",
                              "title",
@@ -43,10 +43,8 @@
         WHERE uid = ${uid};
     </select>
     <select id="keys" resultType="java.lang.Long">
-        SELECT DISTINCT artworks.pid
-        FROM artworks
-            INNER JOIN files f ON artworks.pid = f.pid
-        WHERE artworks.pid BETWEEN ${first} AND ${last}
+        SELECT DISTINCT pid
+        FROM files;
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
@@ -86,8 +84,7 @@
     </select>
     <select id="contains" resultType="java.lang.Boolean">
         SELECT COUNT(*)
-        FROM artworks
-            INNER JOIN files f ON artworks.pid = f.pid
-        WHERE artworks.pid = ${pid}
+        FROM files
+        WHERE pid = ${pid};
     </select>
 </mapper>
