@@ -22,6 +22,7 @@ import xyz.cssxsh.pixiv.model.*
 import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
+import java.net.UnknownHostException
 import java.security.MessageDigest
 import javax.net.ssl.SSLException
 
@@ -264,6 +265,7 @@ val apiIgnore: (Throwable) -> Boolean = { throwable ->
         is SocketTimeoutException,
         is HttpRequestTimeoutException,
         is StreamResetException,
+        is UnknownHostException,
         -> {
             logger.warning { "API错误, 已忽略: ${throwable.message}" }
             true

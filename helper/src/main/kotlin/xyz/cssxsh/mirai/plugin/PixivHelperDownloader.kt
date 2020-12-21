@@ -10,6 +10,7 @@ import xyz.cssxsh.pixiv.tool.PixivDownloader
 import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
+import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 
 object PixivHelperDownloader : PixivDownloader(
@@ -23,6 +24,7 @@ object PixivHelperDownloader : PixivDownloader(
             is StreamResetException,
             is ClosedReceiveChannelException,
             is NullPointerException,
+            is UnknownHostException,
             -> {
                 // PixivHelperPlugin.logger.verbose { "[${url.getFilename()}]<$message>下载错误, 已忽略: ${throwable.message}" }
                 true
