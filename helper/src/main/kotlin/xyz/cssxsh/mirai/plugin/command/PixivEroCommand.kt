@@ -9,6 +9,7 @@ import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.pixiv.model.ArtWorkInfo
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(
@@ -20,6 +21,21 @@ object PixivEroCommand : SimpleCommand(
     @ExperimentalCommandDescriptors
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
+
+    private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
+
+    private fun PixivHelper.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
+        info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+    }.let { infos ->
+        if (infos.isNotEmpty()) {
+            infos
+        } else {
+            useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval + 1) }.forEach { info ->
+                caches[info.pid] = info
+            }
+            getEroArtWorkInfos()
+        }
+    }
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
