@@ -59,17 +59,6 @@ fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
 }
 
-fun ArtWorkInfo.getMessage(): Message = buildMessageChain {
-    appendLine("作者: ${useUserInfoMapper { it.findByUid(uid) }?.name}")
-    appendLine("UID: $uid ")
-    appendLine("收藏数: $totalBookmarks ")
-    appendLine("SAN值: $sanityLevel ")
-    appendLine("创作于: $createDate ")
-    appendLine("共: $pageCount 张图片 ")
-    appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
-    appendLine("标签：${useTagInfoMapper { it.findByPid(pid) }.map { it.translatedName ?: it.name }}")
-}
-
 suspend fun PixivHelper.buildMessage(
     illust: IllustInfo,
     save: Boolean = true,
@@ -104,25 +93,10 @@ suspend fun PixivHelper.buildMessage(
 
 suspend fun PixivHelper.buildMessage(
     info: ArtWorkInfo,
-): List<Message> = buildList {
-    if (simpleInfo) {
-        add(buildMessageChain {
-            appendLine("PID: ${info.pid} ")
-            appendLine("UID: ${info.uid} ")
-            appendLine("收藏数: ${info.totalBookmarks} ")
-            appendLine("SAN值: ${info.sanityLevel} ")
-        })
-    } else {
-        add(info.getMessage())
-    }
-    if (!info.isR18) {
-        getImages(pid = info.pid, urls = useFileInfoMapper { it.fileInfos(info.pid) }.map { it.url }).forEach {
-            add(it.uploadAsImage(contact))
-        }
-    } else {
-        add(PlainText("R18禁止！"))
-    }
-}
+): List<Message> = buildMessage(
+    illust = getIllustInfo(pid = info.pid),
+    save = false
+)
 
 fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
     if (pageCount > 1) {
