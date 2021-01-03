@@ -32,7 +32,10 @@ object PixivSearchCommand : SimpleCommand(
     private const val MAX_REPEAT = 10
 
     private suspend fun search(url: String, repeat: Int = 0): List<SearchResult> = runCatching {
-        ImageSearcher.getSearchResults(url.replace("http", "https"))
+        ImageSearcher.getSearchResults(
+            ignore = apiIgnore,
+            picUrl = url.replace("http://", "https://")
+        )
     }.onFailure {
         logger.warning({ "搜索[$url]第${repeat}次失败" }, it)
         if (repeat >= MAX_REPEAT) {

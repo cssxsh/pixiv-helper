@@ -25,6 +25,21 @@ object ImageSearcher {
             }
         }
 
+    private suspend fun <R> useHttpClient(
+        ignore: (Throwable) -> Boolean,
+        block: suspend (HttpClient) -> R,
+    ): R = httpClient.use { client ->
+        runCatching {
+            block(client)
+        }.getOrElse { throwable ->
+            if (ignore(throwable)) {
+                useHttpClient(ignore = ignore, block = block)
+            } else {
+                throw throwable
+            }
+        }
+    }
+
     private fun parse(html: String): List<SearchResult> =
         Jsoup.parse(html).select(".resulttablecontent").map { content ->
             SearchResult(
@@ -39,8 +54,9 @@ object ImageSearcher {
         }
 
     suspend fun getSearchResults(
+        ignore: (Throwable) -> Boolean = { _ -> false },
         picUrl: String
-    ): List<SearchResult> = httpClient.use { client ->
+    ): List<SearchResult> = useHttpClient(ignore) { client ->
         client.get<String>(API) {
             parameter("db", DB_INDEX)
             parameter("url", picUrl)
@@ -50,8 +66,9 @@ object ImageSearcher {
     }
 
     suspend fun postSearchResults(
+        ignore: (Throwable) -> Boolean = { _ -> false },
         picUrl: String
-    ): List<SearchResult> = httpClient.use { client ->
+    ): List<SearchResult> = useHttpClient(ignore) { client ->
         runCatching {
             client.get<ByteArray>(picUrl)
         }.onFailure {

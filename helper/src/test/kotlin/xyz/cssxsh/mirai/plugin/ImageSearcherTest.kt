@@ -10,7 +10,7 @@ internal class ImageSearcherTest {
 
     @Test
     fun getSearchResults(): Unit = runBlocking {
-        ImageSearcher.getSearchResults(picUrl).also {
+        ImageSearcher.getSearchResults(picUrl = picUrl).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it.toString())
@@ -19,7 +19,7 @@ internal class ImageSearcherTest {
 
     @Test
     fun postSearchResults(): Unit = runBlocking {
-        ImageSearcher.postSearchResults(picUrl).also {
+        ImageSearcher.postSearchResults(picUrl = picUrl).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it)
