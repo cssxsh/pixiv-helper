@@ -126,8 +126,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             cancelAndJoin()
         }
 
-    var tagJob: Job? = null
-
     var followJob: Job? = null
 
     override fun config(block: PixivConfig.() -> Unit) =
