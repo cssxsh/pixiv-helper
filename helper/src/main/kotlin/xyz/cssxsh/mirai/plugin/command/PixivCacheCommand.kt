@@ -133,14 +133,14 @@ object PixivCacheCommand : CompositeCommand(
         getHelper().addCacheJob("FOLLOW") { getFollowIllusts() }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank() =
-        getHelper().run {
-            RankMode.values().forEach {
-                addCacheJob("RANK(${it.name})") {
-                    getRank(it)
-                }
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank() = getHelper().run {
+        RankMode.values().forEach {
+            addCacheJob("RANK(${it.name})") {
+                getRank(it)
             }
+            delay((300).secondsToMillis)
         }
+    }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
@@ -159,12 +159,12 @@ object PixivCacheCommand : CompositeCommand(
                 list.forEachIndexed { index, uid ->
                     isActive && runCatching {
                         userDetail(uid = uid, ignore = apiIgnore).let { detail ->
-                            logger.verbose { "${index}. USER(${uid})有${detail.total()}个作品尝试" }
+                            logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
                             if (detail.total() > useArtWorkInfoMapper { it.countByUid(uid) }) {
-                                delay(detail.total() * 1_000)
-                                addCacheJob("USER(${uid})") {
+                                addCacheJob("${index}.USER(${uid})") {
                                     getUserIllusts(detail)
                                 }
+                                delay(detail.total() * 1_000)
                             }
                         }
                     }.onFailure {
@@ -188,26 +188,29 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followAll() = getHelper().runCatching {
-        getUserFollowing(userDetail(uid = getAuthInfo().user.uid, ignore = apiIgnore)).sortedBy { it.user.id }
-            .also { list ->
-                logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
-                launch {
-                    list.forEachIndexed { index, preview ->
-                        if (isActive) runCatching {
-                            if (preview.isLoaded().not()) {
-                                userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
-                                    logger.verbose { "${index}. USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                    addCacheJob("USER(${detail.user.id})") {
-                                        getUserIllusts(detail)
-                                    }
+        getUserFollowing(userDetail(
+            uid = getAuthInfo().user.uid,
+            ignore = apiIgnore
+        )).sortedBy { it.user.id }.also { list ->
+            logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
+            launch {
+                list.forEachIndexed { index, preview ->
+                    if (isActive) runCatching {
+                        if (preview.isLoaded().not()) {
+                            userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
+                                logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                addCacheJob("${index}.USER(${detail.user.id})") {
+                                    getUserIllusts(detail)
                                 }
+                                delay(detail.total() * 1_000)
                             }
-                        }.onFailure {
-                            logger.warning({ "关注缓存${preview.user.id}失败" }, it)
                         }
+                    }.onFailure {
+                        logger.warning({ "关注缓存${preview.user.id}失败" }, it)
                     }
                 }
             }
+        }
     }.onSuccess {
         reply("关注列表中共${it.size}个画师需要缓存")
     }.onFailure {
@@ -224,10 +227,11 @@ object PixivCacheCommand : CompositeCommand(
                         if (isActive) runCatching {
                             if (preview.isLoaded().not()) {
                                 userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
-                                    logger.verbose { "${index}. USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                    addCacheJob("USER(${detail.user.id})") {
+                                    logger.verbose { "USER(${index}.${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                    addCacheJob("USER(${index}.${detail.user.id})") {
                                         getUserIllusts(detail).filter { it.isEro() }
                                     }
+                                    delay(detail.total() * 1_000)
                                 }
                             }
                         }.onFailure {
