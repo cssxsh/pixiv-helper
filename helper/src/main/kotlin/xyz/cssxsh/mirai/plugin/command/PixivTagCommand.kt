@@ -11,7 +11,6 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
@@ -110,6 +109,7 @@ object PixivTagCommand : SimpleCommand(
                     if (list.size < PixivHelperSettings.minInterval) addRelated(pid, list.map { pid })
                     buildMessage(illust = getIllustInfo(pid = pid), save = false)
                 }
+                buildMessageByIllust(pid)
             }
         } else {
             listOf(PlainText("技能冷却中"))

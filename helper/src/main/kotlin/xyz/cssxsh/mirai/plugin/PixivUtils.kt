@@ -60,7 +60,7 @@ fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
 }
 
-suspend fun PixivHelper.buildMessage(
+suspend fun PixivHelper.buildMessageByIllust(
     illust: IllustInfo,
     save: Boolean = true,
 ): List<Message> = buildList {
@@ -92,10 +92,10 @@ suspend fun PixivHelper.buildMessage(
     }
 }
 
-suspend fun PixivHelper.buildMessage(
-    info: ArtWorkInfo,
-): List<Message> = buildMessage(
-    illust = getIllustInfo(pid = info.pid),
+suspend fun PixivHelper.buildMessageByIllust(
+    pid: Long,
+): List<Message> = buildMessageByIllust(
+    illust = getIllustInfo(pid),
     save = false
 )
 

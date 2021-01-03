@@ -59,8 +59,8 @@ object PixivEroCommand : SimpleCommand(
                 if (remainingCapacity() == 0) take()
                 put(info.pid)
             }
-        }.let {
-            buildMessage(it)
+        }.let { info ->
+            buildMessageByIllust(info.pid)
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }

@@ -8,7 +8,7 @@ import net.mamoe.mirai.message.MessageEvent
 import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.buildMessage
+import xyz.cssxsh.mirai.plugin.buildMessageByIllust
 import xyz.cssxsh.mirai.plugin.data.PixivAliasData
 import xyz.cssxsh.mirai.plugin.getHelper
 import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
@@ -29,7 +29,7 @@ object PixivIllustratorCommand : CompositeCommand(
         useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random().let { info ->
-            buildMessage(info)
+            buildMessageByIllust(info.pid)
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
@@ -44,7 +44,7 @@ object PixivIllustratorCommand : CompositeCommand(
             useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
-                buildMessage(info)
+                buildMessageByIllust(info.pid)
             }
         }
     }.onSuccess { list ->
