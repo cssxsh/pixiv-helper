@@ -157,8 +157,11 @@ fun IllustInfo.getTagInfo() = tags.map {
     )
 }
 
+internal fun UserInfoMapper.addUserByIllustInfo(user: UserInfo) =
+    if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
+
 fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
-    session.getMapper(UserInfoMapper::class.java).replaceUser(getUserInfo())
+    session.getMapper(UserInfoMapper::class.java).addUserByIllustInfo(getUserInfo())
     session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
     session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
     if (tags.isNotEmpty()) {
@@ -168,20 +171,14 @@ fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
 }
 
 fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
-    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将更新" }
-    session.getMapper(UserInfoMapper::class.java).replaceUsers(buildMap<Long, UserInfo> {
-        this@updateToSQLite.forEach { info ->
-            putIfAbsent(info.user.id, info.getUserInfo())
-        }
-    }.values.toList())
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息已更新" }
+    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
 
     session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
         this@updateToSQLite.forEach { info ->
-            mapper.replaceArtWork(info.getArtWorkInfo())
+            mapper.updateArtWork(info.getArtWorkInfo())
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已更新" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]基础信息已更新" }
 
     session.getMapper(TagInfoMapper::class.java).let { mapper ->
         this@updateToSQLite.forEach { info ->
@@ -191,34 +188,34 @@ fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
         }
     }
 
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已更新" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已更新" }
 
-    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已更新" }
+    logger.info { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
 }
 
 fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
-    logger.verbose { "作品(${first().pid}..${last().pid})[${size}]信息即将插入" }
+    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将插入" }
 
-    session.getMapper(UserInfoMapper::class.java).replaceUsers(buildMap<Long, UserInfo> {
+    session.getMapper(UserInfoMapper::class.java).let { mapper ->
         this@saveToSQLite.forEach { info ->
-            putIfAbsent(info.user.id, info.getUserInfo())
+            mapper.addUserByIllustInfo(info.getUserInfo())
         }
-    }.values.toList())
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]用户信息已插入" }
+    }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]用户信息已插入" }
 
     session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
         this@saveToSQLite.forEach { info ->
             mapper.replaceArtWork(info.getArtWorkInfo())
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]基础信息已插入" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]基础信息已插入" }
 
     session.getMapper(FileInfoMapper::class.java).let { mapper ->
         this@saveToSQLite.forEach { info ->
             mapper.replaceFiles(info.getFileInfos())
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]文件信息已插入" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]文件信息已插入" }
 
     session.getMapper(TagInfoMapper::class.java).let { mapper ->
         this@saveToSQLite.forEach { info ->
@@ -227,9 +224,9 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
             }
         }
     }
-    logger.verbose { "作品{${first().pid}..${last().pid}}[${size}]标签信息已插入" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已插入" }
 
-    logger.info { "作品{${first().pid}..${last().pid}}[${size}]信息已插入" }
+    logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
 fun ByteArray.getMd5(): String =

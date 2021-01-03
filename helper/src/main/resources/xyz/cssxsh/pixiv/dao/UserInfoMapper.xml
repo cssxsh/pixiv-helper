@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="xyz.cssxsh.pixiv.dao.UserInfoMapper">
-    <insert id="replaceUser">
-        REPLACE INTO users("uid", "name", "account")
-        VALUES (${uid}, #{name}, #{account});
-    </insert>
     <select id="findByUid" resultType="xyz.cssxsh.pixiv.model.UserInfo">
         SELECT *
         FROM users
         WHERE uid = ${uid};
     </select>
+    <insert id="replaceUser">
+        REPLACE INTO users("uid", "name", "account")
+        VALUES (${uid}, #{name}, #{account});
+    </insert>
     <insert id="replaceUsers" >
         REPLACE INTO users("uid", "name", "account")
         VALUES
@@ -17,4 +17,20 @@
             (${item.uid}, #{item.name}, #{item.account})
         </foreach>;
     </insert>
+    <update id="updateUser" >
+        UPDATE users
+        SET
+            name = #{name},
+            account = #{account}
+        WHERE uid = ${uid};
+    </update>
+    <update id="updateUsers" >
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update users
+            SET
+                name = #{item.name},
+                account = #{item.account}
+            where uid = ${item.id}
+        </foreach>
+    </update>
 </mapper>

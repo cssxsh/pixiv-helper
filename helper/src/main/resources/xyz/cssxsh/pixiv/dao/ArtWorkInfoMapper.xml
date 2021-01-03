@@ -32,6 +32,24 @@
                 ${isR18},
                 ${isEro});
     </insert>
+    <update id="updateArtWork" >
+        UPDATE artworks
+        SET
+            title = #{title},
+            caption = #{caption},
+            create_date = #{createDate},
+            page_count = ${pageCount},
+            sanity_level =${sanityLevel},
+            type = #{type},
+            width = ${width},
+            height = ${height},
+            total_bookmarks = ${totalBookmarks},
+            total_comments = ${totalComments},
+            total_view = ${totalView},
+            is_r18 = ${isR18},
+            is_ero = ${isEro}
+        WHERE pid = ${pid};
+    </update>
     <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
@@ -43,8 +61,8 @@
         WHERE uid = ${uid};
     </select>
     <select id="keys" resultType="java.lang.Long">
-        SELECT DISTINCT pid
-        FROM files;
+        SELECT pid
+        FROM artworks;
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
@@ -84,7 +102,7 @@
     </select>
     <select id="contains" resultType="java.lang.Boolean">
         SELECT COUNT(*)
-        FROM files
+        FROM artworks
         WHERE pid = ${pid};
     </select>
 </mapper>

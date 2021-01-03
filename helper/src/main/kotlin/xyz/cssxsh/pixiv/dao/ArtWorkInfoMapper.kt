@@ -6,6 +6,7 @@ interface ArtWorkInfoMapper {
     fun findByPid(pid: Long): ArtWorkInfo?
     fun countByUid(uid: Long): Long
     fun replaceArtWork(info: ArtWorkInfo)
+    fun updateArtWork(info: ArtWorkInfo)
     fun keys(interval: LongRange): Set<Long>
     fun count(): Long
     fun deleteByPid(pid: Long)
