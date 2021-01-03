@@ -65,17 +65,23 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 reply("任务<$name>有{${first().pid..last().pid}}共${size}个新作品等待缓存")
             }
             runCatching {
-                size to filter { illust ->
-                    isActive && illust.runCatching {
-                        getImages(pid, getOriginUrl())
-                    }.onSuccess {
-                        delay(delayTime)
-                    }.onFailure {
-                        logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                        runCatching {
-                            reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                        }
-                    }.isSuccess
+                size to map { illust ->
+                    async {
+                        illust to (isActive && illust.runCatching {
+                            getImages(pid, getOriginUrl())
+                        }.onSuccess {
+                            delay(delayTime)
+                        }.onFailure {
+                            logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
+                            runCatching {
+                                reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
+                            }
+                        }.isSuccess)
+                    }
+                }.awaitAll().mapNotNull { (illust, success) ->
+                    illust.takeIf {
+                        success
+                    }
                 }.apply { saveToSQLite() }.size
             }.onSuccess { (total, success) ->
                 logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
@@ -98,15 +104,16 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 cacheJob = launch(Dispatchers.IO) {
                     while (isActive && cacheList.isNotEmpty()) {
                         cacheList.removeFirst().let { (name, getIllusts) ->
-                            getIllusts.invoke(this@PixivHelper).sortedBy { it.pid }.takeIf { it.isNotEmpty() }?.let { list ->
-                                if (write) list.writeToCache()
-                                useArtWorkInfoMapper {
-                                    it.keys(list.first().pid..list.last().pid)
-                                }.let { keys ->
-                                    list.filter { it.pid in keys }.takeIf { it.isNotEmpty() }?.updateToSQLite()
-                                    loadCache(name, list.filter { it.pid !in keys })
+                            getIllusts.invoke(this@PixivHelper).sortedBy { it.pid }.takeIf { it.isNotEmpty() }
+                                ?.let { list ->
+                                    if (write) list.writeToCache()
+                                    useArtWorkInfoMapper {
+                                        it.keys(list.first().pid..list.last().pid)
+                                    }.let { keys ->
+                                        list.filter { it.pid in keys }.takeIf { it.isNotEmpty() }?.updateToSQLite()
+                                        loadCache(name, list.filter { it.pid !in keys })
+                                    }
                                 }
-                            }
                         }
                     }
                 }
