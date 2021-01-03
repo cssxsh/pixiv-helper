@@ -27,13 +27,13 @@ object PixivEroCommand : SimpleCommand(
     private fun PixivHelper.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
         info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
     }.let { infos ->
-        if (infos.isNotEmpty()) {
-            infos
-        } else {
-            useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval + 1) }.forEach { info ->
+        if (infos.isEmpty() || historyQueue.remainingCapacity() == 0) {
+            useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval) }.forEach { info ->
                 caches[info.pid] = info
             }
             getEroArtWorkInfos()
+        } else {
+            infos
         }
     }
 
@@ -47,9 +47,8 @@ object PixivEroCommand : SimpleCommand(
         if ("更好" !in message.contentToString()) {
             minBookmarks = 0
         }
-        useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval + 1) }.filter { info ->
-            info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
-        }.apply {
+        // TODO 使用缓存变量
+        getEroArtWorkInfos().apply {
             PixivStatisticalData.eroAdd(user = fromEvent.sender).let {
                 logger.verbose { "${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图" }
             }
