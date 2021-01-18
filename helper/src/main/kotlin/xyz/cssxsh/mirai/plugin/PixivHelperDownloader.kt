@@ -26,13 +26,14 @@ object PixivHelperDownloader : PixivDownloader(
             is NullPointerException,
             is UnknownHostException,
             -> {
-                // PixivHelperPlugin.logger.verbose { "[${url.getFilename()}]<$message>下载错误, 已忽略: ${throwable.message}" }
                 true
             }
-            else -> when (throwable.message) {
-                "Required SETTINGS preface not received" -> {
-                    // PixivHelperPlugin.logger.verbose { "[${url.getFilename()}]<$message>下载错误, 已忽略: ${throwable.message}" }
+            else -> when {
+                throwable.message?.contains("Required SETTINGS preface not received") == true -> {
                     true
+                }
+                throwable.message?.contains("Completed read overflow") == true -> {
+                     true
                 }
                 else -> false
             }
