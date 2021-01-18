@@ -26,7 +26,7 @@ object ImageSearcher {
         }
 
     private suspend fun <R> useHttpClient(
-        ignore: (Throwable) -> Boolean,
+        ignore: suspend (Throwable) -> Boolean,
         block: suspend (HttpClient) -> R,
     ): R = httpClient.use { client ->
         runCatching {
@@ -54,7 +54,7 @@ object ImageSearcher {
         }
 
     suspend fun getSearchResults(
-        ignore: (Throwable) -> Boolean = { _ -> false },
+        ignore: suspend (Throwable) -> Boolean = { _ -> false },
         picUrl: String
     ): List<SearchResult> = useHttpClient(ignore) { client ->
         client.get<String>(API) {
@@ -66,7 +66,7 @@ object ImageSearcher {
     }
 
     suspend fun postSearchResults(
-        ignore: (Throwable) -> Boolean = { _ -> false },
+        ignore: suspend (Throwable) -> Boolean = { _ -> false },
         picUrl: String
     ): List<SearchResult> = useHttpClient(ignore) { client ->
         runCatching {

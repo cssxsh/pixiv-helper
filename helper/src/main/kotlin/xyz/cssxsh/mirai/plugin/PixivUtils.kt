@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.message.MessageEvent
@@ -254,7 +255,7 @@ fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
 }
 
-val apiIgnore: (Throwable) -> Boolean = { throwable ->
+val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
@@ -270,6 +271,11 @@ val apiIgnore: (Throwable) -> Boolean = { throwable ->
         else -> when (throwable.message) {
             "Required SETTINGS preface not received" -> {
                 logger.warning { "API错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            "Rate limit" -> {
+                logger.warning { "API限流, 已延时: ${throwable.message}" }
+                delay((10).minutesToMillis)
                 true
             }
             else -> false
