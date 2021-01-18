@@ -5,10 +5,11 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.MessageEvent
-import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
 import xyz.cssxsh.pixiv.model.ArtWorkInfo
 
 @Suppress("unused")
@@ -24,13 +25,15 @@ object PixivEroCommand : SimpleCommand(
 
     private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
 
+    private fun PixivHelper.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(minInterval) }.forEach { info ->
+        caches[info.pid] = info
+    }
+
     private fun PixivHelper.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
         info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
     }.let { infos ->
-        if (infos.isEmpty() || historyQueue.remainingCapacity() == 0) {
-            useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.minInterval) }.forEach { info ->
-                caches[info.pid] = info
-            }
+        if (infos.isEmpty()) {
+            addEroArtWorkInfos()
             getEroArtWorkInfos()
         } else {
             infos
@@ -42,7 +45,7 @@ object PixivEroCommand : SimpleCommand(
         if ("更色" in message.contentToString()) {
             minSanityLevel++
         } else {
-            minSanityLevel = 1
+            minSanityLevel = 0
         }
         if ("更好" !in message.contentToString()) {
             minBookmarks = 0
@@ -56,7 +59,9 @@ object PixivEroCommand : SimpleCommand(
             minSanityLevel = info.sanityLevel
             minBookmarks = info.totalBookmarks
             historyQueue.apply {
-                if (remainingCapacity() == 0) take()
+                if (remainingCapacity() == 0) {
+                    take()
+                }
                 put(info.pid)
             }
         }.let { info ->
@@ -65,6 +70,7 @@ object PixivEroCommand : SimpleCommand(
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
+        logger.warning({ "读取色图失败" }, it)
         quoteReply("读取色图失败， ${it.message}")
     }.isSuccess
 }
