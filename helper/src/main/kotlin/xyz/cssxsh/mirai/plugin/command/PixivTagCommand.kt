@@ -29,15 +29,15 @@ object PixivTagCommand : SimpleCommand(
         tag: String,
         limit: Long = 1000,
     ) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
                 searchIllust(word = tag, offset = offset, ignore = apiIgnore).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
-                logger.verbose { "加载'${tag}'搜索列表第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载'${tag}'搜索列表第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载'${tag}'搜索列表第${offset / 30}页失败" }, it)
+                logger.warning({ "加载'${tag}'搜索列表第${page}页失败" }, it)
             }
         }
     }.filter { illust ->
@@ -50,15 +50,15 @@ object PixivTagCommand : SimpleCommand(
         pid: Long,
         illusts: List<Long>,
     ) = buildList {
-        (0 until AppApi.RELATED_OFFSET step AppApi.PAGE_SIZE).forEach { offset ->
+        (0 until AppApi.RELATED_OFFSET step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
                 illustRelated(pid = pid, seedIllustIds = illusts, offset = offset, ignore = apiIgnore).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
-                logger.verbose { "加载[${pid}]相关列表第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载[${pid}]相关列表第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载[${pid}]相关列表第${offset / 30}页失败" }, it)
+                logger.warning({ "加载[${pid}]相关列表第${page}页失败" }, it)
             }
         }
     }.filter { illust ->
