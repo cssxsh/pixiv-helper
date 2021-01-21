@@ -287,14 +287,12 @@ suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = apiIgnore).illust },
-): IllustInfo = imagesFolder(pid).let { dir ->
-    dir.resolve("${pid}.json").let { file ->
-        if (!flush && file.exists()) {
-            file.readIllustInfo()
-        } else {
-            block(pid).apply {
-                writeTo(file)
-            }
+): IllustInfo = imagesFolder(pid).resolve("${pid}.json").let { file ->
+    if (!flush && file.exists()) {
+        file.readIllustInfo()
+    } else {
+        block(pid).apply {
+            writeTo(file)
         }
     }
 }
