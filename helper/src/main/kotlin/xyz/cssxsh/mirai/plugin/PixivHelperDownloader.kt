@@ -5,6 +5,7 @@ import io.ktor.network.sockets.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.pixiv.tool.PixivDownloader
 import java.io.EOFException
@@ -33,7 +34,7 @@ object PixivHelperDownloader : PixivDownloader(
                     true
                 }
                 throwable.message?.contains("Completed read overflow") == true -> {
-                     true
+                    true
                 }
                 else -> false
             }
@@ -57,20 +58,18 @@ object PixivHelperDownloader : PixivDownloader(
     ): List<File> = imagesFolder(pid).let { dir ->
         urls.filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()
-            downloadImageUrls(
-                urls = downloads,
-                block = { _, url, result ->
-                    runCatching {
-                        dir.resolve(url.getFilename()).apply {
-                            writeBytes(result.getOrThrow())
-                        }
-                    }.onFailure {
-                        PixivHelperPlugin.logger.warning({ "作品(${pid})下载错误" }, it)
-                    }.isSuccess
-                }
-            ).all { it }.let {
-                check(it) { "作品(${pid})下载错误" }
+            downloadImageUrls(downloads) { _, url, result ->
+                runCatching {
+                    dir.resolve(url.getFilename()).apply {
+                        writeBytes(result.getOrThrow())
+                    }
+                }.onFailure {
+                    logger.warning({ "作品(${pid})下载错误" }, it)
+                }.exceptionOrNull()
+            }.mapNotNull { it }.let {
+                check(it.isEmpty()) { "作品(${pid})下载错误, ${it.first()}" }
             }
+            logger.info { "作品(${pid}){${downloads.size}}下载完成" }
         }
         urls.map { url ->
             dir.resolve(url.getFilename())
