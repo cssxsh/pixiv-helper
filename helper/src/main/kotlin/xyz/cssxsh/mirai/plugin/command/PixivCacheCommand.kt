@@ -41,86 +41,88 @@ object PixivCacheCommand : CompositeCommand(
 
     private fun UserDetail.total(): Long = profile.totalIllusts + profile.totalManga
 
-    private suspend fun PixivHelper.getRank(mode: RankMode, limit: Long = 10_000) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
+    private suspend fun PixivHelper.getRank(mode: RankMode, date: String?, limit: Long = 10_000) = buildList {
+        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
-                illustRanking(mode = mode, offset = offset, ignore = apiIgnore).illusts
+                illustRanking(mode = mode, date = date, offset = offset, ignore = apiIgnore).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
-                logger.verbose { "加载排行榜[${mode}]第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载排行榜[${mode}](${date ?: "new"})第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载排行榜[${mode}]第${offset / 30}页失败" }, it)
+                logger.warning({ "加载排行榜[${mode}](${date ?: "new"})第${page}页失败" }, it)
             }
         }
     }
 
     private suspend fun PixivHelper.getFollowIllusts(limit: Long = 10_000) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 illustFollow(offset = offset, ignore = apiIgnore).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
-                logger.verbose { "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${offset / 30}页失败" }, it)
+                logger.warning({ "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页失败" }, it)
             }
         }
     }
 
     private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEach { offset ->
+        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 userRecommended(offset = offset, ignore = apiIgnore).userPreviews.flatMap { it.illusts }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
-                logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${offset / 30}页失败" }, it)
+                logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页失败" }, it)
             }
         }
     }
 
     private suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = 10_000) = buildList {
-        var url = AppApi.USER_BOOKMARKS_ILLUST
-        (0 until limit step AppApi.PAGE_SIZE).forEach { _ ->
-            if (isActive) runCatching {
-                userBookmarksIllust(uid = uid, url = url, ignore = apiIgnore)
-            }.onSuccess { (list, nextUrl) ->
-                if (nextUrl == null) return@buildList
-                addAll(list)
-                logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
-                url = nextUrl
-            }.onFailure {
-                logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
+        (0 until limit step AppApi.PAGE_SIZE).fold<Long, String?>(AppApi.USER_BOOKMARKS_ILLUST) { url, _ ->
+            if (isActive && url != null) {
+                runCatching {
+                    userBookmarksIllust(uid = uid, url = url, ignore = apiIgnore)
+                }.onSuccess { (list, nextUrl) ->
+                    if (nextUrl == null) return@buildList
+                    addAll(list)
+                    logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
+                }.onFailure {
+                    logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
+                }.getOrNull()?.nextUrl
+            } else {
+                null
             }
         }
     }
 
     private suspend fun PixivHelper.getUserIllusts(detail: UserDetail) = buildList {
-        (0 until detail.total() step AppApi.PAGE_SIZE).mapNotNull { offset ->
+        (0 until detail.total() step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 userIllusts(uid = detail.user.id, offset = offset, ignore = apiIgnore).illusts
             }.onSuccess {
                 addAll(it)
-                logger.verbose { "加载用户(${detail.user.id})作品第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载用户(${detail.user.id})作品第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载用户(${detail.user.id})作品第${offset / 30}页失败" }, it)
+                logger.warning({ "加载用户(${detail.user.id})作品第${page}页失败" }, it)
             }
         }
     }
 
     private suspend fun PixivHelper.getUserFollowing(detail: UserDetail) = buildList {
-        (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).mapNotNull { offset ->
+        (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 userFollowing(uid = detail.user.id, offset = offset, ignore = apiIgnore).userPreviews
             }.onSuccess {
                 addAll(it)
-                logger.verbose { "加载用户(${detail.user.id})关注用户第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载用户(${detail.user.id})关注用户第${offset / 30}页失败" }, it)
+                logger.warning({ "加载用户(${detail.user.id})关注用户第${page}页失败" }, it)
             }
         }
     }
@@ -133,12 +135,11 @@ object PixivCacheCommand : CompositeCommand(
         getHelper().addCacheJob("FOLLOW") { getFollowIllusts() }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank() = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank(date: String? = null) = getHelper().run {
         RankMode.values().forEach {
-            addCacheJob("RANK(${it.name})") {
-                getRank(it)
+            addCacheJob("RANK[${it.name}](${date ?: "new"})") {
+                getRank(mode = it, date = date)
             }
-            delay((300).secondsToMillis)
         }
     }
 
@@ -164,7 +165,6 @@ object PixivCacheCommand : CompositeCommand(
                                 addCacheJob("${index}.USER(${uid})") {
                                     getUserIllusts(detail)
                                 }
-                                delay(detail.total() * 1_000)
                             }
                         }
                     }.onFailure {
@@ -202,7 +202,6 @@ object PixivCacheCommand : CompositeCommand(
                                 addCacheJob("${index}.USER(${detail.user.id})") {
                                     getUserIllusts(detail)
                                 }
-                                delay(detail.total() * 1_000)
                             }
                         }
                     }.onFailure {
@@ -219,27 +218,28 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followEro() = getHelper().runCatching {
-        getUserFollowing(userDetail(uid = getAuthInfo().user.uid, ignore = apiIgnore)).sortedBy { it.user.id }
-            .also { list ->
-                logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
-                launch {
-                    list.forEachIndexed { index, preview ->
-                        if (isActive) runCatching {
-                            if (preview.isLoaded().not()) {
-                                userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
-                                    logger.verbose { "USER(${index}.${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                    addCacheJob("USER(${index}.${detail.user.id})") {
-                                        getUserIllusts(detail).filter { it.isEro() }
-                                    }
-                                    delay(detail.total() * 1_000)
+        getUserFollowing(userDetail(
+            uid = getAuthInfo().user.uid,
+            ignore = apiIgnore
+        )).sortedBy { it.user.id }.also { list ->
+            logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
+            launch {
+                list.forEachIndexed { index, preview ->
+                    if (isActive) runCatching {
+                        if (preview.isLoaded().not()) {
+                            userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
+                                logger.verbose { "USER(${index}.${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                addCacheJob("USER(${index}.${detail.user.id})") {
+                                    getUserIllusts(detail).filter { it.isEro() }
                                 }
                             }
-                        }.onFailure {
-                            logger.warning({ "关注缓存${preview.user.id}失败" }, it)
                         }
+                    }.onFailure {
+                        logger.warning({ "关注缓存${preview.user.id}失败" }, it)
                     }
                 }
             }
+        }
     }.onSuccess {
         reply("关注列表中共${it.size}个画师需要缓存")
     }.onFailure {
@@ -258,26 +258,21 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().run {
-        PixivHelperSettings.cacheFolder.also {
-            logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
-        }.listFiles { file -> file.name.matches("""\d{3}______""".toRegex()) && file.isDirectory }?.forEach { first ->
-            logger.info { "${first.absolutePath} 开始加载" }
-            (first.listFiles { file -> file.name.matches("""\d{6}___""".toRegex()) && file.isDirectory }
-                ?: emptyArray()).flatMap { second ->
-                (second.listFiles { file -> file.name.matches("""\d+""".toRegex()) && file.isDirectory }
-                    ?: emptyArray()).mapNotNull { dir ->
-                    dir.name.toLong().takeIf { pid ->
-                        dir.resolve("${pid}.json").exists() // && dir.listFiles()!!.size > 1
-                    }
-                }
-            }.let { list ->
-                val interval = first.name.replace('_', '0').toLong().let {
-                    it..(it + 999_999)
-                }
-                list - useArtWorkInfoMapper { it.keys(interval) }
-            }.let { list ->
-                if (list.isNotEmpty()) {
-                    addCacheJob("LOAD(${first.name})", false) {
+        PixivHelperSettings.cacheFolder.listFiles { file ->
+            file.name.matches("""\d{3}______""".toRegex()) && file.isDirectory
+        }?.forEach { first ->
+            first.listFiles { file ->
+                file.name.matches("""\d{6}___""".toRegex()) && file.isDirectory
+            }?.forEach { second ->
+                second.listFiles { file ->
+                    file.name.matches("""\d+""".toRegex()) && file.isDirectory &&
+                        file.resolve("${file.name}.json").exists()
+                }?.map { dir ->
+                    dir.name.toLong()
+                }.takeUnless { it.isNullOrEmpty() }?.let { list ->
+                    list - useArtWorkInfoMapper { it.keys((list.minOrNull()!!) .. (list.maxOrNull()!!))}
+                }.takeUnless { it.isNullOrEmpty() }?.let { list ->
+                    addCacheJob("LOAD(${second.name})", false) {
                         list.map {
                             getIllustInfo(it)
                         }
