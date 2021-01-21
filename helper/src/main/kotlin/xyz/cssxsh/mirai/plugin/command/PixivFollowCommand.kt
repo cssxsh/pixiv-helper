@@ -28,15 +28,15 @@ object PixivFollowCommand : CompositeCommand(
     override val prefixOptional: Boolean = true
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
-        (0L until maxNum step AppApi.PAGE_SIZE).forEach { offset ->
+        (0 until maxNum step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
                 userFollowing(uid = uid, offset = offset, ignore = apiIgnore).userPreviews.map { it.user.id }
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 add(it)
-                logger.verbose { "加载(${uid})关注用户预览第${offset / 30}页{${it.size}}成功" }
+                logger.verbose { "加载(${uid})关注用户预览第${page}页{${it.size}}成功" }
             }.onFailure {
-                logger.warning({ "加载(${uid})关注用户预览第${offset / 30}页失败" }, it)
+                logger.warning({ "加载(${uid})关注用户预览第${page}页失败" }, it)
             }
         }
     }.flatten().toSet()
