@@ -66,11 +66,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
             runCatching {
                 size to map { illust ->
+                    delay(delayTime)
                     async {
                         illust to (isActive && illust.runCatching {
                             getImages(pid, getOriginUrl())
-                        }.onSuccess {
-                            delay(delayTime)
                         }.onFailure {
                             logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
                             runCatching {

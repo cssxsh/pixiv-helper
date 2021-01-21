@@ -273,7 +273,7 @@ val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
                 logger.warning { "API错误, 已忽略: ${throwable.message}" }
                 true
             }
-            "Rate limit" -> {
+            "Rate Limit" -> {
                 logger.warning { "API限流, 已延时: ${throwable.message}" }
                 delay((10).minutesToMillis)
                 true
