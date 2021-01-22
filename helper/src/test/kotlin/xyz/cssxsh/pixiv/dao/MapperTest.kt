@@ -24,7 +24,7 @@ internal class MapperTest {
         }
     }
 
-    fun imagesFolder(pid: Long): File = File("F:\\PixivCache")
+    private fun imagesFolder(pid: Long): File = File("F:\\PixivCache")
         .resolve("%03d______".format(pid / 1_000_000))
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
@@ -83,12 +83,12 @@ internal class MapperTest {
         val dir = imagesFolder(24924)
         dir.resolve("24924.json").readIllustInfo().run {
             sqlSessionFactory.openSession().use { session ->
-                session.getMapper(UserInfoMapper::class.java).insertUser(UserInfo(
+                session.getMapper(UserInfoMapper::class.java).replaceUser(UserInfo(
                     uid = user.id,
                     name = user.name,
                     account = user.account
                 ))
-                session.getMapper(ArtWorkInfoMapper::class.java).insertArtWork(ArtWorkInfo(
+                session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(ArtWorkInfo(
                     pid = pid,
                     uid = user.id,
                     title = title,
@@ -105,7 +105,7 @@ internal class MapperTest {
                     isR18 = isR18(),
                     isEro = isEro()
                 ))
-                session.getMapper(FileInfoMapper::class.java).insertFiles(getOriginUrl().mapIndexed { index, url ->
+                session.getMapper(FileInfoMapper::class.java).replaceFiles(getOriginUrl().mapIndexed { index, url ->
                     FileInfo(
                         pid = pid,
                         index = index,
@@ -114,7 +114,7 @@ internal class MapperTest {
                         size = dir.resolve(url.getFilename()).length()
                     )
                 })
-                session.getMapper(TagInfoMapper::class.java).insertTags(tags.map {
+                session.getMapper(TagInfoMapper::class.java).replaceTags(tags.map {
                     TagInfo(
                         pid = pid,
                         name = it.name,
