@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -42,12 +42,12 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
-        if ("更色" in message.contentToString()) {
+        if ("更色" in fromEvent.message.contentToString()) {
             minSanityLevel++
         } else {
             minSanityLevel = 0
         }
-        if ("更好" !in message.contentToString()) {
+        if ("更好" !in fromEvent.message.contentToString()) {
             minBookmarks = 0
         }
         // TODO 使用缓存变量

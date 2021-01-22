@@ -6,8 +6,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.MessageEvent
-import net.mamoe.mirai.utils.minutesToMillis
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -16,6 +15,7 @@ import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.time.minutes
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
@@ -209,7 +209,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.listen() = getHelper().runCatching {
-        addIllustFollowListener(delay = (10).minutesToMillis) { illust ->
+        addIllustFollowListener(delay = (10).minutes.toLongMilliseconds()) { illust ->
             buildMessageByIllust(illust).forEach { message -> reply(message) }
         }
     }.onSuccess {

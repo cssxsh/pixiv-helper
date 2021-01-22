@@ -5,10 +5,11 @@ import io.ktor.network.sockets.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.message.uploadAsImage
+import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
+import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
@@ -26,11 +27,18 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import java.security.MessageDigest
 import javax.net.ssl.SSLException
+import kotlin.time.minutes
 
 /**
  * 获取对应subject的助手
  */
 fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
+
+suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: Message) =
+    sendMessage(fromEvent.message.quote() + message)
+
+suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
+    sendMessage(fromEvent.message.quote() + message)
 
 fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
     session.getMapper(ArtWorkInfoMapper::class.java).let(block)
@@ -275,7 +283,7 @@ val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
             }
             "Rate Limit" -> {
                 logger.warning { "API限流, 已延时: ${throwable.message}" }
-                delay((10).minutesToMillis)
+                delay((10).minutes.toLongMilliseconds())
                 true
             }
             else -> false

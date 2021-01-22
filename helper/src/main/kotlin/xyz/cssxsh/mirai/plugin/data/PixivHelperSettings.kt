@@ -3,11 +3,11 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
-import net.mamoe.mirai.utils.secondsToMillis
 import org.sqlite.JDBC
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
 import java.io.File
+import kotlin.time.seconds
 
 object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     /**
@@ -32,7 +32,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
      * 缓存延迟时间
      */
     @ValueName("delay_time")
-    val delayTime: Long by value(1.secondsToMillis)
+    val delayTime: Long by value((10).seconds.toLongMilliseconds())
 
     /**
      * 涩图标准

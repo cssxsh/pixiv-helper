@@ -8,13 +8,13 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.MessageEvent
-import net.mamoe.mirai.utils.minutesToMillis
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
 import xyz.cssxsh.pixiv.api.app.*
+import kotlin.time.minutes
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -68,14 +68,14 @@ object PixivFollowCommand : CompositeCommand(
                         logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
                         if (num >= 8) {
                             logger.verbose { "用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时" }
-                            delay(1.minutesToMillis)
+                            delay((1).minutes.toLongMilliseconds())
                             num = 0
                         } else {
                             num++
                         }
                     }.onFailure {
                         logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
-                        delay(3.minutesToMillis)
+                        delay((3).minutes.toLongMilliseconds())
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->

@@ -13,9 +13,10 @@ import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
 import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.containsFriend
+import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
-import net.mamoe.mirai.event.subscribeAlways
 import java.nio.file.Paths
 
 @ConsoleExperimentalApi
@@ -45,13 +46,17 @@ object RunMirai {
         }
     }
 
-    private fun MiraiConsole.setCustomize() {
+    private fun MiraiConsole.setCustomize(): Unit = GlobalEventChannel.parentScope(this).run {
         JvmPluginLoader.dataStorage.load(TempPluginDataHolder, AmrFileData)
         subscribeAlways<NewFriendRequestEvent> {
             accept()
         }
         subscribeAlways<BotInvitedJoinGroupRequestEvent> {
-            accept()
+            if (bot.containsFriend(invitorId)) {
+                accept()
+            } else {
+                ignore()
+            }
         }
         TTSCommand.register()
         RecallCommand.register()

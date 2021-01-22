@@ -30,7 +30,7 @@ repositories {
 dependencies {
     kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
     compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
-    compileOnly(mirai("core", Versions.core))
+    compileOnly(mirai("core-api", Versions.core))
     compileOnly(mirai("console", Versions.console))
     implementation(ktor("client-core", Versions.ktor))
     implementation(ktor("client-serialization", Versions.ktor))
@@ -42,10 +42,6 @@ dependencies {
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
     // test
-    testImplementation(mirai("core", Versions.core))
-    testImplementation(mirai("console", Versions.console))
-    testImplementation(mirai("core-qqandroid", Versions.core))
-    testImplementation(mirai("console-terminal", Versions.console))
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
     // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
 }
@@ -56,6 +52,8 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
         }
     }

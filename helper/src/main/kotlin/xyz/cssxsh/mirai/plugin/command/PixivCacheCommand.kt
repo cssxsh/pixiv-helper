@@ -8,7 +8,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.downloadImageUrls
@@ -174,9 +174,9 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess {
-        reply("别名列表中共${it.size}个画师需要缓存")
+        sendMessage("别名列表中共${it.size}个画师需要缓存")
     }.onFailure {
-        reply(it.toString())
+        sendMessage(it.toString())
     }.isSuccess
 
 
@@ -211,9 +211,9 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess {
-        reply("关注列表中共${it.size}个画师需要缓存")
+        sendMessage("关注列表中共${it.size}个画师需要缓存")
     }.onFailure {
-        reply(it.toString())
+        sendMessage(it.toString())
     }.isSuccess
 
     @SubCommand
@@ -241,9 +241,9 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess {
-        reply("关注列表中共${it.size}个画师需要缓存")
+        sendMessage("关注列表中共${it.size}个画师需要缓存")
     }.onFailure {
-        reply(it.toString())
+        sendMessage(it.toString())
     }.isSuccess
 
     /**
@@ -289,9 +289,9 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = getHelper().runCatching {
         cacheStop()
     }.onSuccess {
-        quoteReply("任务${it}已停止")
+        sendMessage("任务${it}已停止")
     }.onFailure {
-        quoteReply(it.toString())
+        sendMessage(it.toString())
     }.isSuccess
 
     /**
@@ -330,9 +330,9 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
     }.onSuccess { (size, num) ->
-        quoteReply("检查缓存完毕，总计${size}, 无法修复数: $num")
+        sendMessage("检查缓存完毕，总计${size}, 无法修复数: $num")
     }.onFailure {
-        quoteReply(it.toString())
+        sendMessage(it.toString())
     }.isSuccess
 
     @SubCommand

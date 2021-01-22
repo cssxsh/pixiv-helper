@@ -8,7 +8,6 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.utils.minutesToMillis
 import org.apache.ibatis.io.Resources
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.SqlSession
@@ -20,6 +19,7 @@ import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
 import xyz.cssxsh.mirai.plugin.tools.Zipper
+import kotlin.time.minutes
 
 @AutoService(JvmPlugin::class)
 object PixivHelperPlugin : KotlinPlugin(
@@ -41,11 +41,11 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
-    private val listener = PixivHelperListener(coroutineContext)
+    private val listener = PixivHelperListener()
 
     @ConsoleExperimentalApi
     override val autoSaveIntervalMillis: LongRange
-        get() = 10.minutesToMillis..30.minutesToMillis
+        get() = (10).minutes.toLongMilliseconds()..(30).minutes.toLongMilliseconds()
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
@@ -69,7 +69,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivGetCommand.register()
 
         PixivHelperDownloader.apply {
-            // TODO
             proxyUrl = PixivConfigData.default.proxy
         }
         sqlSessionFactory.configuration.apply {

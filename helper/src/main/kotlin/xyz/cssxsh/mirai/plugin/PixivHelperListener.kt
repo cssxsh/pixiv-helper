@@ -1,23 +1,20 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.*
+import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.GroupMuteAllEvent
 import net.mamoe.mirai.event.subscribeAlways
 import kotlin.coroutines.CoroutineContext
 
-class PixivHelperListener(parentCoroutineContext: CoroutineContext): CoroutineScope {
+class PixivHelperListener {
 
-    override val coroutineContext: CoroutineContext by lazy {
-        parentCoroutineContext + CoroutineName("PixivHelperListener")
-    }
+    private val list = mutableListOf<Job>()
 
-    fun listen() = apply {
+    fun listen(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
         subscribeAlways<GroupMuteAllEvent> {
             PixivHelperManager.remove(group)
-        }
+        }.let { list.add(it) }
     }
 
-    fun stop() = apply {
-        this.coroutineContext[Job]?.apply { cancel() }
-    }
+    fun stop() = list.forEach { it.cancel() }
 }

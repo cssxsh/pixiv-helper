@@ -21,9 +21,9 @@ repositories {
 }
 
 dependencies {
-    implementation(mirai("core", Versions.core))
+    implementation(mirai("core-api", Versions.core))
     implementation(mirai("console", Versions.console))
-    implementation(mirai("core-qqandroid", Versions.core))
+    implementation(mirai("core", Versions.core))
     implementation(mirai("console-terminal", Versions.console))
     compileOnly(ktor("client-core", Versions.ktor))
     compileOnly(ktor("client-serialization", Versions.ktor))
@@ -93,6 +93,7 @@ tasks {
                     appendln("cd ${testConsoleDir.absolutePath}")
                     appendln("java -classpath ${sourceSets.main.get().runtimeClasspath.asPath} ^")
                     appendln("-Dfile.encoding=UTF-8 ^")
+                    appendln("-Xmx2000m ^")
                     appendln("mirai.RunMirai")
                 }
             )

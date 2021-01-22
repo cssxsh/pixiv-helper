@@ -6,8 +6,10 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.data.Image.Key.queryUrl
+import net.mamoe.mirai.utils.MiraiInternalApi
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
@@ -43,12 +45,11 @@ object PixivSearchCommand : SimpleCommand(
         }
     }.getOrElse { search(url, repeat + 1) }
 
-    private fun Image.getMd5Hex(): String = when {
-        imageId matches FRIEND_IMAGE_ID_REGEX_1 -> imageId
-        imageId matches FRIEND_IMAGE_ID_REGEX_2 -> imageId.substring(imageId.lastIndexOf("-"))
-        imageId matches GROUP_IMAGE_ID_REGEX -> imageId
-        else -> throw IllegalArgumentException("未知ID格式")
-    }.replace("""[-/{}]""".toRegex(), "").substring(0..31).toUpperCase()
+
+    @MiraiInternalApi
+    private fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
+        """%02x""".format(it.toInt())
+    }
 
     @Handler
     @Suppress("unused")
@@ -80,11 +81,7 @@ object PixivSearchCommand : SimpleCommand(
             }
         }
     }.onSuccess {
-        if (fromEvent.subject is Group) {
-            quoteReply(it)
-        } else {
-            reply(it)
-        }
+        quoteReply(it)
     }.onFailure {
         logger.verbose({ "搜索失败$image" }, it)
         quoteReply("搜索失败， ${it.message}")

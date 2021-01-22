@@ -5,8 +5,8 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.contact.recall
-import net.mamoe.mirai.message.MessageEvent
+import net.mamoe.mirai.contact.recallMessage
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.QuoteReply
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.utils.verbose
@@ -30,14 +30,14 @@ object RecallCommand : SimpleCommand(
     @Handler
     @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() {
-        message[QuoteReply]?.run {
+        fromEvent.message.takeIf { QuoteReply in it }?.let { message ->
             runCatching {
-                logger.verbose { "尝试对${source}进行撤回" }
-                fromEvent.subject.recall(source)
+                logger.verbose { "尝试对${message}进行撤回" }
+                fromEvent.subject.recallMessage(message)
             }.onSuccess {
-                logger.info { "撤回${source}成功" }
+                logger.info { "撤回${message}成功" }
             }.onFailure {
-                logger.warning({ "撤回${source}失败" }, it)
+                logger.warning({ "撤回${message}失败" }, it)
             }
         }
     }
