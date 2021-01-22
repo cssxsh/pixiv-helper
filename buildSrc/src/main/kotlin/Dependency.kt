@@ -11,9 +11,6 @@ fun DependencyHandler.ktor(module: String, version: String= Versions.ktor) =
 fun DependencyHandler.mirai(module: String, version: String = "+") =
     "net.mamoe:mirai-$module:$version"
 
-fun DependencyHandler.korlibs(module: String, version: String = Versions.korlibs) =
-    "com.soywiz.korlibs.$module:$module:$version"
-
 fun DependencyHandler.okhttp3(module: String, version: String = Versions.okhttp) =
     "com.squareup.okhttp3:$module:$version"
 
