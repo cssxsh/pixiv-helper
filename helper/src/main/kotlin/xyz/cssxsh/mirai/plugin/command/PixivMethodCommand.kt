@@ -14,7 +14,6 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import kotlin.time.minutes
 
 @Suppress("unused")
@@ -29,7 +28,7 @@ object PixivMethodCommand : CompositeCommand(
         }
         LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
             override fun parse(raw: String, sender: CommandSender): LocalDate =
-                LocalDate.parse(raw, DateTimeFormatter.ISO_DATE)
+                LocalDate.parse(raw)
         }
     }
 ) {
