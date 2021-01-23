@@ -3,10 +3,13 @@ package xyz.cssxsh.mirai.plugin.command
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
+import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
+import net.mamoe.mirai.console.command.descriptor.CommandValueArgumentParser
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.command.descriptor.buildCommandArgumentContext
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
@@ -20,13 +23,24 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.data.app.UserPreview
-import java.io.File
+import java.time.LocalDate
+import java.time.Year
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
-    description = "PIXIV缓存指令"
+    description = "PIXIV缓存指令",
+    overrideContext = buildCommandArgumentContext {
+        LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
+            override fun parse(raw: String, sender: CommandSender): LocalDate =
+                LocalDate.parse(raw)
+        }
+        Year::class with object : CommandValueArgumentParser<Year> {
+            override fun parse(raw: String, sender: CommandSender): Year =
+                Year.parse(raw)
+        }
+    }
 ) {
 
     @ExperimentalCommandDescriptors
@@ -39,9 +53,23 @@ object PixivCacheCommand : CompositeCommand(
         illusts.all { mapper.contains(it.pid) }
     }
 
-    private fun UserDetail.total(): Long = profile.totalIllusts + profile.totalManga
+    private fun UserDetail.count() = useArtWorkInfoMapper { mapper ->
+        mapper.countByUid(user.id)
+    }
 
-    private suspend fun PixivHelper.getRank(mode: RankMode, date: String?, limit: Long = 10_000) = buildList {
+    private fun UserDetail.total() = profile.totalIllusts + profile.totalManga
+
+    // FIXME: 交给插件设置加载
+    private val cacheRanks = listOf(
+        RankMode.MONTH,
+        RankMode.WEEK,
+        RankMode.WEEK_ORIGINAL,
+        RankMode.DAY,
+        RankMode.DAY_MALE,
+        RankMode.DAY_FEMALE,
+    )
+
+    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 illustRanking(mode = mode, date = date, offset = offset, ignore = apiIgnore).illusts
@@ -51,6 +79,19 @@ object PixivCacheCommand : CompositeCommand(
                 logger.verbose { "加载排行榜[${mode}](${date ?: "new"})第${page}页{${it.size}}成功" }
             }.onFailure {
                 logger.warning({ "加载排行榜[${mode}](${date ?: "new"})第${page}页失败" }, it)
+            }
+        }
+    }
+
+    private suspend fun PixivHelper.getYear(year: Year) = buildList {
+        (1..12).forEach { month ->
+            if (isActive) runCatching {
+                illustRanking(mode = RankMode.MONTH, date = year.atMonth(month).atEndOfMonth(), ignore = apiIgnore).illusts
+            }.onSuccess {
+                addAll(it)
+                logger.verbose { "加载排行榜[${RankMode.MONTH}](${year.atMonth(month).atEndOfMonth()}){${it.size}}成功" }
+            }.onFailure {
+                logger.warning({ "加载排行榜[${RankMode.MONTH}](${year.atMonth(month).atEndOfMonth()})失败" }, it)
             }
         }
     }
@@ -114,7 +155,10 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getUserFollowing(detail: UserDetail) = buildList {
+    private suspend fun PixivHelper.getUserIllusts(uid: Long) =
+        getUserIllusts(userDetail(uid = uid, ignore = apiIgnore))
+
+    private suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = buildList {
         (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 userFollowing(uid = detail.user.id, offset = offset, ignore = apiIgnore).userPreviews
@@ -127,6 +171,9 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
+    private suspend fun PixivHelper.getUserFollowingPreview() =
+        getUserFollowingPreview(userDetail(uid = getAuthInfo().user.uid, ignore = apiIgnore))
+
     /**
      * 缓存关注列表
      */
@@ -135,13 +182,17 @@ object PixivCacheCommand : CompositeCommand(
         getHelper().addCacheJob("FOLLOW") { getFollowIllusts() }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank(date: String? = null) = getHelper().run {
-        RankMode.values().forEach {
-            addCacheJob("RANK[${it.name}](${date ?: "new"})") {
-                getRank(mode = it, date = date)
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank(date: LocalDate? = null) = getHelper().run {
+        cacheRanks.forEach { mode ->
+            addCacheJob("RANK[${mode.name}](${date ?: "new"})") {
+                getRank(mode = mode, date = date)
             }
         }
     }
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) =
+        getHelper().addCacheJob("YEAR(${year})") { getYear(year) }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
@@ -153,15 +204,14 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
-        PixivAliasData.aliases.values.toSet().sorted().also {
-            logger.verbose { "别名中{${it.first()}...${it.last()}}共${it.size}个画师需要缓存" }
-        }.also { list ->
+        PixivAliasData.aliases.values.toSet().sorted().also { list ->
+            logger.verbose { "别名中{${list.first()}...${list.last()}}共${list.size}个画师需要缓存" }
             launch {
                 list.forEachIndexed { index, uid ->
-                    isActive && runCatching {
+                    if (isActive) runCatching {
                         userDetail(uid = uid, ignore = apiIgnore).let { detail ->
-                            logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
-                            if (detail.total() > useArtWorkInfoMapper { it.countByUid(uid) }) {
+                            if (detail.total() > detail.count()) {
+                                logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
                                 addCacheJob("${index}.USER(${uid})") {
                                     getUserIllusts(detail)
                                 }
@@ -169,7 +219,7 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }.onFailure {
                         logger.warning({ "别名缓存${uid}失败" }, it)
-                    }.isSuccess
+                    }
                 }
             }
         }
@@ -179,58 +229,25 @@ object PixivCacheCommand : CompositeCommand(
         sendMessage(it.toString())
     }.isSuccess
 
-
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.followPreview() =
-        getHelper().addCacheJob("FOLLOW_PREVIEW") {
-            getUserFollowing(userDetail(uid = getAuthInfo().user.uid, ignore = apiIgnore)).flatMap { it.illusts }
-        }
-
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followAll() = getHelper().runCatching {
-        getUserFollowing(userDetail(
-            uid = getAuthInfo().user.uid,
-            ignore = apiIgnore
-        )).sortedBy { it.user.id }.also { list ->
+        getUserFollowingPreview().sortedBy { it.user.id }.also { list ->
             logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
             launch {
                 list.forEachIndexed { index, preview ->
                     if (isActive) runCatching {
                         if (preview.isLoaded().not()) {
                             userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
-                                logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                addCacheJob("${index}.USER(${detail.user.id})") {
-                                    getUserIllusts(detail)
-                                }
-                            }
-                        }
-                    }.onFailure {
-                        logger.warning({ "关注缓存${preview.user.id}失败" }, it)
-                    }
-                }
-            }
-        }
-    }.onSuccess {
-        sendMessage("关注列表中共${it.size}个画师需要缓存")
-    }.onFailure {
-        sendMessage(it.toString())
-    }.isSuccess
-
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.followEro() = getHelper().runCatching {
-        getUserFollowing(userDetail(
-            uid = getAuthInfo().user.uid,
-            ignore = apiIgnore
-        )).sortedBy { it.user.id }.also { list ->
-            logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
-            launch {
-                list.forEachIndexed { index, preview ->
-                    if (isActive) runCatching {
-                        if (preview.isLoaded().not()) {
-                            userDetail(uid = preview.user.id, ignore = apiIgnore).let { detail ->
-                                logger.verbose { "USER(${index}.${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                addCacheJob("USER(${index}.${detail.user.id})") {
-                                    getUserIllusts(detail).filter { it.isEro() }
+                                if (detail.total() > detail.count() + preview.illusts.size) {
+                                    logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                    addCacheJob("${index}.USER(${detail.user.id})") {
+                                        getUserIllusts(detail)
+                                    }
+                                } else {
+                                    logger.verbose { "${index}.USER(${detail.user.id})有${preview.illusts.size}个作品尝试缓存" }
+                                    addCacheJob("${index}.USER_PREVIEW(${detail.user.id})") {
+                                        preview.illusts
+                                    }
                                 }
                             }
                         }
@@ -251,7 +268,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
-        getHelper().addCacheJob("USER(${uid})") { getUserIllusts(userDetail(uid = uid, ignore = apiIgnore)) }
+        getHelper().addCacheJob("USER(${uid})") { getUserIllusts(uid = uid) }
 
     /**
      * 从文件夹中加载信息
@@ -270,7 +287,7 @@ object PixivCacheCommand : CompositeCommand(
                 }?.map { dir ->
                     dir.name.toLong()
                 }.takeUnless { it.isNullOrEmpty() }?.let { list ->
-                    list - useArtWorkInfoMapper { it.keys((list.minOrNull()!!) .. (list.maxOrNull()!!))}
+                    list - useArtWorkInfoMapper { it.keys((list.minOrNull()!!)..(list.maxOrNull()!!)) }
                 }.takeUnless { it.isNullOrEmpty() }?.let { list ->
                     addCacheJob("LOAD(${second.name})", false) {
                         list.map {
@@ -313,7 +330,7 @@ object PixivCacheCommand : CompositeCommand(
                         }
                     }
                     useFileInfoMapper { it.fileInfos(pid) }.filter { infos ->
-                        File(dir, infos.url.getFilename()).exists().not()
+                        dir.resolve(infos.url.getFilename()).exists().not()
                     }.let { infos ->
                         downloadImageUrls(urls = infos.map { it.url }, dir = dir).forEachIndexed { index, result ->
                             result.onFailure {
@@ -347,9 +364,8 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     fun ConsoleCommandSender.remove(pid: Long) {
-        useArtWorkInfoMapper { it.deleteByPid(pid) }.let {
-            logger.info { "色图作品(${pid})信息将从缓存移除" }
-        }
+        useArtWorkInfoMapper { it.deleteByPid(pid) }
+        logger.info { "色图作品(${pid})信息将从缓存移除" }
         PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
                 it.delete()
