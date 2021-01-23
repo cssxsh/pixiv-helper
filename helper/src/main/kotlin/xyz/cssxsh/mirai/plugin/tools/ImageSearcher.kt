@@ -6,9 +6,8 @@ import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
-import net.mamoe.mirai.utils.warning
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.Jsoup
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.data.SearchResult
 import kotlin.io.use
 
@@ -45,45 +44,36 @@ object ImageSearcher {
             SearchResult(
                 similarity = content.select(".resultsimilarityinfo")
                     .text().replace("%", "").toDouble() / 100,
-                content = content.select(".resultcontent").text(),
-                pid = content.select(".resultcontent a.linkify").first().text().toLong(),
-                uid = content.select(".resultcontent a.linkify").last().attr("href").run {
-                    substring(lastIndexOf("=") + 1).toLong()
-                }
+                content = content.select(".resultcontent")
+                    .text(),
+                pid = content.select(".resultcontent a.linkify")
+                    .first().text().toLong(),
+                uid = content.select(".resultcontent a.linkify")
+                    .last().attr("href").toHttpUrl().queryParameter("id")!!.toLong()
             )
         }
 
     suspend fun getSearchResults(
         ignore: suspend (Throwable) -> Boolean = { _ -> false },
-        picUrl: String
+        url: String,
     ): List<SearchResult> = useHttpClient(ignore) { client ->
         client.get<String>(API) {
             parameter("db", DB_INDEX)
-            parameter("url", picUrl)
-        }.let { html ->
-            parse(html)
+            parameter("url", url)
         }
-    }
+    }.let { html -> parse(html) }
 
     suspend fun postSearchResults(
         ignore: suspend (Throwable) -> Boolean = { _ -> false },
-        picUrl: String
+        file: ByteArray,
     ): List<SearchResult> = useHttpClient(ignore) { client ->
-        runCatching {
-            client.get<ByteArray>(picUrl)
-        }.onFailure {
-            logger.warning({ "图片下载失败, $picUrl" }, it)
-        }.getOrThrow().let {
-            client.post<String>(API) {
-                body = MultiPartFormDataContent(formData {
-                    append("database", DB_INDEX)
-                    append("file", "file.jpg") {
-                        writeFully(it)
-                    }
-                })
-            }
-        }.let { html ->
-            parse(html)
+        client.post<String>(API) {
+            body = MultiPartFormDataContent(formData {
+                append("database", DB_INDEX)
+                append("file", "file.jpg") {
+                    writeFully(file)
+                }
+            })
         }
-    }
+    }.let { html -> parse(html) }
 }
