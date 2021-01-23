@@ -57,40 +57,38 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private val cacheList: MutableList<Pair<String, suspend PixivHelper.() -> List<IllustInfo>>> = mutableListOf()
 
-    private suspend fun loadCache(name: String, list: List<IllustInfo>) {
-        list.sortedBy { it.pid }.takeIf { it.isNotEmpty() }?.apply {
-            logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
+    private suspend fun Collection<IllustInfo>.loadCache(name: String): Unit = sortedBy { it.pid }.run {
+        logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
+        runCatching {
+            reply("任务<$name>有{${first().pid..last().pid}}共${size}个新作品等待缓存")
+        }
+        runCatching {
+            size to map { illust ->
+                delay(delayTime)
+                async {
+                    illust to (isActive && illust.runCatching {
+                        getImages()
+                    }.onFailure {
+                        logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
+                        runCatching {
+                            reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
+                        }
+                    }.isSuccess)
+                }
+            }.awaitAll().mapNotNull { (illust, success) ->
+                illust.takeIf {
+                    success
+                }
+            }.apply { saveToSQLite() }.size
+        }.onSuccess { (total, success) ->
+            logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
             runCatching {
-                reply("任务<$name>有{${first().pid..last().pid}}共${size}个新作品等待缓存")
+                reply("任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个")
             }
+        }.onFailure {
+            logger.warning({ "任务<$name>缓存失败" }, it)
             runCatching {
-                size to map { illust ->
-                    delay(delayTime)
-                    async {
-                        illust to (isActive && illust.runCatching {
-                            getImages()
-                        }.onFailure {
-                            logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                            runCatching {
-                                reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                            }
-                        }.isSuccess)
-                    }
-                }.awaitAll().mapNotNull { (illust, success) ->
-                    illust.takeIf {
-                        success
-                    }
-                }.apply { saveToSQLite() }.size
-            }.onSuccess { (total, success) ->
-                logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
-                runCatching {
-                    reply("任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个")
-                }
-            }.onFailure {
-                logger.warning({ "任务<$name>缓存失败" }, it)
-                runCatching {
-                    reply("任务<$name>缓存失败, ${it.message}")
-                }
+                reply("任务<$name>缓存失败, ${it.message}")
             }
         }
     }
@@ -102,16 +100,17 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 cacheJob = launch(Dispatchers.IO) {
                     while (isActive && cacheList.isNotEmpty()) {
                         cacheList.removeFirst().let { (name, getIllusts) ->
-                            getIllusts.invoke(this@PixivHelper).sortedBy { it.pid }.takeIf { it.isNotEmpty() }
-                                ?.let { list ->
-                                    if (write) list.writeToCache()
-                                    useArtWorkInfoMapper {
-                                        it.keys(list.first().pid..list.last().pid)
-                                    }.let { keys ->
-                                        list.filter { it.pid in keys }.takeIf { it.isNotEmpty() }?.updateToSQLite()
-                                        loadCache(name, list.filter { it.pid !in keys })
+                            getIllusts.invoke(this@PixivHelper).let { list ->
+                                if (write) list.writeToCache()
+                                useArtWorkInfoMapper { mapper ->
+                                    list.groupBy {
+                                        mapper.contains(it.pid)
                                     }
+                                }.let { map ->
+                                    map[true]?.updateToSQLite()
+                                    map[false]?.loadCache(name)
                                 }
+                            }
                         }
                     }
                 }
