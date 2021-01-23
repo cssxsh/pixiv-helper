@@ -27,19 +27,19 @@ object PixivFollowCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000): Set<Long> = buildList {
+    private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
         (0 until maxNum step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
                 userFollowing(uid = uid, offset = offset, ignore = apiIgnore).userPreviews.map { it.user.id }
             }.onSuccess {
-                if (it.isEmpty()) return@buildList
-                add(it)
+                if (it.isEmpty()) return@buildSet
+                addAll(it)
                 logger.verbose { "加载(${uid})关注用户预览第${page}页{${it.size}}成功" }
             }.onFailure {
                 logger.warning({ "加载(${uid})关注用户预览第${page}页失败" }, it)
             }
         }
-    }.flatten().toSet()
+    }
 
     /**
      * 关注色图作者
@@ -68,14 +68,14 @@ object PixivFollowCommand : CompositeCommand(
                         logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
                         if (num >= 8) {
                             logger.verbose { "用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时" }
-                            delay((1).minutes.toLongMilliseconds())
+                            delay((1).minutes)
                             num = 0
                         } else {
                             num++
                         }
                     }.onFailure {
                         logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
-                        delay((3).minutes.toLongMilliseconds())
+                        delay((3).minutes)
                     }.isSuccess
                 }
             }.onSuccess { (total, success) ->
