@@ -55,6 +55,11 @@ fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { session ->
     session.getMapper(TagInfoMapper::class.java).let(block)
 }
 
+@MiraiInternalApi
+internal fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
+    """%02x""".format(it.toInt())
+}
+
 fun String.getFilename() = substring(lastIndexOfAny(listOf("\\", "/")) + 1)
 
 fun IllustInfo.getMessage(): Message = buildMessageChain {

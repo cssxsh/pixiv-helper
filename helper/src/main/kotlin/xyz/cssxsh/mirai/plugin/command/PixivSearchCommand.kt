@@ -5,11 +5,9 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
-import net.mamoe.mirai.utils.MiraiInternalApi
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
@@ -43,12 +41,6 @@ object PixivSearchCommand : SimpleCommand(
             throw IllegalStateException("搜索次数超过${MAX_REPEAT}", it)
         }
     }.getOrElse { search(url, repeat + 1) }
-
-
-    @MiraiInternalApi
-    private fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
-        """%02x""".format(it.toInt())
-    }
 
     @Handler
     @Suppress("unused")
