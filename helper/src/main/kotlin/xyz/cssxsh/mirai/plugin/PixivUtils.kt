@@ -11,7 +11,6 @@ import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okhttp3.internal.http2.StreamResetException
-import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -90,7 +89,7 @@ suspend fun PixivHelper.buildMessageByIllust(
         })
     }
     if (!illust.isR18()) {
-        getImages(pid = illust.pid, urls = illust.getOriginUrl()).forEach {
+        illust.getImages().forEach {
             add(it.uploadAsImage(contact))
         }
     } else {
@@ -302,5 +301,26 @@ suspend fun PixivHelper.getIllustInfo(
         block(pid).apply {
             writeTo(file)
         }
+    }
+}
+
+suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
+    getOriginUrl().filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
+        dir.mkdirs()
+        PixivHelperDownloader.downloadImageUrls(downloads) { _, url, result ->
+            runCatching {
+                dir.resolve(url.getFilename()).apply {
+                    writeBytes(result.getOrThrow())
+                }
+            }.onFailure {
+                logger.warning({ "作品(${pid})[$url]下载错误" }, it)
+            }.exceptionOrNull()
+        }.mapNotNull { it }.let {
+            check(it.isEmpty()) { "作品(${pid})下载错误, $it" }
+        }
+        logger.info { "作品(${pid}){${downloads.size}}下载完成" }
+    }
+    getOriginUrl().map { url ->
+        dir.resolve(url.getFilename())
     }
 }

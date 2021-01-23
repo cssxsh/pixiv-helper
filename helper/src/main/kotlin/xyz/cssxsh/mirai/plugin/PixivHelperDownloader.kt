@@ -51,28 +51,4 @@ object PixivHelperDownloader : PixivDownloader(
             }
         }
     )
-
-    suspend fun getImages(
-        pid: Long,
-        urls: List<String>,
-    ): List<File> = imagesFolder(pid).let { dir ->
-        urls.filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
-            dir.mkdirs()
-            downloadImageUrls(downloads) { _, url, result ->
-                runCatching {
-                    dir.resolve(url.getFilename()).apply {
-                        writeBytes(result.getOrThrow())
-                    }
-                }.onFailure {
-                    logger.warning({ "作品(${pid})下载错误" }, it)
-                }.exceptionOrNull()
-            }.mapNotNull { it }.let {
-                check(it.isEmpty()) { "作品(${pid})下载错误, ${it.first()}" }
-            }
-            logger.info { "作品(${pid}){${downloads.size}}下载完成" }
-        }
-        urls.map { url ->
-            dir.resolve(url.getFilename())
-        }
-    }
 }

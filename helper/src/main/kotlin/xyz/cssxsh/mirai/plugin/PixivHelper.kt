@@ -8,7 +8,6 @@ import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.getImages
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
@@ -69,7 +68,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                     delay(delayTime)
                     async {
                         illust to (isActive && illust.runCatching {
-                            getImages(pid, getOriginUrl())
+                            getImages()
                         }.onFailure {
                             logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
                             runCatching {
