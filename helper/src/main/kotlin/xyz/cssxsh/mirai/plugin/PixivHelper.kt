@@ -10,7 +10,6 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.delayTime
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.AuthInfoDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
@@ -64,7 +63,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
         runCatching {
             size to map { illust ->
-                delay(delayTime)
                 async {
                     illust to (isActive && illust.runCatching {
                         getImages()

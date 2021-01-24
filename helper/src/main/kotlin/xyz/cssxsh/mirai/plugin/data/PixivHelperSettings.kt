@@ -29,12 +29,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     val backupPath: String by value("")
 
     /**
-     * 缓存延迟时间
-     */
-    @ValueName("delay_time")
-    val delayTime: Long by value((10).seconds.toLongMilliseconds())
-
-    /**
      * 涩图标准
      */
     @ValueName("total_bookmarks")
