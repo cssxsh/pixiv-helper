@@ -54,7 +54,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
             dataFolder.resolve("cache")
         } else {
             File(cachePath)
-        }.apply { mkdir() }
+        }
 
     /**
      * 压缩文件保存目录
@@ -64,7 +64,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
             dataFolder.resolve("backup")
         } else {
             File(backupPath)
-        }.apply { mkdir() }
+        }
 
     /**
      * 图片目录

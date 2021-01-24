@@ -68,6 +68,9 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivInfoCommand.register()
         PixivGetCommand.register()
 
+        PixivHelperSettings.cacheFolder.mkdirs()
+        PixivHelperSettings.backupFolder.mkdirs()
+
         PixivHelperDownloader.apply {
             proxyUrl = PixivConfigData.default.proxy
         }
