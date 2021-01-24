@@ -35,7 +35,7 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
-    fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
+    internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
         sqlSessionFactory.openSession(false).use { session ->
             session.let(block).also { session.commit() }
         }

@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
+import io.ktor.http.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
@@ -32,27 +33,27 @@ import kotlin.time.minutes
 /**
  * 获取对应subject的助手
  */
-fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
+internal fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
 
-suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: Message) =
-    sendMessage(fromEvent.message.quote() + message)
+internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: Message) =
+    sendMessage(message + fromEvent.message.quote())
 
-suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
-    sendMessage(fromEvent.message.quote() + message)
+internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
+    quoteReply(message.toPlainText())
 
-fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
+internal fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
     session.getMapper(ArtWorkInfoMapper::class.java).let(block)
 }
 
-fun <T> useFileInfoMapper(block: (FileInfoMapper) -> T) = useSession { session ->
+internal fun <T> useFileInfoMapper(block: (FileInfoMapper) -> T) = useSession { session ->
     session.getMapper(FileInfoMapper::class.java).let(block)
 }
 
-fun <T> useUserInfoMapper(block: (UserInfoMapper) -> T) = useSession { session ->
+internal fun <T> useUserInfoMapper(block: (UserInfoMapper) -> T) = useSession { session ->
     session.getMapper(UserInfoMapper::class.java).let(block)
 }
 
-fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { session ->
+internal fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { session ->
     session.getMapper(TagInfoMapper::class.java).let(block)
 }
 
@@ -61,9 +62,9 @@ internal fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
     """%02x""".format(it.toInt())
 }
 
-fun String.getFilename() = substring(lastIndexOfAny(listOf("\\", "/")) + 1)
+internal fun Url.getFilename() = encodedPath.substring(encodedPath.lastIndexOfAny(listOf("\\", "/")) + 1)
 
-fun IllustInfo.getMessage(): Message = buildMessageChain {
+internal fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
     appendLine("收藏数: $totalBookmarks ")
@@ -74,25 +75,29 @@ fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
 }
 
-suspend fun PixivHelper.buildMessageByIllust(
+internal fun IllustInfo.getSimpleMessage(): Message = buildMessageChain {
+    appendLine("PID: $pid ")
+    appendLine("UID: ${user.id} ")
+    appendLine("收藏数: $totalBookmarks ")
+    appendLine("SAN值: $sanityLevel ")
+}
+
+internal fun IllustInfo.getPixivCat(): Message = buildMessageChain {
+    appendLine("原图连接: ")
+    getPixivCatUrls().forEach {
+        appendLine(it)
+    }
+}
+
+internal suspend fun PixivHelper.buildMessageByIllust(
     illust: IllustInfo,
     save: Boolean = true,
 ): List<Message> = buildList {
     if (simpleInfo) {
-        add(buildMessageChain {
-            appendLine("PID: ${illust.pid} ")
-            appendLine("UID: ${illust.user.id} ")
-            appendLine("收藏数: ${illust.totalBookmarks} ")
-            appendLine("SAN值: ${illust.sanityLevel} ")
-        })
+        add(illust.getSimpleMessage())
     } else {
         add(illust.getMessage())
-        add(buildMessageChain {
-            appendLine("原图连接: ")
-            illust.getPixivCatUrls().forEach {
-                appendLine(it)
-            }
-        })
+        add(illust.getPixivCat())
     }
     if (!illust.isR18()) {
         illust.getImages().forEach {
@@ -106,14 +111,14 @@ suspend fun PixivHelper.buildMessageByIllust(
     }
 }
 
-suspend fun PixivHelper.buildMessageByIllust(
+internal suspend fun PixivHelper.buildMessageByIllust(
     pid: Long,
 ): List<Message> = buildMessageByIllust(
     illust = getIllustInfo(pid),
     save = false
 )
 
-fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
+internal fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
     if (pageCount > 1) {
         (1..pageCount).forEach {
             add("https://pixiv.cat/${pid}-${it}.jpg")
@@ -123,19 +128,19 @@ fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
     }
 }
 
-fun IllustInfo.isR18(): Boolean =
+internal fun IllustInfo.isR18(): Boolean =
     tags.any { """R-?18""".toRegex() in it.name }
 
-fun IllustInfo.isEro(): Boolean =
+internal fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
-fun IllustInfo.getUserInfo() = UserInfo(
+internal fun IllustInfo.getUserInfo() = UserInfo(
     uid = user.id,
     name = user.name,
     account = user.account
 )
 
-fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
+internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     pid = pid,
     uid = user.id,
     title = title,
@@ -153,17 +158,17 @@ fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     isEro = isEro()
 )
 
-fun IllustInfo.getFileInfos() = getOriginUrl().mapIndexed { index, url ->
+internal fun IllustInfo.getFileInfos() = getOriginImageUrls().mapIndexed { index, url ->
     FileInfo(
         pid = pid,
         index = index,
-        md5 = imagesFolder(pid).resolve(url.getFilename()).readBytes().getMd5(),
+        md5 = imagesFolder(pid).resolve(Url(url).getFilename()).readBytes().getMd5(),
         url = url,
-        size = imagesFolder(pid).resolve(url.getFilename()).length()
+        size = imagesFolder(pid).resolve(Url(url).getFilename()).length()
     )
 }
 
-fun IllustInfo.getTagInfo() = tags.map {
+internal fun IllustInfo.getTagInfo() = tags.map {
     TagInfo(
         pid = pid,
         name = it.name,
@@ -174,7 +179,7 @@ fun IllustInfo.getTagInfo() = tags.map {
 internal fun UserInfoMapper.addUserByIllustInfo(user: UserInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
-fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
+internal fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
     session.getMapper(UserInfoMapper::class.java).addUserByIllustInfo(getUserInfo())
     session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
     session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
@@ -184,7 +189,7 @@ fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
     logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
 }
 
-fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
 
     session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
@@ -207,7 +212,7 @@ fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
 }
 
-fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将插入" }
 
     session.getMapper(UserInfoMapper::class.java).let { mapper ->
@@ -243,7 +248,7 @@ fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session ->
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
-fun ByteArray.getMd5(): String =
+internal fun ByteArray.getMd5(): String =
     MessageDigest.getInstance("md5").digest(this).asUByteArray().joinToString("") {
         """%02x""".format(it.toInt())
     }
@@ -255,20 +260,20 @@ internal val Json_ = Json {
     allowStructuredMapKeys = true
 }
 
-fun IllustInfo.writeTo(file: File, ) =
+internal fun IllustInfo.writeTo(file: File) =
     file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
 
-fun File.readIllustInfo(): IllustInfo =
+internal fun File.readIllustInfo(): IllustInfo =
     Json_.decodeFromString(IllustInfo.serializer(), readText())
 
-fun IllustInfo.writeToCache() =
+internal fun IllustInfo.writeToCache() =
     writeTo(imagesFolder(pid).resolve("${pid}.json"))
 
-fun Collection<IllustInfo>.writeToCache() = forEach { illust ->
+internal fun Iterable<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
 }
 
-val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+internal val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
@@ -288,7 +293,7 @@ val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
             }
             "Rate Limit" -> {
                 logger.warning { "API限流, 已延时: ${throwable.message}" }
-                delay((10).minutes.toLongMilliseconds())
+                delay((10).minutes)
                 true
             }
             else -> false
@@ -296,7 +301,7 @@ val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     }
 }
 
-suspend fun PixivHelper.getIllustInfo(
+internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = apiIgnore).illust },
@@ -310,23 +315,23 @@ suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
-    getOriginUrl().filter { dir.resolve(it.getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
+internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
+    getOriginImageUrls().filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
         dir.mkdirs()
         PixivHelperDownloader.downloadImageUrls(downloads) { _, url, result ->
             runCatching {
-                dir.resolve(url.getFilename()).apply {
+                dir.resolve(Url(url).getFilename()).apply {
                     writeBytes(result.getOrThrow())
                 }
             }.onFailure {
                 logger.warning({ "作品(${pid})[$url]下载错误" }, it)
-            }.exceptionOrNull()
-        }.mapNotNull { it }.let {
-            check(it.isEmpty()) { "作品(${pid})下载错误, $it" }
+            }
+        }.let { list ->
+            check(list.all { it.isSuccess }) { "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull() }}" }
         }
-        logger.info { "作品(${pid}){${downloads.size}}下载完成" }
+        logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
-    getOriginUrl().map { url ->
-        dir.resolve(url.getFilename())
+    getOriginImageUrls().map { url ->
+        dir.resolve(Url(url).getFilename())
     }
 }

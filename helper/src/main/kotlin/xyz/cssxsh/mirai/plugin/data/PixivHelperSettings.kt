@@ -7,7 +7,6 @@ import org.sqlite.JDBC
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
 import java.io.File
-import kotlin.time.seconds
 
 object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
     /**

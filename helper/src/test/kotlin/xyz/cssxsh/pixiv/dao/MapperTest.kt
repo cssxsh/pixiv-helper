@@ -83,44 +83,10 @@ internal class MapperTest {
         val dir = imagesFolder(24924)
         dir.resolve("24924.json").readIllustInfo().run {
             sqlSessionFactory.openSession().use { session ->
-                session.getMapper(UserInfoMapper::class.java).replaceUser(UserInfo(
-                    uid = user.id,
-                    name = user.name,
-                    account = user.account
-                ))
-                session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(ArtWorkInfo(
-                    pid = pid,
-                    uid = user.id,
-                    title = title,
-                    caption = caption,
-                    createDate = createDate,
-                    pageCount = pageCount,
-                    sanityLevel = sanityLevel,
-                    type = type.value(),
-                    width = width,
-                    height = height,
-                    totalBookmarks = totalBookmarks ?: 0,
-                    totalComments = totalComments ?: 0,
-                    totalView = totalView ?: 0,
-                    isR18 = isR18(),
-                    isEro = isEro()
-                ))
-                session.getMapper(FileInfoMapper::class.java).replaceFiles(getOriginUrl().mapIndexed { index, url ->
-                    FileInfo(
-                        pid = pid,
-                        index = index,
-                        md5 = dir.resolve(url.getFilename()).readBytes().getMd5(),
-                        url = url,
-                        size = dir.resolve(url.getFilename()).length()
-                    )
-                })
-                session.getMapper(TagInfoMapper::class.java).replaceTags(tags.map {
-                    TagInfo(
-                        pid = pid,
-                        name = it.name,
-                        translatedName = it.translatedName
-                    )
-                })
+                session.getMapper(UserInfoMapper::class.java).replaceUser(getUserInfo())
+                session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
+                session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
+                session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
             }
         }
     }

@@ -1,12 +1,10 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
+import io.ktor.http.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.pixiv.tool.PixivDownloader
 import java.io.EOFException
 import java.io.File
@@ -15,6 +13,11 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 
 object PixivHelperDownloader : PixivDownloader(
+    host = mapOf(
+        "i.pximg.net" to (134..147).map {
+            "210.140.92.${it}"
+        }
+    ),
     ignore = { _, throwable, _ ->
         when (throwable) {
             is SSLException,
@@ -45,7 +48,7 @@ object PixivHelperDownloader : PixivDownloader(
         urls = urls,
         block = { _, url, result ->
             runCatching {
-                dir.resolve(url.getFilename()).apply {
+                dir.resolve(Url(url).getFilename()).apply {
                     writeBytes(result.getOrThrow())
                 }
             }

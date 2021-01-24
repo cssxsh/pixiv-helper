@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.client.features.*
+import io.ktor.http.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSender
@@ -23,6 +24,7 @@ import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.app.*
 import xyz.cssxsh.pixiv.data.app.UserDetail
 import xyz.cssxsh.pixiv.data.app.UserPreview
+import java.io.File
 import java.time.LocalDate
 import java.time.Year
 
@@ -69,7 +71,7 @@ object PixivCacheCommand : CompositeCommand(
         RankMode.DAY_FEMALE,
     )
 
-    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = 10_000) = buildList {
+    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = 500) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 illustRanking(mode = mode, date = date, offset = offset, ignore = apiIgnore).illusts
@@ -83,15 +85,10 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getYear(year: Year) = buildList {
+    private fun loadDayOfYears(year: Year) = buildList {
         (1..12).forEach { month ->
-            if (isActive) runCatching {
-                illustRanking(mode = RankMode.MONTH, date = year.atMonth(month).atEndOfMonth(), ignore = apiIgnore).illusts
-            }.onSuccess {
-                addAll(it)
-                logger.verbose { "加载排行榜[${RankMode.MONTH}](${year.atMonth(month).atEndOfMonth()}){${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载排行榜[${RankMode.MONTH}](${year.atMonth(month).atEndOfMonth()})失败" }, it)
+            (0..3L).forEach { week ->
+                add(year.atMonth(month).atEndOfMonth().plusWeeks(week))
             }
         }
     }
@@ -191,8 +188,13 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) =
-        getHelper().addCacheJob("YEAR(${year})") { getYear(year) }
+    suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
+        loadDayOfYears(year).forEach { date ->
+            addCacheJob("YEAR[${year}]($date)") {
+                getRank(mode = RankMode.MONTH, date = date).filter { it.isEro() }
+            }
+        }
+    }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
@@ -270,28 +272,39 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
         getHelper().addCacheJob("USER(${uid})") { getUserIllusts(uid = uid) }
 
+    private fun File.listDirs(regex: Regex) =
+        listFiles { file -> file.name.matches(regex) && file.isDirectory } ?: emptyArray()
+
+    private fun File.isIgnore(start: Long = 0L) =
+        name.replace('_', '0').toLong() < start
+
     /**
      * 从文件夹中加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.load() = getHelper().run {
-        PixivHelperSettings.cacheFolder.listFiles { file ->
-            file.name.matches("""\d{3}______""".toRegex()) && file.isDirectory
-        }?.forEach { first ->
-            first.listFiles { file ->
-                file.name.matches("""\d{6}___""".toRegex()) && file.isDirectory
-            }?.forEach { second ->
-                second.listFiles { file ->
-                    file.name.matches("""\d+""".toRegex()) && file.isDirectory &&
-                        file.resolve("${file.name}.json").exists()
-                }?.map { dir ->
-                    dir.name.toLong()
-                }.takeUnless { it.isNullOrEmpty() }?.let { list ->
-                    list - useArtWorkInfoMapper { it.keys((list.minOrNull()!!)..(list.maxOrNull()!!)) }
-                }.takeUnless { it.isNullOrEmpty() }?.let { list ->
-                    addCacheJob("LOAD(${second.name})", false) {
-                        list.map {
-                            getIllustInfo(it)
+    fun CommandSenderOnMessage<MessageEvent>.load(start: Long = 0L) = getHelper().run {
+        PixivHelperSettings.cacheFolder.also {
+            logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
+        }.listDirs("""\d{3}______""".toRegex()).forEach { first ->
+            if (first.isIgnore(start).not()) {
+                addCacheJob("LOAD(${first.name})", false) {
+                    logger.info { "${first.absolutePath} 开始加载" }
+                    first.listDirs("""\d{6}___""".toRegex()).flatMap { second ->
+                        if (second.isIgnore(start)) {
+                            emptyList()
+                        } else {
+                            second.listDirs("""\d+""".toRegex()).filter { dir ->
+                                useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not() &&
+                                    dir.isIgnore(start).not()
+                            }.mapNotNull { dir ->
+                                dir.resolve("${dir.name}.json").let {
+                                    if (it.canRead()) {
+                                        it.readIllustInfo()
+                                    } else {
+                                        null
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -312,7 +325,6 @@ object PixivCacheCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * FIXME
      * 检查当前缓存中不可读，删除并重新下载
      */
     @SubCommand
@@ -329,8 +341,8 @@ object PixivCacheCommand : CompositeCommand(
                             illustDetail(pid).illust.writeTo(file)
                         }
                     }
-                    useFileInfoMapper { it.fileInfos(pid) }.filter { infos ->
-                        dir.resolve(infos.url.getFilename()).exists().not()
+                    useFileInfoMapper { it.fileInfos(pid) }.filter { info ->
+                        dir.resolve(Url(info.url).getFilename()).exists().not()
                     }.let { infos ->
                         downloadImageUrls(urls = infos.map { it.url }, dir = dir).forEachIndexed { index, result ->
                             result.onFailure {
