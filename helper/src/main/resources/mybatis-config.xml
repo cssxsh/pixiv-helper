@@ -12,9 +12,6 @@
         <!-- <setting name="localCacheScope" value="STATEMENT"/> -->
         <setting name="localCacheScope" value="SESSION"/>
     </settings>
-    <typeHandlers>
-        <typeHandler javaType="java.time.OffsetDateTime" handler="xyz.cssxsh.pixiv.model.OffsetDateTimeHandler" />
-    </typeHandlers>
 
     <environments default="development">
         <environment id="development">

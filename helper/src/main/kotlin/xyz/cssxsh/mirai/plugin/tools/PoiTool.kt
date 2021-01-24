@@ -12,7 +12,6 @@ import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 @Suppress("unused")
 object PoiTool {
@@ -70,7 +69,7 @@ object PoiTool {
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE")).apply {
-                                setCellValue(Date.from(info.createDate.toInstant()))
+                                setCellValue(info.createAt)
                                 cellStyle = dateStyle
                             }
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())

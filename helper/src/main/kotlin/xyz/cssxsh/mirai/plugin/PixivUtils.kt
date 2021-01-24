@@ -25,6 +25,7 @@ import java.io.File
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.security.MessageDigest
+import java.time.ZoneOffset
 import javax.net.ssl.SSLException
 import kotlin.time.minutes
 
@@ -139,7 +140,7 @@ fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     uid = user.id,
     title = title,
     caption = caption,
-    createDate = createDate,
+    createAt = createDate.withOffsetSameInstant(ZoneOffset.ofHours(9)).toLocalDateTime(),
     pageCount = pageCount,
     sanityLevel = sanityLevel,
     type = type.value(),

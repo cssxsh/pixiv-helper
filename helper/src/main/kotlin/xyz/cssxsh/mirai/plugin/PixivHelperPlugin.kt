@@ -86,7 +86,7 @@ object PixivHelperPlugin : KotlinPlugin(
                     setSynchronous(SynchronousMode.OFF)
                     setEncoding(Encoding.UTF8)
                 }
-                url = sqliteUrl
+                url = sqliteUrl()
             })
         }
         // Listener

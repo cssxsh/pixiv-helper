@@ -2,8 +2,7 @@ package xyz.cssxsh.pixiv.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import xyz.cssxsh.pixiv.data.JapanDateTimeSerializer
-import java.time.OffsetDateTime
+import java.time.LocalDateTime
 
 @Serializable
 data class ArtWorkInfo(
@@ -15,9 +14,9 @@ data class ArtWorkInfo(
     val title: String,
     @SerialName("caption")
     val caption: String,
-    @SerialName("create_date")
-    @Serializable(with = JapanDateTimeSerializer::class)
-    val createDate: OffsetDateTime,
+    @SerialName("create_at")
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val createAt: LocalDateTime,
     @SerialName("page_count")
     val pageCount: Int,
     @SerialName("sanity_level")

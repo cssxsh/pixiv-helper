@@ -45,6 +45,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
         cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
     ))
 
+    @ValueName("sqlite")
+    val database: String by value("pixiv.sqlite")
 
     /**
      * 缓存目录
@@ -74,7 +76,12 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
 
-    val sqliteUrl: String
-        get() =
-            "${JDBC.PREFIX}${File(".").resolve("pixiv.sqlite").absolutePath}"
+    fun sqliteUrl(): String = File(".").resolve(database).run {
+        if (exists().not()) {
+            this@PixivHelperSettings::class.java.getResourceAsStream("pixiv.sqlite")?.use {
+                writeBytes(it.readAllBytes())
+            }
+        }
+        "${JDBC.PREFIX}${absolutePath}"
+    }
 }
