@@ -57,7 +57,7 @@ object PixivFollowCommand : CompositeCommand(
             }.sorted().also {
                 logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
                 it.runCatching {
-                    reply("{${first()}...${last()}}共${size}个画师等待关注")
+                    reply("{${first()..last()}}共${size}个画师等待关注")
                 }
             }.runCatching {
                 var num = 0

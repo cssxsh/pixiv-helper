@@ -207,7 +207,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
         PixivAliasData.aliases.values.toSet().sorted().also { list ->
-            logger.verbose { "别名中{${list.first()}...${list.last()}}共${list.size}个画师需要缓存" }
+            logger.verbose { "别名中{${list.first()..list.last()}}共${list.size}个画师需要缓存" }
             launch {
                 list.forEachIndexed { index, uid ->
                     if (isActive) runCatching {
@@ -234,7 +234,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followAll() = getHelper().runCatching {
         getUserFollowingPreview().sortedBy { it.user.id }.also { list ->
-            logger.verbose { "关注中{${list.first().user.id}...${list.last().user.id}}共${list.size}个画师需要缓存" }
+            logger.verbose { "关注中{${list.first().user.id..list.last().user.id}}共${list.size}个画师需要缓存" }
             launch {
                 list.forEachIndexed { index, preview ->
                     if (isActive) runCatching {
@@ -330,7 +330,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
         useArtWorkInfoMapper { it.keys(0L..999_999_999L) }.sorted().also {
-            logger.verbose { "{${it.first()}...${it.last()}}共有 ${it.size} 个作品需要检查" }
+            logger.verbose { "{${it.first()..it.last()}}共有 ${it.size} 个作品需要检查" }
         }.run {
             size to count { pid ->
                 runCatching {
