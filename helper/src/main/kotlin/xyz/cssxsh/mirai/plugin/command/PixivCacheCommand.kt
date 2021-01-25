@@ -276,7 +276,7 @@ object PixivCacheCommand : CompositeCommand(
         listFiles { file -> file.name.matches(regex) && file.isDirectory } ?: emptyArray()
 
     private fun File.isIgnore(start: Long = 0L) =
-        name.replace('_', '0').toLong() < start
+        name.replace('_', '9').toLong() < start
 
     /**
      * 从文件夹中加载信息
