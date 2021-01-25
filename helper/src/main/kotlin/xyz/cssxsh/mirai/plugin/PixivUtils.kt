@@ -17,9 +17,9 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.WorkContentType
-import xyz.cssxsh.pixiv.api.app.illustDetail
+import xyz.cssxsh.pixiv.api.apps.illustDetail
 import xyz.cssxsh.pixiv.dao.*
-import xyz.cssxsh.pixiv.data.app.IllustInfo
+import xyz.cssxsh.pixiv.data.apps.IllustInfo
 import xyz.cssxsh.pixiv.model.*
 import java.io.EOFException
 import java.io.File

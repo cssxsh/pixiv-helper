@@ -11,9 +11,9 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
-import xyz.cssxsh.pixiv.api.app.AppApi
-import xyz.cssxsh.pixiv.api.app.illustRelated
-import xyz.cssxsh.pixiv.api.app.searchIllust
+import xyz.cssxsh.pixiv.api.apps.AppApi
+import xyz.cssxsh.pixiv.api.apps.illustRelated
+import xyz.cssxsh.pixiv.api.apps.searchIllust
 
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,

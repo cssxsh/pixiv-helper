@@ -11,7 +11,7 @@ import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.RankMode
-import xyz.cssxsh.pixiv.api.app.*
+import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 import java.time.LocalDate
 import kotlin.time.minutes

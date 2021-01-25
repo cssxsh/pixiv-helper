@@ -13,7 +13,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
-import xyz.cssxsh.pixiv.api.app.*
+import xyz.cssxsh.pixiv.api.apps.*
 import kotlin.time.minutes
 
 @Suppress("unused")

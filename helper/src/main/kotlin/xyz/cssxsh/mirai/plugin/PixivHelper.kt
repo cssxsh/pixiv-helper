@@ -15,7 +15,7 @@ import xyz.cssxsh.pixiv.data.AuthInfoDelegate
 import xyz.cssxsh.pixiv.data.AuthResult
 import xyz.cssxsh.pixiv.data.ConfigDelegate
 import xyz.cssxsh.pixiv.data.ExpiresTimeDelegate
-import xyz.cssxsh.pixiv.data.app.IllustInfo
+import xyz.cssxsh.pixiv.data.apps.IllustInfo
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue

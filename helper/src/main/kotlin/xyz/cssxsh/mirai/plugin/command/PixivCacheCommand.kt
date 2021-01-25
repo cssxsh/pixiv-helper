@@ -21,9 +21,9 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.RankMode
-import xyz.cssxsh.pixiv.api.app.*
-import xyz.cssxsh.pixiv.data.app.UserDetail
-import xyz.cssxsh.pixiv.data.app.UserPreview
+import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.data.apps.UserDetail
+import xyz.cssxsh.pixiv.data.apps.UserPreview
 import java.io.File
 import java.time.LocalDate
 import java.time.Year
