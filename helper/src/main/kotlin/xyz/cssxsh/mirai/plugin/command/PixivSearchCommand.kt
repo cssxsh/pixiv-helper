@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.ktor.client.features.*
+import io.ktor.network.sockets.*
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
@@ -10,11 +12,16 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.verbose
 import net.mamoe.mirai.utils.warning
+import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.data.SearchResult
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
+import java.io.EOFException
+import java.net.ConnectException
+import java.net.UnknownHostException
+import javax.net.ssl.SSLException
 
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
@@ -30,9 +37,26 @@ object PixivSearchCommand : SimpleCommand(
 
     private const val MAX_REPEAT = 10
 
+    private val searchApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+        when (throwable) {
+            is SSLException,
+            is EOFException,
+            is ConnectException,
+            is SocketTimeoutException,
+            is HttpRequestTimeoutException,
+            is StreamResetException,
+            is UnknownHostException,
+            -> {
+                logger.warning { "SEARCH API错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            else -> false
+        }
+    }
+
     private suspend fun search(url: String, repeat: Int = 0): List<SearchResult> = runCatching {
         ImageSearcher.getSearchResults(
-            ignore = apiIgnore,
+            ignore = searchApiIgnore,
             url = url.replace("http://", "https://")
         )
     }.onFailure {

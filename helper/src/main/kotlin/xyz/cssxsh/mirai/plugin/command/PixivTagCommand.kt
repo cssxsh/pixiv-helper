@@ -31,7 +31,7 @@ object PixivTagCommand : SimpleCommand(
     ) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
-                searchIllust(word = tag, offset = offset, ignore = apiIgnore).illusts
+                searchIllust(word = tag, offset = offset).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
@@ -52,7 +52,7 @@ object PixivTagCommand : SimpleCommand(
     ) = buildList {
         (0 until AppApi.RELATED_OFFSET step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
-                illustRelated(pid = pid, seedIllustIds = illusts, offset = offset, ignore = apiIgnore).illusts
+                illustRelated(pid = pid, seedIllustIds = illusts, offset = offset).illusts
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)

@@ -2,12 +2,15 @@
 
 package xyz.cssxsh.mirai.plugin
 
+import io.ktor.client.features.*
+import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.*
+import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.client.*
@@ -16,9 +19,14 @@ import xyz.cssxsh.pixiv.data.AuthResult
 import xyz.cssxsh.pixiv.data.ConfigDelegate
 import xyz.cssxsh.pixiv.data.ExpiresTimeDelegate
 import xyz.cssxsh.pixiv.data.apps.IllustInfo
+import java.io.EOFException
+import java.net.ConnectException
+import java.net.UnknownHostException
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
+import javax.net.ssl.SSLException
+import kotlin.time.minutes
 
 /**
  * 助手实例
@@ -34,6 +42,34 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
 
     public override var expiresTime: OffsetDateTime by ExpiresTimeDelegate(contact)
+
+    override val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+        when (throwable) {
+            is SSLException,
+            is EOFException,
+            is ConnectException,
+            is SocketTimeoutException,
+            is HttpRequestTimeoutException,
+            is StreamResetException,
+            is UnknownHostException,
+            -> {
+                logger.warning { "PIXIV API错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            else -> when (throwable.message) {
+                "Required SETTINGS preface not received" -> {
+                    logger.warning { "API错误, 已忽略: ${throwable.message}" }
+                    true
+                }
+                "Rate Limit" -> {
+                    logger.warning { "API限流, 已延时: ${throwable.message}" }
+                    delay((10).minutes)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
 
     val historyQueue by lazy {
         ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
@@ -91,29 +127,32 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    fun addCacheJob(name: String, write: Boolean = true, block: suspend PixivHelper.() -> List<IllustInfo>): Boolean =
-        cacheList.add(name to block).also {
-            logger.verbose { "任务<$name>已添加" }
-            if (cacheJob?.takeIf { it.isActive } == null) {
-                cacheJob = launch(Dispatchers.IO) {
-                    while (isActive && cacheList.isNotEmpty()) {
-                        cacheList.removeFirst().let { (name, getIllusts) ->
-                            getIllusts.invoke(this@PixivHelper).let { list ->
-                                if (write) list.writeToCache()
-                                useArtWorkInfoMapper { mapper ->
-                                    list.groupBy {
-                                        mapper.contains(it.pid)
-                                    }
-                                }.let { map ->
-                                    map[true]?.updateToSQLite()
-                                    map[false]?.loadCache(name)
+    fun addCacheJob(
+        name: String,
+        write: Boolean = true,
+        block: suspend PixivHelper.() -> List<IllustInfo>,
+    ): Boolean = cacheList.add(name to block).also {
+        logger.verbose { "任务<$name>已添加" }
+        if (cacheJob?.takeIf { it.isActive } == null) {
+            cacheJob = launch(Dispatchers.IO) {
+                while (isActive && cacheList.isNotEmpty()) {
+                    cacheList.removeFirst().let { (name, getIllusts) ->
+                        getIllusts.invoke(this@PixivHelper).let { list ->
+                            if (write) list.writeToCache()
+                            useArtWorkInfoMapper { mapper ->
+                                list.groupBy {
+                                    mapper.contains(it.pid)
                                 }
+                            }.let { map ->
+                                map[true]?.updateToSQLite()
+                                map[false]?.loadCache(name)
                             }
                         }
                     }
                 }
             }
         }
+    }
 
     suspend fun cacheStop() =
         cacheJob?.apply {

@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.features.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
-import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.event.events.MessageEvent
@@ -11,7 +10,6 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
-import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -21,14 +19,9 @@ import xyz.cssxsh.pixiv.api.apps.illustDetail
 import xyz.cssxsh.pixiv.dao.*
 import xyz.cssxsh.pixiv.data.apps.IllustInfo
 import xyz.cssxsh.pixiv.model.*
-import java.io.EOFException
 import java.io.File
-import java.net.ConnectException
-import java.net.UnknownHostException
 import java.security.MessageDigest
 import java.time.ZoneOffset
-import javax.net.ssl.SSLException
-import kotlin.time.minutes
 
 /**
  * 获取对应subject的助手
@@ -206,7 +199,6 @@ internal fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { sessio
             }
         }
     }
-
     logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已更新" }
 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
@@ -273,38 +265,10 @@ internal fun Iterable<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
 }
 
-internal val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
-    when (throwable) {
-        is SSLException,
-        is EOFException,
-        is ConnectException,
-        is SocketTimeoutException,
-        is HttpRequestTimeoutException,
-        is StreamResetException,
-        is UnknownHostException,
-        -> {
-            logger.warning { "API错误, 已忽略: ${throwable.message}" }
-            true
-        }
-        else -> when (throwable.message) {
-            "Required SETTINGS preface not received" -> {
-                logger.warning { "API错误, 已忽略: ${throwable.message}" }
-                true
-            }
-            "Rate Limit" -> {
-                logger.warning { "API限流, 已延时: ${throwable.message}" }
-                delay((10).minutes)
-                true
-            }
-            else -> false
-        }
-    }
-}
-
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
-    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(pid = it, ignore = apiIgnore).illust },
+    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust },
 ): IllustInfo = imagesFolder(pid).resolve("${pid}.json").let { file ->
     if (!flush && file.exists()) {
         file.readIllustInfo()
@@ -327,7 +291,9 @@ internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let 
                 logger.warning({ "作品(${pid})[$url]下载错误" }, it)
             }
         }.let { list ->
-            check(list.all { it.isSuccess }) { "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull() }}" }
+            check(list.all { it.isSuccess }) {
+                "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull()?.message }}"
+            }
         }
         logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
