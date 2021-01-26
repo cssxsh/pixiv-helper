@@ -42,6 +42,15 @@ object PixivCacheCommand : CompositeCommand(
             override fun parse(raw: String, sender: CommandSender): Year =
                 Year.parse(raw)
         }
+        LongRange::class with object : CommandValueArgumentParser<LongRange> {
+
+            private val RANGE_REGEX = """(\d+)\.{2,4}(\d+)""".toRegex()
+
+            override fun parse(raw: String, sender: CommandSender): LongRange =
+                requireNotNull(RANGE_REGEX.find(raw)).destructured.let { (start, end) ->
+                    start.toLong()..end.toLong()
+                }
+        }
     }
 ) {
 
@@ -275,36 +284,32 @@ object PixivCacheCommand : CompositeCommand(
     private fun File.listDirs(regex: Regex) =
         listFiles { file -> file.name.matches(regex) && file.isDirectory } ?: emptyArray()
 
-    private fun File.isIgnore(start: Long = 0L) =
-        name.replace('_', '9').toLong() < start
+    private fun File.isContained(range: LongRange) =
+        name.replace('_', '0').toLong() <= range.last && name.replace('_', '9').toLong() >= range.first
+
+    private val MAX_RANGE = 0..999_999_999L
 
     /**
      * 从文件夹中加载信息
      */
     @SubCommand
-    fun CommandSenderOnMessage<MessageEvent>.load(start: Long = 0L) = getHelper().run {
+    fun CommandSenderOnMessage<MessageEvent>.load(range: LongRange = MAX_RANGE) = getHelper().run {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
         }.listDirs("""\d{3}______""".toRegex()).forEach { first ->
-            if (first.isIgnore(start).not()) {
+            if (first.isContained(range)) {
                 addCacheJob("LOAD(${first.name})", false) {
                     logger.info { "${first.absolutePath} 开始加载" }
                     first.listDirs("""\d{6}___""".toRegex()).flatMap { second ->
-                        if (second.isIgnore(start)) {
-                            emptyList()
-                        } else {
+                        if (second.isContained(range)) {
                             second.listDirs("""\d+""".toRegex()).filter { dir ->
                                 useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not() &&
-                                    dir.isIgnore(start).not()
+                                    dir.isContained(range)
                             }.mapNotNull { dir ->
-                                dir.resolve("${dir.name}.json").let {
-                                    if (it.canRead()) {
-                                        it.readIllustInfo()
-                                    } else {
-                                        null
-                                    }
-                                }
+                                dir.resolve("${dir.name}.json").takeIf { it.canRead() }?.readIllustInfo()
                             }
+                        } else {
+                            emptyList()
                         }
                     }
                 }
@@ -328,8 +333,8 @@ object PixivCacheCommand : CompositeCommand(
      * 检查当前缓存中不可读，删除并重新下载
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.check() = getHelper().runCatching {
-        useArtWorkInfoMapper { it.keys(0L..999_999_999L) }.sorted().also {
+    suspend fun CommandSenderOnMessage<MessageEvent>.check(range: LongRange = MAX_RANGE) = getHelper().runCatching {
+        useArtWorkInfoMapper { it.keys(range) }.sorted().also {
             logger.verbose { "{${it.first()..it.last()}}共有 ${it.size} 个作品需要检查" }
         }.run {
             size to count { pid ->
