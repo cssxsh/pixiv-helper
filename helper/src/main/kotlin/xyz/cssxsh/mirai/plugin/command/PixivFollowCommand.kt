@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -14,7 +13,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
 import xyz.cssxsh.pixiv.api.apps.*
-import kotlin.time.minutes
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -59,29 +57,16 @@ object PixivFollowCommand : CompositeCommand(
                 it.runCatching {
                     reply("{${first()..last()}}共${size}个画师等待关注")
                 }
-            }.runCatching {
-                var num = 0
-                size to count { uid ->
-                    isActive && runCatching {
-                        userFollowAdd(uid = uid)
-                    }.onSuccess {
-                        logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
-                        if (num >= 8) {
-                            logger.verbose { "用户(${getAuthInfo().user.uid})尝试添加关注达到${num}次，将开始延时" }
-                            delay((1).minutes)
-                            num = 0
-                        } else {
-                            num++
-                        }
-                    }.onFailure {
-                        logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
-                        delay((3).minutes)
-                    }.isSuccess
-                }
-            }.onSuccess { (total, success) ->
-                reply("关注完毕共${total}个画师, 关注成功${success}个")
-            }.onFailure {
-                reply("关注失败, ${it.message}")
+            }.groupBy { uid ->
+                isActive && runCatching {
+                    userFollowAdd(uid = uid)
+                }.onSuccess {
+                    logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
+                }.onFailure {
+                    logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
+                }.isSuccess
+            }.let { (success, failure) ->
+                reply("关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}")
             }
         }.also {
             followJob = it

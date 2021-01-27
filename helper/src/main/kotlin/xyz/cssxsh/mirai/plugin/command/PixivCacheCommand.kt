@@ -336,35 +336,32 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.check(range: LongRange = MAX_RANGE) = getHelper().runCatching {
         useArtWorkInfoMapper { it.keys(range) }.sorted().also {
             logger.verbose { "{${it.first()..it.last()}}共有 ${it.size} 个作品需要检查" }
-        }.run {
-            size to count { pid ->
-                runCatching {
-                    val dir = PixivHelperSettings.imagesFolder(pid)
-                    dir.resolve("${pid}.json").also { file ->
-                        if (file.exists().not()) {
-                            logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
-                            illustDetail(pid).illust.writeTo(file)
+        }.groupBy { pid ->
+            isActive && PixivHelperSettings.imagesFolder(pid).runCatching {
+                resolve("${pid}.json").also { file ->
+                    if (file.exists().not()) {
+                        logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
+                        illustDetail(pid).illust.writeTo(file)
+                    }
+                }
+                useFileInfoMapper { it.fileInfos(pid) }.filter { info ->
+                    resolve(Url(info.url).getFilename()).exists().not()
+                }.let { infos ->
+                    downloadImageUrls(urls = infos.map { it.url }, dir = this).forEachIndexed { index, result ->
+                        result.onFailure {
+                            logger.warning({ "[${infos[index]}]修复出错" }, it)
+                        }.onSuccess {
+                            logger.info { "[${infos[index]}]修复成功" }
                         }
                     }
-                    useFileInfoMapper { it.fileInfos(pid) }.filter { info ->
-                        dir.resolve(Url(info.url).getFilename()).exists().not()
-                    }.let { infos ->
-                        downloadImageUrls(urls = infos.map { it.url }, dir = dir).forEachIndexed { index, result ->
-                            result.onFailure {
-                                logger.warning({ "[${infos[index]}]修复出错" }, it)
-                            }.onSuccess {
-                                logger.info { "[${infos[index]}]修复成功" }
-                            }
-                        }
-                    }
-                }.onFailure {
-                    logger.warning({ "作品(${pid})修复出错" }, it)
-                    reply("作品(${pid})修复出错, ${it.message}")
-                }.isFailure
-            }
+                }
+            }.onFailure {
+                logger.warning({ "作品(${pid})修复出错" }, it)
+                reply("作品(${pid})修复出错, ${it.message}")
+            }.isSuccess
         }
-    }.onSuccess { (size, num) ->
-        sendMessage("检查缓存完毕，总计${size}, 无法修复数: $num")
+    }.onSuccess { (success, failure) ->
+        sendMessage("检查缓存完毕，成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}")
     }.onFailure {
         sendMessage(it.toString())
     }.isSuccess

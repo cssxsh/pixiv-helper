@@ -143,9 +143,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                                 list.groupBy {
                                     mapper.contains(it.pid)
                                 }
-                            }.let { map ->
-                                map[true]?.updateToSQLite()
-                                map[false]?.loadCache(name)
+                            }.let { (success, failure) ->
+                                success?.updateToSQLite()
+                                failure?.loadCache(name)
                             }
                         }
                     }
