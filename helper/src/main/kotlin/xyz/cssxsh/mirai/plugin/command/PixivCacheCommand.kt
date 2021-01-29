@@ -333,18 +333,21 @@ object PixivCacheCommand : CompositeCommand(
      * 检查当前缓存中不可读，删除并重新下载
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.check(range: LongRange = MAX_RANGE) = getHelper().runCatching {
-        useArtWorkInfoMapper { it.keys(range) }.sorted().also {
-            logger.verbose { "{${it.first()..it.last()}}共有 ${it.size} 个作品需要检查" }
-        }.groupBy { pid ->
-            isActive && PixivHelperSettings.imagesFolder(pid).runCatching {
-                resolve("${pid}.json").also { file ->
+    suspend fun CommandSenderOnMessage<MessageEvent>.check(interval: LongRange) = getHelper().runCatching {
+        useArtWorkInfoMapper { it.artWorks(interval) }.sortedBy { it.pid }.also {
+            logger.verbose { "{${it.first().pid..it.last().pid}}共有 ${it.size} 个作品需要检查" }
+        }.groupBy { info ->
+            isActive && imagesFolder(info.pid).runCatching {
+                resolve("${info.pid}.json").also { file ->
                     if (file.exists().not()) {
                         logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
-                        illustDetail(pid).illust.writeTo(file)
+                        illustDetail(info.pid).illust.run {
+                            writeToCache()
+                            saveToSQLite()
+                        }
                     }
                 }
-                useFileInfoMapper { it.fileInfos(pid) }.filter { info ->
+                useFileInfoMapper { it.fileInfos(info.pid) }.filter { info ->
                     resolve(Url(info.url).getFilename()).exists().not()
                 }.let { infos ->
                     downloadImageUrls(urls = infos.map { it.url }, dir = this).forEachIndexed { index, result ->
@@ -356,8 +359,8 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 }
             }.onFailure {
-                logger.warning({ "作品(${pid})修复出错" }, it)
-                reply("作品(${pid})修复出错, ${it.message}")
+                logger.warning({ "作品(${info.pid})修复出错" }, it)
+                reply("作品(${info.pid})修复出错, ${it.message}")
             }.isSuccess
         }
     }.onSuccess { (success, failure) ->

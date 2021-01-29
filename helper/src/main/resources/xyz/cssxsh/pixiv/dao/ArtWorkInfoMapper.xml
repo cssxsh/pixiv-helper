@@ -60,9 +60,10 @@
         FROM artworks
         WHERE uid = ${uid};
     </select>
-    <select id="keys" resultType="java.lang.Long">
-        SELECT pid
-        FROM artworks;
+    <select id="artWorks" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+        SELECT *
+        FROM artworks
+        WHERE pid BETWEEN #{first} AND #{last};
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)

@@ -4,15 +4,12 @@ import org.apache.ibatis.io.Resources
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.pixiv.model.ArtWorkInfo
-import xyz.cssxsh.pixiv.model.FileInfo
-import xyz.cssxsh.pixiv.model.TagInfo
-import xyz.cssxsh.pixiv.model.UserInfo
 import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
