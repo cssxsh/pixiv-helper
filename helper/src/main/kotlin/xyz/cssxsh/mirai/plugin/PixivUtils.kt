@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
-import io.ktor.client.features.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.event.events.MessageEvent
@@ -285,20 +283,12 @@ internal suspend fun PixivHelper.getIllustInfo(
 internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
     getOriginImageUrls().filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
         dir.mkdirs()
-        PixivHelperDownloader.downloadImageUrls(downloads) { _, url, result ->
-            runCatching {
-                dir.resolve(Url(url).getFilename()).apply {
-                    writeBytes(result.getOrThrow())
-                }
-            }.onFailure {
-                logger.warning({ "作品(${pid})[$url]下载错误" }, it)
-            }
-        }.let { list ->
+        PixivHelperDownloader.downloadImageUrls(downloads, dir).let { list ->
             check(list.all { it.isSuccess }) {
                 "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull()?.message }}"
             }
         }
-        logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+        logger.info { "作品(${pid})<${createDate}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     getOriginImageUrls().map { url ->
         dir.resolve(Url(url).getFilename())
