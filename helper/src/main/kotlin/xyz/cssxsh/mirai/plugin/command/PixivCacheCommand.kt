@@ -378,32 +378,4 @@ object PixivCacheCommand : CompositeCommand(
             panJob = it
         }
     }
-
-    @SubCommand
-    fun ConsoleCommandSender.remove(pid: Long) {
-        useArtWorkInfoMapper { it.deleteByPid(pid) }
-        logger.info { "色图作品(${pid})信息将从缓存移除" }
-        PixivHelperSettings.imagesFolder(pid).apply {
-            listFiles()?.forEach {
-                it.delete()
-            }
-            logger.info { "色图作品(${pid})文件夹将删除，结果${delete()}" }
-        }
-    }
-
-    @SubCommand
-    fun ConsoleCommandSender.delete(uid: Long) {
-        useArtWorkInfoMapper { it.userArtWork(uid) }.also {
-            logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
-        }.forEach { info ->
-            useArtWorkInfoMapper { it.deleteByPid(info.pid) }
-            logger.info { "色图作品(${info.pid})[${info.title}]信息将从缓存移除" }
-            PixivHelperSettings.imagesFolder(info.pid).apply {
-                listFiles()?.forEach { file ->
-                    file.delete()
-                }
-                logger.info { "色图作品(${info.pid})[${info.title}]文件夹将删除，结果${delete()}" }
-            }
-        }
-    }
 }

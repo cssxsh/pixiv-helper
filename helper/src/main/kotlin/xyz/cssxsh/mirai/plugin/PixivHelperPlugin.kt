@@ -67,6 +67,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivIllustratorCommand.register()
         PixivInfoCommand.register()
         PixivGetCommand.register()
+        PixivDeleteCommand.register()
 
         PixivHelperSettings.cacheFolder.mkdirs()
         PixivHelperSettings.backupFolder.mkdirs()
@@ -104,6 +105,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivIllustratorCommand.unregister()
         PixivInfoCommand.unregister()
         PixivGetCommand.unregister()
+        PixivDeleteCommand.unregister()
 
         listener.stop()
         useSession { it.commit() }
