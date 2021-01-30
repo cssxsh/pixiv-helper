@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.mirai.plugin.tools.PanConfig
+import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
@@ -18,7 +19,7 @@ internal class PanUpdaterTest {
         measureTime {
             update(
                 sourcePath = filepath,
-                updatePath = filepath.getFilename(),
+                updatePath = File(filepath).name,
                 config = PanConfig(
                     bdsToken = "a25846e85d9ae2b6356b1c78d31c9ef3",
                     logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",

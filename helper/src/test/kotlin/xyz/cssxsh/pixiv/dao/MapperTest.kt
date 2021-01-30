@@ -36,7 +36,6 @@ internal class MapperTest {
         sqlSessionFactory.configuration.apply {
             environment =
                 Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
-                    println(sqliteUrl)
                     url = sqliteUrl
                 })
         }
@@ -44,33 +43,15 @@ internal class MapperTest {
 
     @Test
     fun useArtWorkInfoMapper(): Unit = sqlSessionFactory.openSession(true).use { session ->
-        val pid = 24924L
-        val uid = 464L
+        val pid = 2086L
+        val interval = 0 until 1_000_000L
         session.getMapper(ArtWorkInfoMapper::class.java).count().let {
             println(it)
         }
         session.getMapper(ArtWorkInfoMapper::class.java).findByPid(pid).let {
             println(it)
         }
-        session.getMapper(TagInfoMapper::class.java).findByPid(pid).let {
-            println(it)
-        }
-        session.getMapper(TagInfoMapper::class.java).findByName("明日方舟").let {
-            println(it)
-        }
-        session.getMapper(FileInfoMapper::class.java).fileInfos(pid).let {
-            println(it)
-        }
-        session.getMapper(ArtWorkInfoMapper::class.java).userArtWork(uid).let {
-            println(it)
-        }
-        session.getMapper(ArtWorkInfoMapper::class.java).contains(643077).let {
-            println(it)
-        }
-        session.getMapper(FileInfoMapper::class.java).findByMd5("103340dedca009c7228e0b0c9492ea97").let {
-            println(it)
-        }
-        session.getMapper(ArtWorkInfoMapper::class.java).keys(0..1_000_000L).let {
+        session.getMapper(ArtWorkInfoMapper::class.java).artWorks(interval).let {
             println(it.size)
         }
     }
