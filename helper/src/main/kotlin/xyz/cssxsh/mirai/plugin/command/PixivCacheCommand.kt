@@ -20,6 +20,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.pixiv.RankMode
 import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.data.apps.UserDetail
@@ -119,7 +120,7 @@ object PixivCacheCommand : CompositeCommand(
     private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
-                userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
+                userRecommended(offset = offset).userPreviews
             }.onSuccess {
                 if (it.isEmpty()) return@buildList
                 addAll(it)
@@ -207,7 +208,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
-        getHelper().addCacheJob("RECOMMENDED") { getRecommended() }
+        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().flatMap { it.illusts }.filter { it.isEro() } }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =

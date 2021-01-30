@@ -21,7 +21,6 @@ import xyz.cssxsh.pixiv.data.apps.IllustInfo
 import xyz.cssxsh.pixiv.model.*
 import java.io.File
 import java.security.MessageDigest
-import java.time.ZoneOffset
 
 /**
  * 获取对应subject的助手

@@ -55,6 +55,7 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
+            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
         }
     }
 }

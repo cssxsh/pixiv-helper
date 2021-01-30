@@ -5,6 +5,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.pixiv.model.ArtWorkInfo
 import java.io.BufferedOutputStream
 import java.nio.file.attribute.FileTime
@@ -51,7 +52,7 @@ object Zipper {
             ZipOutputStream(BufferedOutputStream(outputStream(), BUFFER_SIZE)).use { zipOutputStream ->
                 zipOutputStream.setLevel(Deflater.BEST_COMPRESSION)
                 list.forEach { info ->
-                    PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                    imagesFolder(info.pid).listFiles()?.forEach { file ->
                         zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
                             creationTime = FileTime.from(Instant.ofEpochSecond(info.createAt))
                             lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.createAt))

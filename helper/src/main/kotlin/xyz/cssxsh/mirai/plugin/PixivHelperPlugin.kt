@@ -35,6 +35,22 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
+    private fun SqlSessionFactory.init(): Unit = configuration.run {
+        environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
+            config.apply {
+                enforceForeignKeys(true)
+                setCacheSize(8196)
+                setPageSize(8196)
+                setJournalMode(JournalMode.MEMORY)
+                enableCaseSensitiveLike(true)
+                setTempStore(TempStore.MEMORY)
+                setSynchronous(SynchronousMode.OFF)
+                setEncoding(Encoding.UTF8)
+            }
+            url = sqliteUrl()
+        })
+    }
+
     internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
         sqlSessionFactory.openSession(false).use { session ->
             session.let(block).also { session.commit() }
@@ -72,24 +88,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.cacheFolder.mkdirs()
         PixivHelperSettings.backupFolder.mkdirs()
 
-        PixivHelperDownloader.apply {
-            proxyUrl = PixivConfigData.default.proxy
-        }
-        sqlSessionFactory.configuration.apply {
-            environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
-                config.apply {
-                    enforceForeignKeys(true)
-                    setCacheSize(8196)
-                    setPageSize(8196)
-                    setJournalMode(JournalMode.MEMORY)
-                    enableCaseSensitiveLike(true)
-                    setTempStore(TempStore.MEMORY)
-                    setSynchronous(SynchronousMode.OFF)
-                    setEncoding(Encoding.UTF8)
-                }
-                url = sqliteUrl()
-            })
-        }
+        sqlSessionFactory.init()
         // Listener
         listener.listen()
     }

@@ -45,7 +45,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.login(
         username: String,
-        password: String
+        password: String,
     ) = getHelper().runCatching {
         login(username, password).let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
@@ -63,7 +63,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.refresh(
-        token: String
+        token: String,
     ) = getHelper().runCatching {
         refresh(token).let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
@@ -102,9 +102,11 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.rank(
         mode: RankMode,
         date: LocalDate,
-        index: Long
+        index: Long,
     ) = getHelper().runCatching {
-        buildMessageByIllust(illustRanking(date = date, mode = mode, offset = index).illusts.apply { writeToCache() }.first())
+        buildMessageByIllust(illustRanking(date = date, mode = mode, offset = index).illusts.apply {
+            writeToCache()
+        }.first())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -120,7 +122,7 @@ object PixivMethodCommand : CompositeCommand(
     @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
     suspend fun CommandSenderOnMessage<MessageEvent>.now(
         type: String,
-        index: Long
+        index: Long,
     ) = getHelper().runCatching {
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
@@ -150,7 +152,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.detail(
-        pid: Long
+        pid: Long,
     ) = getHelper().runCatching {
         buildMessageByIllust(illustDetail(pid = pid).illust.apply { writeToCache() })
     }.onSuccess { list ->
@@ -165,7 +167,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(
-        uid: Long
+        uid: Long,
     ) = getHelper().runCatching {
         buildMessageByIllust(userIllusts(uid = uid).illusts.apply { writeToCache() }.random())
     }.onSuccess { list ->
@@ -181,7 +183,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.search(
         word: String,
-        index: Int
+        index: Int,
     ) = getHelper().runCatching {
         require(index in 1..30) { "index 的范围在1~30" }
         buildMessageByIllust(searchIllust(word = word).illusts.apply { writeToCache() }[index - 1])
@@ -222,7 +224,9 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessageByIllust(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.apply { writeToCache() }.random())
+        buildMessageByIllust(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.apply {
+            writeToCache()
+        }.random())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
