@@ -10,7 +10,9 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 import java.io.File
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Suppress("unused")
@@ -69,7 +71,7 @@ object PoiTool {
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PID")).setCellValue(info.pid.toDouble())
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("TITLE")).setCellValue(info.title)
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("CREATE_DATE")).apply {
-                                setCellValue(info.createAt)
+                                setCellValue(LocalDateTime.ofEpochSecond(info.createAt, 0, ZoneOffset.ofHours(9)))
                                 cellStyle = dateStyle
                             }
                             createCell(PIXIV_CACHE_DATA_HEADER.indexOf("PAGE_COUNT")).setCellValue(info.pageCount.toDouble())

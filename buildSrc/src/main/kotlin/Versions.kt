@@ -17,5 +17,5 @@ object Versions {
     const val junit = "5.6.2"
     const val autoService = "1.0-rc7"
     const val mybatis = "3.5.6"
-    const val sqliteJdbc = "3.32.3.2"
+    const val sqliteJdbc = "3.34.0"
 }

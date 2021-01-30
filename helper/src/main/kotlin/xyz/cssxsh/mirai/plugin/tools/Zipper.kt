@@ -8,8 +8,8 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.model.ArtWorkInfo
 import java.io.BufferedOutputStream
 import java.nio.file.attribute.FileTime
+import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
@@ -53,8 +53,8 @@ object Zipper {
                 list.forEach { info ->
                     PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
                         zipOutputStream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
-                            creationTime = FileTime.from(info.createAt.toInstant(ZoneOffset.ofHours(9)))
-                            lastModifiedTime = FileTime.from(info.createAt.toInstant(ZoneOffset.ofHours(9)))
+                            creationTime = FileTime.from(Instant.ofEpochSecond(info.createAt))
+                            lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.createAt))
                         })
                         zipOutputStream.write(file.readBytes())
                     }

@@ -15,8 +15,7 @@ data class ArtWorkInfo(
     @SerialName("caption")
     val caption: String,
     @SerialName("create_at")
-    @Serializable(with = LocalDateTimeSerializer::class)
-    val createAt: LocalDateTime,
+    val createAt: Long,
     @SerialName("page_count")
     val pageCount: Int,
     @SerialName("sanity_level")
