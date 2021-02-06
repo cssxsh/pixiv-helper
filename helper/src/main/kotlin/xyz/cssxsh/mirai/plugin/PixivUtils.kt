@@ -63,7 +63,7 @@ internal fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("UID: ${user.id} ")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("SAN值: $sanityLevel ")
-    appendLine("创作于: $createDate ")
+    appendLine("创作于: $createAt ")
     appendLine("共: $pageCount 张图片 ")
     appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
@@ -139,7 +139,7 @@ internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     uid = user.id,
     title = title,
     caption = caption,
-    createAt = createDate.toEpochSecond(),
+    createAt = createAt.toEpochSecond(),
     pageCount = pageCount,
     sanityLevel = sanityLevel,
     type = type.value(),
@@ -180,7 +180,7 @@ internal fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
     if (tags.isNotEmpty()) {
         session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
     }
-    logger.info { "作品(${pid})<${createDate}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
+    logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
 }
 
 internal fun Collection<IllustInfo>.updateToSQLite(): Unit = useSession { session ->
@@ -288,7 +288,7 @@ internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let 
                 "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull()?.message }}"
             }
         }
-        logger.info { "作品(${pid})<${createDate}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+        logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     getOriginImageUrls().map { url ->
         dir.resolve(Url(url).getFilename())
