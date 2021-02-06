@@ -39,14 +39,14 @@ object PixivDeleteCommand : CompositeCommand(
             listFiles()?.forEach {
                 it.delete()
             }
-            logger.verbose { "色图作品(${pid})文件夹将删除，结果${delete()}" }
+            logger.verbose { "作品(${pid})文件夹将删除，结果${delete()}" }
         }
     }
 
     private fun List<ArtWorkInfo>.delete() {
         useArtWorkInfoMapper { mapper ->
             forEach { info ->
-                logger.info { "色图作品(${info.pid})[${info.type}][${info.title}]{${info.totalBookmarks}}信息将从缓存移除" }
+                logger.info { "作品(${info.pid})[${info.type}][${info.title}]{${info.totalBookmarks}}信息将从缓存移除" }
                 mapper.deleteByPid(info.pid)
             }
         }
@@ -55,14 +55,14 @@ object PixivDeleteCommand : CompositeCommand(
                 listFiles()?.forEach {
                     it.delete()
                 }
-                logger.verbose { "色图作品(${info.pid})文件夹将删除，结果${delete()}" }
+                logger.verbose { "作品(${info.pid})文件夹将删除，结果${delete()}" }
             }
         }
     }
 
     @SubCommand
     fun ConsoleCommandSender.artwork(pid: Long) {
-        logger.info { "色图作品(${pid})信息将从缓存移除" }
+        logger.info { "作品(${pid})信息将从缓存移除" }
         deleteArtwork(pid)
     }
 
