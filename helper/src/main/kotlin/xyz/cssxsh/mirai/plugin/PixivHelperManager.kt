@@ -27,7 +27,9 @@ object PixivHelperManager {
             users.getOrPut(contact.id) {
                 defaultValue().apply {
                     launch {
-                        reply("目前测试私聊模式中使用用户自己的账户，请使用 pixiv login <uid> <password> 指令尝试登陆")
+                        sign {
+                            "目前测试私聊模式中使用用户自己的账户，请使用 pixiv login <uid> <password> 指令尝试登陆"
+                        }
                     }
                 }
             }

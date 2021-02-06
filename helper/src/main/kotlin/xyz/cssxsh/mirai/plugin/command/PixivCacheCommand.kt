@@ -185,13 +185,17 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存关注列表
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow() =
-        getHelper().addCacheJob("FOLLOW") { getFollowIllusts() }
+    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().run {
+        getFollowIllusts().filter { it.type != WorkContentType.MANGA }.groupBy { it.createAt.toLocalDate() }.forEach { (date, list) ->
+            addCacheJob(name = "FOLLOW(${date})", reply = false) { list }
+        }
+    }
+
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.rank(date: LocalDate? = null) = getHelper().run {
         cacheRanks.forEach { mode ->
-            addCacheJob("RANK[${mode.name}](${date ?: "new"})") {
+            addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") {
                 getRank(mode = mode, date = date)
             }
         }
@@ -212,7 +216,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =
-        getHelper().addCacheJob("BOOKMARKS") { getBookmarks(uid) }
+        getHelper().addCacheJob(name = "BOOKMARKS") { getBookmarks(uid) }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
@@ -224,7 +228,7 @@ object PixivCacheCommand : CompositeCommand(
                         userDetail(uid = uid).let { detail ->
                             if (detail.total() > detail.count()) {
                                 logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
-                                addCacheJob("${index}.USER(${uid})") {
+                                addCacheJob(name = "${index}.USER(${uid})", reply = false) {
                                     getUserIllusts(detail)
                                 }
                             }
@@ -252,12 +256,12 @@ object PixivCacheCommand : CompositeCommand(
                             userDetail(uid = preview.user.id).let { detail ->
                                 if (detail.total() > detail.count() + preview.illusts.size) {
                                     logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                    addCacheJob("${index}.USER(${detail.user.id})") {
+                                    addCacheJob(name = "${index}.USER(${detail.user.id})", reply = false) {
                                         getUserIllusts(detail)
                                     }
                                 } else {
                                     logger.verbose { "${index}.USER(${detail.user.id})有${preview.illusts.size}个作品尝试缓存" }
-                                    addCacheJob("${index}.USER_PREVIEW(${detail.user.id})") {
+                                    addCacheJob(name = "${index}.USER_PREVIEW(${detail.user.id})", reply = false) {
                                         preview.illusts
                                     }
                                 }
@@ -280,7 +284,7 @@ object PixivCacheCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
-        getHelper().addCacheJob("USER(${uid})") { getUserIllusts(uid = uid) }
+        getHelper().addCacheJob(name = "USER(${uid})") { getUserIllusts(uid = uid) }
 
     private fun File.listDirs(regex: Regex) =
         listFiles { file -> file.name.matches(regex) && file.isDirectory } ?: emptyArray()
@@ -299,7 +303,7 @@ object PixivCacheCommand : CompositeCommand(
             logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
         }.listDirs("""\d{3}______""".toRegex()).forEach { first ->
             if (first.isContained(range)) {
-                addCacheJob("LOAD(${first.name})", false) {
+                addCacheJob(name = "LOAD(${first.name})", write = false) {
                     logger.info { "${first.absolutePath} 开始加载" }
                     first.listDirs("""\d{6}___""".toRegex()).flatMap { second ->
                         if (second.isContained(range)) {
@@ -325,7 +329,7 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.cancel() = getHelper().runCatching {
         cacheStop()
     }.onSuccess {
-        sendMessage("任务${it}已停止")
+        sendMessage("任务已停止")
     }.onFailure {
         sendMessage(it.toString())
     }.isSuccess
@@ -361,7 +365,9 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }.onFailure {
                 logger.warning({ "作品(${info.pid})修复出错" }, it)
-                reply("作品(${info.pid})修复出错, ${it.message}")
+                sign {
+                    "作品(${info.pid})修复出错, ${it.message}"
+                }
             }.isSuccess
         }
     }.onSuccess { (success, failure) ->

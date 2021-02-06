@@ -76,11 +76,11 @@ object PixivTagCommand : SimpleCommand(
         useTagInfoMapper { it.findByName(tag) }.apply {
             logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
         }.let { list ->
-            if (list.size < PixivHelperSettings.minInterval) addCacheJob("SEARCH(${tag})") {
+            if (list.size < PixivHelperSettings.minInterval) addCacheJob(name = "SEARCH(${tag})", reply = false) {
                 searchTag(tag)
             }
             list.random().let { pid ->
-                if (list.size < PixivHelperSettings.minInterval) addCacheJob("RELATED(${pid})") {
+                if (list.size < PixivHelperSettings.minInterval) addCacheJob(name = "RELATED(${pid})", reply = false) {
                     getRelated(pid, list)
                 }
                 buildMessageByIllust(pid)

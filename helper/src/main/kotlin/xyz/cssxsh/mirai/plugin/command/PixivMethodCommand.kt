@@ -211,7 +211,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.listen() = getHelper().runCatching {
         addIllustFollowListener(delay = (10).minutes.toLongMilliseconds()) { illust ->
-            buildMessageByIllust(illust).forEach { message -> reply(message) }
+            buildMessageByIllust(illust).forEach { sign { it } }
         }
     }.onSuccess {
         quoteReply("监听任务添加成功")

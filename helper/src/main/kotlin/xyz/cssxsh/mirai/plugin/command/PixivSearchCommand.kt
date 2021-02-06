@@ -77,7 +77,7 @@ object PixivSearchCommand : SimpleCommand(
                     launch {
                         logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
                         runCatching {
-                            addCacheJob("SEARCH[${image.getMd5Hex()}]") {
+                            addCacheJob(name ="SEARCH[${image.getMd5Hex()}]", reply = false) {
                                 listOf(getIllustInfo(pid = result.pid, flush = true))
                             }
                         }.onSuccess {

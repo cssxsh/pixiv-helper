@@ -54,8 +54,8 @@ object PixivFollowCommand : CompositeCommand(
                 it - followed
             }.sorted().also {
                 logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
-                it.runCatching {
-                    reply("{${first()..last()}}共${size}个画师等待关注")
+                sign {
+                    "{${it.first()..it.last()}}共${it.size}个画师等待关注"
                 }
             }.groupBy { uid ->
                 isActive && runCatching {
@@ -66,7 +66,9 @@ object PixivFollowCommand : CompositeCommand(
                     logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
                 }.isSuccess
             }.let { (success, failure) ->
-                reply("关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}")
+                sign{
+                    "关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}"
+                }
             }
         }.also {
             followJob = it

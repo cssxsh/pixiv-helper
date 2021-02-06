@@ -5,10 +5,10 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.Message
-import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.*
@@ -21,9 +21,9 @@ import xyz.cssxsh.pixiv.data.ExpiresTimeDelegate
 import xyz.cssxsh.pixiv.data.apps.IllustInfo
 import java.io.EOFException
 import java.net.ConnectException
+import java.net.SocketException
 import java.net.UnknownHostException
 import java.time.OffsetDateTime
-import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import javax.net.ssl.SSLException
 import kotlin.time.minutes
@@ -52,6 +52,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             is HttpRequestTimeoutException,
             is StreamResetException,
             is UnknownHostException,
+            is SocketException,
             -> {
                 logger.warning { "PIXIV API错误, 已忽略: ${throwable.message}" }
                 true
@@ -62,8 +63,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                     true
                 }
                 "Rate Limit" -> {
-                    logger.warning { "API限流, 已延时: ${throwable.message}" }
-                    delay((10).minutes)
+                    (3).minutes.let {
+                        logger.warning { "API限流, 已延时: $it" }
+                        delay(it)
+                    }
                     true
                 }
                 else -> false
@@ -88,77 +91,115 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             PixivConfigData.simpleInfo[contact.toString()] = value
         }
 
-    private var cacheJob: Job? = null
+    private data class CacheTask(
+        val name: String,
+        val write: Boolean,
+        val reply: Boolean,
+        val block: suspend PixivHelper.() -> List<IllustInfo>,
+    )
 
-    private val cacheList: MutableList<Pair<String, suspend PixivHelper.() -> List<IllustInfo>>> = mutableListOf()
+    private data class DownloadTask(
+        val name: String,
+        val list: List<IllustInfo>,
+        val reply: Boolean,
+    )
 
-    private suspend fun Collection<IllustInfo>.loadCache(name: String): Unit = sortedBy { it.pid }.run {
-        logger.verbose { "任务<$name>共${size}个作品信息将会被尝试缓存" }
-        runCatching {
-            reply("任务<$name>有{${first().pid..last().pid}}共${size}个新作品等待缓存")
-        }
-        runCatching {
-            size to map { illust ->
-                async {
-                    illust to (isActive && illust.runCatching {
-                        getImages()
-                    }.onFailure {
-                        logger.warning({ "任务<$name>获取作品(${illust.pid})[${illust.title}]错误" }, it)
-                        runCatching {
-                            reply("任务<$name>获取作品(${illust.pid})[${illust.title}]错误, ${it.message}")
-                        }
-                    }.isSuccess)
-                }
-            }.awaitAll().mapNotNull { (illust, success) ->
-                illust.takeIf {
-                    success
-                }
-            }.apply { saveToSQLite() }.size
-        }.onSuccess { (total, success) ->
-            logger.verbose { "任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个" }
-            runCatching {
-                reply("任务<$name>缓存完毕, 共${total}个新作品, 缓存成功${success}个")
+    private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
+
+    private suspend fun <T, R> Iterable<T>.asyncMapIndexed(
+        transform: suspend (Int, T) -> R,
+    ): List<R> = withContext(Dispatchers.IO) {
+        mapIndexed { index, value ->
+            async {
+                transform(index, value)
             }
-        }.onFailure {
-            logger.warning({ "任务<$name>缓存失败" }, it)
-            runCatching {
-                reply("任务<$name>缓存失败, ${it.message}")
-            }
-        }
+        }.awaitAll()
     }
 
-    fun addCacheJob(
-        name: String,
-        write: Boolean = true,
-        block: suspend PixivHelper.() -> List<IllustInfo>,
-    ): Boolean = cacheList.add(name to block).also {
-        logger.verbose { "任务<$name>已添加" }
-        if (cacheJob?.takeIf { it.isActive } == null) {
-            cacheJob = launch(Dispatchers.IO) {
-                while (isActive && cacheList.isNotEmpty()) {
-                    cacheList.removeFirst().let { (name, getIllusts) ->
-                        getIllusts.invoke(this@PixivHelper).let { list ->
-                            if (write) list.writeToCache()
-                            useArtWorkInfoMapper { mapper ->
-                                list.groupBy {
-                                    mapper.contains(it.pid)
-                                }
-                            }.let { (success, failure) ->
-                                success?.updateToSQLite()
-                                failure?.loadCache(name)
-                            }
-                        }
+    private suspend fun Flow<CacheTask>.check() = transform { (name, write, reply, block) ->
+        runCatching {
+            block.invoke(this@PixivHelper).let { list ->
+                if (write) list.writeToCache()
+                useArtWorkInfoMapper { mapper ->
+                    list.groupBy {
+                        mapper.contains(it.pid)
+                    }
+                }.also { (success, failure) ->
+                    success?.updateToSQLite()
+                    failure?.sortedBy { it.pid }?.let {
+                        emit(DownloadTask(name = name, list = it, reply = reply))
                     }
                 }
             }
+        }.onFailure {
+            logger.warning({ "预加载任务<${name}>失败" }, it)
+            if (reply) sign {
+                "预加载任务<${name}>失败"
+            }
         }
     }
 
-    suspend fun cacheStop() =
-        cacheJob?.apply {
-            cacheList.clear()
-            cancelAndJoin()
+    private suspend fun Flow<DownloadTask>.download() = collect { (name, list, reply) ->
+        runCatching {
+            logger.verbose { "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存" }
+            if (reply) sign {
+                "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个新作品等待缓存"
+            }
+            list.asyncMapIndexed { index, illust ->
+                illust to illust.runCatching {
+                    getImages()
+                }.onFailure {
+                    if (it !is CancellationException) {
+                        logger.warning({ "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误" }, it)
+                        if (reply) sign {
+                            "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
+                        }
+                    }
+                }.isSuccess
+            }.groupBy({ it.second }, { it.first }).also { (success, _) ->
+                success?.saveToSQLite()
+            }
+        }.onSuccess { (success, _) ->
+            logger.verbose { "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success?.size ?: 0}个" }
+            if (reply) sign {
+                "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success?.size ?: 0}个"
+            }
+        }.onFailure {
+            logger.warning({ "任务<${name}>缓存失败, 共${list.size}个新作品" }, it)
+            if (reply) sign {
+                "任务<${name}>缓存失败, 共${list.size}个新作品"
+            }
         }
+    }
+
+    private val cacheJob: Job = launch(Dispatchers.IO) {
+        while (isActive) {
+            runCatching {
+                cacheChannel.receiveAsFlow().check().download()
+            }.onFailure {
+                if (isActive) {
+                    logger.warning({ "重新加载${coroutineContext[CoroutineName]?.name}.CacheChannel" }, it)
+                    cacheChannel = Channel(Channel.BUFFERED)
+                }
+            }
+        }
+    }
+
+    suspend fun addCacheJob(
+        name: String,
+        write: Boolean = true,
+        reply: Boolean = true,
+        block: suspend PixivHelper.() -> List<IllustInfo>,
+    ) = cacheChannel.send(CacheTask(
+        name = name,
+        write = write,
+        reply = reply,
+        block = block
+    ))
+
+    fun cacheStop() {
+        cacheChannel.cancel()
+    }
 
     var followJob: Job? = null
 
@@ -173,17 +214,14 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         logger.info { "$it by Account: $mailOrPixivID, ExpiresTime: $expiresTime" }
     }
 
-    /**
-     * 给这个助手的联系人发送消息
-     */
-    @JvmSynthetic
-    suspend fun reply(message: Message): MessageReceipt<Contact> =
-        contact.sendMessage(message)
-
-    /**
-     * 给这个助手的联系人发送文本消息
-     */
-    @JvmSynthetic
-    suspend fun reply(plain: String): MessageReceipt<Contact> =
-        contact.sendMessage(PlainText(plain))
+    suspend fun sign(block: () -> Any?) = isActive && runCatching {
+        block().let { message ->
+            when (message) {
+                null, Unit -> Unit
+                is Message -> contact.sendMessage(message)
+                is String -> contact.sendMessage(message)
+                else -> contact.sendMessage(message.toString())
+            }
+        }
+    }.onFailure { logger.warning({ "回复${contact}失败" }, it) }.isSuccess
 }
