@@ -1,6 +1,9 @@
+import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
+
 plugins {
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
+    id("net.mamoe.mirai-console") version Versions.mirai
 }
 
 repositories {
@@ -21,17 +24,7 @@ repositories {
 }
 
 dependencies {
-    implementation(mirai("core-api", Versions.core))
-    implementation(mirai("console", Versions.console))
-    implementation(mirai("core", Versions.core))
-    implementation(mirai("console-terminal", Versions.console))
-    compileOnly(ktor("client-core", Versions.ktor))
-    compileOnly(ktor("client-serialization", Versions.ktor))
-    compileOnly(ktor("client-encoding", Versions.ktor))
-    compileOnly(ktor("client-okhttp", Versions.ktor))
-    // test
-    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
-    // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
+    //
 }
 
 kotlin {
@@ -46,39 +39,27 @@ kotlin {
 }
 
 tasks {
-
     test {
         useJUnitPlatform()
     }
 
-    compileKotlin {
-        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
-        kotlinOptions.jvmTarget = "11"
-    }
-
-    compileTestKotlin {
-        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
-        kotlinOptions.jvmTarget = "11"
-    }
-
-    val testConsoleDir = File(rootProject.projectDir, "test").apply { mkdir() }
+    val testConsoleDir = rootProject.projectDir.resolve( "test").apply { mkdir() }
 
     create("copyFile") {
         group = "mirai"
 
-        dependsOn(project(":helper").getTasksByName("shadowJar", false))
-        dependsOn(testClasses)
+        dependsOn("buildPlugin")
 
         doFirst {
-            File(testConsoleDir, "plugins/").walk().filter {
+            testConsoleDir.resolve("plugins/").walk().filter {
                 rootProject.name in it.name
             }.forEach {
                 delete(it)
                 println("Deleted ${it.absolutePath}")
             }
             copy {
-                into(File(testConsoleDir, "plugins/"))
-                from(File(project(":helper").buildDir, "libs/")) {
+                into(testConsoleDir.resolve( "plugins/"))
+                from(project(":helper").buildDir.resolve("mirai/")) {
                     include {
                         rootProject.name in it.name
                     }.eachFile {
@@ -89,12 +70,12 @@ tasks {
 
             File(testConsoleDir, "start.bat").writeText(
                 buildString {
-                    appendln("@echo off")
-                    appendln("cd ${testConsoleDir.absolutePath}")
-                    appendln("java -classpath ${sourceSets.main.get().runtimeClasspath.asPath} ^")
-                    appendln("-Dfile.encoding=UTF-8 ^")
-                    appendln("-Xmx2000m ^")
-                    appendln("mirai.RunMirai")
+                    appendReproducibleNewLine("@echo off")
+                    appendReproducibleNewLine("cd ${testConsoleDir.absolutePath}")
+                    appendReproducibleNewLine("java -classpath ${sourceSets.main.get().runtimeClasspath.asPath} ^")
+                    appendReproducibleNewLine("-Dfile.encoding=UTF-8 ^")
+                    appendReproducibleNewLine("-Xmx2000m ^")
+                    appendReproducibleNewLine("mirai.RunMirai")
                 }
             )
         }

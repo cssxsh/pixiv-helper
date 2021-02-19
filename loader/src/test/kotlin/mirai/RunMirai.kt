@@ -2,13 +2,7 @@ package mirai
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import mirai.command.RecallCommand
-import mirai.command.TTSCommand
-import mirai.data.AmrFileData
-import mirai.data.TempPluginDataHolder
 import net.mamoe.mirai.console.MiraiConsole
-import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
-import net.mamoe.mirai.console.plugin.jvm.JvmPluginLoader
 import net.mamoe.mirai.console.terminal.ConsoleTerminalExperimentalApi
 import net.mamoe.mirai.console.terminal.MiraiConsoleImplementationTerminal
 import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
@@ -47,7 +41,6 @@ object RunMirai {
     }
 
     private fun MiraiConsole.setCustomize(): Unit = GlobalEventChannel.parentScope(this).run {
-        JvmPluginLoader.dataStorage.load(TempPluginDataHolder, AmrFileData)
         subscribeAlways<NewFriendRequestEvent> {
             accept()
         }
@@ -58,7 +51,5 @@ object RunMirai {
                 ignore()
             }
         }
-        TTSCommand.register()
-        RecallCommand.register()
     }
 }

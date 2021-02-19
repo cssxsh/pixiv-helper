@@ -2,13 +2,15 @@
 plugins {
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
-    kotlin("kapt") version Versions.kotlin
-    id("com.github.johnrengelman.shadow") version Versions.shadow
-//    id("net.mamoe.mirai-console") version Versions.console
+    id("net.mamoe.mirai-console") version Versions.mirai
 }
 
 group = "xyz.cssxsh.mirai.plugin"
 version = "0.6.0-dev-1"
+
+mirai {
+    jvmTarget = JavaVersion.VERSION_11
+}
 
 repositories {
     mavenLocal()
@@ -28,22 +30,13 @@ repositories {
 }
 
 dependencies {
-    kapt(group = "com.google.auto.service", name = "auto-service", version = Versions.autoService)
-    compileOnly(group = "com.google.auto.service", name = "auto-service-annotations", version = Versions.autoService)
-    compileOnly(mirai("core-api", Versions.core))
-    compileOnly(mirai("console", Versions.console))
-    implementation(ktor("client-core", Versions.ktor))
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
-    implementation(ktor("client-okhttp", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
     implementation(poi("poi-ooxml", Versions.poi))
     implementation(mybatis("mybatis", Versions.mybatis))
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
-    // test
-    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = Versions.junit)
-    // testImplementation(kotlinx("coroutines-test", Versions.coroutines))
 }
 
 kotlin {
@@ -61,27 +54,7 @@ kotlin {
 }
 
 tasks {
-
     test {
         useJUnitPlatform()
-    }
-
-    shadowJar {
-        dependencies {
-            exclude { "org.jetbrains" in it.moduleGroup }
-            exclude { "net.mamoe" in it.moduleGroup }
-            exclude { "org.slf4j" in it.moduleGroup }
-        }
-        archiveBaseName.set(rootProject.name)
-    }
-
-    compileKotlin {
-        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
-        kotlinOptions.jvmTarget = "11"
-    }
-
-    compileTestKotlin {
-        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
-        kotlinOptions.jvmTarget = "11"
     }
 }

@@ -1,10 +1,8 @@
 package xyz.cssxsh.mirai.plugin
 
-import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
-import net.mamoe.mirai.console.plugin.jvm.JvmPlugin
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -21,7 +19,6 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
 import xyz.cssxsh.mirai.plugin.tools.Zipper
 import kotlin.time.minutes
 
-@AutoService(JvmPlugin::class)
 object PixivHelperPlugin : KotlinPlugin(
     JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "0.5.0-dev-1") {
         name("pixiv-helper")
