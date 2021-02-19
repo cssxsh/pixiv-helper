@@ -4,11 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserInfo(
-    @SerialName("uid")
-    val uid: Long,
+data class TagBaseInfo(
+    @SerialName("pid")
+    val pid: Long,
     @SerialName("name")
     val name: String,
-    @SerialName("account")
-    val account: String
+    @SerialName("translated_name")
+    val translatedName: String?
 )

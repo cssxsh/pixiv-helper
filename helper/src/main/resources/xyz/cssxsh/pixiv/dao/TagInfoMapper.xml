@@ -9,7 +9,7 @@
             (${item.pid}, #{item.name}, #{item.translatedName})
         </foreach>;
     </insert>
-    <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.TagInfo">
+    <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.TagBaseInfo">
         SELECT *
         FROM tags
         WHERE pid = ${pid};

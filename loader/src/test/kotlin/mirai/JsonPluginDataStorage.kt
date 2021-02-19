@@ -15,6 +15,7 @@ class JsonPluginDataStorage(
     override val directoryPath: Path,
     isConfig: Boolean,
 ) : MultiFilePluginDataStorage {
+
     init {
         directoryPath.toFile().mkdir()
     }

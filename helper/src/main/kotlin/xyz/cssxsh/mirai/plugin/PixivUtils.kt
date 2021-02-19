@@ -94,12 +94,12 @@ internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
                 illust
             }
             AgeLimit.R18 -> {
-                illust.copy(tags = illust.tags + xyz.cssxsh.pixiv.data.apps.TagInfo(
+                illust.copy(tags = illust.tags + TagInfo(
                     name = "R-18"
                 ))
             }
             AgeLimit.R18G -> {
-                illust.copy(tags = illust.tags + xyz.cssxsh.pixiv.data.apps.TagInfo(
+                illust.copy(tags = illust.tags + TagInfo(
                     name = "R-18G"
                 ))
             }
@@ -154,7 +154,7 @@ internal fun IllustInfo.isR18(): Boolean =
 internal fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
-internal fun IllustInfo.getUserInfo() = UserInfo(
+internal fun IllustInfo.getUserInfo() = UserBaseInfo(
     uid = user.id,
     name = user.name,
     account = user.account
@@ -189,14 +189,14 @@ internal fun IllustInfo.getFileInfos() = getOriginImageUrls().mapIndexed { index
 }
 
 internal fun IllustInfo.getTagInfo() = tags.map {
-    TagInfo(
+    TagBaseInfo(
         pid = pid,
         name = it.name,
         translatedName = it.translatedName
     )
 }
 
-internal fun UserInfoMapper.addUserByIllustInfo(user: UserInfo) =
+internal fun UserInfoMapper.addUserByIllustInfo(user: UserBaseInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
 internal fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
