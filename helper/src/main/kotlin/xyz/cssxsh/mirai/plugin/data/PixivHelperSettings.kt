@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import org.sqlite.JDBC
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
-import xyz.cssxsh.mirai.plugin.tools.PanConfig
+import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater.PanConfig
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
@@ -38,10 +38,9 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
      */
     @ValueName("pan_config")
     val panConfig: PanConfig by value(PanConfig(
-        bdsToken = "a25846e85d9ae2b6356b1c78d31c9ef3",
         logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",
         targetPath = "/Pixiv",
-        cookies = "BDUSS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; BDUSS_BFESS=JnNUVzZTBIRjBxSm10dTVtQ01Mb01nNDNhYkxzck5hTVZsRH5GRGJTdzhyNjFmSUFBQUFBJCQAAAAAAAAAAAEAAADUV~MytLTKwMnx0KHJ-ruvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwihl88IoZfTz; STOKEN=0119324ef6417dfc810b4da1c76267b37d3e50d3d6a72f345ff751a453f2a93f"
+        cookies = emptyList()
     ))
 
     @ValueName("sqlite")
