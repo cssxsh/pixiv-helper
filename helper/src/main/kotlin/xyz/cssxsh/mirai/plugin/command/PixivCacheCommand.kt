@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import io.ktor.client.features.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -18,13 +16,11 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.downloadImageUrls
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import xyz.cssxsh.mirai.plugin.tools.PanUpdater.update
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
-import xyz.cssxsh.pixiv.RankMode
+import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
-import xyz.cssxsh.pixiv.data.apps.UserDetail
-import xyz.cssxsh.pixiv.data.apps.UserPreview
+import xyz.cssxsh.pixiv.data.apps.*
 import java.io.File
 import java.time.LocalDate
 import java.time.Year
@@ -35,6 +31,10 @@ object PixivCacheCommand : CompositeCommand(
     "cache",
     description = "PIXIV缓存指令",
     overrideContext = buildCommandArgumentContext {
+        RankMode::class with object : CommandValueArgumentParser<RankMode> {
+            override fun parse(raw: String, sender: CommandSender): RankMode =
+                enumValueOf(raw.toUpperCase())
+        }
         LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
             override fun parse(raw: String, sender: CommandSender): LocalDate =
                 LocalDate.parse(raw)
@@ -61,6 +61,8 @@ object PixivCacheCommand : CompositeCommand(
 
     private var panJob: Job? = null
 
+    private const val LOAD_LIMIT = 3_000L
+
     private fun UserPreview.isLoaded(): Boolean = useArtWorkInfoMapper { mapper ->
         illusts.all { mapper.contains(it.pid) }
     }
@@ -81,7 +83,19 @@ object PixivCacheCommand : CompositeCommand(
         RankMode.DAY_FEMALE,
     )
 
-    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = 500) = buildList {
+    private fun List<IllustInfo>.nocache() = useArtWorkInfoMapper { mapper ->
+        filter { mapper.contains(it.pid).not() }
+    }
+
+    private fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MANGA }
+
+    private fun loadDayOfYears(year: Year, interval: Int = 5, offset: Long = 29) = buildList {
+        (1 .. year.length() step interval).forEach { dayOfYear ->
+            add(year.atDay(dayOfYear).plusDays(offset))
+        }
+    }
+
+    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 illustRanking(mode = mode, date = date, offset = offset).illusts
@@ -95,15 +109,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private fun loadDayOfYears(year: Year) = buildList {
-        (1..12).forEach { month ->
-            (0..3L).forEach { week ->
-                add(year.atMonth(month).atEndOfMonth().plusWeeks(week))
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getFollowIllusts(limit: Long = 10_000) = buildList {
+    private suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 illustFollow(offset = offset).illusts
@@ -117,7 +123,7 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getRecommended(limit: Long = 10_000) = buildList {
+    private suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             if (isActive) runCatching {
                 userRecommended(offset = offset).userPreviews
@@ -131,21 +137,17 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    private suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = 10_000) = buildList {
+    private suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = LOAD_LIMIT) = buildList {
         (0 until limit step AppApi.PAGE_SIZE).fold<Long, String?>(AppApi.USER_BOOKMARKS_ILLUST) { url, _ ->
-            if (isActive && url != null) {
-                runCatching {
-                    userBookmarksIllust(uid = uid, url = url)
-                }.onSuccess { (list, nextUrl) ->
-                    if (nextUrl == null) return@buildList
-                    addAll(list)
-                    logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
-                }.onFailure {
-                    logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
-                }.getOrNull()?.nextUrl
-            } else {
-                null
-            }
+            runCatching {
+                if (isActive.not() || url == null) return@buildList
+                userBookmarksIllust(uid = uid, url = url)
+            }.onSuccess { (list, _) ->
+                addAll(list)
+                logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
+            }.onFailure {
+                logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
+            }.getOrNull()?.nextUrl
         }
     }
 
@@ -193,7 +195,7 @@ object PixivCacheCommand : CompositeCommand(
 
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank(date: LocalDate? = null) = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.ranks(date: LocalDate? = null) = getHelper().run {
         cacheRanks.forEach { mode ->
             addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") {
                 getRank(mode = mode, date = date)
@@ -202,10 +204,14 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode, date: LocalDate? = null) =
+        getHelper().addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") { getRank(mode = mode, date = date, limit = 120) }
+
+    @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
         loadDayOfYears(year).forEach { date ->
-            addCacheJob("YEAR[${year}]($date)") {
-                getRank(mode = RankMode.MONTH, date = date).filter { it.isEro() }
+            addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
+                getRank(mode = RankMode.MONTH, date = date, limit = 90).nomanga().nocache()
             }
         }
     }
@@ -298,7 +304,7 @@ object PixivCacheCommand : CompositeCommand(
      * 从文件夹中加载信息
      */
     @SubCommand
-    fun CommandSenderOnMessage<MessageEvent>.load(range: LongRange = MAX_RANGE) = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.load(range: LongRange = MAX_RANGE) = getHelper().run {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
         }.listDirs("""\d{3}______""".toRegex()).forEach { first ->
