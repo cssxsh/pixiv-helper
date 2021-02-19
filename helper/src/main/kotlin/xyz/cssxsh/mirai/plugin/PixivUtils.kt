@@ -12,10 +12,11 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
-import xyz.cssxsh.pixiv.WorkContentType
-import xyz.cssxsh.pixiv.api.apps.illustDetail
+import xyz.cssxsh.pixiv.*
+import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.api.publics.*
 import xyz.cssxsh.pixiv.dao.*
-import xyz.cssxsh.pixiv.data.apps.IllustInfo
+import xyz.cssxsh.pixiv.data.apps.*
 import xyz.cssxsh.pixiv.model.*
 import java.io.File
 import java.security.MessageDigest
@@ -83,6 +84,31 @@ internal fun IllustInfo.getPixivCat(): Message = buildMessageChain {
     }
 }
 
+private const val TAG_MAX = 10
+
+internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
+    if (illust.sanityLevel == SanityLevel.BLACK && illust.isR18().not() && illust.tags.size == TAG_MAX) {
+        logger.info { "正在检查PID: ${illust.pid} 是否为R18" }
+        return when(getWork(illust.pid).works.single().ageLimit) {
+            AgeLimit.ALL -> {
+                illust
+            }
+            AgeLimit.R18 -> {
+                illust.copy(tags = illust.tags + xyz.cssxsh.pixiv.data.apps.TagInfo(
+                    name = "R-18"
+                ))
+            }
+            AgeLimit.R18G -> {
+                illust.copy(tags = illust.tags + xyz.cssxsh.pixiv.data.apps.TagInfo(
+                    name = "R-18G"
+                ))
+            }
+        }
+    } else {
+        return illust
+    }
+}
+
 internal suspend fun PixivHelper.buildMessageByIllust(
     illust: IllustInfo,
     save: Boolean = true,
@@ -93,7 +119,7 @@ internal suspend fun PixivHelper.buildMessageByIllust(
         add(illust.getMessage())
         add(illust.getPixivCat())
     }
-    if (!illust.isR18()) {
+    if (illust.isR18().not()) {
         illust.getImages().forEach {
             add(it.uploadAsImage(contact))
         }

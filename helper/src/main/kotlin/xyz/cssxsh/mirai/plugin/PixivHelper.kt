@@ -118,7 +118,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<CacheTask>.check() = transform { (name, write, reply, block) ->
         runCatching {
-            block.invoke(this@PixivHelper).let { list ->
+            block.invoke(this@PixivHelper).map {
+                checkR18(it)
+            }.let { list ->
                 if (write) list.writeToCache()
                 useArtWorkInfoMapper { mapper ->
                     list.groupBy {
