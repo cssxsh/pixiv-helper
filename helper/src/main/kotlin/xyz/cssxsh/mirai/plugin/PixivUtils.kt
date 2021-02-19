@@ -307,15 +307,16 @@ internal suspend fun PixivHelper.getIllustInfo(
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
-    getOriginImageUrls().filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
-        dir.mkdirs()
-        PixivHelperDownloader.downloadImageUrls(downloads, dir).let { list ->
-            check(list.all { it.isSuccess }) {
-                "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull()?.message }}"
+    getOriginImageUrls().filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }
+        ?.let { downloads ->
+            dir.mkdirs()
+            PixivHelperDownloader.downloadImageUrls(downloads, dir).let { list ->
+                check(list.all { it.isSuccess }) {
+                    "作品(${pid})下载错误"
+                }
             }
+            logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
         }
-        logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
-    }
     getOriginImageUrls().map { url ->
         dir.resolve(Url(url).getFilename())
     }

@@ -3,9 +3,11 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.features.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
+import net.mamoe.mirai.utils.warning
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.pixiv.tool.PixivDownloader
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import java.io.EOFException
 import java.io.File
 import java.net.SocketException
@@ -47,6 +49,8 @@ object PixivHelperDownloader : PixivDownloader(
                 dir.resolve(Url(url).getFilename()).apply {
                     writeBytes(result.getOrThrow())
                 }
+            }.onFailure {
+                logger.warning({ "[$url]下载失败" }, it)
             }
         }
     )
