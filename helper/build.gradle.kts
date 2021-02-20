@@ -10,6 +10,9 @@ version = "0.6.0-dev-1"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
+    configureShadow {
+        archiveBaseName.set(rootProject.name)
+    }
 }
 
 repositories {
@@ -37,6 +40,8 @@ dependencies {
     implementation(mybatis("mybatis", Versions.mybatis))
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
+    testImplementation(junit("api", Versions.junit))
+    testRuntimeOnly(junit("engine", Versions.junit))
 }
 
 kotlin {

@@ -63,7 +63,7 @@ class JsonPluginDataStorage(
     override fun store(holder: PluginDataHolder, instance: PluginData) {
         runCatching {
             getPluginDataFile(holder, instance).run {
-                writeText(json.encodeToString(instance.updaterSerializer, {}()).also {
+                writeText(json.encodeToString(instance.updaterSerializer, Unit).also {
                     check(it.isNotBlank()) { "写入为空" }
                 })
             }

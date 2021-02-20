@@ -12,9 +12,7 @@ object Versions {
     const val jsoup = "1.13.1"
     const val poi = "4.1.2"
     // other
-    const val shadow = "6.1.0"
-    const val junit = "5.6.2"
-    const val autoService = "1.0-rc7"
+    const val junit = "5.2.0"
     const val mybatis = "3.5.6"
     const val sqliteJdbc = "3.34.0"
 }

@@ -3,7 +3,6 @@ import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
 plugins {
     kotlin("jvm") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
-    id("net.mamoe.mirai-console") version Versions.mirai
 }
 
 repositories {
@@ -24,7 +23,10 @@ repositories {
 }
 
 dependencies {
-    //
+    implementation(mirai("core-api", Versions.mirai))
+    implementation(mirai("console", Versions.mirai))
+    implementation(mirai("core", Versions.mirai))
+    implementation(mirai("console-terminal", Versions.mirai))
 }
 
 kotlin {
@@ -43,12 +45,23 @@ tasks {
         useJUnitPlatform()
     }
 
+    compileKotlin {
+        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
+        kotlinOptions.jvmTarget = "11"
+    }
+
+    compileTestKotlin {
+        kotlinOptions.freeCompilerArgs += "-Xjvm-default=all"
+        kotlinOptions.jvmTarget = "11"
+    }
+
     val testConsoleDir = rootProject.projectDir.resolve( "test").apply { mkdir() }
 
     create("copyFile") {
         group = "mirai"
 
-        dependsOn("buildPlugin")
+        dependsOn(project(":helper").getTasksByName("buildPlugin", false))
+        dependsOn(testClasses)
 
         doFirst {
             testConsoleDir.resolve("plugins/").walk().filter {

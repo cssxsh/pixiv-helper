@@ -2,26 +2,29 @@
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
-fun DependencyHandler.kotlinx(module: String, version: String = Versions.kotlin) =
+fun DependencyHandler.kotlinx(module: String, version: String) =
     "org.jetbrains.kotlinx:kotlinx-$module:$version"
 
-fun DependencyHandler.ktor(module: String, version: String= Versions.ktor) =
+fun DependencyHandler.ktor(module: String, version: String) =
     "io.ktor:ktor-$module:$version"
 
-fun DependencyHandler.mirai(module: String, version: String = "+") =
+fun DependencyHandler.mirai(module: String, version: String) =
     "net.mamoe:mirai-$module:$version"
 
-fun DependencyHandler.okhttp3(module: String, version: String = Versions.okhttp) =
+fun DependencyHandler.okhttp3(module: String, version: String) =
     "com.squareup.okhttp3:$module:$version"
 
-fun DependencyHandler.jsoup(version: String = Versions.jsoup) =
+fun DependencyHandler.jsoup(version: String) =
     "org.jsoup:jsoup:$version"
 
-fun DependencyHandler.poi(module: String, version: String = Versions.poi) =
+fun DependencyHandler.poi(module: String, version: String) =
     "org.apache.poi:${module}:$version"
 
-fun DependencyHandler.mybatis(module: String, version: String = Versions.mybatis) =
+fun DependencyHandler.mybatis(module: String, version: String) =
     "org.mybatis:${module}:${version}"
 
 fun DependencyHandler.xerial(module: String, version: String) =
     "org.xerial:${module}:${version}"
+
+fun DependencyHandler.junit(module: String, version: String) =
+    "org.junit.jupiter:junit-jupiter-${module}:${version}"
