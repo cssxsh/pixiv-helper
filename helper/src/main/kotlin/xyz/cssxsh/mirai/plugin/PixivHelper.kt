@@ -21,7 +21,6 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.time.OffsetDateTime
-import java.util.concurrent.ArrayBlockingQueue
 import javax.net.ssl.SSLException
 import kotlin.time.*
 
@@ -70,17 +69,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
         }
     }
-
-    val historyQueue by lazy {
-        ArrayBlockingQueue<Long>(PixivHelperSettings.minInterval)
-    }
-
-    var minSanityLevel = 1
-        set(value) {
-            field = minOf(value, 6)
-        }
-
-    var minBookmarks: Long = 0
 
     var simpleInfo: Boolean
         get() = PixivConfigData.simpleInfo.getOrPut(contact.toString()) { contact !is Friend }

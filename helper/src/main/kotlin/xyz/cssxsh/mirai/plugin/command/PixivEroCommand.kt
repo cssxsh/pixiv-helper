@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -25,23 +26,27 @@ object PixivEroCommand : SimpleCommand(
 
     private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
 
-    private fun PixivHelper.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(minInterval) }.forEach { info ->
+    private data class History(
+        val list: MutableList<Long> = mutableListOf(),
+        var minSanityLevel: Int = 0,
+        var minBookmarks: Long = 0
+    )
+
+    private val histories: MutableMap<Contact, History> = mutableMapOf()
+
+    private fun History.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(minInterval) }.forEach { info ->
         caches[info.pid] = info
     }
 
-    private fun PixivHelper.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
-        info.pid !in historyQueue && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
-    }.let { infos ->
-        if (infos.isEmpty()) {
-            addEroArtWorkInfos()
-            getEroArtWorkInfos()
-        } else {
-            infos
-        }
+    private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
+        info.pid !in list && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+    }.ifEmpty {
+        addEroArtWorkInfos()
+        getEroArtWorkInfos()
     }
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle() = histories.getOrPut(fromEvent.subject) { History() }.runCatching {
         if ("更色" in fromEvent.message.contentToString()) {
             minSanityLevel++
         } else {
@@ -50,7 +55,6 @@ object PixivEroCommand : SimpleCommand(
         if ("更好" !in fromEvent.message.contentToString()) {
             minBookmarks = 0
         }
-        // TODO 使用缓存变量
         getEroArtWorkInfos().apply {
             PixivStatisticalData.eroAdd(user = fromEvent.sender).let {
                 logger.verbose { "${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图" }
@@ -58,14 +62,14 @@ object PixivEroCommand : SimpleCommand(
         }.random().also { info ->
             minSanityLevel = info.sanityLevel
             minBookmarks = info.totalBookmarks
-            historyQueue.apply {
-                if (remainingCapacity() == 0) {
-                    take()
+            list.apply {
+                if (size >= minInterval) {
+                    clear()
                 }
-                put(info.pid)
+                add(info.pid)
             }
         }.let { info ->
-            buildMessageByIllust(info.pid)
+            getHelper().buildMessageByIllust(info.pid)
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
