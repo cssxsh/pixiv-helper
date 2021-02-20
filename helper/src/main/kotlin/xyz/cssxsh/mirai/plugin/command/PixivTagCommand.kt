@@ -5,15 +5,11 @@ import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.utils.verbose
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
-import xyz.cssxsh.pixiv.api.apps.AppApi
-import xyz.cssxsh.pixiv.api.apps.illustRelated
-import xyz.cssxsh.pixiv.api.apps.searchIllust
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.pixiv.api.apps.*
 
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,

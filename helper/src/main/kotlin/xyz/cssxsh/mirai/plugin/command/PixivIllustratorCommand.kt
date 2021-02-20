@@ -8,7 +8,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.verbose
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivAliasData
+import xyz.cssxsh.mirai.plugin.data.*
 
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,

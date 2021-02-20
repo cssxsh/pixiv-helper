@@ -5,9 +5,8 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.Zipper
-import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
 import java.io.File
 
 @Suppress("unused")

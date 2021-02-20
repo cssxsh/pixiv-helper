@@ -10,13 +10,12 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
-import net.mamoe.mirai.utils.verbose
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.data.SearchResult
+import xyz.cssxsh.pixiv.data.*
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 import java.io.EOFException
 import java.net.ConnectException

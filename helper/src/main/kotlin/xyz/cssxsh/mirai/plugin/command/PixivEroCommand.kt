@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
-import xyz.cssxsh.pixiv.model.ArtWorkInfo
+import xyz.cssxsh.pixiv.model.*
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(

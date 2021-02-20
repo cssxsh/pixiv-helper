@@ -89,7 +89,7 @@ private const val TAG_MAX = 10
 internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
     if (illust.sanityLevel == SanityLevel.BLACK && illust.isR18().not() && illust.tags.size == TAG_MAX) {
         logger.info { "正在检查PID: ${illust.pid} 是否为R18" }
-        return when(getWork(illust.pid).works.single().ageLimit) {
+        return when (getWork(illust.pid).works.single().ageLimit) {
             AgeLimit.ALL -> {
                 illust
             }
@@ -307,17 +307,17 @@ internal suspend fun PixivHelper.getIllustInfo(
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
-    getOriginImageUrls().filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }
-        ?.let { downloads ->
+    getOriginImageUrls().apply {
+        filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()
             PixivHelperDownloader.downloadImageUrls(downloads, dir).let { list ->
                 check(list.all { it.isSuccess }) {
-                    "作品(${pid})下载错误"
+                    "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull() }}"
                 }
             }
             logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
         }
-    getOriginImageUrls().map { url ->
+    }.map { url ->
         dir.resolve(Url(url).getFilename())
     }
 }

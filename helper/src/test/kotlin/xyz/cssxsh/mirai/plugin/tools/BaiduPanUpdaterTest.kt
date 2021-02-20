@@ -1,9 +1,8 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.tools
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
-import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater
 import java.io.File
 import kotlin.time.measureTime
 

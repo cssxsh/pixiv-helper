@@ -6,11 +6,8 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.events.MessageEvent
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
-import xyz.cssxsh.mirai.plugin.data.PixivStatisticalData
-import xyz.cssxsh.mirai.plugin.getHelper
-import xyz.cssxsh.mirai.plugin.quoteReply
-import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
+import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.*
 
 @Suppress("unused")
 object PixivInfoCommand : CompositeCommand(
