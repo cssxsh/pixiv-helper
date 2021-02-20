@@ -1,36 +1,25 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.RankMode
+import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.tool.addIllustFollowListener
-import java.time.LocalDate
-import kotlin.time.minutes
+import java.time.*
+import kotlin.time.*
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "pixiv",
     description = "PIXIV基本方法",
-    overrideContext = buildCommandArgumentContext {
-        RankMode::class with object : CommandValueArgumentParser<RankMode> {
-            override fun parse(raw: String, sender: CommandSender): RankMode =
-                enumValueOf(raw.toUpperCase())
-        }
-        LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
-            override fun parse(raw: String, sender: CommandSender): LocalDate =
-                LocalDate.parse(raw)
-        }
-    }
+    overrideContext = PixivCommandArgumentContext
 ) {
 
     @ExperimentalCommandDescriptors

@@ -2,57 +2,29 @@ package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.console.command.descriptor.CommandValueArgumentParser
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.command.descriptor.buildCommandArgumentContext
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperDownloader.downloadImageUrls
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.data.apps.*
 import java.io.File
-import java.time.LocalDate
-import java.time.Year
+import java.time.*
 
 @Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",
     description = "PIXIV缓存指令",
-    overrideContext = buildCommandArgumentContext {
-        RankMode::class with object : CommandValueArgumentParser<RankMode> {
-            override fun parse(raw: String, sender: CommandSender): RankMode =
-                enumValueOf(raw.toUpperCase())
-        }
-        LocalDate::class with object : CommandValueArgumentParser<LocalDate> {
-            override fun parse(raw: String, sender: CommandSender): LocalDate =
-                LocalDate.parse(raw)
-        }
-        Year::class with object : CommandValueArgumentParser<Year> {
-            override fun parse(raw: String, sender: CommandSender): Year =
-                Year.parse(raw)
-        }
-        LongRange::class with object : CommandValueArgumentParser<LongRange> {
-
-            private val RANGE_REGEX = """(\d+)\.{2,4}(\d+)""".toRegex()
-
-            override fun parse(raw: String, sender: CommandSender): LongRange =
-                requireNotNull(RANGE_REGEX.find(raw)).destructured.let { (start, end) ->
-                    start.toLong()..end.toLong()
-                }
-        }
-    }
+    overrideContext = PixivCommandArgumentContext
 ) {
 
     @ExperimentalCommandDescriptors
@@ -348,7 +320,7 @@ object PixivCacheCommand : CompositeCommand(
         useArtWorkInfoMapper { it.artWorks(interval) }.sortedBy { it.pid }.also {
             logger.verbose { "{${it.first().pid..it.last().pid}}共有 ${it.size} 个作品需要检查" }
         }.groupBy { info ->
-            isActive && imagesFolder(info.pid).runCatching {
+            isActive && PixivHelperSettings.imagesFolder(info.pid).runCatching {
                 resolve("${info.pid}.json").also { file ->
                     if (file.exists().not()) {
                         logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
@@ -361,7 +333,7 @@ object PixivCacheCommand : CompositeCommand(
                 useFileInfoMapper { it.fileInfos(info.pid) }.filter { info ->
                     resolve(Url(info.url).getFilename()).exists().not()
                 }.let { infos ->
-                    downloadImageUrls(urls = infos.map { it.url }, dir = this).forEachIndexed { index, result ->
+                    PixivHelperDownloader.downloadImageUrls(urls = infos.map { it.url }, dir = this).forEachIndexed { index, result ->
                         result.onFailure {
                             logger.warning({ "[${infos[index]}]修复出错" }, it)
                         }.onSuccess {

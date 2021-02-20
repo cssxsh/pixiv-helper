@@ -1,32 +1,22 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.console.command.descriptor.CommandValueArgumentParser
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.command.descriptor.buildCommandArgumentContext
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.utils.info
-import net.mamoe.mirai.utils.verbose
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
+import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
-import xyz.cssxsh.mirai.plugin.useArtWorkInfoMapper
-import xyz.cssxsh.pixiv.WorkContentType
-import xyz.cssxsh.pixiv.model.ArtWorkInfo
+import xyz.cssxsh.pixiv.*
+import xyz.cssxsh.pixiv.model.*
 
 @Suppress("unused")
 object PixivDeleteCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "delete",
     description = "PIXIV删除指令",
-    overrideContext = buildCommandArgumentContext {
-        WorkContentType::class with object : CommandValueArgumentParser<WorkContentType> {
-            override fun parse(raw: String, sender: CommandSender): WorkContentType =
-                WorkContentType.valueOf(raw.toUpperCase())
-        }
-    }
+    overrideContext = PixivCommandArgumentContext
 ) {
 
     @ExperimentalCommandDescriptors
