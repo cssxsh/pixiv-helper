@@ -120,8 +120,12 @@ internal suspend fun PixivHelper.buildMessageByIllust(
         add(illust.getPixivCat())
     }
     if (illust.isR18().not()) {
-        illust.getImages().forEach {
-            add(it.uploadAsImage(contact))
+        illust.getImages().forEachIndexed { index, file ->
+            if (index < 5) {
+                add(file.uploadAsImage(contact))
+            } else {
+                logger.warning { "[${illust.pid}]图片过多，跳过{$index}" }
+            }
         }
     } else {
         add(PlainText("R18禁止！"))
@@ -133,9 +137,32 @@ internal suspend fun PixivHelper.buildMessageByIllust(
 
 internal suspend fun PixivHelper.buildMessageByIllust(
     pid: Long,
+    save: Boolean = false,
 ): List<Message> = buildMessageByIllust(
     illust = getIllustInfo(pid),
-    save = false
+    save = save
+)
+
+internal fun buildMessageByUser(
+    detail: UserDetail,
+    save: Boolean = true,
+): MessageChain = buildMessageChain {
+    appendLine("NAME: ${detail.user.name}")
+    appendLine("UID: ${detail.user.id}")
+    appendLine("ACCOUNT: ${detail.user.account}")
+    appendLine("TOTAL: ${detail.profile.totalIllusts + detail.profile.totalManga}")
+    appendLine("TWITTER: ${detail.profile.twitterAccount}")
+    if (save) {
+        detail.saveToSQLite()
+    }
+}
+
+internal suspend fun PixivHelper.buildMessageByUser(
+    uid: Long,
+    save: Boolean = false,
+): MessageChain = buildMessageByUser(
+    detail = userDetail(uid = uid),
+    save = save
 )
 
 internal fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
@@ -154,10 +181,10 @@ internal fun IllustInfo.isR18(): Boolean =
 internal fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
 
-internal fun IllustInfo.getUserInfo() = UserBaseInfo(
-    uid = user.id,
-    name = user.name,
-    account = user.account
+internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(
+    uid = id,
+    name = name,
+    account = account
 )
 
 internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
@@ -200,7 +227,7 @@ internal fun UserInfoMapper.addUserByIllustInfo(user: UserBaseInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
 internal fun IllustInfo.saveToSQLite(): Unit = useSession { session ->
-    session.getMapper(UserInfoMapper::class.java).addUserByIllustInfo(getUserInfo())
+    session.getMapper(UserInfoMapper::class.java).addUserByIllustInfo(user.toUserBaseInfo())
     session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
     session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
     if (tags.isNotEmpty()) {
@@ -236,7 +263,7 @@ internal fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session 
 
     session.getMapper(UserInfoMapper::class.java).let { mapper ->
         this@saveToSQLite.forEach { info ->
-            mapper.addUserByIllustInfo(info.getUserInfo())
+            mapper.addUserByIllustInfo(info.user.toUserBaseInfo())
         }
     }
     logger.verbose { "作品{${first().pid..last().pid}}[${size}]用户信息已插入" }
@@ -265,6 +292,10 @@ internal fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session 
     logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已插入" }
 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
+}
+
+internal fun UserDetail.saveToSQLite(): Unit = useUserInfoMapper { mapper ->
+    mapper.replaceUser(user.toUserBaseInfo())
 }
 
 internal fun ByteArray.getMd5(): String =
