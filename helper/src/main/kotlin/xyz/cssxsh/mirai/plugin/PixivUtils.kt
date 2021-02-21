@@ -26,6 +26,8 @@ import java.security.MessageDigest
  */
 internal fun <T : MessageEvent> CommandSenderOnMessage<T>.getHelper() = PixivHelperManager[fromEvent.subject]
 
+internal fun MessageEvent.getHelper() = PixivHelperManager[subject]
+
 internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: Message) =
     sendMessage(message + fromEvent.message.quote())
 

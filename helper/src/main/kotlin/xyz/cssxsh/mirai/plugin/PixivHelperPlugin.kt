@@ -13,6 +13,7 @@ import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.sqlite.SQLiteConfig.*
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
@@ -32,29 +33,11 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
-    private fun SqlSessionFactory.init(): Unit = configuration.run {
-        environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
-            config.apply {
-                enforceForeignKeys(true)
-                setCacheSize(8196)
-                setPageSize(8196)
-                setJournalMode(JournalMode.MEMORY)
-                enableCaseSensitiveLike(true)
-                setTempStore(TempStore.MEMORY)
-                setSynchronous(SynchronousMode.OFF)
-                setEncoding(Encoding.UTF8)
-            }
-            url = sqliteUrl()
-        })
-    }
-
     internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
         sqlSessionFactory.openSession(false).use { session ->
             session.let(block).also { session.commit() }
         }
     }
-
-    private val listener = PixivHelperListener()
 
     @ConsoleExperimentalApi
     override val autoSaveIntervalMillis: LongRange
@@ -87,7 +70,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         sqlSessionFactory.init()
         // Listener
-        listener.listen()
+        PixivHelperListener.subscribe()
     }
 
     override fun onDisable() {
@@ -103,7 +86,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivGetCommand.unregister()
         PixivDeleteCommand.unregister()
 
-        listener.stop()
+        PixivHelperListener.stop()
         useSession { it.commit() }
         runBlocking {
             Zipper.backupAsync().await()
