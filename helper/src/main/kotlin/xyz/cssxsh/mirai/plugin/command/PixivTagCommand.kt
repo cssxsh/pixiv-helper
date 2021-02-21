@@ -36,10 +36,6 @@ object PixivTagCommand : SimpleCommand(
                 logger.warning({ "加载'${tag}'搜索列表第${page}页失败" }, it)
             }
         }
-    }.filter { illust ->
-        illust.isEro()
-    }.also { list ->
-        logger.verbose { "'${tag}'共搜索到${list.size}个作品" }
     }
 
     private suspend fun PixivHelper.getRelated(
@@ -57,10 +53,6 @@ object PixivTagCommand : SimpleCommand(
                 logger.warning({ "加载[${pid}]相关列表第${page}页失败" }, it)
             }
         }
-    }.filter { illust ->
-        illust.isEro()
-    }.also { list ->
-        logger.verbose { "[${pid}]相关共获取到${list.size}个作品" }
     }
 
     @Handler
@@ -73,11 +65,19 @@ object PixivTagCommand : SimpleCommand(
             logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
         }.let { list ->
             if (list.size < PixivHelperSettings.minInterval) addCacheJob(name = "SEARCH(${tag})", reply = false) {
-                searchTag(tag)
+                searchTag(tag).filter { illust ->
+                    illust.isEro()
+                }.also { list ->
+                    logger.verbose { "'${tag}'共搜索到${list.size}个作品" }
+                }
             }
             list.random().let { pid ->
                 if (list.size < PixivHelperSettings.minInterval) addCacheJob(name = "RELATED(${pid})", reply = false) {
-                    getRelated(pid, list)
+                    getRelated(pid, list).filter { illust ->
+                        illust.isEro()
+                    }.also { list ->
+                        logger.verbose { "[${pid}]相关共获取到${list.size}个作品" }
+                    }
                 }
                 buildMessageByIllust(pid)
             }
