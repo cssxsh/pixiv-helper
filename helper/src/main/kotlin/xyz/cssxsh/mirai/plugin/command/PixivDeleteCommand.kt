@@ -7,7 +7,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.model.*
 
@@ -25,7 +25,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     private fun deleteArtwork(pid: Long) {
         useArtWorkInfoMapper { it.deleteByPid(pid) }
-        imagesFolder(pid).apply {
+        PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
                 it.delete()
             }
@@ -41,7 +41,7 @@ object PixivDeleteCommand : CompositeCommand(
             }
         }
         forEach { info ->
-            imagesFolder(info.pid).apply {
+            PixivHelperSettings.imagesFolder(info.pid).apply {
                 listFiles()?.forEach {
                     it.delete()
                 }

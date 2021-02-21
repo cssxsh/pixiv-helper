@@ -10,7 +10,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
 import xyz.cssxsh.pixiv.model.*
 
 @Suppress("unused")
@@ -34,7 +33,7 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
-    private fun History.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(minInterval) }.forEach { info ->
+    private fun History.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
         caches[info.pid] = info
     }
 
@@ -60,13 +59,13 @@ object PixivEroCommand : SimpleCommand(
                 logger.verbose { "${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图" }
             }
         }.random().also { info ->
-            minSanityLevel = info.sanityLevel
-            minBookmarks = info.totalBookmarks
-            list.apply {
-                if (size >= minInterval) {
-                    clear()
+            synchronized(this) {
+                minSanityLevel = info.sanityLevel
+                minBookmarks = info.totalBookmarks
+                if (list.size >= PixivHelperSettings.eroInterval) {
+                    list.clear()
                 }
-                add(info.pid)
+                list.add(info.pid)
             }
         }.let { info ->
             getHelper().buildMessageByIllust(info.pid)

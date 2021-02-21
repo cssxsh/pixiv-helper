@@ -50,7 +50,7 @@ object BaiduPanUpdater {
         }
     }
 
-    private lateinit var config: PanConfig
+    private lateinit var config: UserConfig
 
     private suspend fun <T, R> Iterable<T>.asyncMapIndexed(
         transform: suspend (Int, T) -> R
@@ -95,7 +95,7 @@ object BaiduPanUpdater {
     )
 
     @Serializable
-    data class PanConfig(
+    data class UserConfig(
         @SerialName("channel")
         val channel: String = "chunlei",
         @SerialName("web")
@@ -166,7 +166,7 @@ object BaiduPanUpdater {
         val uploadId: String,
     )
 
-    suspend fun loadPanConfig(new: PanConfig) {
+    fun loadPanConfig(new: UserConfig): Unit = runBlocking {
         config = new
         config.cookies.forEach {
             cookiesStorage.addCookie(INDEX_PAGE, Cookie(

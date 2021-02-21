@@ -1,23 +1,17 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import org.apache.ibatis.io.Resources
-import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.SqlSession
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
-import org.sqlite.SQLiteConfig.*
-import org.sqlite.javax.SQLiteConnectionPoolDataSource
-import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
-import xyz.cssxsh.mirai.plugin.tools.PixivZipper
+import xyz.cssxsh.mirai.plugin.tools.*
 import kotlin.time.minutes
 
 object PixivHelperPlugin : KotlinPlugin(
@@ -53,17 +47,18 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivAliasData.reload()
         PixivSearchData.reload()
         // Command
-        PixivMethodCommand.register()
-        PixivEroCommand.register()
+        PixivBackupCommand.register()
         PixivCacheCommand.register()
-        PixivSettingCommand.register()
-        PixivSearchCommand.register()
+        PixivDeleteCommand.register()
+        PixivEroCommand.register()
         PixivFollowCommand.register()
-        PixivTagCommand.register()
+        PixivGetCommand.register()
         PixivIllustratorCommand.register()
         PixivInfoCommand.register()
-        PixivGetCommand.register()
-        PixivDeleteCommand.register()
+        PixivMethodCommand.register()
+        PixivSearchCommand.register()
+        PixivSettingCommand.register()
+        PixivTagCommand.register()
 
         PixivHelperSettings.cacheFolder.mkdirs()
         PixivHelperSettings.backupFolder.mkdirs()
@@ -71,20 +66,23 @@ object PixivHelperPlugin : KotlinPlugin(
         sqlSessionFactory.init()
         // Listener
         PixivHelperListener.subscribe()
+
+        BaiduPanUpdater.loadPanConfig(PixivHelperSettings.panConfig)
     }
 
     override fun onDisable() {
-        PixivMethodCommand.unregister()
+        PixivBackupCommand.unregister()
+        PixivCacheCommand.unregister()
+        PixivDeleteCommand.unregister()
         PixivEroCommand.unregister()
-        PixivEroCommand.unregister()
-        PixivSettingCommand.unregister()
-        PixivSettingCommand.unregister()
         PixivFollowCommand.unregister()
-        PixivTagCommand.unregister()
+        PixivGetCommand.unregister()
         PixivIllustratorCommand.unregister()
         PixivInfoCommand.unregister()
-        PixivGetCommand.unregister()
-        PixivDeleteCommand.unregister()
+        PixivMethodCommand.unregister()
+        PixivSearchCommand.unregister()
+        PixivSettingCommand.unregister()
+        PixivTagCommand.unregister()
 
         PixivHelperListener.stop()
 

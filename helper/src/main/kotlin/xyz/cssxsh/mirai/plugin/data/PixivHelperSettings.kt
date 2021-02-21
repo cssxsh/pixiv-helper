@@ -1,50 +1,59 @@
 package xyz.cssxsh.mirai.plugin.data
 
+import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
 import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
-import org.sqlite.JDBC
+import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
-import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater.PanConfig
+import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
-    /**
-     * 色图间隔
-     */
-    @ValueName("min_interval")
-    val minInterval: Int by value(16)
 
     /**
      * 图片缓存位置
      */
     @ValueName("cache_path")
-    val cachePath: String by value("")
+    private val cachePath: String by value("")
 
     /**
      * 压缩文件保存目录
      */
     @ValueName("backup_path")
-    val backupPath: String by value("")
+    private val backupPath: String by value("")
+
+    /**
+     * 色图间隔
+     */
+    @ValueName("ero_interval")
+    val eroInterval: Int by value(16)
 
     /**
      * 涩图标准
      */
-    @ValueName("total_bookmarks")
-    val totalBookmarks: Long by value(10_000L)
+    @ValueName("ero_bookmarks")
+    val eroBookmarks: Long by value(10_000L)
+
+    @ValueName("ero_page_count")
+    val eroPageCount: Int by value(5)
 
     /**
      * 百度云
      */
     @ValueName("pan_config")
-    val panConfig: PanConfig by value(PanConfig(
-        logId = "MjA3ODZFQzFBMUNFODVDRjdFRkVBMUZGMkZBOTdBM0Y6Rkc9MQ==",
+    val panConfig: BaiduPanUpdater.UserConfig by value(BaiduPanUpdater.UserConfig(
+        logId = "",
         targetPath = "/Pixiv",
         cookies = emptyList()
     ))
 
-    @ValueName("sqlite")
-    val database: String by value("pixiv.sqlite")
+    @ValueName("sqlite_database")
+    private val sqliteDatabase: String by value("./pixiv.sqlite")
+
+    @ValueName("sqlite_config")
+    val sqliteConfig: Map<SQLiteConfig.Pragma, String> by value<Map<String, String>>()
+        .mapKeys({ SQLiteConfig.Pragma.valueOf(it) }, { it.name })
 
     /**
      * 缓存目录
@@ -53,7 +62,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
         get() = if (cachePath.isEmpty()) {
             dataFolder.resolve("cache")
         } else {
-            File(cachePath)
+            File(".").resolve(cachePath)
         }
 
     /**
@@ -63,7 +72,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
         get() = if (backupPath.isEmpty()) {
             dataFolder.resolve("backup")
         } else {
-            File(backupPath)
+            File(".").resolve(backupPath)
         }
 
     /**
@@ -74,12 +83,11 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
 
-    fun sqliteUrl(): String = File(".").resolve(database).run {
-        if (exists().not()) {
+    val sqlite = File(".").resolve(sqliteDatabase).also { sqlite ->
+        if (sqlite.exists().not()) {
             this@PixivHelperSettings::class.java.getResourceAsStream("pixiv.sqlite")?.use {
-                writeBytes(it.readAllBytes())
+                sqlite.writeBytes(it.readAllBytes())
             }
         }
-        "${JDBC.PREFIX}${absolutePath}"
     }
 }

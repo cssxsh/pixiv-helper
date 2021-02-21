@@ -9,7 +9,7 @@ import kotlin.time.measureTime
 internal class BaiduPanUpdaterTest {
 
     private fun readConfig() =
-        Json.decodeFromString(BaiduPanUpdater.PanConfig.serializer(), File("./test/PanConfig.json").readText())
+        Json.decodeFromString(BaiduPanUpdater.UserConfig.serializer(), File("./test/PanConfig.json").readText())
 
     @Test
     fun updateTest(): Unit = runBlocking {

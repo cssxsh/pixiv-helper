@@ -8,8 +8,12 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
+import org.apache.ibatis.mapping.Environment
+import org.apache.ibatis.session.SqlSessionFactory
+import org.sqlite.JDBC
+import org.sqlite.SQLiteConfig
+import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.imagesFolder
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.*
@@ -33,6 +37,25 @@ internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(mes
 
 internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
     quoteReply(message.toPlainText())
+
+internal fun SqlSessionFactory.init() = configuration.apply {
+    environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
+        config.apply {
+            enforceForeignKeys(true)
+            setCacheSize(8196)
+            setPageSize(8196)
+            setJournalMode(SQLiteConfig.JournalMode.MEMORY)
+            enableCaseSensitiveLike(true)
+            setTempStore(SQLiteConfig.TempStore.MEMORY)
+            setSynchronous(SQLiteConfig.SynchronousMode.OFF)
+            setEncoding(SQLiteConfig.Encoding.UTF8)
+            PixivHelperSettings.sqliteConfig.forEach { (pragma, value) ->
+                setPragma(pragma, value)
+            }
+        }
+        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
+    })
+}
 
 internal fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
     session.getMapper(ArtWorkInfoMapper::class.java).let(block)
@@ -123,7 +146,7 @@ internal suspend fun PixivHelper.buildMessageByIllust(
     }
     if (illust.isR18().not()) {
         illust.getImages().forEachIndexed { index, file ->
-            if (index < 5) {
+            if (index < PixivHelperSettings.eroPageCount) {
                 add(file.uploadAsImage(contact))
             } else {
                 logger.warning { "[${illust.pid}]图片过多，跳过{$index}" }
@@ -181,7 +204,7 @@ internal fun IllustInfo.isR18(): Boolean =
     tags.any { """R-?18""".toRegex() in it.name }
 
 internal fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= PixivHelperSettings.totalBookmarks && pageCount < 4 && type == WorkContentType.ILLUST
+    totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount < PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
 
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(
     uid = id,
@@ -211,9 +234,9 @@ internal fun IllustInfo.getFileInfos() = getOriginImageUrls().mapIndexed { index
     FileInfo(
         pid = pid,
         index = index,
-        md5 = imagesFolder(pid).resolve(Url(url).getFilename()).readBytes().getMd5(),
+        md5 = PixivHelperSettings.imagesFolder(pid).resolve(Url(url).getFilename()).readBytes().getMd5(),
         url = url,
-        size = imagesFolder(pid).resolve(Url(url).getFilename()).length()
+        size = PixivHelperSettings.imagesFolder(pid).resolve(Url(url).getFilename()).length()
     )
 }
 
@@ -319,7 +342,7 @@ internal fun File.readIllustInfo(): IllustInfo =
     Json_.decodeFromString(IllustInfo.serializer(), readText())
 
 internal fun IllustInfo.writeToCache() =
-    writeTo(imagesFolder(pid).resolve("${pid}.json"))
+    writeTo(PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json"))
 
 internal fun Iterable<IllustInfo>.writeToCache() = forEach { illust ->
     illust.writeToCache()
@@ -329,7 +352,7 @@ internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean = false,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust },
-): IllustInfo = imagesFolder(pid).resolve("${pid}.json").let { file ->
+): IllustInfo = PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json").let { file ->
     if (!flush && file.exists()) {
         file.readIllustInfo()
     } else {
@@ -339,7 +362,7 @@ internal suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-internal suspend fun IllustInfo.getImages(): List<File> = imagesFolder(pid).let { dir ->
+internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     getOriginImageUrls().apply {
         filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()

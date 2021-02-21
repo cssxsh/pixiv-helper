@@ -67,10 +67,13 @@ object PixivZipper {
         logger.info { "[${zip.name}]压缩完毕！" }
     }
 
-    fun backupData(list: List<Pair<File, String>> = listOf(
-        PixivHelperPlugin.dataFolder to "data",
-        PixivHelperPlugin.configFolder to "config"
-    )): List<File> = list.map { (source, type) ->
+    fun backupData(
+        list: List<Pair<File, String>> = listOf(
+            PixivHelperPlugin.dataFolder to "data",
+            PixivHelperPlugin.configFolder to "config",
+            PixivHelperSettings.sqlite to "database"
+        ),
+    ): List<File> = list.map { (source, type) ->
         getZipFile(type).also { zip ->
             logger.verbose { "将备份数据目录${source.absolutePath}到${zip.absolutePath}" }
             ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->

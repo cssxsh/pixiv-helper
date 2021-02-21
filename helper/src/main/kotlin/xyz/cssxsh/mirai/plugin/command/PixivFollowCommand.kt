@@ -11,7 +11,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.minInterval
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.api.apps.*
 
 @Suppress("unused")
@@ -48,7 +48,7 @@ object PixivFollowCommand : CompositeCommand(
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)
             useArtWorkInfoMapper { it.userEroCount() }.filter { (_, count) ->
-                count > minInterval
+                count > PixivHelperSettings.eroInterval
             }.keys.let {
                 logger.verbose { "共统计了${it.size}名画师" }
                 it - followed
