@@ -17,7 +17,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings.sqliteUrl
-import xyz.cssxsh.mirai.plugin.tools.Zipper
+import xyz.cssxsh.mirai.plugin.tools.PixivZipper
 import kotlin.time.minutes
 
 object PixivHelperPlugin : KotlinPlugin(
@@ -87,9 +87,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivDeleteCommand.unregister()
 
         PixivHelperListener.stop()
-        useSession { it.commit() }
-        runBlocking {
-            Zipper.backupAsync().await()
-        }
+
+        PixivZipper.backupData()
     }
 }

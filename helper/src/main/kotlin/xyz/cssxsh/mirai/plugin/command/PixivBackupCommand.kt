@@ -1,12 +1,14 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.tools.Zipper
+import xyz.cssxsh.mirai.plugin.tools.PixivZipper
 import java.io.File
 
 @Suppress("unused")
@@ -27,14 +29,16 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     fun ConsoleCommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "正在压缩中, ${compressJob}..." }
-        useArtWorkInfoMapper { it.userArtWork(uid) }.let {
-            compressJob = Zipper.compressAsync(it, "USER[${uid}]")
+        compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
+            PixivZipper.compressArtWorks(useArtWorkInfoMapper { it.userArtWork(uid) }, "USER[${uid}]")
         }
     }
 
     @SubCommand
     fun ConsoleCommandSender.backup() {
         check(backupJob?.isActive != true) { "正在压缩中, ${backupJob}..." }
-        backupJob = Zipper.backupAsync()
+        backupJob = PixivHelperPlugin.async(Dispatchers.IO) {
+            PixivZipper.backupData()
+        }
     }
 }
