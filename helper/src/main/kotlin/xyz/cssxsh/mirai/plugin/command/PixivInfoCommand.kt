@@ -7,7 +7,6 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 
 @Suppress("unused")
 object PixivInfoCommand : CompositeCommand(
@@ -43,11 +42,11 @@ object PixivInfoCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.user(target: User) = runCatching {
-        PixivStatisticalData.getCount(target).let { (ero, tags) ->
+        useStatisticInfoMapper { mapper ->
             buildString {
                 appendLine("用户: $target")
-                appendLine("使用色图指令次数: $ero")
-                appendLine("使用标签指令次数: $tags")
+                appendLine("使用色图指令次数: ${mapper.senderEroInfos(target.id)}")
+                appendLine("使用标签指令次数: ${mapper.senderTagInfos(target.id)}")
             }
         }
     }.onSuccess {

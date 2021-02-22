@@ -28,6 +28,7 @@
         <mapper class="xyz.cssxsh.pixiv.dao.FileInfoMapper" />
         <mapper class="xyz.cssxsh.pixiv.dao.UserInfoMapper" />
         <mapper class="xyz.cssxsh.pixiv.dao.TagInfoMapper" />
+        <mapper class="xyz.cssxsh.pixiv.dao.StatisticInfoMapper" />
     </mappers>
 
 </configuration>

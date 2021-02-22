@@ -44,6 +44,15 @@ object PixivEroCommand : SimpleCommand(
         getEroArtWorkInfos()
     }
 
+    private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useStatisticInfoMapper { mapper ->
+        mapper.replaceEroInfo(StatisticEroInfo(
+            sender = event.sender.id,
+            group = event.subject.takeIf { it is Group }?.id,
+            pid = pid,
+            timestamp = event.time.toLong()
+        ))
+    }
+
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.handle() = histories.getOrPut(fromEvent.subject) { History() }.runCatching {
         if ("更色" in fromEvent.message.contentToString()) {
@@ -54,18 +63,16 @@ object PixivEroCommand : SimpleCommand(
         if ("更好" !in fromEvent.message.contentToString()) {
             minBookmarks = 0
         }
-        getEroArtWorkInfos().apply {
-            PixivStatisticalData.eroAdd(user = fromEvent.sender).let {
-                logger.verbose { "${fromEvent.sender}第${it}次使用色图, 最小健全等级${minSanityLevel}, 最小收藏数${minBookmarks} 共找到${size} 张色图" }
-            }
-        }.random().also { info ->
+        getEroArtWorkInfos().random().also { info ->
             synchronized(this) {
                 minSanityLevel = info.sanityLevel
                 minBookmarks = info.totalBookmarks
                 if (list.size >= PixivHelperSettings.eroInterval) {
+                    addEroArtWorkInfos()
                     list.clear()
                 }
                 list.add(info.pid)
+                eroStatisticAdd(fromEvent, info.pid)
             }
         }.let { info ->
             getHelper().buildMessageByIllust(info.pid)

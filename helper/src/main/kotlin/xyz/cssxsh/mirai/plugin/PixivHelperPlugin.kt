@@ -43,7 +43,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.reload()
         // Data
         PixivConfigData.reload()
-        PixivStatisticalData.reload()
         PixivAliasData.reload()
         PixivSearchData.reload()
         // Command

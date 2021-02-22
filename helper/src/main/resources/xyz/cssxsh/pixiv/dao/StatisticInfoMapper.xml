@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.cssxsh.pixiv.dao.StatisticInfoMapper">
+    <insert id="replaceEroInfo">
+        REPLACE INTO statistic_ero("sender", "group", "pid", "timestamp")
+        VALUES (${sender}, #{group}, ${pid}, ${timestamp});
+    </insert>
+    <select id="senderEroInfos" resultType="xyz.cssxsh.pixiv.model.StatisticEroInfo">
+        SELECT *
+        FROM statistic_ero
+        WHERE sender = ${sender};
+    </select>
+    <select id="groupEroInfos" resultType="xyz.cssxsh.pixiv.model.StatisticEroInfo">
+        SELECT *
+        FROM statistic_ero
+        WHERE "group" = ${group};
+    </select>
+    <insert id="replaceTagInfo">
+        REPLACE INTO statistic_tag("sender", "group", "pid", "tag", "timestamp")
+        VALUES (${sender}, #{group}, #{pid}, #{tag}, ${timestamp});
+    </insert>
+    <select id="senderTagInfos" resultType="xyz.cssxsh.pixiv.model.StatisticTagInfo">
+        SELECT *
+        FROM statistic_tag
+        WHERE sender = ${sender};
+    </select>
+    <select id="groupTagInfos" resultType="xyz.cssxsh.pixiv.model.StatisticTagInfo">
+        SELECT *
+        FROM statistic_tag
+        WHERE "group" = ${group};
+    </select>
+</mapper>

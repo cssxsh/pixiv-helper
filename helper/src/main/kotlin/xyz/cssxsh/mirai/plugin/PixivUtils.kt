@@ -73,6 +73,10 @@ internal fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { se
     session.getMapper(TagInfoMapper::class.java).let(block)
 }
 
+internal fun <T> useStatisticInfoMapper(block: (StatisticInfoMapper) -> T) = useSession { session ->
+    session.getMapper(StatisticInfoMapper::class.java).let(block)
+}
+
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
