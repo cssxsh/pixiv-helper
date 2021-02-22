@@ -10,9 +10,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
-import xyz.cssxsh.pixiv.tool.addIllustFollowListener
 import java.time.*
-import kotlin.time.*
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
@@ -192,20 +190,6 @@ object PixivMethodCommand : CompositeCommand(
         list.forEach { quoteReply(it) }
     }.onFailure {
         quoteReply("获取排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 监听
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.listen() = getHelper().runCatching {
-        addIllustFollowListener(delay = (10).minutes.toLongMilliseconds()) { illust ->
-            buildMessageByIllust(illust).forEach { sign { it } }
-        }
-    }.onSuccess {
-        quoteReply("监听任务添加成功")
-    }.onFailure {
-        quoteReply("监听任务添加失败， ${it.message}")
     }.isSuccess
 
     /**
