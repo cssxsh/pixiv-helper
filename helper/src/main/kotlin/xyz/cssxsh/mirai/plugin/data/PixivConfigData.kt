@@ -22,6 +22,6 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     /**
      * 作品信息是否为简单构造
      */
-    @ValueName("simple_info")
-    val simpleInfo: MutableMap<String, Boolean> by value(mutableMapOf())
+    @ValueName("is_simple_info")
+    val isSimpleInfo: MutableMap<String, Boolean> by value(mutableMapOf())
 }

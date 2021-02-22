@@ -71,9 +71,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     }
 
     var simpleInfo: Boolean
-        get() = PixivConfigData.simpleInfo.getOrPut(contact.toString()) { contact !is Friend }
+        get() = PixivConfigData.isSimpleInfo.getOrPut(contact.toString()) { contact !is Friend }
         set(value) {
-            PixivConfigData.simpleInfo[contact.toString()] = value
+            PixivConfigData.isSimpleInfo[contact.toString()] = value
         }
 
     private data class CacheTask(
