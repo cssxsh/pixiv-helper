@@ -73,9 +73,9 @@ internal fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { se
     session.getMapper(TagInfoMapper::class.java).let(block)
 }
 
-operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
+internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
-operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
+internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
 
 @MiraiInternalApi
 internal fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {

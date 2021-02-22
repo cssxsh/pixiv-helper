@@ -349,7 +349,7 @@ object PixivCacheCommand : CompositeCommand(
             }.isSuccess
         }
     }.onSuccess { (success, failure) ->
-        sendMessage("检查缓存完毕，成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}")
+        sendMessage("检查缓存完毕，成功数: ${success.orEmpty().size}, 失败数: ${failure.orEmpty().size}")
     }.onFailure {
         sendMessage(it.toString())
     }.isSuccess
