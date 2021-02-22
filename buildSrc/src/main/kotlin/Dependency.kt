@@ -17,9 +17,6 @@ fun DependencyHandler.okhttp3(module: String, version: String) =
 fun DependencyHandler.jsoup(version: String) =
     "org.jsoup:jsoup:$version"
 
-fun DependencyHandler.poi(module: String, version: String) =
-    "org.apache.poi:${module}:$version"
-
 fun DependencyHandler.mybatis(module: String, version: String) =
     "org.mybatis:${module}:${version}"
 

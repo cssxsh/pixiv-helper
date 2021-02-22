@@ -36,7 +36,6 @@ dependencies {
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
-    implementation(poi("poi-ooxml", Versions.poi))
     implementation(mybatis("mybatis", Versions.mybatis))
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))

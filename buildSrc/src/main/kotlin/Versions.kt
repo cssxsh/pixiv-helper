@@ -10,7 +10,6 @@ object Versions {
     // web
     const val okhttp = "4.9.1"
     const val jsoup = "1.13.1"
-    const val poi = "4.1.2"
     // other
     const val junit = "5.2.0"
     const val mybatis = "3.5.6"
