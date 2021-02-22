@@ -159,7 +159,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    private val cacheJob: Job = launch(Dispatchers.IO) {
+    private val cacheJob: Job = launch(CoroutineName("PixivHelper:${contact}#CacheTask") + Dispatchers.IO) {
         while (isActive) {
             runCatching {
                 cacheChannel.receiveAsFlow().check().download()
