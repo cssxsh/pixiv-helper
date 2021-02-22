@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
-import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
@@ -11,23 +10,16 @@ import org.jsoup.Jsoup
 import xyz.cssxsh.pixiv.data.SearchResult
 import kotlin.io.use
 
-@Suppress("unused")
 object ImageSearcher {
+
     private const val API = "https://saucenao.com/search.php"
+
     private const val DB_INDEX = 5 // Index #5: pixiv Images
-    private val httpClient: HttpClient
-        get() = HttpClient(OkHttp) {
-            install(HttpTimeout) {
-                socketTimeoutMillis = 60_000
-                connectTimeoutMillis = 60_000
-                requestTimeoutMillis = 60_000
-            }
-        }
 
     private suspend fun <R> useHttpClient(
         ignore: suspend (Throwable) -> Boolean,
         block: suspend (HttpClient) -> R,
-    ): R = httpClient.use { client ->
+    ): R = HttpClient(OkHttp).use { client ->
         runCatching {
             block(client)
         }.getOrElse { throwable ->
@@ -39,7 +31,7 @@ object ImageSearcher {
         }
     }
 
-    private fun parse(html: String): List<SearchResult> =
+    private val parseSearchResult: (String) -> List<SearchResult> = { html ->
         Jsoup.parse(html).select(".resulttablecontent").map { content ->
             SearchResult(
                 similarity = content.select(".resultsimilarityinfo")
@@ -52,6 +44,7 @@ object ImageSearcher {
                     .last().attr("href").toHttpUrl().queryParameter("id")!!.toLong()
             )
         }
+    }
 
     suspend fun getSearchResults(
         ignore: suspend (Throwable) -> Boolean = { _ -> false },
@@ -61,7 +54,7 @@ object ImageSearcher {
             parameter("db", DB_INDEX)
             parameter("url", url)
         }
-    }.let { html -> parse(html) }
+    }.let(parseSearchResult)
 
     suspend fun postSearchResults(
         ignore: suspend (Throwable) -> Boolean = { _ -> false },
@@ -75,5 +68,5 @@ object ImageSearcher {
                 }
             })
         }
-    }.let { html -> parse(html) }
+    }.let(parseSearchResult)
 }

@@ -32,7 +32,7 @@ object PixivSearchCommand : SimpleCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private const val MIN_SIMILARITY = 0.80
+    private const val MIN_SIMILARITY = 0.70
 
     private const val MAX_REPEAT = 10
 
@@ -60,8 +60,8 @@ object PixivSearchCommand : SimpleCommand(
         )
     }.onFailure {
         logger.warning({ "搜索[$url]第${repeat}次失败" }, it)
-        if (repeat >= MAX_REPEAT) {
-            throw IllegalStateException("搜索次数超过${MAX_REPEAT}", it)
+        check (repeat >= MAX_REPEAT) {
+            "搜索次数超过${MAX_REPEAT}"
         }
     }.getOrElse { search(url, repeat + 1) }
 
