@@ -5,8 +5,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.PixivZipper
 
@@ -16,10 +14,6 @@ object PixivBackupCommand : CompositeCommand(
     "backup",
     description = "PIXIV备份指令"
 ) {
-
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
 
     private var userJob: Job? = null
 

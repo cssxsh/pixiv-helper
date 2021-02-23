@@ -2,8 +2,6 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -18,10 +16,6 @@ object PixivDeleteCommand : CompositeCommand(
     description = "PIXIV删除指令",
     overrideContext = PixivCommandArgumentContext
 ) {
-
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
 
     private fun deleteArtwork(pid: Long) {
         useArtWorkInfoMapper { it.deleteByPid(pid) }

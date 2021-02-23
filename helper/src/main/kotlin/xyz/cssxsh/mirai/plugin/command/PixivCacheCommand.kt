@@ -5,8 +5,6 @@ import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -26,10 +24,6 @@ object PixivCacheCommand : CompositeCommand(
     description = "PIXIV缓存指令",
     overrideContext = PixivCommandArgumentContext
 ) {
-
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
 
     private var panJob: Job? = null
 

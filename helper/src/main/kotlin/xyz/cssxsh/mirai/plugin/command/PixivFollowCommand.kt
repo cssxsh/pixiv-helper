@@ -5,8 +5,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -20,10 +18,6 @@ object PixivFollowCommand : CompositeCommand(
     "follow",
     description = "PIXIV关注指令"
 ) {
-
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
         (0 until maxNum step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->

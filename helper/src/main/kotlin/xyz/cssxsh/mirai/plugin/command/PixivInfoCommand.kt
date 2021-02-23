@@ -2,8 +2,6 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
@@ -14,10 +12,6 @@ object PixivInfoCommand : CompositeCommand(
     "info",
     description = "PIXIV信息指令"
 ) {
-
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
 
     /**
      * 获取助手信息
