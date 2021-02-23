@@ -21,8 +21,8 @@ object PixivGetCommand : SimpleCommand(
 
     @Handler
     @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(pid: Long) = getHelper().runCatching {
-        buildMessageByIllust(getIllustInfo(pid = pid, flush = true))
+    suspend fun CommandSenderOnMessage<MessageEvent>.handle(pid: Long, flush: Boolean = false) = getHelper().runCatching {
+        buildMessageByIllust(getIllustInfo(pid = pid, flush = flush))
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
