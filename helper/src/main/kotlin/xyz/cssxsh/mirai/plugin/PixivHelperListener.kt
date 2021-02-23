@@ -1,7 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.statement.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
@@ -73,11 +73,11 @@ object PixivHelperListener {
 
     private suspend fun MessageEvent.sendUserInfo(account: String): MessageReceipt<Contact> = getHelper().run {
         useHttpClient { client ->
-            client.head<HttpMessage>("https://pixiv.me/$account").headers[HttpHeaders.Location]
-        }?.let { location ->
-            URL_USER_REGEX.find(location)?.value?.toLong()
-        }?.let { uid ->
-            sendUserInfo(uid = uid)
+            client.head<HttpResponse>("https://pixiv.me/$account").request.url
+        }.let { location ->
+            URL_USER_REGEX.find(location.encodedPath)
+        }?.let { result ->
+            sendUserInfo(uid = result.value.toLong())
         } ?: subject.sendMessage(message.quote() + "跳转失败, https://pixiv.me/$account")
     }
 }
