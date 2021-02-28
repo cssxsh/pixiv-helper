@@ -16,15 +16,15 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
 object PixivHelperListener {
 
-    private val list = mutableListOf<Listener<*>>()
+    private val listeners = mutableMapOf<String, Listener<*>>()
 
-    private fun Listener<*>.addToList() = list.add(this)
+    private infix fun String.with(listener: Listener<*>) = listeners.put(this, listener)?.cancel()
 
     fun subscribe(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
-        subscribeAlways<GroupMuteAllEvent> {
+        "GroupMuteAll" with subscribeAlways<GroupMuteAllEvent> {
             PixivHelperManager.remove(group)
-        }.addToList()
-        subscribeMessages {
+        }
+        "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
                 sendArtworkInfo(pid = result.value.toLong())
@@ -37,10 +37,15 @@ object PixivHelperListener {
                 logger.info { "匹配USER(${result.value})" }
                 sendUserInfo(account = result.value)
             }
-        }.addToList()
+        }
     }
 
-    fun stop() = list.forEach { it.cancel() }
+    fun stop() = synchronized(listeners) {
+        listeners.forEach { (_, listener) ->
+            listener.cancel()
+        }
+        listeners.clear()
+    }
 
     /**
      * https://www.pixiv.net/artworks/79695391
