@@ -42,7 +42,7 @@ object PixivHelperDownloader : PixivDownloader(
         }
     }
 ) {
-    suspend fun downloadImageUrls(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
+    suspend fun downloadImages(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
         urls = urls,
         block = { url, result ->
             runCatching {

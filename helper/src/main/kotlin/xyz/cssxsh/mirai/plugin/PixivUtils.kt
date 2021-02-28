@@ -370,7 +370,7 @@ internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.im
     getOriginImageUrls().apply {
         filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()
-            PixivHelperDownloader.downloadImageUrls(downloads, dir).let { list ->
+            PixivHelperDownloader.downloadImages(downloads, dir).let { list ->
                 check(list.all { it.isSuccess }) {
                     "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull() }}"
                 }
