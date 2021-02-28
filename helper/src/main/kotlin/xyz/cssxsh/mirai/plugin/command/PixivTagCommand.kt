@@ -13,6 +13,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.model.*
 
+@Suppress("unused")
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",
@@ -68,8 +69,7 @@ object PixivTagCommand : SimpleCommand(
     }
 
     @Handler
-    @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(tag: String) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.tag(tag: String) = getHelper().runCatching {
         check(tag.length <= 30) {
             "标签'$tag'过长"
         }

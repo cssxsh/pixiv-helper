@@ -37,7 +37,7 @@ object PixivFollowCommand : CompositeCommand(
      * 关注色图作者
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.ero() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().runCatching {
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             val followed = getFollowed(uid = getAuthInfo().user.uid)

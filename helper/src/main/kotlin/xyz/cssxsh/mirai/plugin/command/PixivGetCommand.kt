@@ -9,6 +9,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
+@Suppress("unused")
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点",
@@ -20,8 +21,7 @@ object PixivGetCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(pid: Long, flush: Boolean = false) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.get(pid: Long, flush: Boolean = false) = getHelper().runCatching {
         buildMessageByIllust(getIllustInfo(pid = pid, flush = flush))
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }

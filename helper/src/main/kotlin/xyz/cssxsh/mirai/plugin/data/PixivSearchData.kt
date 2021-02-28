@@ -7,6 +7,6 @@ import xyz.cssxsh.pixiv.data.SearchResult
 
 object PixivSearchData : AutoSavePluginData("PixivSearch") {
 
-    @ValueName("result_map")
-    val resultMap: MutableMap<String, SearchResult> by value(mutableMapOf())
+    @ValueName("results")
+    val results: MutableMap<String, SearchResult> by value(mutableMapOf())
 }

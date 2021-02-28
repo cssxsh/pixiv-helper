@@ -5,7 +5,7 @@ import io.ktor.network.sockets.*
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
@@ -13,7 +13,7 @@ import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivSearchData.resultMap
+import xyz.cssxsh.mirai.plugin.data.PixivSearchData.results
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.data.*
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
@@ -22,6 +22,7 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 
+@Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
@@ -53,48 +54,44 @@ object PixivSearchCommand : SimpleCommand(
         }
     }
 
-    private suspend fun search(url: String, repeat: Int = 0): List<SearchResult> = runCatching {
-        ImageSearcher.getSearchResults(
-            ignore = searchApiIgnore,
-            url = url.replace("http://", "https://")
-        )
-    }.onFailure {
-        logger.warning({ "搜索[$url]第${repeat}次失败" }, it)
-        check (repeat >= MAX_REPEAT) {
-            "搜索次数超过${MAX_REPEAT}"
-        }
-    }.getOrElse { search(url, repeat + 1) }
+    private suspend fun search(url: String) = (1..MAX_REPEAT).fold(null as List<SearchResult>?) { result, index ->
+        result ?: runCatching {
+            ImageSearcher.getSearchResults(
+                ignore = searchApiIgnore,
+                url = url.replace("http://", "https://")
+            )
+        }.onFailure {
+            logger.warning({ "搜索[$url]第${index}次, 失败" }, it)
+        }.getOrNull()
+    }.orEmpty()
 
     @Handler
-    @Suppress("unused")
-    suspend fun CommandSenderOnMessage<MessageEvent>.handle(image: Image) = runCatching {
-        resultMap.getOrElse(image.getMd5Hex()) {
+    suspend fun CommandSenderOnMessage<MessageEvent>.search(image: Image) = runCatching {
+        results.getOrElse(image.getMd5Hex()) {
             search(image.queryUrl()).run {
                 requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
-            }.also { result ->
-                if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
-                    launch {
-                        logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
-                        runCatching {
-                            addCacheJob(name ="SEARCH[${image.getMd5Hex()}]", reply = false) {
-                                listOf(getIllustInfo(pid = result.pid, flush = true))
-                            }
-                        }.onSuccess {
-                            resultMap[image.getMd5Hex()] = result
-                        }.onFailure {
-                            logger.warning({ "缓存搜索结果失败" }, it)
+            }
+        }.also { result ->
+            if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
+                launch {
+                    logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
+                    runCatching {
+                        addCacheJob(name = "SEARCH[${image.getMd5Hex()}]", reply = false) {
+                            listOf(getIllustInfo(pid = result.pid, flush = true))
                         }
+                    }.onSuccess {
+                        results[image.getMd5Hex()] = result
+                    }.onFailure {
+                        logger.warning({ "缓存搜索结果失败" }, it)
                     }
                 }
             }
-        }.let { result ->
-            buildString {
-                appendLine("相似度: ${result.similarity * 100}%")
-                appendLine(result.content + "#${result.uid}")
-            }
         }
-    }.onSuccess {
-        quoteReply(it)
+    }.onSuccess { result ->
+        quoteReply(buildString {
+            appendLine("相似度: ${result.similarity * 100}%")
+            appendLine(result.content + "#${result.uid}")
+        })
     }.onFailure {
         logger.verbose({ "搜索失败$image" }, it)
         quoteReply("搜索失败， ${it.message}")

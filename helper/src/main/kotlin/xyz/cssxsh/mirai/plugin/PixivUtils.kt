@@ -86,7 +86,7 @@ internal fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
     """%02x""".format(it.toInt())
 }
 
-internal fun Url.getFilename() = encodedPath.substring(encodedPath.lastIndexOfAny(listOf("\\", "/")) + 1)
+internal fun Url.getFilename() = encodedPath.substringAfterLast('/')
 
 internal fun IllustInfo.getMessage(): Message = buildMessageChain {
     appendLine("作者: ${user.name} ")

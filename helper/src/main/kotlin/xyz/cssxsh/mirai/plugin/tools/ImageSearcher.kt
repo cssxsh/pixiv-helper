@@ -31,8 +31,8 @@ object ImageSearcher {
         }
     }
 
-    private val parseSearchResult: (String) -> List<SearchResult> = { html ->
-        Jsoup.parse(html).select(".resulttablecontent").map { content ->
+    private fun String.parseSearchResult(): List<SearchResult> {
+        return Jsoup.parse(this).select(".resulttablecontent").map { content ->
             SearchResult(
                 similarity = content.select(".resultsimilarityinfo")
                     .text().replace("%", "").toDouble() / 100,
@@ -54,7 +54,7 @@ object ImageSearcher {
             parameter("db", DB_INDEX)
             parameter("url", url)
         }
-    }.let(parseSearchResult)
+    }.parseSearchResult()
 
     suspend fun postSearchResults(
         ignore: suspend (Throwable) -> Boolean = { _ -> false },
@@ -68,5 +68,5 @@ object ImageSearcher {
                 }
             })
         }
-    }.let(parseSearchResult)
+    }.parseSearchResult()
 }

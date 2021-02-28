@@ -10,6 +10,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
 
+@Suppress("unused")
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "illustrator", "画师",
@@ -21,7 +22,6 @@ object PixivIllustratorCommand : CompositeCommand(
     override val prefixOptional: Boolean = true
 
     @SubCommand("uid", "ID")
-    @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
         useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
@@ -35,7 +35,6 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("name", "名称")
-    @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
         // TODO
         requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { uid ->
@@ -52,7 +51,6 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("alias", "别名")
-    @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.alias(name: String, uid: Long) = getHelper().runCatching {
         PixivAliasData.aliases[name] = uid
     }.onSuccess {
@@ -62,7 +60,6 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("list", "列表")
-    @Suppress("unused")
     suspend fun CommandSenderOnMessage<MessageEvent>.list() = getHelper().runCatching {
         PixivAliasData.aliases.map { (name, uid) ->
             "[$name] -> ($uid)"
