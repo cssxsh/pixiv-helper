@@ -172,7 +172,9 @@ internal suspend fun PixivHelper.buildMessageByIllust(
     save = save
 )
 
-internal fun buildMessageByUser(
+internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
+
+internal suspend fun PixivHelper.buildMessageByUser(
     detail: UserDetail,
     save: Boolean = true,
 ): MessageChain = buildMessageChain {
@@ -181,6 +183,24 @@ internal fun buildMessageByUser(
     appendLine("ACCOUNT: ${detail.user.account}")
     appendLine("TOTAL: ${detail.profile.totalIllusts + detail.profile.totalManga}")
     appendLine("TWITTER: ${detail.profile.twitterAccount}")
+    runCatching {
+        // px16x16, px50x50, px170x170
+        detail.user.profileImageUrls.getOrDefault("px16x16", NO_PROFILE_IMAGE).let { image ->
+            PixivHelperSettings.profilesFolder.resolve(Url(image).getFilename()).apply {
+                if (exists().not()) {
+                    parentFile.mkdirs()
+                    PixivHelperDownloader.downloadImages(
+                        urls = listOf(image),
+                        dir = parentFile
+                    ).single().onFailure {
+                        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
+                    }.getOrThrow()
+                }
+            }
+        }.let { file ->
+            append(file.uploadAsImage(contact))
+        }
+    }
     if (save) {
         detail.saveToSQLite()
     }

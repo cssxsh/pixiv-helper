@@ -75,6 +75,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
             File(".").resolve(backupPath)
         }
 
+    val profilesFolder: File get() = cacheFolder.resolve("profile")
+
     /**
      * 图片目录
      */
