@@ -2,14 +2,13 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.data.apps.*
 import java.time.*
 
 @Suppress("unused")
@@ -20,9 +19,9 @@ object PixivMethodCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
-    override val prefixOptional: Boolean = true
+    private fun IllustData.getRandom() = illusts.apply { writeToCache() }.random()
+
+    private fun IllustData.getFirst() = illusts.apply { writeToCache() }.first()
 
     /**
      * 登录 通过 用户名，密码
@@ -53,7 +52,7 @@ object PixivMethodCommand : CompositeCommand(
         token: String,
     ) = getHelper().runCatching {
         refresh(token).let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
     }.onSuccess {
         quoteReply(it)
@@ -69,7 +68,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
         autoAuth().let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: ${expiresTime}"
+            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
     }.onSuccess {
         quoteReply(it)
@@ -91,9 +90,7 @@ object PixivMethodCommand : CompositeCommand(
         date: LocalDate,
         index: Long,
     ) = getHelper().runCatching {
-        buildMessageByIllust(illustRanking(date = date, mode = mode, offset = index).illusts.apply {
-            writeToCache()
-        }.first())
+        buildMessageByIllust(illustRanking(date = date, mode = mode, offset = index).getFirst())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -114,7 +111,7 @@ object PixivMethodCommand : CompositeCommand(
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        buildMessageByIllust(illustRanking(mode = rankMode, offset = index).illusts.apply { writeToCache() }.first())
+        buildMessageByIllust(illustRanking(mode = rankMode, offset = index).getFirst())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -126,7 +123,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.random() = getHelper().runCatching {
-        buildMessageByIllust(illustRanking(mode = RankMode.values().random()).illusts.apply { writeToCache() }.random())
+        buildMessageByIllust(illustRanking(mode = RankMode.values().random()).getRandom())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -156,7 +153,7 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(
         uid: Long,
     ) = getHelper().runCatching {
-        buildMessageByIllust(userIllusts(uid = uid).illusts.apply { writeToCache() }.random())
+        buildMessageByIllust(userIllusts(uid = uid).getRandom())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -170,10 +167,8 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.search(
         word: String,
-        index: Int,
     ) = getHelper().runCatching {
-        require(index in 1..30) { "index 的范围在1~30" }
-        buildMessageByIllust(searchIllust(word = word).illusts.apply { writeToCache() }[index - 1])
+        buildMessageByIllust(searchIllust(word = word).getRandom())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -185,7 +180,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().runCatching {
-        buildMessageByIllust(illustFollow().illusts.apply { writeToCache() }.random())
+        buildMessageByIllust(illustFollow().getRandom())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -197,9 +192,7 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessageByIllust(userBookmarksIllust(uid = getAuthInfo().user.uid).illusts.apply {
-            writeToCache()
-        }.random())
+        buildMessageByIllust(userBookmarksIllust(uid = getAuthInfo().user.uid).getRandom())
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
