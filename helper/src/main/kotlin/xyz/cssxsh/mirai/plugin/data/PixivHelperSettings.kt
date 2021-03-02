@@ -9,7 +9,7 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
 import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater
 import java.io.File
 
-object PixivHelperSettings : ReadOnlyPluginConfig("HelperSettings") {
+object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
 
     /**
      * 图片缓存位置
