@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
-import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.*
@@ -72,19 +71,8 @@ object PixivSearchCommand : SimpleCommand(
                 requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
             }
         }.also { result ->
-            if (result.similarity > MIN_SIMILARITY) getHelper().runCatching {
-                launch {
-                    logger.verbose { "[${image.getMd5Hex()}]相似度大于${MIN_SIMILARITY}开始获取搜索结果${result}" }
-                    runCatching {
-                        addCacheJob(name = "SEARCH[${image.getMd5Hex()}]", reply = false) {
-                            listOf(getIllustInfo(pid = result.pid, flush = true))
-                        }
-                    }.onSuccess {
-                        results[image.getMd5Hex()] = result
-                    }.onFailure {
-                        logger.warning({ "缓存搜索结果失败" }, it)
-                    }
-                }
+            if (result.similarity > MIN_SIMILARITY) {
+                results[image.getMd5Hex()] = result
             }
         }
     }.onSuccess { result ->

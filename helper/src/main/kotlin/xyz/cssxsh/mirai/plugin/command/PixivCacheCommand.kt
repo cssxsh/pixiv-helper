@@ -140,8 +140,8 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
         getHelper().addCacheJob(name = "USER(${uid})") { getUserIllusts(uid = uid) }
 
-    private fun File.listDirs(regex: Regex) =
-        listFiles { file -> file.name.matches(regex) && file.isDirectory }.orEmpty()
+    private fun File.listDirs(regex: Regex, range: LongRange) =
+        listFiles { file -> file.name.matches(regex) && file.isDirectory && file.isContained(range) }.orEmpty()
 
     private fun File.isContained(range: LongRange) =
         name.replace('_', '0').toLong() <= range.last && name.replace('_', '9').toLong() >= range.first
@@ -152,24 +152,17 @@ object PixivCacheCommand : CompositeCommand(
      * 从文件夹中加载信息
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.load(range: LongRange = MAX_RANGE) = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.local(range: LongRange = MAX_RANGE): Unit = getHelper().run {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
-        }.listDirs("""\d{3}______""".toRegex()).forEach { first ->
-            if (first.isContained(range)) {
-                addCacheJob(name = "LOAD(${first.name})", write = false) {
-                    logger.info { "${first.absolutePath} 开始加载" }
-                    first.listDirs("""\d{6}___""".toRegex()).flatMap { second ->
-                        if (second.isContained(range)) {
-                            second.listDirs("""\d+""".toRegex()).filter { dir ->
-                                useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not() &&
-                                    dir.isContained(range)
-                            }.mapNotNull { dir ->
-                                dir.resolve("${dir.name}.json").takeIf { it.canRead() }?.readIllustInfo()
-                            }
-                        } else {
-                            emptyList()
-                        }
+        }.listDirs("""\d{3}______""".toRegex(), range).forEach { first ->
+            addCacheJob(name = "LOCAL(${first.name})", write = false) {
+                logger.info { "${first.absolutePath} 开始加载" }
+                first.listDirs("""\d{6}___""".toRegex(), range).flatMap { second ->
+                    second.listDirs("""\d+""".toRegex(), range).filter { dir ->
+                        useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not()
+                    }.mapNotNull { dir ->
+                        dir.resolve("${dir.name}.json").takeIf { it.canRead() }?.readIllustInfo()
                     }
                 }
             }
