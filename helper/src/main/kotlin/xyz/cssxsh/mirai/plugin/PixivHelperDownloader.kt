@@ -50,6 +50,7 @@ object PixivHelperDownloader : PixivDownloader(
                     writeBytes(result.getOrThrow())
                 }
             }.onFailure {
+                if (it.isNotCancellationException())
                 logger.warning({ "[$url]下载失败" }, it)
             }
         }

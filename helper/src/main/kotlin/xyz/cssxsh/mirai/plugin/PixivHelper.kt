@@ -123,7 +123,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 illust to illust.runCatching {
                     getImages()
                 }.onFailure {
-                    if (it !is CancellationException) {
+                    if (it.isNotCancellationException()) {
                         logger.warning({ "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误" }, it)
                         if (reply) sign {
                             "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"

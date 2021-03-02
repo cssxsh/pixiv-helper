@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.event.events.MessageEvent
@@ -396,15 +397,13 @@ internal suspend fun PixivHelper.getIllustInfo(
     }
 }
 
+internal fun Throwable?.isNotCancellationException() = this !is CancellationException
+
 internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     getOriginImageUrls().apply {
         filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()
-            PixivHelperDownloader.downloadImages(downloads, dir).let { list ->
-                check(list.all { it.isSuccess }) {
-                    "作品(${pid})下载错误, ${list.mapNotNull { it.exceptionOrNull() }}"
-                }
-            }
+            check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
             logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
         }
     }.map { url ->
