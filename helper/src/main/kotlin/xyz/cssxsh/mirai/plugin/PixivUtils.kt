@@ -417,7 +417,7 @@ internal fun getBackupList() = buildMap<String, File> {
     this["CONFIG"] = PixivHelperPlugin.configFolder
     val lastBackup: Long = PixivHelperSettings.backupFolder.listFiles { file ->
         file.name.startsWith("DATABASE")
-    }?.maxOf { it.lastModified() } ?: 0
+    }?.maxOf { it.lastModified() } ?: System.currentTimeMillis()
     if (PixivHelperSettings.sqlite.lastModified() > lastBackup) {
         this["DATABASE"] = PixivHelperSettings.sqlite
     }
