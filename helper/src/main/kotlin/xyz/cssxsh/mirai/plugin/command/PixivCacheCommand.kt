@@ -169,6 +169,41 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
+    private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.temp(): Unit = getHelper().run {
+        val list = mutableSetOf<Long>()
+        val dir = PixivHelperSettings.tempFolder
+        val exists = dir.resolve("exists").apply { mkdirs() }
+        logger.verbose { "从 ${dir.absolutePath} 加载文件" }
+        dir.listFiles()?.forEach { source ->
+            FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
+                if (useArtWorkInfoMapper { it.contains(id.toLong()) }) {
+                    source.renameTo(exists.resolve(source.name))
+                } else {
+                    list.add(id.toLong())
+                }
+            }
+        }
+        addCacheJob(name = "TEMP(${dir.absolutePath})") {
+            list.mapNotNull {
+                runCatching { getIllustInfo(pid = it, flush = true) }.getOrNull()
+            }
+        }
+    }
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.search(): Unit = getHelper().run {
+        addCacheJob(name = "SEARCH") {
+            PixivSearchData.results.map { (_, result) -> result.pid }.toSet().filter { pid ->
+                useArtWorkInfoMapper { it.contains(pid) }.not()
+            }.mapNotNull { pid ->
+                runCatching { getIllustInfo(pid = pid, flush = true) }.getOrNull()
+            }
+        }
+    }
+
     /**
      * 强制停止缓存
      */

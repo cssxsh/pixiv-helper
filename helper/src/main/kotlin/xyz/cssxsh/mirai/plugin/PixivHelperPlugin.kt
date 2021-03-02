@@ -61,8 +61,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivTagCommand.register()
         PixivTaskCommand.register()
 
-        PixivHelperSettings.cacheFolder.mkdirs()
-        PixivHelperSettings.backupFolder.mkdirs()
+        PixivHelperSettings.init()
 
         sqlSessionFactory.init()
         // Listener

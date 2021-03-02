@@ -58,6 +58,22 @@ internal fun SqlSessionFactory.init() = configuration.apply {
     })
 }
 
+internal fun PixivHelperSettings.init() {
+    cacheFolder.mkdirs()
+    backupFolder.mkdirs()
+    tempFolder.mkdirs()
+    profilesFolder.mkdirs()
+    if (sqlite.exists().not()) {
+        this::class.java.getResourceAsStream("pixiv.sqlite")?.use {
+            sqlite.writeBytes(it.readAllBytes())
+        }
+    }
+    logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
+    logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
+    logger.info { "TempFolder: ${tempFolder.absolutePath}" }
+    logger.info { "Sqlite: ${sqlite.absolutePath}" }
+}
+
 internal fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
     session.getMapper(ArtWorkInfoMapper::class.java).let(block)
 }
@@ -400,8 +416,15 @@ internal suspend fun PixivHelper.getIllustInfo(
 internal fun Throwable?.isNotCancellationException() = this !is CancellationException
 
 internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
+    val temp = PixivHelperSettings.tempFolder
     getOriginImageUrls().apply {
-        filter { dir.resolve(Url(it).getFilename()).exists().not() }.takeIf { it.isNotEmpty() }?.let { downloads ->
+        filter {
+            dir.resolve(Url(it).getFilename()).apply {
+                if (exists().not() && temp.resolve(name).exists()) {
+                    temp.resolve(name).renameTo(this)
+                }
+            }.exists().not()
+        }.takeIf { it.isNotEmpty() }?.let { downloads ->
             dir.mkdirs()
             check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
             logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
