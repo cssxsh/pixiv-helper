@@ -4,16 +4,13 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
-import xyz.cssxsh.pixiv.data.apps.*
 import java.io.File
 import java.time.*
 
@@ -25,22 +22,7 @@ object PixivCacheCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private var panJob: Job? = null
-
-    private const val LOAD_LIMIT = 3_000L
-
-    private fun UserPreview.isLoaded(): Boolean = useArtWorkInfoMapper { mapper ->
-        illusts.all { mapper.contains(it.pid) }
-    }
-
-    private fun UserDetail.count() = useArtWorkInfoMapper { mapper ->
-        mapper.countByUid(user.id)
-    }
-
-    private fun UserDetail.total() = profile.totalIllusts + profile.totalManga
-
-    // FIXME: 交给插件设置加载
-    private val cacheRanks = listOf(
+    private val CACHE_RANKS = listOf(
         RankMode.MONTH,
         RankMode.WEEK,
         RankMode.WEEK_ORIGINAL,
@@ -49,120 +31,25 @@ object PixivCacheCommand : CompositeCommand(
         RankMode.DAY_FEMALE,
     )
 
-    private fun List<IllustInfo>.nocache() = useArtWorkInfoMapper { mapper ->
-        filter { mapper.contains(it.pid).not() }
-    }
-
-    private fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MANGA }
-
     private fun loadDayOfYears(year: Year, interval: Int = 5, offset: Long = 29) = buildList {
-        (1 .. year.length() step interval).forEach { dayOfYear ->
+        (1..year.length() step interval).forEach { dayOfYear ->
             add(year.atDay(dayOfYear).plusDays(offset))
         }
     }
-
-    private suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
-            if (isActive) runCatching {
-                illustRanking(mode = mode, date = date, offset = offset).illusts
-            }.onSuccess {
-                if (it.isEmpty()) return@buildList
-                addAll(it)
-                logger.verbose { "加载排行榜[${mode}](${date ?: "new"})第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载排行榜[${mode}](${date ?: "new"})第${page}页失败" }, it)
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
-            if (isActive) runCatching {
-                illustFollow(offset = offset).illusts
-            }.onSuccess {
-                if (it.isEmpty()) return@buildList
-                addAll(it)
-                logger.verbose { "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页失败" }, it)
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
-            if (isActive) runCatching {
-                userRecommended(offset = offset).userPreviews
-            }.onSuccess {
-                if (it.isEmpty()) return@buildList
-                addAll(it)
-                logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页失败" }, it)
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = LOAD_LIMIT) = buildList {
-        (0 until limit step AppApi.PAGE_SIZE).fold<Long, String?>(AppApi.USER_BOOKMARKS_ILLUST) { url, _ ->
-            runCatching {
-                if (isActive.not() || url == null) return@buildList
-                userBookmarksIllust(uid = uid, url = url)
-            }.onSuccess { (list, _) ->
-                addAll(list)
-                logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
-            }.onFailure {
-                logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
-            }.getOrNull()?.nextUrl
-        }
-    }
-
-    private suspend fun PixivHelper.getUserIllusts(detail: UserDetail) = buildList {
-        (0 until detail.total() step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
-            if (isActive) runCatching {
-                userIllusts(uid = detail.user.id, offset = offset).illusts
-            }.onSuccess {
-                addAll(it)
-                logger.verbose { "加载用户(${detail.user.id})作品第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载用户(${detail.user.id})作品第${page}页失败" }, it)
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getUserIllusts(uid: Long) =
-        getUserIllusts(userDetail(uid = uid))
-
-    private suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = buildList {
-        (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
-            if (isActive) runCatching {
-                userFollowing(uid = detail.user.id, offset = offset).userPreviews
-            }.onSuccess {
-                addAll(it)
-                logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载用户(${detail.user.id})关注用户第${page}页失败" }, it)
-            }
-        }
-    }
-
-    private suspend fun PixivHelper.getUserFollowingPreview() =
-        getUserFollowingPreview(userDetail(uid = getAuthInfo().user.uid))
 
     /**
      * 缓存关注列表
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().run {
-        getFollowIllusts().filter { it.type != WorkContentType.MANGA }.groupBy { it.createAt.toLocalDate() }.forEach { (date, list) ->
+        getFollowIllusts().nomanga().groupBy { it.createAt.toLocalDate() }.forEach { (date, list) ->
             addCacheJob(name = "FOLLOW(${date})", reply = false) { list }
         }
     }
 
-
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.ranks(date: LocalDate? = null) = getHelper().run {
-        cacheRanks.forEach { mode ->
+        CACHE_RANKS.forEach { mode ->
             addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") {
                 getRank(mode = mode, date = date)
             }
@@ -170,8 +57,9 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode, date: LocalDate? = null) =
-        getHelper().addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") { getRank(mode = mode, date = date, limit = 120) }
+    suspend fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode, date: LocalDate? = null) = getHelper().run {
+        addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") { getRank(mode = mode, date = date, limit = 120) }
+    }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
@@ -191,9 +79,10 @@ object PixivCacheCommand : CompositeCommand(
         getHelper().addCacheJob(name = "BOOKMARKS") { getBookmarks(uid) }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.alias() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.alias(): Unit = getHelper().run {
         PixivAliasData.aliases.values.toSet().sorted().also { list ->
             logger.verbose { "别名中{${list.first()..list.last()}}共${list.size}个画师需要缓存" }
+            sendMessage("别名列表中共${list.size}个画师需要缓存")
             launch {
                 list.forEachIndexed { index, uid ->
                     if (isActive) runCatching {
@@ -211,16 +100,13 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }
         }
-    }.onSuccess {
-        sendMessage("别名列表中共${it.size}个画师需要缓存")
-    }.onFailure {
-        sendMessage(it.toString())
-    }.isSuccess
+    }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.followAll() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<MessageEvent>.followAll(): Unit = getHelper().run {
         getUserFollowingPreview().sortedBy { it.user.id }.also { list ->
             logger.verbose { "关注中{${list.first().user.id..list.last().user.id}}共${list.size}个画师需要缓存" }
+            sendMessage("关注列表中共${list.size}个画师需要缓存")
             launch {
                 list.forEachIndexed { index, preview ->
                     if (isActive) runCatching {
@@ -245,11 +131,7 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }
         }
-    }.onSuccess {
-        sendMessage("关注列表中共${it.size}个画师需要缓存")
-    }.onFailure {
-        sendMessage(it.toString())
-    }.isSuccess
+    }
 
     /**
      * 从用户详情加载信息
@@ -259,7 +141,7 @@ object PixivCacheCommand : CompositeCommand(
         getHelper().addCacheJob(name = "USER(${uid})") { getUserIllusts(uid = uid) }
 
     private fun File.listDirs(regex: Regex) =
-        listFiles { file -> file.name.matches(regex) && file.isDirectory } ?: emptyArray()
+        listFiles { file -> file.name.matches(regex) && file.isDirectory }.orEmpty()
 
     private fun File.isContained(range: LongRange) =
         name.replace('_', '0').toLong() <= range.last && name.replace('_', '9').toLong() >= range.first
@@ -318,16 +200,16 @@ object PixivCacheCommand : CompositeCommand(
                 resolve("${info.pid}.json").also { file ->
                     if (file.exists().not()) {
                         logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
-                        illustDetail(info.pid).illust.run {
-                            writeToCache()
-                            saveToSQLite()
-                        }
+                        illustDetail(info.pid).illust.apply { writeToCache() }.saveToSQLite()
                     }
                 }
                 useFileInfoMapper { it.fileInfos(info.pid) }.filter { info ->
                     resolve(Url(info.url).getFilename()).exists().not()
                 }.let { infos ->
-                    PixivHelperDownloader.downloadImageUrls(urls = infos.map { it.url }, dir = this).forEachIndexed { index, result ->
+                    PixivHelperDownloader.downloadImages(
+                        urls = infos.map { it.url },
+                        dir = this,
+                    ).forEachIndexed { index, result ->
                         result.onFailure {
                             logger.warning({ "[${infos[index]}]修复出错" }, it)
                         }.onSuccess {
@@ -347,14 +229,4 @@ object PixivCacheCommand : CompositeCommand(
     }.onFailure {
         sendMessage(it.toString())
     }.isSuccess
-
-    @SubCommand
-    fun ConsoleCommandSender.pan(file: String) {
-        check(panJob?.isActive != true) { "正在上传中, ${panJob}..." }
-        PixivHelperPlugin.launch {
-            BaiduPanUpdater.update(File(file), file)
-        }.also {
-            panJob = it
-        }
-    }
 }

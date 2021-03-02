@@ -55,12 +55,12 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
             else -> when (throwable.message) {
                 "Required SETTINGS preface not received" -> {
-                    logger.warning { "API错误, 已忽略: ${throwable.message}" }
+                    logger.warning { "PIXIV API错误, 已忽略: ${throwable.message}" }
                     true
                 }
                 "Rate Limit" -> {
                     (3).minutes.let {
-                        logger.warning { "API限流, 已延时: $it" }
+                        logger.warning { "PIXIV API限流, 已延时: $it" }
                         delay(it)
                     }
                     true
@@ -75,19 +75,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         set(value) {
             PixivConfigData.isSimpleInfo[contact.toString()] = value
         }
-
-    private data class CacheTask(
-        val name: String,
-        val write: Boolean,
-        val reply: Boolean,
-        val block: suspend PixivHelper.() -> List<IllustInfo>,
-    )
-
-    private data class DownloadTask(
-        val name: String,
-        val list: List<IllustInfo>,
-        val reply: Boolean,
-    )
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
@@ -190,8 +177,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     var followJob: Job? = null
 
-    override fun config(block: PixivConfig.() -> Unit) =
-        config.apply(block).also { config = it }
+    private val tasks = mutableMapOf<String, Job>()
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info { "$it by RefreshToken: $token, ExpiresTime: $expiresTime" }

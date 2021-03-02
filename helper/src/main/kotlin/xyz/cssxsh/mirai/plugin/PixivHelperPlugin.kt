@@ -45,6 +45,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivConfigData.reload()
         PixivAliasData.reload()
         PixivSearchData.reload()
+        PixivTaskData.reload()
         // Command
         PixivBackupCommand.register()
         PixivCacheCommand.register()
@@ -58,6 +59,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.register()
         PixivSettingCommand.register()
         PixivTagCommand.register()
+        PixivTaskCommand.register()
 
         PixivHelperSettings.cacheFolder.mkdirs()
         PixivHelperSettings.backupFolder.mkdirs()
@@ -65,6 +67,8 @@ object PixivHelperPlugin : KotlinPlugin(
         sqlSessionFactory.init()
         // Listener
         PixivHelperListener.subscribe()
+
+        PixivHelperScheduler.start()
 
         BaiduNetDiskUpdater.loadToken()
     }
@@ -82,8 +86,11 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.unregister()
         PixivSettingCommand.unregister()
         PixivTagCommand.unregister()
+        PixivTaskCommand.unregister()
 
         PixivHelperListener.stop()
+
+        PixivHelperScheduler.stop()
 
         PixivZipper.compressData(list = getBackupList())
     }

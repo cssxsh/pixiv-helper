@@ -77,6 +77,16 @@ internal fun <T> useStatisticInfoMapper(block: (StatisticInfoMapper) -> T) = use
     session.getMapper(StatisticInfoMapper::class.java).let(block)
 }
 
+internal fun UserPreview.isLoaded() = useArtWorkInfoMapper { mapper ->
+    illusts.all { mapper.contains(it.pid) }
+}
+
+internal fun UserDetail.count() = useArtWorkInfoMapper { mapper ->
+    mapper.countByUid(user.id)
+}
+
+internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
+
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
@@ -181,7 +191,7 @@ internal suspend fun PixivHelper.buildMessageByUser(
     appendLine("NAME: ${detail.user.name}")
     appendLine("UID: ${detail.user.id}")
     appendLine("ACCOUNT: ${detail.user.account}")
-    appendLine("TOTAL: ${detail.profile.totalIllusts + detail.profile.totalManga}")
+    appendLine("TOTAL: ${detail.total()}")
     appendLine("TWITTER: ${detail.profile.twitterAccount}")
     runCatching {
         // px16x16, px50x50, px170x170
