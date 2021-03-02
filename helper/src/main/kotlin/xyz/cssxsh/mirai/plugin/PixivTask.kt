@@ -5,6 +5,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.data.apps.*
 import java.time.OffsetDateTime
@@ -115,17 +117,76 @@ internal suspend fun PixivHelper.subscribe(
     val illusts = block()
     addCacheJob(name = "TimerTask(${name})", reply = false) { illusts }
     illusts.nomanga().filter { it.createAt.toEpochSecond() > last && it.isR18().not() }.forEach { illust ->
-        buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
         delay(SEND_DELAY)
+        buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
     }
     return illusts.maxByOrNull { it.createAt }
 }
 
-private const val RANK_HOUR = 8
+private const val RANK_HOUR = 12
 
 internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
-    (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0)
+    (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0).withSecond(0)
 
+internal suspend fun TimerTask.delay() {
+    when (this) {
+        is TimerTask.User -> {
+            delay((0..interval).random())
+        }
+        is TimerTask.Rank -> {
+            delay((OffsetDateTime.now().toNextRank().toEpochSecond() - last))
+        }
+        is TimerTask.Follow -> {
+            delay((0..interval).random())
+        }
+        is TimerTask.Backup -> {
+            delay((0..interval).random())
+        }
+    }
+}
 
+internal suspend fun TimerTask.run(task: String) {
+    when (this) {
+        is TimerTask.User -> {
+            contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name = task, last = last) {
+                    getUserIllusts(uid = uid, limit = 30L) // one page
+                }
+            }?.let {
+                last = it.createAt.toEpochSecond()
+            }
+        }
+        is TimerTask.Rank -> {
+            contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name = task, last = last) {
+                    getRank(mode = mode, date = null, limit = 180L)
+                }
+            }?.let {
+                last = it.createAt.toEpochSecond()
+            }
+        }
+        is TimerTask.Follow -> {
+            contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name = task, last = last) {
+                    getFollowIllusts(limit = 90L)
+                }
+            }?.let {
+                last = it.createAt.toEpochSecond()
+            }
+        }
+        is TimerTask.Backup -> {
+            PixivZipper.compressData(list = getBackupList()).forEach { file ->
+                runCatching {
+                    BaiduNetDiskUpdater.uploadFile(file)
+                }.onSuccess { info ->
+                    PixivHelperPlugin.logger.info { "[${file}]上传成功: $info" }
+                }.onFailure {
+                    PixivHelperPlugin.logger.warning({ "[${file}]上传失败" }, it)
+                }
+            }
+            last = OffsetDateTime.now().toEpochSecond()
+        }
+    }
+}
 
 
