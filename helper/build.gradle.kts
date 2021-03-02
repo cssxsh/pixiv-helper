@@ -40,6 +40,9 @@ dependencies {
     implementation(mybatis("mybatis", Versions.mybatis))
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
+    implementation(cssxsh("baidu-oauth", Versions.baidu))
+    implementation(cssxsh("baidu-netdisk", Versions.baidu))
+    testImplementation(kotlin("test-junit5"))
     testImplementation(junit("api", Versions.junit))
     testRuntimeOnly(junit("engine", Versions.junit))
 }
