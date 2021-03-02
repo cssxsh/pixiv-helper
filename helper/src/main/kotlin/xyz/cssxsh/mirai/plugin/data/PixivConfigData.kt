@@ -24,4 +24,13 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
      */
     @ValueName("is_simple_info")
     val isSimpleInfo: MutableMap<String, Boolean> by value(mutableMapOf())
+
+    @ValueName("netdisk_access")
+    var netdiskAccessToken: String by value("")
+
+    @ValueName("netdisk_refresh")
+    var netdiskRefreshToken: String by value("")
+
+    @ValueName("netdisk_expires")
+    var netdiskExpires: Long by value(0L)
 }

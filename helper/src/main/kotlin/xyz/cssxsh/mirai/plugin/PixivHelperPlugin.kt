@@ -66,7 +66,7 @@ object PixivHelperPlugin : KotlinPlugin(
         // Listener
         PixivHelperListener.subscribe()
 
-        BaiduPanUpdater.loadPanConfig(PixivHelperSettings.panConfig)
+        BaiduNetDiskUpdater.loadToken()
     }
 
     override fun onDisable() {

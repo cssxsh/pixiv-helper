@@ -25,3 +25,6 @@ fun DependencyHandler.xerial(module: String, version: String) =
 
 fun DependencyHandler.junit(module: String, version: String) =
     "org.junit.jupiter:junit-jupiter-${module}:${version}"
+
+fun DependencyHandler.cssxsh(module: String, version: String) =
+    "xyz.cssxsh.${module.substringBeforeLast('-')}:${module}:${version}"

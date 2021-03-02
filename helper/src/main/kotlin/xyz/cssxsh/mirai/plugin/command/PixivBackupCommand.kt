@@ -58,4 +58,36 @@ object PixivBackupCommand : CompositeCommand(
             PixivZipper.compressData(list = getBackupList())
         }
     }
+
+    @SubCommand
+    fun ConsoleCommandSender.upload(file: String) {
+        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
+        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
+            val source = PixivHelperSettings.backupFolder.resolve(file)
+            check(source.isFile) { "[${file}]不是文件或不存在" }
+            val code = source.getRapidUploadInfo().format()
+            runCatching {
+                BaiduNetDiskUpdater.uploadFile(file = source)
+            }.onSuccess { info ->
+                logger.info { "[${file}]($code)上传成功: $info" }
+            }.onFailure {
+                logger.warning({ "[${file}]上传失败" }, it)
+            }
+        }
+    }
+
+    @SubCommand
+    fun ConsoleCommandSender.auth(code: String) {
+        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
+        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
+            runCatching {
+                BaiduNetDiskUpdater.getAuthorizeToken(code = code)
+            }.onFailure {
+                logger.warning({ "认证失败, code: $code" }, it)
+            }.onSuccess { token ->
+                BaiduNetDiskUpdater.saveToken(token = token)
+                logger.info { "认证成功, $token" }
+            }
+        }
+    }
 }

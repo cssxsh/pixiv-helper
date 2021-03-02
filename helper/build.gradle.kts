@@ -23,6 +23,7 @@ repositories {
     maven(url = "https://bintray.proxy.ustclug.org/him188moe/mirai/")
     maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlin-dev")
     maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlinx/")
+    maven(url = "https://bintray.proxy.ustclug.org/desmo/baidu-client/")
     // central
     maven(url = "https://maven.aliyun.com/repository/central")
     mavenCentral()
@@ -53,6 +54,8 @@ kotlin {
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
+            languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
 }

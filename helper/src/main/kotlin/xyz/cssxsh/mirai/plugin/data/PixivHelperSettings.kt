@@ -6,7 +6,6 @@ import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
-import xyz.cssxsh.mirai.plugin.tools.BaiduPanUpdater
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
@@ -37,16 +36,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
 
     @ValueName("ero_page_count")
     val eroPageCount: Int by value(5)
-
-    /**
-     * 百度云
-     */
-    @ValueName("pan_config")
-    val panConfig: BaiduPanUpdater.UserConfig by value(BaiduPanUpdater.UserConfig(
-        logId = "",
-        targetPath = "/Pixiv",
-        cookies = emptyList()
-    ))
 
     @ValueName("sqlite_database")
     private val sqliteDatabase: String by value("./pixiv.sqlite")
