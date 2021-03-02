@@ -12,7 +12,7 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import kotlin.time.minutes
+import kotlin.time.*
 
 object PixivHelperPlugin : KotlinPlugin(
     JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "0.5.0-dev-1") {
@@ -85,6 +85,6 @@ object PixivHelperPlugin : KotlinPlugin(
 
         PixivHelperListener.stop()
 
-        PixivZipper.backupData()
+        PixivZipper.compressData(list = getBackupList())
     }
 }

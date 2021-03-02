@@ -35,8 +35,7 @@ object PixivZipper {
      */
     private const val BUFFER_SIZE = 64 * 1024 * 1024
 
-    private fun ArtWorkInfo.toSignText() =
-        "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
+    private fun ArtWorkInfo.toSignText() = "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
 
     private fun timestamp() =
         OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
@@ -45,10 +44,10 @@ object PixivZipper {
         FULLWIDTH_REPLACE_CHARS.getOrDefault(it.value, "")
     }
 
-    private fun getZipFile(type: String) =
-        PixivHelperSettings.backupFolder.resolve("${type.toUpperCase()}(${timestamp()}).zip").apply { createNewFile() }
+    private fun getZipFile(basename: String) =
+        PixivHelperSettings.backupFolder.resolve("${basename.toUpperCase()}(${timestamp()}).zip").apply { createNewFile() }
 
-    fun compressArtWorks(list: List<ArtWorkInfo>, type: String): File = getZipFile(type).also { zip ->
+    fun compressArtWorks(list: List<ArtWorkInfo>, basename: String): File = getZipFile(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
@@ -61,38 +60,43 @@ object PixivZipper {
                     stream.write(file.readBytes())
                 }
                 logger.verbose { "${info.toSignText()}已写入[${zip.name}]" }
+                System.gc()
             }
             stream.flush()
         }
         logger.info { "[${zip.name}]压缩完毕！" }
     }
 
-    fun backupData(
-        list: List<Pair<File, String>> = listOf(
-            PixivHelperPlugin.dataFolder to "data",
-            PixivHelperPlugin.configFolder to "config",
-            PixivHelperSettings.sqlite to "database"
-        ),
-    ): List<File> = list.map { (source, type) ->
-        getZipFile(type).also { zip ->
+    private fun ZipOutputStream.addFile(file: File, path: String = "", zip: File) {
+        putNextEntry(ZipEntry("${path}${file.name}").apply {
+            time = file.lastModified()
+        })
+        write(file.readBytes())
+        flush()
+        logger.verbose { "[${file.name}]已写入[${zip.name}]" }
+        System.gc()
+    }
+
+    private fun ZipOutputStream.addDir(dir: File, path: String = "", zip: File) {
+        dir.listFiles()?.forEach {
+            if (it.isFile) {
+                addFile(file = it, path = "${path}${dir.name}/", zip = zip)
+            } else {
+                addDir(dir = it, path = "${path}${dir.name}/", zip = zip)
+            }
+        }
+    }
+
+    fun compressData(list: Map<String, File>): List<File> = list.map { (basename, source) ->
+        getZipFile(basename).also { zip ->
             logger.verbose { "将备份数据目录${source.absolutePath}到${zip.absolutePath}" }
             ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
                 stream.setLevel(Deflater.BEST_COMPRESSION)
                 if (source.isDirectory) {
-                    source.listFiles { file -> file.isFile }?.forEach { file ->
-                        stream.putNextEntry(ZipEntry(file.name).apply {
-                            lastModifiedTime = FileTime.fromMillis(file.lastModified())
-                        })
-                        stream.write(file.readBytes())
-                        logger.verbose { "[${file.name}]已写入[${zip.name}]" }
-                    }
+                    stream.addDir(dir = source, zip = zip)
                 } else if (source.isFile) {
-                    stream.putNextEntry(ZipEntry(source.name).apply {
-                        lastModifiedTime = FileTime.fromMillis(source.lastModified())
-                    })
-                    stream.write(source.readBytes())
+                    stream.addFile(file = source, zip = zip)
                 }
-                stream.flush()
             }
             logger.info { "[${zip.name}]压缩完毕！" }
         }

@@ -401,3 +401,14 @@ internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.im
         dir.resolve(Url(url).getFilename())
     }
 }
+
+internal fun getBackupList() = buildMap<String, File> {
+    this["DATA"] = PixivHelperPlugin.dataFolder
+    this["CONFIG"] = PixivHelperPlugin.configFolder
+    val lastBackup: Long = PixivHelperSettings.backupFolder.listFiles { file ->
+        file.name.startsWith("DATABASE")
+    }?.maxOf { it.lastModified() } ?: 0
+    if (PixivHelperSettings.sqlite.lastModified() > lastBackup) {
+        this["DATABASE"] = PixivHelperSettings.sqlite
+    }
+}
