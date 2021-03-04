@@ -172,10 +172,10 @@ object PixivCacheCommand : CompositeCommand(
     private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.temp(): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.temp(path: String = ""): Unit = getHelper().run {
         val list = mutableSetOf<Long>()
-        val dir = PixivHelperSettings.tempFolder
-        val exists = dir.resolve("exists").apply { mkdirs() }
+        val dir = if (path.isNotBlank()) File(path) else PixivHelperSettings.tempFolder
+        val exists = PixivHelperSettings.tempFolder.resolve("exists").apply { mkdirs() }
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         dir.listFiles()?.forEach { source ->
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
