@@ -10,18 +10,12 @@ import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import okhttp3.internal.http2.StreamResetException
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.*
 import xyz.cssxsh.pixiv.data.apps.*
-import java.io.EOFException
-import java.net.ConnectException
-import java.net.SocketException
-import java.net.UnknownHostException
 import java.time.OffsetDateTime
-import javax.net.ssl.SSLException
 import kotlin.time.*
 
 /**
@@ -41,36 +35,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     public override var expiresTime: OffsetDateTime by ExpiresTimeDelegate(contact)
 
-    override val apiIgnore: suspend (Throwable) -> Boolean = { throwable ->
-        when (throwable) {
-            is SSLException,
-            is EOFException,
-            is ConnectException,
-            is SocketTimeoutException,
-            is HttpRequestTimeoutException,
-            is StreamResetException,
-            is UnknownHostException,
-            is SocketException,
-            -> {
-                logger.warning { "PIXIV API错误, 已忽略: ${throwable.message}" }
-                true
-            }
-            else -> when (throwable.message) {
-                "Required SETTINGS preface not received" -> {
-                    logger.warning { "PIXIV API错误, 已忽略: ${throwable.message}" }
-                    true
-                }
-                "Rate Limit" -> {
-                    (3).minutes.let {
-                        logger.warning { "PIXIV API限流, 已延时: $it" }
-                        delay(it)
-                    }
-                    true
-                }
-                else -> false
-            }
-        }
-    }
+    override val apiIgnore: suspend (Throwable) -> Boolean get() = PixivApiIgnore
 
     var simpleInfo: Boolean
         get() = PixivConfigData.isSimpleInfo.getOrPut(contact.toString()) { contact !is Friend }

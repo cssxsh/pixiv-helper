@@ -1,6 +1,10 @@
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.utils.info
+import io.ktor.client.features.*
+import io.ktor.network.sockets.*
+import kotlinx.coroutines.delay
+import net.mamoe.mirai.utils.*
+import okhttp3.internal.http2.StreamResetException
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
@@ -22,6 +26,37 @@ private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
 
 private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+
+internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+    when (throwable) {
+        is SSLException,
+        is EOFException,
+        is ConnectException,
+        is SocketTimeoutException,
+        is HttpRequestTimeoutException,
+        is StreamResetException,
+        is UnknownHostException,
+        is SocketException,
+        -> {
+            PixivHelperPlugin.logger.warning { "PIXIV API错误, 已忽略: $throwable" }
+            true
+        }
+        else -> when (throwable.message) {
+            "Required SETTINGS preface not received" -> {
+                PixivHelperPlugin.logger.warning { "PIXIV API错误, 已忽略: $throwable" }
+                true
+            }
+            "Rate Limit" -> {
+                (3).minutes.let {
+                    PixivHelperPlugin.logger.warning { "PIXIV API限流, 已延时: $it" }
+                    delay(it)
+                }
+                true
+            }
+            else -> false
+        }
+    }
+}
 
 internal val PIXIV_HOST = mapOf(
     "i.pximg.net" to PIXIV_IMAGE_IP,
