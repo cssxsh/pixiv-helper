@@ -376,25 +376,28 @@ internal suspend fun PixivHelper.getIllustInfo(
 internal fun Throwable.isNotCancellationException() =
     (this is CancellationException || message == "No more continuations to resume").not()
 
-internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
+internal suspend fun IllustInfo.getImages(): List<File> {
+    val dir = PixivHelperSettings.imagesFolder(pid)
     val temp = PixivHelperSettings.tempFolder
+    val downloads = mutableListOf<String>()
     dir.mkdirs()
-    getOriginImageUrls().apply {
-        filter {
-            dir.resolve(Url(it).getFilename()).apply {
-                if (exists().not() && temp.resolve(name).exists()) {
-                    temp.resolve(name).renameTo(this)
-                        || temp.resolve(name).renameTo(this)
-                        || temp.resolve(name).renameTo(this)
-                }
-            }.exists().not()
-        }.takeIf { it.isNotEmpty() }?.let { downloads ->
-            check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
-            logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+    val files = getOriginImageUrls().map { url ->
+        dir.resolve(Url(url).getFilename()).apply {
+            if (exists().not() && temp.resolve(name).exists()) {
+                temp.resolve(name).renameTo(this)
+                    || temp.resolve(name).renameTo(this)
+                    || temp.resolve(name).renameTo(this)
+            }
+            if (exists().not()) {
+                downloads.add(url)
+            }
         }
-    }.map { url ->
-        dir.resolve(Url(url).getFilename())
     }
+    if (downloads.isNotEmpty()) {
+        check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
+        logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+    }
+    return files
 }
 
 internal fun getBackupList() = buildMap<String, File> {
