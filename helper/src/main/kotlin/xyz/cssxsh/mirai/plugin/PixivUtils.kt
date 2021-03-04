@@ -125,10 +125,7 @@ internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(
-    illust: IllustInfo,
-    save: Boolean = true,
-): List<Message> = buildList {
+internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: Boolean): List<Message> = buildList {
     if (simpleInfo) {
         add(illust.getSimpleMessage())
     } else {
@@ -151,20 +148,12 @@ internal suspend fun PixivHelper.buildMessageByIllust(
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(
-    pid: Long,
-    save: Boolean = false,
-): List<Message> = buildMessageByIllust(
-    illust = getIllustInfo(pid),
-    save = save
-)
+internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, save: Boolean): List<Message> =
+    buildMessageByIllust(illust = getIllustInfo(pid = pid, flush = save), save)
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
-internal suspend fun PixivHelper.buildMessageByUser(
-    detail: UserDetail,
-    save: Boolean = true,
-): MessageChain = buildMessageChain {
+internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail, save: Boolean): MessageChain = buildMessageChain {
     appendLine("NAME: ${detail.user.name}")
     appendLine("UID: ${detail.user.id}")
     appendLine("ACCOUNT: ${detail.user.account}")
@@ -179,27 +168,22 @@ internal suspend fun PixivHelper.buildMessageByUser(
                     PixivHelperDownloader.downloadImages(
                         urls = listOf(image),
                         dir = parentFile
-                    ).single().onFailure {
-                        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
-                    }.getOrThrow()
+                    ).single().getOrThrow()
                 }
             }
         }.let { file ->
             append(file.uploadAsImage(contact))
         }
+    }.onFailure {
+        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
     }
     if (save) {
         detail.saveToSQLite()
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(
-    uid: Long,
-    save: Boolean = false,
-): MessageChain = buildMessageByUser(
-    detail = userDetail(uid = uid),
-    save = save
-)
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain =
+    buildMessageByUser(detail = userDetail(uid = uid), save = save)
 
 internal fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
     if (pageCount > 1) {
@@ -361,7 +345,7 @@ internal fun Iterable<IllustInfo>.writeToCache() = forEach { illust ->
 
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
-    flush: Boolean = false,
+    flush: Boolean,
     block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust },
 ): IllustInfo = PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json").let { file ->
     if (!flush && file.exists()) {

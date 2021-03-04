@@ -90,7 +90,10 @@ object PixivMethodCommand : CompositeCommand(
         date: LocalDate,
         index: Long,
     ) = getHelper().runCatching {
-        buildMessageByIllust(illustRanking(date = date, mode = mode, offset = index).getFirst())
+        buildMessageByIllust(
+            illust = illustRanking(date = date, mode = mode, offset = index).getFirst(),
+            save = true
+        )
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -111,7 +114,10 @@ object PixivMethodCommand : CompositeCommand(
         val rankMode: RankMode = enumValueOf(type.also {
             require("18" !in it) { "R18禁止！" }
         })
-        buildMessageByIllust(illustRanking(mode = rankMode, offset = index).getFirst())
+        buildMessageByIllust(
+            illust = illustRanking(mode = rankMode, offset = index).getFirst(),
+            save = true
+        )
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -126,7 +132,10 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.search(
         word: String,
     ) = getHelper().runCatching {
-        buildMessageByIllust(searchIllust(word = word).getRandom())
+        buildMessageByIllust(
+            illust = searchIllust(word = word).getRandom(),
+            save = true
+        )
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -138,7 +147,10 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().runCatching {
-        buildMessageByIllust(illustFollow().getRandom())
+        buildMessageByIllust(
+            illust = illustFollow().getRandom(),
+            save = true
+        )
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
@@ -150,7 +162,10 @@ object PixivMethodCommand : CompositeCommand(
      */
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessageByIllust(userBookmarksIllust(uid = getAuthInfo().user.uid).getRandom())
+        buildMessageByIllust(
+            illust = userBookmarksIllust(uid = getAuthInfo().user.uid).getRandom(),
+            save = true
+        )
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {

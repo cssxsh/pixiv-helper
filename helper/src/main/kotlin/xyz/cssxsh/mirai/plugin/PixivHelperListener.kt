@@ -68,13 +68,11 @@ object PixivHelperListener {
     private val URL_PIXIV_ME_REGEX =
         """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex()
 
-    private suspend fun MessageEvent.sendArtworkInfo(pid: Long): MessageReceipt<Contact> = getHelper().run {
-        subject.sendMessage(message.quote() + buildMessageByIllust(pid = pid).toMessageChain())
-    }
+    private suspend fun MessageEvent.sendArtworkInfo(pid: Long): MessageReceipt<Contact> =
+        subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid, save = true).toMessageChain())
 
-    private suspend fun MessageEvent.sendUserInfo(uid: Long): MessageReceipt<Contact> = getHelper().run {
-        subject.sendMessage(message.quote() + buildMessageByUser(uid = uid))
-    }
+    private suspend fun MessageEvent.sendUserInfo(uid: Long): MessageReceipt<Contact> =
+        subject.sendMessage(message.quote() + getHelper().buildMessageByUser(uid = uid, save = true))
 
     private suspend fun MessageEvent.sendUserInfo(account: String): MessageReceipt<Contact> = getHelper().run {
         useHttpClient { client ->

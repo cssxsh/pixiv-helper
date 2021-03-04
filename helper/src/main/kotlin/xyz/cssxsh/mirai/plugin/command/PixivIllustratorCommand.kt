@@ -26,7 +26,10 @@ object PixivIllustratorCommand : CompositeCommand(
         useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random().let { info ->
-            buildMessageByIllust(info.pid)
+            buildMessageByIllust(
+                pid = info.pid,
+                save = false
+            )
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
@@ -41,7 +44,10 @@ object PixivIllustratorCommand : CompositeCommand(
             useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
-                buildMessageByIllust(info.pid)
+                buildMessageByIllust(
+                    pid = info.pid,
+                    save = false
+                )
             }
         }
     }.onSuccess { list ->
