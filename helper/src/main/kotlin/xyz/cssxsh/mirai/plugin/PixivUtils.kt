@@ -331,18 +331,13 @@ internal val Json_ = Json {
     allowStructuredMapKeys = true
 }
 
-internal fun IllustInfo.writeTo(file: File) =
-    file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
-
 internal fun File.readIllustInfo(): IllustInfo =
     Json_.decodeFromString(IllustInfo.serializer(), readText())
 
-internal fun IllustInfo.writeToCache() =
-    writeTo(PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json"))
+internal fun IllustInfo.writeToCache(file: File = PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json")) =
+    apply { file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this)) }
 
-internal fun Iterable<IllustInfo>.writeToCache() = forEach { illust ->
-    illust.writeToCache()
-}
+internal fun List<IllustInfo>.writeToCache() = onEach { it.writeToCache() }
 
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
@@ -352,9 +347,7 @@ internal suspend fun PixivHelper.getIllustInfo(
     if (!flush && file.exists()) {
         file.readIllustInfo()
     } else {
-        block(pid).apply {
-            writeTo(file)
-        }
+        block(pid).writeToCache(file = file)
     }
 }
 

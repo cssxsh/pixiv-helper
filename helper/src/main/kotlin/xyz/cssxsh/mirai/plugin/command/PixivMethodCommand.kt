@@ -19,9 +19,9 @@ object PixivMethodCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private fun IllustData.getRandom() = illusts.apply { writeToCache() }.random()
+    private fun IllustData.getRandom() = illusts.writeToCache().random()
 
-    private fun IllustData.getFirst() = illusts.apply { writeToCache() }.first()
+    private fun IllustData.getFirst() = illusts.writeToCache().first()
 
     /**
      * 登录 通过 用户名，密码

@@ -224,7 +224,7 @@ object PixivCacheCommand : CompositeCommand(
                 resolve("${info.pid}.json").also { file ->
                     if (file.exists().not()) {
                         logger.warning { "${file.absolutePath} 不可读， 文件将删除重新下载，删除结果：${file.delete()}" }
-                        illustDetail(info.pid).illust.apply { writeToCache() }.saveToSQLite()
+                        illustDetail(info.pid).illust.writeToCache().saveToSQLite()
                     }
                 }
                 useFileInfoMapper { it.fileInfos(info.pid) }.filter { info ->
