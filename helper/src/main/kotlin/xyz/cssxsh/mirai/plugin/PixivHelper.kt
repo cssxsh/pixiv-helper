@@ -177,12 +177,12 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     ))
 
     fun cacheStop() {
+        cacheJob.cancel()
         cacheChannel.cancel()
     }
 
     var followJob: Job? = null
 
-    private val tasks = mutableMapOf<String, Job>()
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info { "$it by RefreshToken: $token, ExpiresTime: $expiresTime" }
