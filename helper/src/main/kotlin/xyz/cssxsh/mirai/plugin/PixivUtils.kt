@@ -9,11 +9,6 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
-import org.apache.ibatis.mapping.Environment
-import org.apache.ibatis.session.SqlSessionFactory
-import org.sqlite.JDBC
-import org.sqlite.SQLiteConfig
-import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
@@ -38,41 +33,6 @@ internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(mes
 
 internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
     quoteReply(message.toPlainText())
-
-internal fun SqlSessionFactory.init() = configuration.apply {
-    environment = Environment(environment.id, environment.transactionFactory, SQLiteConnectionPoolDataSource().apply {
-        config.apply {
-            enforceForeignKeys(true)
-            setCacheSize(8196)
-            setPageSize(8196)
-            setJournalMode(SQLiteConfig.JournalMode.MEMORY)
-            enableCaseSensitiveLike(true)
-            setTempStore(SQLiteConfig.TempStore.MEMORY)
-            setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-            setEncoding(SQLiteConfig.Encoding.UTF8)
-            PixivHelperSettings.sqliteConfig.forEach { (pragma, value) ->
-                setPragma(pragma, value)
-            }
-        }
-        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
-    })
-}
-
-internal fun PixivHelperSettings.init() {
-    cacheFolder.mkdirs()
-    backupFolder.mkdirs()
-    tempFolder.mkdirs()
-    profilesFolder.mkdirs()
-    if (sqlite.exists().not()) {
-        this::class.java.getResourceAsStream("pixiv.sqlite")?.use {
-            sqlite.writeBytes(it.readAllBytes())
-        }
-    }
-    logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
-    logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
-    logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    logger.info { "Sqlite: ${sqlite.absolutePath}" }
-}
 
 internal fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
     session.getMapper(ArtWorkInfoMapper::class.java).let(block)
@@ -426,7 +386,6 @@ internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.im
                 }
             }.exists().not()
         }.takeIf { it.isNotEmpty() }?.let { downloads ->
-            dir.mkdirs()
             check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
             logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
         }

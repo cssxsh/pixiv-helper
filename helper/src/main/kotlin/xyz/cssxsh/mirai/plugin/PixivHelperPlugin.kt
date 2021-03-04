@@ -5,7 +5,6 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import org.apache.ibatis.io.Resources
 import org.apache.ibatis.session.SqlSession
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
@@ -22,9 +21,7 @@ object PixivHelperPlugin : KotlinPlugin(
 ) {
 
     private val sqlSessionFactory: SqlSessionFactory by lazy {
-        Resources.getResourceAsStream("mybatis-config.xml").use {
-            SqlSessionFactoryBuilder().build(it)
-        }
+        SqlSessionFactoryBuilder().build(InitSqlConfiguration)
     }
 
     internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
@@ -63,7 +60,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         PixivHelperSettings.init()
 
-        sqlSessionFactory.init()
+        sqlSessionFactory.configuration.init()
         // Listener
         PixivHelperListener.subscribe()
 

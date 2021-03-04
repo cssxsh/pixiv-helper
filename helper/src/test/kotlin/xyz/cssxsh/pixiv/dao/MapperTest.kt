@@ -1,10 +1,8 @@
 package xyz.cssxsh.pixiv.dao
 
-import org.apache.ibatis.io.Resources
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -17,17 +15,13 @@ import java.io.File
 internal class MapperTest {
 
     private val sqlSessionFactory: SqlSessionFactory by lazy {
-        Resources.getResourceAsStream(config).use {
-            SqlSessionFactoryBuilder().build(it)
-        }
+        SqlSessionFactoryBuilder().build(InitSqlConfiguration)
     }
 
     private fun imagesFolder(pid: Long): File = File("F:\\PixivCache")
         .resolve("%03d______".format(pid / 1_000_000))
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
-
-    private val config = "mybatis-config.xml"
 
     private val sqliteUrl get() = "jdbc:sqlite:${File("../test/pixiv.db").absolutePath}"
 
