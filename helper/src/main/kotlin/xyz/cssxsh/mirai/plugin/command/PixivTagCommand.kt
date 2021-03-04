@@ -50,7 +50,7 @@ object PixivTagCommand : SimpleCommand(
                 }
                 tagStatisticAdd(event = fromEvent, tag = tag, pid = pid)
             }.let { pid ->
-                buildMessageByIllust(pid)
+                buildMessageByIllust(pid = pid, save = false)
             }
         }
     }.onSuccess { list ->

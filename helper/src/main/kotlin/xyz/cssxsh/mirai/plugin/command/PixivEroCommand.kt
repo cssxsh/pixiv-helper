@@ -75,7 +75,7 @@ object PixivEroCommand : SimpleCommand(
                 eroStatisticAdd(fromEvent, info.pid)
             }
         }.let { info ->
-            getHelper().buildMessageByIllust(info.pid)
+            getHelper().buildMessageByIllust(pid = info.pid, save = false)
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }

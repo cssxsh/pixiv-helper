@@ -150,7 +150,7 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: 
 }
 
 internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, save: Boolean): List<Message> =
-    buildMessageByIllust(illust = getIllustInfo(pid = pid, flush = save), save)
+    buildMessageByIllust(illust = getIllustInfo(pid = pid, flush = save), save = save)
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 

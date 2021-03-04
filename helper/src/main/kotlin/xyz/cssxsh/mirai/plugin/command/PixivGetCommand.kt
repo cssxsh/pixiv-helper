@@ -22,7 +22,7 @@ object PixivGetCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<MessageEvent>.get(pid: Long, flush: Boolean = false) = getHelper().runCatching {
-        buildMessageByIllust(getIllustInfo(pid = pid, flush = flush))
+        buildMessageByIllust(pid = pid, save = flush)
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
     }.onFailure {
