@@ -30,10 +30,12 @@ import kotlin.time.*
 class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     coroutineName = "PixivHelper:${contact}",
-    config = PixivConfig(host = PIXIV_HOST)
+    config = DEFAULT_PIXIV_CONFIG // This config is not use
 ) {
 
     override var config: PixivConfig by ConfigDelegate(contact)
+
+    override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
 
     override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
 
@@ -182,7 +184,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     }
 
     var followJob: Job? = null
-
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
         logger.info { "$it by RefreshToken: $token, ExpiresTime: $expiresTime" }

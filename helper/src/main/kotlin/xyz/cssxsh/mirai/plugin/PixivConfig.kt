@@ -8,7 +8,14 @@ import org.sqlite.JDBC
 import org.sqlite.SQLiteConfig
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.pixiv.client.PixivConfig
 import xyz.cssxsh.pixiv.dao.*
+import java.io.EOFException
+import java.net.ConnectException
+import java.net.SocketException
+import java.net.UnknownHostException
+import javax.net.ssl.SSLException
+import kotlin.time.minutes
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
@@ -25,6 +32,10 @@ internal val PIXIV_HOST = mapOf(
     "public.pixiv.net" to PIXIV_NET_IP,
     "www.pixiv.net" to PIXIV_NET_IP,
     "pixiv.me" to PIXIV_NET_IP
+)
+
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(
+    host = PIXIV_HOST
 )
 
 internal val InitSqlConfiguration = Configuration()
