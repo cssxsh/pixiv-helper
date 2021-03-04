@@ -132,8 +132,9 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: 
         add(illust.getMessage())
         add(illust.getPixivCat())
     }
+    val files = illust.getImages()
     if (illust.isR18().not()) {
-        illust.getImages().forEachIndexed { index, file ->
+        files.forEachIndexed { index, file ->
             if (index < PixivHelperSettings.eroPageCount) {
                 add(file.uploadAsImage(contact))
             } else {
@@ -315,7 +316,7 @@ internal fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session 
 }
 
 internal fun UserDetail.saveToSQLite(): Unit = useUserInfoMapper { mapper ->
-    mapper.replaceUser(user.toUserBaseInfo())
+    mapper.addUserByIllustInfo(user.toUserBaseInfo())
 }
 
 internal fun ByteArray.getMd5(): String =
