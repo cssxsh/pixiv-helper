@@ -378,11 +378,14 @@ internal fun Throwable.isNotCancellationException() =
 
 internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     val temp = PixivHelperSettings.tempFolder
+    dir.mkdirs()
     getOriginImageUrls().apply {
         filter {
             dir.resolve(Url(it).getFilename()).apply {
                 if (exists().not() && temp.resolve(name).exists()) {
                     temp.resolve(name).renameTo(this)
+                        || temp.resolve(name).renameTo(this)
+                        || temp.resolve(name).renameTo(this)
                 }
             }.exists().not()
         }.takeIf { it.isNotEmpty() }?.let { downloads ->
