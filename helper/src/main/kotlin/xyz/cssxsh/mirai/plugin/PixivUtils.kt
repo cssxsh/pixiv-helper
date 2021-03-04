@@ -413,7 +413,8 @@ internal suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-internal fun Throwable?.isNotCancellationException() = this !is CancellationException
+internal fun Throwable.isNotCancellationException() =
+    (this is CancellationException || message == "No more continuations to resume").not()
 
 internal suspend fun IllustInfo.getImages(): List<File> = PixivHelperSettings.imagesFolder(pid).let { dir ->
     val temp = PixivHelperSettings.tempFolder
