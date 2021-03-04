@@ -19,27 +19,47 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     fun CommandSenderOnMessage<MessageEvent>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
-        PixivHelperScheduler.setTimerTask(name = "User($uid)[${contact}]", info = TimerTask.User(
-            uid = uid,
-            interval = duration.minutes.toLongMilliseconds(),
-            contact = getContactInfo()
-        ))
+        PixivHelperScheduler.setTimerTask(
+            name = "User($uid)[${contact}]",
+            info = TimerTask.User(
+                uid = uid,
+                interval = duration.minutes.toLongMilliseconds(),
+                contact = getContactInfo()
+            )
+        )
     }
 
     @SubCommand
     fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode) = getHelper().run {
-        PixivHelperScheduler.setTimerTask(name = "Rank($mode)[${contact}]", info = TimerTask.Rank(
-            mode = mode,
-            contact = getContactInfo()
-        ))
+        PixivHelperScheduler.setTimerTask(
+            name = "Rank($mode)[${contact}]",
+            info = TimerTask.Rank(
+                mode = mode,
+                contact = getContactInfo()
+            )
+        )
     }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.follow(duration: Int = TASK_DURATION) = getHelper().run {
-        PixivHelperScheduler.setTimerTask(name = "Follow(${getAuthInfo().user.uid})[${contact}]", info = TimerTask.Follow(
-            interval = duration.minutes.toLongMilliseconds(),
-            contact = getContactInfo()
-        ))
+        PixivHelperScheduler.setTimerTask(
+            name = "Follow(${getAuthInfo().user.uid})[${contact}]",
+            info = TimerTask.Follow(
+                interval = duration.minutes.toLongMilliseconds(),
+                contact = getContactInfo()
+            )
+        )
+    }
+
+    @SubCommand
+    suspend fun CommandSenderOnMessage<MessageEvent>.recommended(duration: Int = TASK_DURATION) = getHelper().run {
+        PixivHelperScheduler.setTimerTask(
+            name = "Recommended(${getAuthInfo().user.uid})[${contact}]",
+            info = TimerTask.Recommended(
+                interval = duration.minutes.toLongMilliseconds(),
+                contact = getContactInfo()
+            )
+        )
     }
 
     @SubCommand

@@ -7,17 +7,20 @@ import kotlinx.serialization.Serializable
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.data.apps.*
 import java.time.OffsetDateTime
 import kotlin.time.*
 
+typealias LoadTask = suspend PixivHelper.() -> Flow<List<IllustInfo>>
+
 internal data class CacheTask(
     val name: String,
     val write: Boolean,
     val reply: Boolean,
-    val block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
+    val block: LoadTask,
 )
 
 internal data class DownloadTask(
@@ -100,6 +103,16 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    data class Recommended(
+        @SerialName("last")
+        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @SerialName("interval")
+        val interval: Long,
+        @SerialName("contact")
+        val contact: ContactInfo,
+    ) : TimerTask()
+
+    @Serializable
     data class Backup(
         @SerialName("last")
         override var last: Long = OffsetDateTime.now().toEpochSecond(),
@@ -110,17 +123,24 @@ sealed class TimerTask {
 
 private val SEND_DELAY = (3).minutes
 
-internal suspend fun PixivHelper.subscribe(
-    name: String,
-    last: Long,
-    block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
-): IllustInfo? {
+private fun getLast(name: String) = PixivTaskData.tasks.getValue(name).last
+
+private fun setLast(name: String, value: Long) = PixivTaskData.tasks.compute(name) { _, info ->
+    info?.apply { last = value }
+}
+
+internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block()
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
-    return flow.toList().flatten().nomanga().filter { it.createAt.toEpochSecond() > last && it.isR18().not() }.onEach { illust ->
-        delay(SEND_DELAY)
-        buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
-    }.maxByOrNull { it.createAt }
+    flow.collect { list ->
+        list.nomanga().filter {
+            it.createAt.toEpochSecond() > getLast(name) && it.isR18().not()
+        }.forEach { illust ->
+            setLast(name, illust.createAt.toEpochSecond())
+            delay(SEND_DELAY)
+            buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
+        }
+    }
 }
 
 private const val RANK_HOUR = 12
@@ -139,39 +159,43 @@ internal suspend fun TimerTask.delay() {
         is TimerTask.Follow -> {
             delay((0..interval).random())
         }
+        is TimerTask.Recommended -> {
+            delay((0..interval).random())
+        }
         is TimerTask.Backup -> {
             delay((0..interval).random())
         }
     }
 }
 
-internal suspend fun TimerTask.run(task: String) {
-    when (this) {
+internal suspend fun runTask(name: String, info: TimerTask) {
+    when (info) {
         is TimerTask.User -> {
-            contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name = task, last = last) {
-                    getUserIllusts(uid = uid, limit = 30L) // one page
+            info.contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name) {
+                    getUserIllusts(uid = info.uid, limit = 30L) // one page
                 }
-            }?.let {
-                last = it.createAt.toEpochSecond()
             }
         }
         is TimerTask.Rank -> {
-            contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name = task, last = last) {
-                    getRank(mode = mode, date = null, limit = 180L)
+            info.contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name) {
+                    getRank(mode = info.mode, date = null, limit = 180L)
                 }
-            }?.let {
-                last = it.createAt.toEpochSecond()
             }
         }
         is TimerTask.Follow -> {
-            contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name = task, last = last) {
+            info.contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name) {
                     getFollowIllusts(limit = 90L)
                 }
-            }?.let {
-                last = it.createAt.toEpochSecond()
+            }
+        }
+        is TimerTask.Recommended -> {
+            info.contact.getHelperOrNull()?.let { helper ->
+                helper.subscribe(name) {
+                    getRecommended(limit = 90L)
+                }
             }
         }
         is TimerTask.Backup -> {
@@ -184,7 +208,7 @@ internal suspend fun TimerTask.run(task: String) {
                     PixivHelperPlugin.logger.warning({ "[${file}]上传失败" }, it)
                 }
             }
-            last = OffsetDateTime.now().toEpochSecond()
+            setLast(name, OffsetDateTime.now().toEpochSecond())
         }
     }
 }

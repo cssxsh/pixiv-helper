@@ -12,16 +12,14 @@ object PixivHelperScheduler {
 
     private var check: Job? = null
 
-    private val CACHE_DELAY = (10).minutes
-
-    private fun runTask(name: String, info: TimerTask) = PixivHelperPlugin.launch {
+    private fun runTimerTask(name: String, info: TimerTask) = PixivHelperPlugin.launch {
         logger.info {
-            "Task($name)开始运行, $info"
+            "${info}开始运行"
         }
         info.delay()
         while (isActive) {
             launch {
-                info.run(task = name)
+                runTask(name = name, info = info)
             }
             info.delay()
         }
@@ -29,7 +27,7 @@ object PixivHelperScheduler {
 
     fun setTimerTask(name: String, info: TimerTask): Unit = synchronized(jobs) {
         PixivTaskData.tasks[name] = info
-        jobs.put(name, runTask(name, info))?.cancel()
+        jobs.put(name, runTimerTask(name, info))?.cancel()
     }
 
     fun start() {
@@ -38,11 +36,10 @@ object PixivHelperScheduler {
                 PixivTaskData.tasks.forEach { (name, info) ->
                     synchronized(jobs) {
                         jobs.compute(name) { _, job ->
-                            job?.takeIf { it.isActive } ?: runTask(name, info)
+                            job?.takeIf { it.isActive } ?: runTimerTask(name, info)
                         }
                     }
                 }
-                delay(CACHE_DELAY)
             }
         }
     }

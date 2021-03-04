@@ -19,7 +19,7 @@ internal fun List<IllustInfo>.nocache() = useArtWorkInfoMapper { mapper ->
 
 internal fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MANGA }
 
-internal fun List<IllustInfo>.noero() = filter { it.isEro().not() }
+internal fun List<IllustInfo>.eros() = filter { it.isEro() }
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
@@ -52,10 +52,10 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = fl
 internal suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
-            userRecommended(offset = offset).userPreviews
+            userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it)
+            emit(it.eros())
             logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页失败" }, it)
@@ -125,7 +125,7 @@ internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT
             searchIllust(word = tag, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it.noero())
+            emit(it.eros())
             logger.verbose { "加载'${tag}'搜索列表第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载'${tag}'搜索列表第${page}页失败" }, it)
@@ -139,7 +139,7 @@ internal suspend fun PixivHelper.getRelated(pid: Long, illusts: List<Long>) = fl
             illustRelated(pid = pid, seedIllustIds = illusts, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it.noero())
+            emit(it.eros())
             logger.verbose { "加载[${pid}]相关列表第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载[${pid}]相关列表第${page}页失败" }, it)

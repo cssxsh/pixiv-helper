@@ -72,7 +72,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
-        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().map { list -> list.flatMap { it.illusts.noero() } } }
+        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended() }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =

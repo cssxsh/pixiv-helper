@@ -168,7 +168,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         name: String,
         write: Boolean = true,
         reply: Boolean = true,
-        block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
+        block: LoadTask,
     ) = cacheChannel.send(CacheTask(
         name = name,
         write = write,
