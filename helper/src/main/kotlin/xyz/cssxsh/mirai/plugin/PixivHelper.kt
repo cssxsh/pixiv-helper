@@ -30,7 +30,7 @@ import kotlin.time.*
 class PixivHelper(val contact: Contact) : SimplePixivClient(
     parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     coroutineName = "PixivHelper:${contact}",
-    config = PixivConfig()
+    config = PixivConfig(host = PIXIV_HOST)
 ) {
 
     override var config: PixivConfig by ConfigDelegate(contact)

@@ -15,11 +15,7 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 
 object PixivHelperDownloader : PixivDownloader(
-    initHost = mapOf(
-        "i.pximg.net" to (134..147).map {
-            "210.140.92.${it}"
-        }
-    ),
+    initHost = PIXIV_HOST,
     ignore = { _, throwable, _ ->
         when (throwable) {
             is SSLException,
