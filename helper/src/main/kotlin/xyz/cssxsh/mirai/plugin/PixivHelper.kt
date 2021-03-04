@@ -37,11 +37,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override val apiIgnore: suspend (Throwable) -> Boolean get() = PixivApiIgnore
 
-    var simpleInfo: Boolean
-        get() = PixivConfigData.isSimpleInfo.getOrPut(contact.toString()) { contact !is Friend }
-        set(value) {
-            PixivConfigData.isSimpleInfo[contact.toString()] = value
-        }
+    var simpleInfo: Boolean by SimpleInfoDelegate(contact)
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
