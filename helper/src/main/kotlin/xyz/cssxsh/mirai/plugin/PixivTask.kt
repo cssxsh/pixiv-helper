@@ -134,7 +134,7 @@ internal suspend fun TimerTask.delay() {
             delay((0..interval).random())
         }
         is TimerTask.Rank -> {
-            delay((OffsetDateTime.now().toNextRank().toEpochSecond() - last))
+            delay((OffsetDateTime.now().toNextRank().toEpochSecond() - last).seconds)
         }
         is TimerTask.Follow -> {
             delay((0..interval).random())

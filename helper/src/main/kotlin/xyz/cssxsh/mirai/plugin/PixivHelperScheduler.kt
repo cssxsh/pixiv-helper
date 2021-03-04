@@ -12,7 +12,7 @@ object PixivHelperScheduler {
 
     private var check: Job? = null
 
-    private const val CACHE_DELAY = 10
+    private val CACHE_DELAY = (10).minutes
 
     private fun runTask(name: String, info: TimerTask) = PixivHelperPlugin.launch {
         logger.info {
@@ -42,7 +42,7 @@ object PixivHelperScheduler {
                         }
                     }
                 }
-                delay(CACHE_DELAY.minutes)
+                delay(CACHE_DELAY)
             }
         }
     }
