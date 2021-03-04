@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.mamoe.mirai.Bot
@@ -16,7 +17,7 @@ internal data class CacheTask(
     val name: String,
     val write: Boolean,
     val reply: Boolean,
-    val block: suspend PixivHelper.() -> List<IllustInfo>,
+    val block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
 )
 
 internal data class DownloadTask(
@@ -112,15 +113,14 @@ private val SEND_DELAY = (3).minutes
 internal suspend fun PixivHelper.subscribe(
     name: String,
     last: Long,
-    block: suspend PixivHelper.() -> List<IllustInfo>,
+    block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
 ): IllustInfo? {
-    val illusts = block()
-    addCacheJob(name = "TimerTask(${name})", reply = false) { illusts }
-    illusts.nomanga().filter { it.createAt.toEpochSecond() > last && it.isR18().not() }.forEach { illust ->
+    val flow = block()
+    addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
+    return flow.toList().flatten().nomanga().filter { it.createAt.toEpochSecond() > last && it.isR18().not() }.onEach { illust ->
         delay(SEND_DELAY)
         buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
-    }
-    return illusts.maxByOrNull { it.createAt }
+    }.maxByOrNull { it.createAt }
 }
 
 private const val RANK_HOUR = 12

@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.event.events.MessageEvent
@@ -9,6 +11,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.count
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
 import java.io.File
@@ -41,11 +44,8 @@ object PixivCacheCommand : CompositeCommand(
      * 缓存关注列表
      */
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().run {
-        getFollowIllusts().nomanga().groupBy { it.createAt.toLocalDate() }.forEach { (date, list) ->
-            addCacheJob(name = "FOLLOW(${date})", reply = false) { list }
-        }
-    }
+    suspend fun CommandSenderOnMessage<MessageEvent>.follow() =
+        getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().map { it.nomanga() } }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.ranks(date: LocalDate? = null) = getHelper().run {
@@ -65,14 +65,14 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
         loadDayOfYears(year).forEach { date ->
             addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
-                getRank(mode = RankMode.MONTH, date = date, limit = 90).nomanga().nocache()
+                getRank(mode = RankMode.MONTH, date = date, limit = 90).map { it.nomanga().nocache() }
             }
         }
     }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
-        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().flatMap { it.illusts }.filter { it.isEro() } }
+        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().map { list -> list.flatMap { it.illusts.noero() } } }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =
@@ -104,30 +104,28 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.followAll(): Unit = getHelper().run {
-        getUserFollowingPreview().sortedBy { it.user.id }.also { list ->
-            logger.verbose { "关注中{${list.first().user.id..list.last().user.id}}共${list.size}个画师需要缓存" }
-            sendMessage("关注列表中共${list.size}个画师需要缓存")
+        getUserFollowingPreview(detail = userDetail(uid = getAuthInfo().user.uid).apply {
+            logger.verbose { "关注中共${profile.totalFollowUsers}个画师需要缓存" }
+            sendMessage("关注列表中共${profile.totalFollowUsers}个画师需要缓存")
+        }).also { flow ->
             launch {
-                list.forEachIndexed { index, preview ->
-                    if (isActive) runCatching {
-                        if (preview.isLoaded().not()) {
-                            userDetail(uid = preview.user.id).let { detail ->
-                                if (detail.total() > detail.count() + preview.illusts.size) {
-                                    logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                    addCacheJob(name = "${index}.USER(${detail.user.id})", reply = false) {
-                                        getUserIllusts(detail)
-                                    }
-                                } else {
-                                    logger.verbose { "${index}.USER(${detail.user.id})有${preview.illusts.size}个作品尝试缓存" }
-                                    addCacheJob(name = "${index}.USER_PREVIEW(${detail.user.id})", reply = false) {
-                                        preview.illusts
-                                    }
+                flow.transform { list ->
+                    list.filterNot {
+                        it.isLoaded()
+                    }.forEach { preview ->
+                        userDetail(uid = preview.user.id).let { detail ->
+                            if (detail.total() > detail.count() + preview.illusts.size) {
+                                logger.verbose { "USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                addCacheJob(name = "USER(${detail.user.id})", reply = false) {
+                                    getUserIllusts(detail)
                                 }
+                            } else {
+                                emit(preview.illusts)
                             }
                         }
-                    }.onFailure {
-                        logger.warning({ "关注缓存${preview.user.id}失败" }, it)
                     }
+                }.let {
+                    addCacheJob(name = "USER_PREVIEW)", reply = false) { it }
                 }
             }
         }
@@ -158,13 +156,13 @@ object PixivCacheCommand : CompositeCommand(
         }.listDirs("""\d{3}______""".toRegex(), range).forEach { first ->
             addCacheJob(name = "LOCAL(${first.name})", write = false) {
                 logger.info { "${first.absolutePath} 开始加载" }
-                first.listDirs("""\d{6}___""".toRegex(), range).flatMap { second ->
+                first.listDirs("""\d{6}___""".toRegex(), range).map { second ->
                     second.listDirs("""\d+""".toRegex(), range).filter { dir ->
                         useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not()
                     }.mapNotNull { dir ->
                         dir.resolve("${dir.name}.json").takeIf { it.canRead() }?.readIllustInfo()
                     }
-                }
+                }.asFlow()
             }
         }
     }
@@ -187,19 +185,17 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
         addCacheJob(name = "TEMP(${dir.absolutePath})") {
-            list.mapNotNull {
-                runCatching { getIllustInfo(pid = it, flush = true) }.getOrNull()
-            }
+            getListIllusts(set = list)
         }
     }
 
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.search(): Unit = getHelper().run {
         addCacheJob(name = "SEARCH") {
-            PixivSearchData.results.map { (_, result) -> result.pid }.toSet().filter { pid ->
+            PixivSearchData.results.map { (_, result) -> result.pid }.filter { pid ->
                 useArtWorkInfoMapper { it.contains(pid) }.not()
-            }.mapNotNull { pid ->
-                runCatching { getIllustInfo(pid = pid, flush = true) }.getOrNull()
+            }.let {
+                getListIllusts(set = it.toSet())
             }
         }
     }

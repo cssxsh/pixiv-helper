@@ -90,10 +90,15 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<CacheTask>.check() = transform { (name, write, reply, block) ->
         runCatching {
-            block.invoke(this@PixivHelper).map {
-                checkR18(it)
-            }.let { list ->
-                if (write) list.writeToCache()
+            block.invoke(this@PixivHelper).map { list ->
+                list.map {
+                    checkR18(it)
+                }
+            }.onEach { list ->
+                if (write && list.isNotEmpty()) {
+                    list.writeToCache()
+                }
+            }.collect { list ->
                 useArtWorkInfoMapper { mapper ->
                     list.groupBy {
                         mapper.contains(it.pid)
@@ -163,7 +168,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         name: String,
         write: Boolean = true,
         reply: Boolean = true,
-        block: suspend PixivHelper.() -> List<IllustInfo>,
+        block: suspend PixivHelper.() -> Flow<List<IllustInfo>>,
     ) = cacheChannel.send(CacheTask(
         name = name,
         write = write,
