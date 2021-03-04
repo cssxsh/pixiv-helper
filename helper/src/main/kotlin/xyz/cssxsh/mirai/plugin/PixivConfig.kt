@@ -10,15 +10,15 @@ import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.dao.*
 
-private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
+private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
-/**
- * XXX: Failed to connect 210.140.131.224-225
- */
-private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" }
+private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
+
+private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
 
 internal val PIXIV_HOST = mapOf(
     "i.pximg.net" to PIXIV_IMAGE_IP,
+    "s.pximg.net" to PIXIV_IMAGE_IP,
     "oauth.secure.pixiv.net" to PIXIV_NET_IP,
     "app-api.pixiv.net" to PIXIV_NET_IP,
     "public.pixiv.net" to PIXIV_NET_IP,
