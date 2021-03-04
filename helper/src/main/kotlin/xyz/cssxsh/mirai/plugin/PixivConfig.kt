@@ -21,6 +21,7 @@ internal val PIXIV_HOST = mapOf(
     "s.pximg.net" to PIXIV_IMAGE_IP,
     "oauth.secure.pixiv.net" to PIXIV_NET_IP,
     "app-api.pixiv.net" to PIXIV_NET_IP,
+    "public-api.secure.pixiv.net" to PIXIV_NET_IP,
     "public.pixiv.net" to PIXIV_NET_IP,
     "www.pixiv.net" to PIXIV_NET_IP,
     "pixiv.me" to PIXIV_NET_IP
