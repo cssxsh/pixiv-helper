@@ -119,48 +119,6 @@ object PixivMethodCommand : CompositeCommand(
     }.isSuccess
 
     /**
-     * 随机排行榜
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.random() = getHelper().runCatching {
-        buildMessageByIllust(illustRanking(mode = RankMode.values().random()).getRandom())
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("随机获取排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 作品详情
-     * @param pid 作品ID
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.detail(
-        pid: Long,
-    ) = getHelper().runCatching {
-        buildMessageByIllust(illustDetail(pid = pid).illust.apply { writeToCache() })
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取作品详情失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 用户作品
-     * @param uid 用户ID
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(
-        uid: Long,
-    ) = getHelper().runCatching {
-        buildMessageByIllust(userIllusts(uid = uid).getRandom())
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取用户作品失败， ${it.message}")
-    }.isSuccess
-
-    /**
      * 搜索
      * @param word 关键词
      */
