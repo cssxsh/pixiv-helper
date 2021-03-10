@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import org.sqlite.SQLiteConfig
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
 import java.io.File
 
@@ -23,19 +24,19 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
      * 色图间隔
      */
     @ValueName("ero_interval")
-    val eroInterval: Int by value(16)
+    val eroInterval: Int by value(ERO_INTERVAL)
 
     /**
      * 涩图标准 收藏
      */
     @ValueName("ero_bookmarks")
-    val eroBookmarks: Long by value(10_000L)
+    val eroBookmarks: Long by value(ERO_BOOKMARKS)
 
     /**
      * 涩图标准 页数
      */
     @ValueName("ero_page_count")
-    val eroPageCount: Int by value(5)
+    val eroPageCount: Int by value(ERO_PAGE_COUNT)
 
     @ValueName("sqlite_database")
     private val sqliteDatabase: String by value("")

@@ -4,6 +4,7 @@ import io.ktor.client.features.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.delay
 import net.mamoe.mirai.utils.*
+import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.StreamResetException
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
@@ -19,13 +20,15 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
-import kotlin.time.minutes
+import kotlin.time.*
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
 private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
 
 private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+
+internal val PIXIV_RATE_LIMIT_DELAY = (3).minutes
 
 internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     when (throwable) {
@@ -47,14 +50,51 @@ internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
                 true
             }
             "Rate Limit" -> {
-                (3).minutes.let {
-                    PixivHelperPlugin.logger.warning { "PIXIV API限流, 已延时: $it" }
-                    delay(it)
-                }
+                PixivHelperPlugin.logger.warning { "PIXIV API限流, 将延时: $PIXIV_RATE_LIMIT_DELAY" }
+                delay(PIXIV_RATE_LIMIT_DELAY)
                 true
             }
             else -> false
         }
+    }
+}
+
+internal val PixivDownloadIgnore: (String, Throwable, String) -> Boolean = { _, throwable, _ ->
+    when (throwable) {
+        is SSLException,
+        is EOFException,
+        is SocketException,
+        is SocketTimeoutException,
+        is HttpRequestTimeoutException,
+        is StreamResetException,
+        is NullPointerException,
+        is UnknownHostException,
+        is ConnectionShutdownException,
+        -> true
+        else -> when {
+            throwable.message?.contains("Required SETTINGS preface not received") == true -> true
+            throwable.message?.contains("Completed read overflow") == true -> true
+            throwable.message?.contains("""Expected \d+, actual \d+""".toRegex()) == true -> true
+            throwable.message?.contains("closed") == true -> true
+            else -> false
+        }
+    }
+}
+
+internal val SearchApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+    when (throwable) {
+        is SSLException,
+        is EOFException,
+        is ConnectException,
+        is SocketTimeoutException,
+        is HttpRequestTimeoutException,
+        is StreamResetException,
+        is UnknownHostException,
+        -> {
+            PixivHelperPlugin.logger.warning { "SEARCH API错误, 已忽略: ${throwable.message}" }
+            true
+        }
+        else -> false
     }
 }
 
@@ -69,9 +109,7 @@ internal val PIXIV_HOST = mapOf(
     "pixiv.me" to PIXIV_NET_IP
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(
-    host = PIXIV_HOST
-)
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
@@ -114,3 +152,11 @@ internal fun PixivHelperSettings.init() {
     PixivHelperPlugin.logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     PixivHelperPlugin.logger.info { "Sqlite: ${sqlite.absolutePath}" }
 }
+
+internal const val MIN_SIMILARITY = 0.70
+
+internal const val ERO_INTERVAL = 16
+
+internal const val ERO_BOOKMARKS = 10_000L
+
+internal const val ERO_PAGE_COUNT = 5
