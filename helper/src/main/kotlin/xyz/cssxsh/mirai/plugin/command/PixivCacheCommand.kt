@@ -103,29 +103,27 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.followAll(): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<MessageEvent>.following(): Unit = getHelper().run {
         getUserFollowingPreview(detail = userDetail(uid = getAuthInfo().user.uid).apply {
             logger.verbose { "关注中共${profile.totalFollowUsers}个画师需要缓存" }
             sendMessage("关注列表中共${profile.totalFollowUsers}个画师需要缓存")
         }).also { flow ->
-            launch {
+            addCacheJob(name = "FOLLOW_ALL(${getAuthInfo().user.uid})", reply = false) {
+                var index = 0
                 flow.transform { list ->
-                    list.filterNot {
-                        it.isLoaded()
-                    }.forEach { preview ->
-                        userDetail(uid = preview.user.id).let { detail ->
+                    list.forEach { preview ->
+                        index++
+                        if (preview.isLoaded().not()) {
+                            val detail = userDetail(uid = preview.user.id)
                             if (detail.total() > detail.count() + preview.illusts.size) {
-                                logger.verbose { "USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
-                                addCacheJob(name = "USER(${detail.user.id})", reply = false) {
-                                    getUserIllusts(detail)
-                                }
+                                logger.verbose { "${index}.USER(${detail.user.id})有${detail.total()}个作品尝试缓存" }
+                                emitAll(getUserIllusts(detail))
                             } else {
+                                logger.verbose { "${index}.USER(${detail.user.id})有${preview.illusts.size}个作品尝试缓存" }
                                 emit(preview.illusts)
                             }
                         }
                     }
-                }.let {
-                    addCacheJob(name = "USER_PREVIEW)", reply = false) { it }
                 }
             }
         }
