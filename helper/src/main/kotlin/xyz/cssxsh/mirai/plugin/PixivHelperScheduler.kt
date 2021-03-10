@@ -12,11 +12,13 @@ object PixivHelperScheduler {
 
     private var check: Job? = null
 
+    private val CHECK_DELAY = (30).minutes
+
     private fun runTimerTask(name: String, info: TimerTask) = PixivHelperPlugin.launch {
         logger.info {
             "${info}开始运行"
         }
-        info.delay()
+        info.pre()
         while (isActive) {
             launch {
                 runTask(name = name, info = info)
@@ -40,6 +42,7 @@ object PixivHelperScheduler {
                         }
                     }
                 }
+                delay(CHECK_DELAY)
             }
         }
     }

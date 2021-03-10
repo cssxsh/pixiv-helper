@@ -2,16 +2,27 @@ package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.message.data.toMessageChain
+import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.data.apps.*
+import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.*
 
 typealias LoadTask = suspend PixivHelper.() -> Flow<List<IllustInfo>>
@@ -59,21 +70,37 @@ internal fun PixivHelper.getContactInfo(): ContactInfo = when (contact) {
     else -> throw IllegalArgumentException("未知类型联系人")
 }
 
-internal fun ContactInfo.getHelperOrNull() = Bot.findInstance(bot)?.let { bot ->
+internal fun ContactInfo.getHelper() = Bot.getInstance(bot).let { bot ->
     when (type) {
-        ContactType.GROUP -> bot.getGroup(id)
-        ContactType.USER -> bot.getFriend(id) ?: bot.getStranger(id)
+        ContactType.GROUP -> bot.getGroupOrFail(id)
+        ContactType.USER -> bot.getFriend(id) ?: bot.getStrangerOrFail(id)
     }
-}?.let { PixivHelperManager[it] }
+}.let { PixivHelperManager[it] }
 
 @Serializable
 sealed class TimerTask {
-    abstract var last: Long
+    abstract var last: OffsetDateTime
+
+    @Serializer(OffsetDateTime::class)
+    object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
+
+        private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
+        override val descriptor: SerialDescriptor =
+            PrimitiveSerialDescriptor(OffsetDateTime::class.qualifiedName!!, PrimitiveKind.STRING)
+
+        override fun deserialize(decoder: Decoder): OffsetDateTime =
+            OffsetDateTime.parse(decoder.decodeString(), formatter)
+
+        override fun serialize(encoder: Encoder, value: OffsetDateTime) =
+            encoder.encodeString(formatter.format(value))
+    }
 
     @Serializable
     data class User(
         @SerialName("last")
-        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @Serializable(OffsetDateTimeSerializer::class)
+        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         val interval: Long,
         @SerialName("uid")
@@ -85,7 +112,8 @@ sealed class TimerTask {
     @Serializable
     data class Rank(
         @SerialName("last")
-        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @Serializable(OffsetDateTimeSerializer::class)
+        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("mode")
         val mode: RankMode,
         @SerialName("contact")
@@ -95,7 +123,8 @@ sealed class TimerTask {
     @Serializable
     data class Follow(
         @SerialName("last")
-        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @Serializable(OffsetDateTimeSerializer::class)
+        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         val interval: Long,
         @SerialName("contact")
@@ -105,7 +134,8 @@ sealed class TimerTask {
     @Serializable
     data class Recommended(
         @SerialName("last")
-        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @Serializable(OffsetDateTimeSerializer::class)
+        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         val interval: Long,
         @SerialName("contact")
@@ -115,7 +145,8 @@ sealed class TimerTask {
     @Serializable
     data class Backup(
         @SerialName("last")
-        override var last: Long = OffsetDateTime.now().toEpochSecond(),
+        @Serializable(OffsetDateTimeSerializer::class)
+        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         val interval: Long,
     ) : TimerTask()
@@ -125,20 +156,30 @@ private val SEND_DELAY = (3).minutes
 
 private fun getLast(name: String) = PixivTaskData.tasks.getValue(name).last
 
-private fun setLast(name: String, value: Long) = PixivTaskData.tasks.compute(name) { _, info ->
-    info?.apply { last = value }
+private fun setLast(name: String, last: OffsetDateTime) = PixivTaskData.tasks.compute(name) { _, info ->
+    when (info) {
+        is TimerTask.User -> info.copy(last = last)
+        is TimerTask.Rank -> info.copy(last = last)
+        is TimerTask.Follow -> info.copy(last = last)
+        is TimerTask.Recommended -> info.copy(last = last)
+        is TimerTask.Backup -> info.copy(last = last)
+        null -> null
+    }
 }
 
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    val flow = block()
-    addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
-    flow.collect { list ->
-        list.nomanga().filter {
-            it.createAt.toEpochSecond() > getLast(name) && it.isR18().not()
-        }.forEach { illust ->
-            setLast(name, illust.createAt.toEpochSecond())
-            delay(SEND_DELAY)
-            buildMessageByIllust(illust = illust, save = false).forEach { sign { it } }
+    block().also {
+        addCacheJob(name = "TimerTask(${name})", reply = false) { it }
+    }.toList().flatten().nomanga().toSet().sortedBy { it.createAt }.filter {
+        it.createAt > getLast(name) && it.isR18().not() && it.createAt.isToday()
+    }.apply {
+        maxOfOrNull { it.createAt }?.let {
+            setLast(name, it)
+        }
+    }.forEach { illust ->
+        delay(SEND_DELAY)
+        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust, save = false).toMessageChain()).let {
+            sign { it }
         }
     }
 }
@@ -148,22 +189,51 @@ private const val RANK_HOUR = 12
 internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
     (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0).withSecond(0)
 
+private fun OffsetDateTime.isToday(): Boolean =
+    toLocalDate() == LocalDate.now()
+
+private val DELAY_MIN = (1).minutes.toLongMilliseconds()
+
+internal suspend fun TimerTask.pre() {
+    when (this) {
+        is TimerTask.User -> {
+            delay((DELAY_MIN..interval).random())
+        }
+        is TimerTask.Rank -> {
+            delay(DELAY_MIN)
+        }
+        is TimerTask.Follow -> {
+            delay((DELAY_MIN..interval).random())
+        }
+        is TimerTask.Recommended -> {
+            delay((DELAY_MIN..interval).random())
+        }
+        is TimerTask.Backup -> {
+            delay((DELAY_MIN..interval).random())
+        }
+    }
+}
+
 internal suspend fun TimerTask.delay() {
     when (this) {
         is TimerTask.User -> {
-            delay((0..interval).random())
+            delay(interval)
         }
         is TimerTask.Rank -> {
-            delay((OffsetDateTime.now().toNextRank().toEpochSecond() - last).seconds)
+            OffsetDateTime.now().let {
+                it.toNextRank().toEpochSecond() - it.toEpochSecond()
+            }.let {
+                delay(it.seconds)
+            }
         }
         is TimerTask.Follow -> {
-            delay((0..interval).random())
+            delay(interval)
         }
         is TimerTask.Recommended -> {
-            delay((0..interval).random())
+            delay(interval)
         }
         is TimerTask.Backup -> {
-            delay((0..interval).random())
+            delay(interval)
         }
     }
 }
@@ -208,7 +278,7 @@ internal suspend fun runTask(name: String, info: TimerTask) {
                     PixivHelperPlugin.logger.warning({ "[${file}]上传失败" }, it)
                 }
             }
-            setLast(name, OffsetDateTime.now().toEpochSecond())
+            setLast(name, OffsetDateTime.now())
         }
     }
 }
