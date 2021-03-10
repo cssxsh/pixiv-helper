@@ -7,19 +7,19 @@ import xyz.cssxsh.mirai.plugin.PixivHelper
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class AuthInfoDelegate(private val contact: Contact) : ReadWriteProperty<PixivHelper, AuthResult.AuthInfo?> {
+class AuthInfoDelegate(private val contact: Contact) : ReadWriteProperty<PixivHelper, AuthResult?> {
 
-    private val userAuthInfos: MutableMap<Long, AuthResult.AuthInfo?> = mutableMapOf()
+    private val userAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
 
-    private var defaultAuthInfos: AuthResult.AuthInfo? = null
+    private var defaultAuthInfos: AuthResult? = null
 
-    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: AuthResult.AuthInfo?) = when (contact) {
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: AuthResult?) = when (contact) {
         is User -> userAuthInfos[contact.id] = value
         is Group -> defaultAuthInfos = value
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult.AuthInfo? = when (contact) {
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult? = when (contact) {
         is User -> userAuthInfos[contact.id]
         is Group -> defaultAuthInfos
         else -> throw IllegalAccessException("未知类型联系人!")

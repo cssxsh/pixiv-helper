@@ -31,7 +31,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
 
-    override var authInfo: AuthResult.AuthInfo? by AuthInfoDelegate(contact)
+    override var authInfo: AuthResult? by AuthInfoDelegate(contact)
 
     public override var expiresTime: OffsetDateTime by ExpiresTimeDelegate(contact)
 
@@ -147,11 +147,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     var followJob: Job? = null
 
     override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info { "$it by RefreshToken: $token, ExpiresTime: $expiresTime" }
+        logger.info { "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by RefreshToken: $token, ExpiresTime: $expiresTime" }
     }
 
     override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info { "$it by Account: $mailOrPixivID, ExpiresTime: $expiresTime" }
+        logger.info { "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: $mailOrPixivID, ExpiresTime: $expiresTime" }
     }
 
     suspend fun sign(block: () -> Any?) = isActive && runCatching {
