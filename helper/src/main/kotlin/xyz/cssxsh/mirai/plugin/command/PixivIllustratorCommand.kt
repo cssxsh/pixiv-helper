@@ -39,8 +39,9 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("name", "名称")
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
-        // TODO
-        requireNotNull(PixivAliasData.aliases[name]) { "找不到别名'${name}'" }.let { uid ->
+        PixivAliasData.aliases.getOrElse(name) { useUserInfoMapper { it.findByName(name) }?.uid }.let {
+            requireNotNull(it) { "找不到别名'${name}'" }
+        }.let { uid ->
             useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
