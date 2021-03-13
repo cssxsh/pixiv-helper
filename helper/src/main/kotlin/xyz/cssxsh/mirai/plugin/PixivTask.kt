@@ -152,7 +152,7 @@ sealed class TimerTask {
     ) : TimerTask()
 }
 
-private val SEND_DELAY = (3).minutes
+private val SEND_DELAY = (1).minutes
 
 private fun getLast(name: String) = PixivTaskData.tasks.getValue(name).last
 
@@ -192,7 +192,7 @@ internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
 private fun OffsetDateTime.isToday(): Boolean =
     toLocalDate() == LocalDate.now()
 
-private val DELAY_MIN = (1).minutes.toLongMilliseconds()
+private val DELAY_MIN = (10).minutes.toLongMilliseconds()
 
 internal suspend fun TimerTask.pre() {
     when (this) {
@@ -209,7 +209,7 @@ internal suspend fun TimerTask.pre() {
             delay((DELAY_MIN..interval).random())
         }
         is TimerTask.Backup -> {
-            delay((DELAY_MIN..interval).random())
+            delay(interval)
         }
     }
 }
@@ -241,31 +241,23 @@ internal suspend fun TimerTask.delay() {
 internal suspend fun runTask(name: String, info: TimerTask) {
     when (info) {
         is TimerTask.User -> {
-            info.contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name) {
-                    getUserIllusts(uid = info.uid, limit = 30L) // one page
-                }
+            info.contact.getHelper().subscribe(name) {
+                getUserIllusts(uid = info.uid, limit = 30L) // one page
             }
         }
         is TimerTask.Rank -> {
-            info.contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name) {
-                    getRank(mode = info.mode, date = null, limit = 180L)
-                }
+            info.contact.getHelper().subscribe(name) {
+                getRank(mode = info.mode, date = null, limit = 180L)
             }
         }
         is TimerTask.Follow -> {
-            info.contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name) {
-                    getFollowIllusts(limit = 90L)
-                }
+            info.contact.getHelper().subscribe(name) {
+                getFollowIllusts(limit = 90L)
             }
         }
         is TimerTask.Recommended -> {
-            info.contact.getHelperOrNull()?.let { helper ->
-                helper.subscribe(name) {
-                    getRecommended(limit = 90L)
-                }
+            info.contact.getHelper().subscribe(name) {
+                getRecommended(limit = 90L)
             }
         }
         is TimerTask.Backup -> {

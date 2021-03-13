@@ -15,7 +15,7 @@ object PixivTaskCommand : CompositeCommand(
     description = "PIXIV定时器",
     overrideContext = PixivCommandArgumentContext
 ) {
-    private const val TASK_DURATION = 60
+    private const val TASK_DURATION = 3
 
     @SubCommand
     fun CommandSenderOnMessage<MessageEvent>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
@@ -23,7 +23,7 @@ object PixivTaskCommand : CompositeCommand(
             name = "User($uid)[${contact}]",
             info = TimerTask.User(
                 uid = uid,
-                interval = duration.minutes.toLongMilliseconds(),
+                interval = duration.hours.toLongMilliseconds(),
                 contact = getContactInfo()
             )
         )
@@ -45,7 +45,7 @@ object PixivTaskCommand : CompositeCommand(
         PixivHelperScheduler.setTimerTask(
             name = "Follow(${getAuthInfo().user.uid})[${contact}]",
             info = TimerTask.Follow(
-                interval = duration.minutes.toLongMilliseconds(),
+                interval = duration.hours.toLongMilliseconds(),
                 contact = getContactInfo()
             )
         )
@@ -56,7 +56,7 @@ object PixivTaskCommand : CompositeCommand(
         PixivHelperScheduler.setTimerTask(
             name = "Recommended(${getAuthInfo().user.uid})[${contact}]",
             info = TimerTask.Recommended(
-                interval = duration.minutes.toLongMilliseconds(),
+                interval = duration.hours.toLongMilliseconds(),
                 contact = getContactInfo()
             )
         )
@@ -64,5 +64,5 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     fun CommandSender.backup(duration: Int = TASK_DURATION) = PixivHelperScheduler
-        .setTimerTask(name = "Backup", info = TimerTask.Backup(interval = duration.minutes.toLongMilliseconds()))
+        .setTimerTask(name = "Backup", info = TimerTask.Backup(interval = duration.hours.toLongMilliseconds()))
 }
