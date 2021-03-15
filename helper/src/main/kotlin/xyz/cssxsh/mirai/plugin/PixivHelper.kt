@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
@@ -12,6 +10,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.pixiv.GrantType
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.*
 import xyz.cssxsh.pixiv.data.apps.*
@@ -150,12 +149,19 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     var followJob: Job? = null
 
-    override suspend fun refresh(token: String) = super.refresh(token).also {
-        logger.info { "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by RefreshToken: $token, ExpiresTime: $expiresTime" }
-    }
-
-    override suspend fun login(mailOrPixivID: String, password: String) = super.login(mailOrPixivID, password).also {
-        logger.info { "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: $mailOrPixivID, ExpiresTime: $expiresTime" }
+    override suspend fun auth(
+        grantType: GrantType,
+        config: PixivConfig,
+        url: String,
+    ) = super.auth(grantType = grantType, config = config, url = url).also {
+        when (grantType) {
+            GrantType.PASSWORD -> logger.info {
+                "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: ${config.account}, ExpiresTime: $expiresTime"
+            }
+            GrantType.REFRESH_TOKEN -> logger.info {
+                "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by RefreshToken: ${config.refreshToken}, ExpiresTime: $expiresTime"
+            }
+        }
     }
 
     suspend fun send(block: () -> Any?) = isActive && runCatching {
