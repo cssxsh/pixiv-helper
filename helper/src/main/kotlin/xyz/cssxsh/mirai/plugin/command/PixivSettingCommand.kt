@@ -27,10 +27,10 @@ object PixivSettingCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.simple(
-        isSimple: Boolean
+    suspend fun CommandSenderOnMessage<MessageEvent>.link(
+        link: Boolean
     ) = getHelper().runCatching {
-        "$simpleInfo -> $isSimple".also { simpleInfo = isSimple }
+        "$link -> $link".also { this.link = link }
     }.onSuccess {
         quoteReply(it)
     }.onFailure {

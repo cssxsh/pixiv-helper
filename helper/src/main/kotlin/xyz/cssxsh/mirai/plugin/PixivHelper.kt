@@ -36,7 +36,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override val apiIgnore: suspend (Throwable) -> Boolean get() = PixivApiIgnore
 
-    var simpleInfo: Boolean by SimpleInfoDelegate(contact)
+    var link: Boolean by LinkDelegate(contact)
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 

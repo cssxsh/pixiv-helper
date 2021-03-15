@@ -75,22 +75,15 @@ internal fun Image.getMd5Hex(): String = md5.toUByteArray().joinToString("") {
 
 internal fun Url.getFilename() = encodedPath.substringAfterLast('/')
 
-internal fun IllustInfo.getMessage(): Message = buildMessageChain {
+internal fun IllustInfo.getContent(): Message = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
+    appendLine("PID: $pid ")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("SAN值: $sanityLevel ")
     appendLine("创作于: $createAt ")
     appendLine("共: $pageCount 张图片 ")
-    appendLine("Pixiv_Net: https://www.pixiv.net/artworks/${pid} ")
     appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
-}
-
-internal fun IllustInfo.getSimpleMessage(): Message = buildMessageChain {
-    appendLine("PID: $pid ")
-    appendLine("UID: ${user.id} ")
-    appendLine("收藏数: $totalBookmarks ")
-    appendLine("SAN值: $sanityLevel ")
 }
 
 internal fun IllustInfo.getPixivCat(): Message = buildMessageChain {
@@ -126,10 +119,8 @@ internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
 }
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: Boolean): List<Message> = buildList {
-    if (simpleInfo) {
-        add(illust.getSimpleMessage())
-    } else {
-        add(illust.getMessage())
+    add(illust.getContent())
+    if (link) {
         add(illust.getPixivCat())
     }
     val files = illust.getImages()

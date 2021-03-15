@@ -23,8 +23,8 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     /**
      * 作品信息是否为简单构造
      */
-    @ValueName("is_simple_info")
-    val isSimpleInfo: MutableMap<String, Boolean> by value(mutableMapOf())
+    @ValueName("link")
+    val link: MutableMap<String, Boolean> by value(mutableMapOf())
 
     @ValueName("netdisk_access")
     var netdiskAccessToken: String by value("")

@@ -19,11 +19,11 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     suspend fun CommandSenderOnMessage<MessageEvent>.helper() = getHelper().runCatching {
         buildString {
-            appendLine("Uid: ${getAuthInfo().user.uid}")
+            appendLine("Id: ${getAuthInfo().user.uid}")
+            appendLine("Name: ${getAuthInfo().user.name}")
             appendLine("Account: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
             appendLine("ExpiresTime: $expiresTime")
-            appendLine("简略信息: $simpleInfo")
         }
     }.onSuccess {
         quoteReply(it)
