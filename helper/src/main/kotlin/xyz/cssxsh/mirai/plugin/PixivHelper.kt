@@ -75,7 +75,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
         }.onFailure {
             logger.warning({ "预加载任务<${name}>失败" }, it)
-            if (reply) sign {
+            if (reply) send {
                 "预加载任务<${name}>失败"
             }
         }
@@ -83,8 +83,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<DownloadTask>.download() = collect { (name, list, reply) ->
         runCatching {
-            logger.verbose { "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存" }
-            if (reply) sign {
+            logger.verbose {
+                "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存"
+            }
+            if (reply) send {
                 "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个新作品等待缓存"
             }
             list.asyncMapIndexed { index, illust ->
@@ -92,8 +94,10 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                     getImages()
                 }.onFailure {
                     if (it.isNotCancellationException()) {
-                        logger.warning({ "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误" }, it)
-                        if (reply) sign {
+                        logger.warning({
+                            "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
+                        }, it)
+                        if (reply) send {
                             "任务<${name}>获取作品${index}.(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
                         }
                     }
@@ -102,13 +106,13 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 success?.saveToSQLite()
             }
         }.onSuccess { (success, _) ->
-            logger.verbose { "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success?.size ?: 0}个" }
-            if (reply) sign {
-                "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success?.size ?: 0}个"
+            logger.verbose { "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success.orEmpty().size}个" }
+            if (reply) send {
+                "任务<${name}>缓存完毕, 共${list.size}个新作品, 缓存成功${success.orEmpty().size}个"
             }
         }.onFailure {
             logger.warning({ "任务<${name}>缓存失败, 共${list.size}个新作品" }, it)
-            if (reply) sign {
+            if (reply) send {
                 "任务<${name}>缓存失败, 共${list.size}个新作品"
             }
         }
@@ -154,7 +158,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         logger.info { "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: $mailOrPixivID, ExpiresTime: $expiresTime" }
     }
 
-    suspend fun sign(block: () -> Any?) = isActive && runCatching {
+    suspend fun send(block: () -> Any?) = isActive && runCatching {
         block().let { message ->
             when (message) {
                 null, Unit -> Unit

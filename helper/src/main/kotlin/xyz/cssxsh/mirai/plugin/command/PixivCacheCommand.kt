@@ -241,7 +241,7 @@ object PixivCacheCommand : CompositeCommand(
                 }
             }.onFailure {
                 logger.warning({ "作品(${info.pid})修复出错" }, it)
-                sign {
+                send {
                     "作品(${info.pid})修复出错, ${it.message}"
                 }
             }.isSuccess
