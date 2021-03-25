@@ -6,7 +6,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.model.*
 
 @Suppress("unused")
@@ -63,14 +62,17 @@ object PixivDeleteCommand : CompositeCommand(
 
     private const val OFFSET_STEP = 1_000_000L
 
+    private val ranges = (0 until OFFSET_MAX step OFFSET_STEP).map { offset -> offset until (offset + OFFSET_STEP) }
+
     @SubCommand
-    fun ConsoleCommandSender.type(type: WorkContentType, bookmarks: Long) {
-        (0 until OFFSET_MAX step OFFSET_STEP).map { offset -> offset until (offset + OFFSET_STEP) }.forEach { interval ->
+    @Description("删除小于指定收藏数作品（用于处理漫画作品）")
+    fun ConsoleCommandSender.bookmarks(bookmarks: Long) {
+        ranges.forEach { interval ->
             logger.verbose { "开始检查[$interval]" }
-            useArtWorkInfoMapper { it.artWorks(interval) }.filter {
-                WorkContentType.valueOf(it.type.trim().toUpperCase()) == type && it.totalBookmarks < bookmarks
+            useMappers { it.artwork.artWorks(interval) }.filter {
+                it.totalBookmarks < bookmarks
             }.also {
-                logger.verbose { "TYPE[$type]{$bookmarks}(${interval})共${it.size}个作品需要删除" }
+                logger.verbose { "{$bookmarks}(${interval})共${it.size}个作品需要删除" }
             }.delete()
         }
     }
