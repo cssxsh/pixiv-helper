@@ -19,6 +19,16 @@ object PixivFollowCommand : CompositeCommand(
     description = "PIXIV关注指令"
 ) {
 
+    @SubCommand
+    @Description("为当前助手关注指定用户")
+    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = getHelper().runCatching {
+        userFollowAdd(uid = uid)
+    }.onSuccess {
+        logger.info { "添加关注(${uid})成功, $it" }
+    }.onFailure {
+        quoteReply("关注添加失败， ${it.message}")
+    }.isSuccess
+
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
         (0 until maxNum step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
@@ -33,25 +43,10 @@ object PixivFollowCommand : CompositeCommand(
         }
     }
 
-    /**
-     * 关注色图作者
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().runCatching {
+    private fun PixivHelper.follow(block: suspend PixivHelper.() -> Set<Long>) {
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
-            val followed = getFollowed(uid = getAuthInfo().user.uid)
-            useArtWorkInfoMapper { it.userEroCount() }.filter { (_, count) ->
-                count > PixivHelperSettings.eroInterval
-            }.keys.let {
-                logger.verbose { "共统计了${it.size}名画师" }
-                it - followed
-            }.sorted().also {
-                logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
-                send {
-                    "{${it.first()..it.last()}}共${it.size}个画师等待关注"
-                }
-            }.groupBy { uid ->
+            block().groupBy { uid ->
                 isActive && runCatching {
                     userFollowAdd(uid = uid)
                 }.onSuccess {
@@ -60,16 +55,35 @@ object PixivFollowCommand : CompositeCommand(
                     logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
                 }.isSuccess
             }.let { (success, failure) ->
-                send{
+                send {
                     "关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}"
                 }
             }
         }.also {
             followJob = it
         }
-    }.onSuccess { job ->
-        quoteReply("关注任务添加完成${job}")
-    }.onFailure {
-        quoteReply("关注添加失败， ${it.message}")
-    }.isSuccess
+    }
+
+    @SubCommand
+    @Description("关注色图缓存中的较好画师")
+    suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().follow {
+        val followed = getFollowed(uid = getAuthInfo().user.uid)
+        useMappers { it.artwork.userEroCount() }.filter { (_, count) ->
+            count > PixivHelperSettings.eroInterval
+        }.keys.let {
+            logger.verbose { "共统计了${it.size}名画师" }
+            it - followed
+        }.sorted().also {
+            logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
+            send {
+                "{${it.first()..it.last()}}共${it.size}个画师等待关注"
+            }
+        }.toSet()
+    }
+
+    @SubCommand
+    @Description("关注指定用户的关注")
+    suspend fun CommandSenderOnMessage<MessageEvent>.copy(uid: Long) = getHelper().follow {
+        getFollowed(uid = uid)
+    }
 }
