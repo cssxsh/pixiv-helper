@@ -23,8 +23,8 @@ object PixivTagCommand : SimpleCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?): Boolean = useStatisticInfoMapper { mapper ->
-        mapper.replaceTagInfo(StatisticTagInfo(
+    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?): Boolean = useMappers { mappers ->
+        mappers.statistic.replaceTagInfo(StatisticTagInfo(
             sender = event.sender.id,
             group = event.subject.takeIf { it is Group }?.id,
             pid = pid,
@@ -38,7 +38,7 @@ object PixivTagCommand : SimpleCommand(
         check(tag.length <= 30) {
             "标签'$tag'过长"
         }
-        useTagInfoMapper { it.findByName(tag) }.apply {
+        useMappers { it.tag.findByName(tag) }.apply {
             logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
         }.let { list ->
             if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "SEARCH(${tag})", reply = false) {

@@ -135,6 +135,7 @@ internal fun Configuration.init() = apply {
     addMapper(StatisticInfoMapper::class.java)
     addMapper(TagInfoMapper::class.java)
     addMapper(UserInfoMapper::class.java)
+    addMapper(DeleteInfoMapper::class.java)
 }
 
 internal fun PixivHelperSettings.init() {

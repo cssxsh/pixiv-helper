@@ -21,6 +21,10 @@ internal fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MA
 
 internal fun List<IllustInfo>.eros() = filter { it.isEro() }
 
+internal fun List<Long>.notDeleted() = useMappers { mappers ->
+    filterNot { mappers.delete.contains(it) }
+}
+
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
@@ -106,7 +110,7 @@ internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = f
 }
 
 internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(AppApi.PAGE_SIZE.toInt()).asFlow().map { list ->
-    list.mapNotNull { pid ->
+    list.notDeleted().mapNotNull { pid ->
         runCatching {
             getIllustInfo(pid = pid, flush = true).apply {
                 check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
@@ -114,6 +118,11 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(Ap
         }.onFailure {
             if (it.isNotCancellationException()) {
                 logger.warning({ "加载作品($pid)失败" }, it)
+            }
+            if (it.message == "該当作品は削除されたか、存在しない作品IDです。") {
+                useMappers { mappers ->
+                    mappers.delete.add(pid = pid)
+                }
             }
         }.getOrNull()
     }

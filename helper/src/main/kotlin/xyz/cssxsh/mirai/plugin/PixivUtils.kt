@@ -20,6 +20,7 @@ import xyz.cssxsh.pixiv.data.apps.*
 import xyz.cssxsh.pixiv.model.*
 import java.io.File
 import java.security.MessageDigest
+import java.time.OffsetDateTime
 
 /**
  * 获取对应subject的助手
@@ -34,32 +35,34 @@ internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(mes
 internal suspend fun <T : MessageEvent> CommandSenderOnMessage<T>.quoteReply(message: String) =
     quoteReply(message.toPlainText())
 
-internal fun <T> useArtWorkInfoMapper(block: (ArtWorkInfoMapper) -> T) = useSession { session ->
-    session.getMapper(ArtWorkInfoMapper::class.java).let(block)
+internal data class Mappers(
+    val artwork: ArtWorkInfoMapper,
+    val file: FileInfoMapper,
+    val user: UserInfoMapper,
+    val tag: TagInfoMapper,
+    val statistic: StatisticInfoMapper,
+    val delete: DeleteInfoMapper,
+)
+
+internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
+    Mappers(
+        artwork = session.getMapper(ArtWorkInfoMapper::class.java),
+        file = session.getMapper(FileInfoMapper::class.java),
+        user = session.getMapper(UserInfoMapper::class.java),
+        tag = session.getMapper(TagInfoMapper::class.java),
+        statistic = session.getMapper(StatisticInfoMapper::class.java),
+        delete = session.getMapper(DeleteInfoMapper::class.java),
+    ).let(block)
 }
 
-internal fun <T> useFileInfoMapper(block: (FileInfoMapper) -> T) = useSession { session ->
-    session.getMapper(FileInfoMapper::class.java).let(block)
+internal fun DeleteInfoMapper.add(pid: Long) = add(pid = pid, timestamp = OffsetDateTime.now().toEpochSecond())
+
+internal fun UserPreview.isLoaded() = useMappers { mappers ->
+    illusts.all { mappers.artwork.contains(it.pid) }
 }
 
-internal fun <T> useUserInfoMapper(block: (UserInfoMapper) -> T) = useSession { session ->
-    session.getMapper(UserInfoMapper::class.java).let(block)
-}
-
-internal fun <T> useTagInfoMapper(block: (TagInfoMapper) -> T) = useSession { session ->
-    session.getMapper(TagInfoMapper::class.java).let(block)
-}
-
-internal fun <T> useStatisticInfoMapper(block: (StatisticInfoMapper) -> T) = useSession { session ->
-    session.getMapper(StatisticInfoMapper::class.java).let(block)
-}
-
-internal fun UserPreview.isLoaded() = useArtWorkInfoMapper { mapper ->
-    illusts.all { mapper.contains(it.pid) }
-}
-
-internal fun UserDetail.count() = useArtWorkInfoMapper { mapper ->
-    mapper.countByUid(user.id)
+internal fun UserDetail.count() = useMappers { mapper ->
+    mapper.artwork.countByUid(user.id)
 }
 
 internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
@@ -306,8 +309,8 @@ internal fun Collection<IllustInfo>.saveToSQLite(): Unit = useSession { session 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
-internal fun UserDetail.saveToSQLite(): Unit = useUserInfoMapper { mapper ->
-    mapper.addUserByIllustInfo(user.toUserBaseInfo())
+internal fun UserDetail.saveToSQLite(): Unit = useMappers { mapper ->
+    mapper.user.addUserByIllustInfo(user.toUserBaseInfo())
 }
 
 internal fun ByteArray.getMd5(): String =

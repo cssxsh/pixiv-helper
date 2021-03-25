@@ -17,7 +17,10 @@ object PixivDeleteCommand : CompositeCommand(
 ) {
 
     private fun deleteArtwork(pid: Long) {
-        useArtWorkInfoMapper { it.deleteByPid(pid) }
+        useMappers { mappers ->
+            mappers.artwork.deleteByPid(pid)
+            mappers.delete.add(pid)
+        }
         PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
                 it.delete()
@@ -27,10 +30,11 @@ object PixivDeleteCommand : CompositeCommand(
     }
 
     private fun List<ArtWorkInfo>.delete() {
-        useArtWorkInfoMapper { mapper ->
+        useMappers {  mappers ->
             forEach { info ->
                 logger.info { "作品(${info.pid})[${info.type}][${info.title}]{${info.totalBookmarks}}信息将从缓存移除" }
-                mapper.deleteByPid(info.pid)
+                mappers.artwork.deleteByPid(info.pid)
+                mappers.delete.add(info.pid)
             }
         }
         forEach { info ->
@@ -53,7 +57,7 @@ object PixivDeleteCommand : CompositeCommand(
     @SubCommand
     @Description("删除指定用户作品")
     fun ConsoleCommandSender.user(uid: Long) {
-        useArtWorkInfoMapper { it.userArtWork(uid) }.also {
+        useMappers { it.artwork.userArtWork(uid) }.also {
             logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
         }.delete()
     }

@@ -33,7 +33,7 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
-    private fun History.addEroArtWorkInfos() = useArtWorkInfoMapper { it.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
+    private fun History.addEroArtWorkInfos() = useMappers { it.artwork.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
         caches[info.pid] = info
     }
 
@@ -44,8 +44,8 @@ object PixivEroCommand : SimpleCommand(
         getEroArtWorkInfos()
     }
 
-    private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useStatisticInfoMapper { mapper ->
-        mapper.replaceEroInfo(StatisticEroInfo(
+    private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
+        mappers.statistic.replaceEroInfo(StatisticEroInfo(
             sender = event.sender.id,
             group = event.subject.takeIf { it is Group }?.id,
             pid = pid,

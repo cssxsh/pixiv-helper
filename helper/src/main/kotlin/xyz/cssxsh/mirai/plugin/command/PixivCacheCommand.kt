@@ -11,7 +11,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.count
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
 import java.io.File
@@ -137,7 +136,7 @@ object PixivCacheCommand : CompositeCommand(
                 logger.info { "${first.absolutePath} 开始加载" }
                 first.listDirs("""\d{6}___""".toRegex(), range).map { second ->
                     second.listDirs("""\d+""".toRegex(), range).filter { dir ->
-                        useArtWorkInfoMapper { it.contains(dir.name.toLong()) }.not()
+                        useMappers { it.artwork.contains(dir.name.toLong()) }.not()
                     }.mapNotNull { dir ->
                         dir.resolve("${dir.name}.json").takeIf { it.canRead() }?.readIllustInfo()
                     }
@@ -157,7 +156,7 @@ object PixivCacheCommand : CompositeCommand(
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         dir.listFiles()?.forEach { source ->
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
-                if (useArtWorkInfoMapper { it.contains(id.toLong()) }) {
+                if (useMappers { it.artwork.contains(id.toLong()) }) {
                     source.renameTo(exists.resolve(source.name))
                 } else {
                     list.add(id.toLong())
@@ -174,7 +173,7 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.search(): Unit = getHelper().run {
         addCacheJob(name = "SEARCH") {
             PixivSearchData.results.map { (_, result) -> result.pid }.filter { pid ->
-                useArtWorkInfoMapper { it.contains(pid) }.not()
+                useMappers { it.artwork.contains(pid) }.not()
             }.let {
                 getListIllusts(set = it.toSet())
             }
@@ -194,7 +193,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("检查当前缓存中不可读，删除并重新下载")
     suspend fun CommandSenderOnMessage<MessageEvent>.check(interval: LongRange) = getHelper().runCatching {
-        useArtWorkInfoMapper { it.artWorks(interval) }.sortedBy { it.pid }.also {
+        useMappers { it.artwork.artWorks(interval) }.sortedBy { it.pid }.also {
             logger.verbose { "{${it.first().pid..it.last().pid}}共有 ${it.size} 个作品需要检查" }
         }.groupBy { info ->
             isActive && PixivHelperSettings.imagesFolder(info.pid).runCatching {
@@ -204,7 +203,7 @@ object PixivCacheCommand : CompositeCommand(
                         illustDetail(info.pid).illust.writeToCache().saveToSQLite()
                     }
                 }
-                useFileInfoMapper { it.fileInfos(info.pid) }.filter { info ->
+                useMappers { it.file.fileInfos(info.pid) }.filter { info ->
                     resolve(Url(info.url).getFilename()).exists().not()
                 }.let { infos ->
                     PixivHelperDownloader.downloadImages(

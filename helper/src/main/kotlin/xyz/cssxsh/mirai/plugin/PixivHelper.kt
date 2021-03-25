@@ -61,9 +61,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                     list.writeToCache()
                 }
             }.collect { list ->
-                useArtWorkInfoMapper { mapper ->
+                useMappers { mappers ->
                     list.groupBy {
-                        mapper.contains(it.pid)
+                        mappers.artwork.contains(it.pid)
                     }
                 }.also { (success, failure) ->
                     success?.updateToSQLite()

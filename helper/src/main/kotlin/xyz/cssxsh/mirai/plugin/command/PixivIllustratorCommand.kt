@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.utils.verbose
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
@@ -24,7 +24,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("uid", "ID")
     @Description("根据画师UID随机发送画师作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
-        useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
+        useMappers { it.artwork.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random().let { info ->
             buildMessageByIllust(
@@ -41,10 +41,10 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("name", "名称")
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
-        PixivAliasData.aliases.getOrElse(name) { useUserInfoMapper { it.findByName(name) }?.uid }.let {
+        PixivAliasData.aliases.getOrElse(name) { useMappers { it.user.findByName(name) }?.uid }.let {
             requireNotNull(it) { "找不到别名'${name}'" }
         }.let { uid ->
-            useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
+            useMappers { it.artwork.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
             }.random().let { info ->
                 buildMessageByIllust(

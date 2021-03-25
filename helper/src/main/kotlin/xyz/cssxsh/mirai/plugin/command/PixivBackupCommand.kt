@@ -10,8 +10,7 @@ import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivAliasData
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 
 @Suppress("unused")
@@ -30,7 +29,7 @@ object PixivBackupCommand : CompositeCommand(
     fun ConsoleCommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            PixivZipper.compressArtWorks(list = useArtWorkInfoMapper { it.userArtWork(uid) }, basename = "USER[${uid}]")
+            PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
         }
     }
 
@@ -40,7 +39,7 @@ object PixivBackupCommand : CompositeCommand(
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
             PixivAliasData.aliases.values.toSet().forEach { uid ->
-                PixivZipper.compressArtWorks(list = useArtWorkInfoMapper { it.userArtWork(uid) }, basename = "USER[${uid}]")
+                PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
             }
         }
     }

@@ -32,11 +32,11 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取用户信息")
     suspend fun CommandSenderOnMessage<MessageEvent>.user(target: User) = runCatching {
-        useStatisticInfoMapper { mapper ->
-            buildString {
+        buildString {
+            useMappers {
                 appendLine("用户: $target")
-                appendLine("使用色图指令次数: ${mapper.senderEroInfos(target.id)}")
-                appendLine("使用标签指令次数: ${mapper.senderTagInfos(target.id)}")
+                appendLine("使用色图指令次数: ${it.statistic.senderEroInfos(target.id)}")
+                appendLine("使用标签指令次数: ${it.statistic.senderTagInfos(target.id)}")
             }
         }
     }.onSuccess {
@@ -49,10 +49,10 @@ object PixivInfoCommand : CompositeCommand(
     @Description("获取缓存信息")
     suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
         buildString {
-            useArtWorkInfoMapper {
-                appendLine("缓存数: ${it.count()}")
-                appendLine("全年龄色图数: ${it.eroCount()}")
-                appendLine("R18色图数: ${it.r18Count()}")
+            useMappers {
+                appendLine("缓存数: ${it.artwork.count()}")
+                appendLine("全年龄色图数: ${it.artwork.eroCount()}")
+                appendLine("R18色图数: ${it.artwork.r18Count()}")
             }
         }
     }.onSuccess {
