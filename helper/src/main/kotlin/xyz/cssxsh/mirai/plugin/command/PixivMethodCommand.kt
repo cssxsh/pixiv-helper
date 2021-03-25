@@ -6,10 +6,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.data.apps.*
-import java.time.*
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
@@ -65,100 +62,5 @@ object PixivMethodCommand : CompositeCommand(
     }.onFailure {
         logger.warning({ "自动登陆失败" }, it)
         quoteReply("自动登陆失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 排行榜
-     * @param mode 模式名 [RankMode]
-     * @param date 日期 yyyy-MM-dd
-     * @param index 排名
-     */
-    @SubCommand
-    @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank(
-        mode: RankMode,
-        date: LocalDate,
-        index: Long,
-    ) = getHelper().runCatching {
-        buildMessageByIllust(
-            illust = illustRanking(date = date, mode = mode, offset = index).getFirst(),
-            save = true
-        )
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 当前排行榜
-     * @param type 模式名 [RankMode]
-     * @param index 排名
-     */
-    @SubCommand
-    @Description("type by in DAY, DAY_MALE, DAY_FEMALE, WEEK_ORIGINAL, WEEK_ROOKIE, WEEK, MONTH, DAY_MANGA")
-    suspend fun CommandSenderOnMessage<MessageEvent>.now(
-        type: String,
-        index: Long,
-    ) = getHelper().runCatching {
-        val rankMode: RankMode = enumValueOf(type.also {
-            require("18" !in it) { "R18禁止！" }
-        })
-        buildMessageByIllust(
-            illust = illustRanking(mode = rankMode, offset = index).getFirst(),
-            save = true
-        )
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取当今排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 搜索
-     * @param word 关键词
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.search(
-        word: String,
-    ) = getHelper().runCatching {
-        buildMessageByIllust(
-            illust = searchIllust(word = word).getRandom(),
-            save = true
-        )
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 关注
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow() = getHelper().runCatching {
-        buildMessageByIllust(
-            illust = illustFollow().getRandom(),
-            save = true
-        )
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("获取排行榜失败， ${it.message}")
-    }.isSuccess
-
-    /**
-     * 书签
-     */
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.bookmark() = getHelper().runCatching {
-        buildMessageByIllust(
-            illust = userBookmarksIllust(uid = getAuthInfo().user.uid).getRandom(),
-            save = true
-        )
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        quoteReply("读取书签失败， ${it.message}")
     }.isSuccess
 }
