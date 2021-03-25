@@ -65,7 +65,7 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
         loadDayOfYears(year).forEach { date ->
             addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
-                getRank(mode = RankMode.MONTH, date = date, limit = 90).map { it.nomanga().nocache() }
+                getRank(mode = RankMode.MONTH, date = date, limit = 90).map { it.nomanga().notCached() }
             }
         }
     }

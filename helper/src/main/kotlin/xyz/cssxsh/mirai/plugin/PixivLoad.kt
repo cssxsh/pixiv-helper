@@ -13,8 +13,8 @@ import java.time.LocalDate
 
 private const val LOAD_LIMIT = 3_000L
 
-internal fun List<IllustInfo>.nocache() = useArtWorkInfoMapper { mapper ->
-    filter { mapper.contains(it.pid).not() }
+internal fun List<IllustInfo>.notCached() = useMappers { mappers ->
+    filterNot { mappers.artwork.contains(it.pid) }
 }
 
 internal fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MANGA }
