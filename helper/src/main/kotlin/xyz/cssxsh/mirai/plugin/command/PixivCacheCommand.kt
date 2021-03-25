@@ -25,15 +25,6 @@ object PixivCacheCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private val CACHE_RANKS = listOf(
-        RankMode.MONTH,
-        RankMode.WEEK,
-        RankMode.WEEK_ORIGINAL,
-        RankMode.DAY,
-        RankMode.DAY_MALE,
-        RankMode.DAY_FEMALE,
-    )
-
     private fun loadDayOfYears(year: Year, interval: Int = 5, offset: Long = 29) = buildList {
         (1..year.length() step interval).forEach { dayOfYear ->
             add(year.atDay(dayOfYear).plusDays(offset))
@@ -44,15 +35,6 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存关注推送")
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() =
         getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().map { it.nomanga() } }
-
-    @SubCommand
-    suspend fun CommandSenderOnMessage<MessageEvent>.ranks(date: LocalDate? = null) = getHelper().run {
-        CACHE_RANKS.forEach { mode ->
-            addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") {
-                getRank(mode = mode, date = date)
-            }
-        }
-    }
 
     @SubCommand
     @Description("缓存指定排行榜信息")
