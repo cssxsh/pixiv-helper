@@ -18,6 +18,7 @@ object PixivTaskCommand : CompositeCommand(
     private const val TASK_DURATION = 3
 
     @SubCommand
+    @Description("设置用户定时订阅任务")
     fun CommandSenderOnMessage<MessageEvent>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "User($uid)[${contact}]",
@@ -30,6 +31,7 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("设置排行榜定时订阅任务")
     fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Rank($mode)[${contact}]",
@@ -41,6 +43,7 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("设置关注推送定时订阅任务")
     suspend fun CommandSenderOnMessage<MessageEvent>.follow(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Follow(${getAuthInfo().user.uid})[${contact}]",
@@ -52,6 +55,7 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("设置推荐画师定时订阅任务")
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Recommended(${getAuthInfo().user.uid})[${contact}]",
@@ -63,6 +67,7 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("设置定时备份任务")
     fun CommandSender.backup(duration: Int = TASK_DURATION) = PixivHelperScheduler
         .setTimerTask(name = "Backup", info = TimerTask.Backup(interval = duration.hours.toLongMilliseconds()))
 }

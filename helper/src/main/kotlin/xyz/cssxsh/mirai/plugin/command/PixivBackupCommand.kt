@@ -26,6 +26,7 @@ object PixivBackupCommand : CompositeCommand(
     private var panJob: Job? = null
 
     @SubCommand
+    @Description("备份指定用户的作品")
     fun ConsoleCommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -34,6 +35,7 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("备份已设定别名用户的作品")
     fun ConsoleCommandSender.alias() {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -44,6 +46,7 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("备份指定标签的作品")
     fun ConsoleCommandSender.tag(tag: String) {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -52,6 +55,7 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("备份插件数据")
     fun ConsoleCommandSender.data() {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -60,6 +64,7 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("上传插件数据到百度云")
     fun ConsoleCommandSender.upload(file: String) {
         check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
         panJob = PixivHelperPlugin.async(Dispatchers.IO) {
@@ -77,6 +82,7 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("百度云用户认证")
     fun ConsoleCommandSender.auth(code: String) {
         check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
         panJob = PixivHelperPlugin.async(Dispatchers.IO) {

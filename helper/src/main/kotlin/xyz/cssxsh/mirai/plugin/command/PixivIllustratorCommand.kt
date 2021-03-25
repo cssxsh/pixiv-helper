@@ -22,6 +22,7 @@ object PixivIllustratorCommand : CompositeCommand(
     override val prefixOptional: Boolean = true
 
     @SubCommand("uid", "ID")
+    @Description("根据画师UID随机发送画师作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.uid(uid: Long) = getHelper().runCatching {
         useArtWorkInfoMapper { it.userArtWork(uid) }.also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
@@ -38,6 +39,7 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("name", "名称")
+    @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.name(name: String) = getHelper().runCatching {
         PixivAliasData.aliases.getOrElse(name) { useUserInfoMapper { it.findByName(name) }?.uid }.let {
             requireNotNull(it) { "找不到别名'${name}'" }
@@ -58,6 +60,7 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("alias", "别名")
+    @Description("设置画师或alias")
     suspend fun CommandSenderOnMessage<MessageEvent>.alias(name: String, uid: Long) = getHelper().runCatching {
         PixivAliasData.aliases[name] = uid
     }.onSuccess {
@@ -67,6 +70,7 @@ object PixivIllustratorCommand : CompositeCommand(
     }.isSuccess
 
     @SubCommand("list", "列表")
+    @Description("显示别名列表")
     suspend fun CommandSenderOnMessage<MessageEvent>.list() = getHelper().runCatching {
         PixivAliasData.aliases.map { (name, uid) ->
             "[$name] -> ($uid)"

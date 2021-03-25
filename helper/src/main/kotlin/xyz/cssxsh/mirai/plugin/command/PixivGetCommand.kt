@@ -12,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 @Suppress("unused")
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "get", "搞快点",
+    "get", "搞快点", "GKD",
     description = "PIXIV获取指令"
 ) {
 

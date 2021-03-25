@@ -16,17 +16,15 @@ object PixivSettingCommand : CompositeCommand(
     description = "PIXIV设置"
 ) {
 
-    /**
-     * 设置代理 pixiv proxy http://10.21.159.95:7890
-     * @param proxy 代理URL
-     */
     @SubCommand
+    @Description("设置代理, 例如 http://10.21.159.95:7890")
     fun ConsoleCommandSender.proxy(proxy: String) {
         logger.info { "proxy: ${PixivConfigData.default.proxy} -> $proxy" }
         PixivConfigData.default.proxy = proxy
     }
 
     @SubCommand
+    @Description("设置是否显示Pixiv Cat 原图链接")
     suspend fun CommandSenderOnMessage<MessageEvent>.link(
         link: Boolean
     ) = getHelper().runCatching {

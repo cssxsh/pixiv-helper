@@ -23,12 +23,8 @@ object PixivMethodCommand : CompositeCommand(
 
     private fun IllustData.getFirst() = illusts.writeToCache().first()
 
-    /**
-     * 登录 通过 用户名，密码
-     * @param username 用户名
-     * @param password 密码
-     */
     @SubCommand
+    @Description("登录 通过 用户名，密码")
     suspend fun CommandSenderOnMessage<MessageEvent>.login(
         username: String,
         password: String,
@@ -43,11 +39,8 @@ object PixivMethodCommand : CompositeCommand(
         quoteReply("[$username]登陆失败， ${it.message}")
     }.isSuccess
 
-    /**
-     * 登录 通过 Token
-     * @param token refreshToken
-     */
     @SubCommand
+    @Description("登录 通过 Token")
     suspend fun CommandSenderOnMessage<MessageEvent>.refresh(
         token: String,
     ) = getHelper().runCatching {
@@ -61,11 +54,8 @@ object PixivMethodCommand : CompositeCommand(
         quoteReply("[$token]登陆失败， ${it.message}")
     }.isSuccess
 
-
-    /**
-     * 自动登录
-     */
     @SubCommand
+    @Description("登录 通过 配置")
     suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
         autoAuth().let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"

@@ -45,12 +45,14 @@ object PixivDeleteCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("删除指定作品")
     fun ConsoleCommandSender.artwork(pid: Long) {
         logger.info { "作品(${pid})信息将从缓存移除" }
         deleteArtwork(pid)
     }
 
     @SubCommand
+    @Description("删除指定用户作品")
     fun ConsoleCommandSender.user(uid: Long) {
         useArtWorkInfoMapper { it.userArtWork(uid) }.also {
             logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }

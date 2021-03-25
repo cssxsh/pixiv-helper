@@ -13,10 +13,8 @@ object PixivInfoCommand : CompositeCommand(
     description = "PIXIV信息指令"
 ) {
 
-    /**
-     * 获取助手信息
-     */
     @SubCommand
+    @Description("获取助手信息")
     suspend fun CommandSenderOnMessage<MessageEvent>.helper() = getHelper().runCatching {
         buildString {
             appendLine("Id: ${getAuthInfo().user.uid}")
@@ -31,10 +29,8 @@ object PixivInfoCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-    /**
-     * 获取用户信息
-     */
     @SubCommand
+    @Description("获取用户信息")
     suspend fun CommandSenderOnMessage<MessageEvent>.user(target: User) = runCatching {
         useStatisticInfoMapper { mapper ->
             buildString {
@@ -49,10 +45,8 @@ object PixivInfoCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
-    /**
-     * 获取缓存信息
-     */
     @SubCommand
+    @Description("获取缓存信息")
     suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
         buildString {
             useArtWorkInfoMapper {
