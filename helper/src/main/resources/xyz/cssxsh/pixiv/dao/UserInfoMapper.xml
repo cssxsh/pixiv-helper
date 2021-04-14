@@ -9,7 +9,7 @@
     <select id="findByName" resultType="xyz.cssxsh.pixiv.model.UserBaseInfo">
         SELECT *
         FROM users
-        WHERE name LIKE #{name};
+        WHERE name LIKE '%'||#{name}||'%' OR account LIKE '%'||#{name}||'%';
     </select>
     <insert id="replaceUser">
         REPLACE INTO users("uid", "name", "account")
