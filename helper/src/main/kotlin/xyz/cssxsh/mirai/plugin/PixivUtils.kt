@@ -92,7 +92,7 @@ internal fun IllustInfo.getContent(): Message = buildMessageChain {
 internal fun IllustInfo.getPixivCat(): Message = buildMessageChain {
     appendLine("原图连接: ")
     getPixivCatUrls().forEach {
-        appendLine(it)
+        appendLine(it.toString())
     }
 }
 
@@ -180,14 +180,8 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail, save: Bo
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain =
     buildMessageByUser(detail = userDetail(uid = uid), save = save)
 
-internal fun IllustInfo.getPixivCatUrls(): List<String> = buildList {
-    if (pageCount > 1) {
-        (1..pageCount).forEach {
-            add("https://pixiv.cat/${pid}-${it}.jpg")
-        }
-    } else {
-        add("https://pixiv.cat/${pid}.jpg")
-    }
+internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map {
+    Url(it).copy(host = "i.pixiv.cat")
 }
 
 internal fun IllustInfo.isR18(): Boolean =
