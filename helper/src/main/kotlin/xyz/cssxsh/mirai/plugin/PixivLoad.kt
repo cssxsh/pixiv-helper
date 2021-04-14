@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -13,16 +14,22 @@ import java.time.LocalDate
 
 private const val LOAD_LIMIT = 3_000L
 
-internal fun List<IllustInfo>.notCached() = useMappers { mappers ->
-    filterNot { mappers.artwork.contains(it.pid) }
-}
-
-internal fun List<IllustInfo>.nomanga() = filter { it.type != WorkContentType.MANGA }
-
-internal fun List<IllustInfo>.eros() = filter { it.isEro() }
-
 internal fun List<Long>.notDeleted() = useMappers { mappers ->
     filterNot { mappers.delete.contains(it) }
+}
+
+internal fun Flow<List<IllustInfo>>.notCached() = map { list ->
+    useMappers { mappers ->
+        list.filterNot { mappers.artwork.contains(it.pid) }
+    }
+}
+
+internal fun Flow<List<IllustInfo>>.nomanga() = map { list ->
+    list.filter { it.type != WorkContentType.MANGA }
+}
+
+internal fun Flow<List<IllustInfo>>.eros() = map { list ->
+    list.filter { it.isEro() }
 }
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = flow {
@@ -59,7 +66,7 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = flow
             userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it.eros())
+            emit(it)
             logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页失败" }, it)
@@ -134,7 +141,7 @@ internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT
             searchIllust(word = tag, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it.eros())
+            emit(it)
             logger.verbose { "加载'${tag}'搜索列表第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载'${tag}'搜索列表第${page}页失败" }, it)
@@ -148,7 +155,7 @@ internal suspend fun PixivHelper.getRelated(pid: Long, illusts: List<Long>) = fl
             illustRelated(pid = pid, seedIllustIds = illusts, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
-            emit(it.eros())
+            emit(it)
             logger.verbose { "加载[${pid}]相关列表第${page}页{${it.size}}成功" }
         }.onFailure {
             logger.warning({ "加载[${pid}]相关列表第${page}页失败" }, it)

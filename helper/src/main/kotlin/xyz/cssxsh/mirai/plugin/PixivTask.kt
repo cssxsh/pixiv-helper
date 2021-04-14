@@ -170,7 +170,7 @@ private fun setLast(name: String, last: OffsetDateTime) = PixivTaskData.tasks.co
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     block().also {
         addCacheJob(name = "TimerTask(${name})", reply = false) { it }
-    }.toList().flatten().nomanga().toSet().sortedBy { it.createAt }.filter {
+    }.nomanga().toList().flatten().toSet().sortedBy { it.createAt }.filter {
         it.createAt > getLast(name) && it.isR18().not() && it.createAt.isToday()
     }.apply {
         maxOfOrNull { it.createAt }?.let {
@@ -257,7 +257,7 @@ internal suspend fun runTask(name: String, info: TimerTask) {
         }
         is TimerTask.Recommended -> {
             info.contact.getHelper().subscribe(name) {
-                getRecommended(limit = 90L)
+                getRecommended(limit = 90L).eros()
             }
         }
         is TimerTask.Backup -> {

@@ -33,7 +33,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存关注推送")
     suspend fun CommandSenderOnMessage<MessageEvent>.follow() =
-        getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().map { it.nomanga() } }
+        getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().nomanga() }
 
     @SubCommand
     @Description("缓存指定排行榜信息")
@@ -45,7 +45,7 @@ object PixivCacheCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
         loadDayOfYears(year).forEach { date ->
             addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
-                getRank(mode = RankMode.MONTH, date = date, limit = 90).map { it.nomanga().notCached() }
+                getRank(mode = RankMode.MONTH, date = date, limit = 90).nomanga().notCached()
             }
         }
     }
@@ -53,7 +53,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("从推荐画师的预览中缓存色图作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
-        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended() }
+        getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().eros() }
 
     @SubCommand
     @Description("从指定用户的收藏中缓存色图作品")
@@ -117,6 +117,11 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存指定画师作品")
     suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
         getHelper().addCacheJob(name = "USER(${uid})") { getUserIllusts(uid = uid) }
+
+    @SubCommand
+    @Description("缓存搜索得到的tag")
+    suspend fun CommandSenderOnMessage<MessageEvent>.tag(tag: String): Unit =
+        getHelper().addCacheJob(name = "TAG(${tag})") { searchTag(tag).eros() }
 
     private fun File.listDirs(regex: Regex, range: LongRange) =
         listFiles { file -> file.name.matches(regex) && file.isDirectory && file.isContained(range) }.orEmpty()

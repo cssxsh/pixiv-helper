@@ -41,12 +41,12 @@ object PixivTagCommand : SimpleCommand(
         useMappers { it.tag.findByName(tag) }.apply {
             logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
         }.let { list ->
-            if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "SEARCH(${tag})", reply = false) {
-                searchTag(tag)
+            if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "TAG(${tag})", reply = false) {
+                searchTag(tag).eros()
             }
             list.random().also { pid ->
                 if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "RELATED(${pid})", reply = false) {
-                    getRelated(pid, list)
+                    getRelated(pid, list).eros()
                 }
                 tagStatisticAdd(event = fromEvent, tag = tag, pid = pid)
             }.let { pid ->
