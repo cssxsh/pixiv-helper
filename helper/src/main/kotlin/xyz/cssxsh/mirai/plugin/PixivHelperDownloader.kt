@@ -14,9 +14,9 @@ object PixivHelperDownloader : PixivDownloader(
     suspend fun downloadImages(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
         urls = urls,
         block = { url, result ->
-            runCatching {
+            result.mapCatching {
                 dir.resolve(Url(url).getFilename()).apply {
-                    writeBytes(result.getOrThrow())
+                    writeBytes(it)
                 }
             }.onFailure {
                 if (it.isNotCancellationException()) {
