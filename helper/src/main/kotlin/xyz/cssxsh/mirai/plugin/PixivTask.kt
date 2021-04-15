@@ -17,6 +17,7 @@ import net.mamoe.mirai.message.data.toMessageChain
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.data.apps.*
@@ -265,9 +266,9 @@ internal suspend fun runTask(name: String, info: TimerTask) {
                 runCatching {
                     BaiduNetDiskUpdater.uploadFile(file)
                 }.onSuccess { info ->
-                    PixivHelperPlugin.logger.info { "[${file}]上传成功: $info" }
+                    logger.info { "[${file}]上传成功: $info" }
                 }.onFailure {
-                    PixivHelperPlugin.logger.warning({ "[${file}]上传失败" }, it)
+                    logger.warning({ "[${file}]上传失败" }, it)
                 }
             }
             setLast(name, OffsetDateTime.now())

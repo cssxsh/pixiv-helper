@@ -12,6 +12,7 @@ import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
 import org.sqlite.JDBC
 import org.sqlite.SQLiteConfig
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
+import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.client.PixivConfig
 import xyz.cssxsh.pixiv.dao.*
@@ -41,16 +42,16 @@ internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
         is UnknownHostException,
         is SocketException,
         -> {
-            PixivHelperPlugin.logger.warning { "PIXIV API错误, 已忽略: $throwable" }
+            logger.warning { "PIXIV API错误, 已忽略: $throwable" }
             true
         }
         else -> when (throwable.message) {
             "Required SETTINGS preface not received" -> {
-                PixivHelperPlugin.logger.warning { "PIXIV API错误, 已忽略: $throwable" }
+                logger.warning { "PIXIV API错误, 已忽略: $throwable" }
                 true
             }
             "Rate Limit" -> {
-                PixivHelperPlugin.logger.warning { "PIXIV API限流, 将延时: $PIXIV_RATE_LIMIT_DELAY" }
+                logger.warning { "PIXIV API限流, 将延时: $PIXIV_RATE_LIMIT_DELAY" }
                 delay(PIXIV_RATE_LIMIT_DELAY)
                 true
             }
@@ -91,7 +92,7 @@ internal val SearchApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
         is StreamResetException,
         is UnknownHostException,
         -> {
-            PixivHelperPlugin.logger.warning { "SEARCH API错误, 已忽略: ${throwable.message}" }
+            logger.warning { "SEARCH API错误, 已忽略: ${throwable.message}" }
             true
         }
         else -> false
@@ -148,10 +149,10 @@ internal fun PixivHelperSettings.init() {
             sqlite.writeBytes(it.readAllBytes())
         }
     }
-    PixivHelperPlugin.logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
-    PixivHelperPlugin.logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
-    PixivHelperPlugin.logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    PixivHelperPlugin.logger.info { "Sqlite: ${sqlite.absolutePath}" }
+    logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
+    logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
+    logger.info { "TempFolder: ${tempFolder.absolutePath}" }
+    logger.info { "Sqlite: ${sqlite.absolutePath}" }
 }
 
 internal const val MIN_SIMILARITY = 0.70

@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.utils.warning
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.data.apps.*
