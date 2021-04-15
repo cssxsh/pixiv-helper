@@ -1,21 +1,16 @@
 package xyz.cssxsh.mirai.plugin
 
-import io.ktor.client.features.*
-import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.GrantType
 import xyz.cssxsh.pixiv.client.*
 import xyz.cssxsh.pixiv.data.*
-import xyz.cssxsh.pixiv.data.apps.*
 import java.time.OffsetDateTime
-import kotlin.time.*
 
 /**
  * 助手实例
@@ -117,7 +112,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    private val cacheJob: Job = launch(CoroutineName("PixivHelper:${contact}#CacheTask") + Dispatchers.IO) {
+    private val cacheJob: Job = launch(CoroutineName("PixivHelper:${contact}#CacheTask")) {
         while (isActive) {
             runCatching {
                 cacheChannel.receiveAsFlow().check().download()
@@ -152,8 +147,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     override suspend fun auth(
         grantType: GrantType,
         config: PixivConfig,
-        url: String,
-    ) = super.auth(grantType = grantType, config = config, url = url).also {
+        time: OffsetDateTime
+    ) = super.auth(grantType = grantType, config = config, time = time).also {
         when (grantType) {
             GrantType.PASSWORD -> logger.info {
                 "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: ${config.account}, ExpiresTime: $expiresTime"
