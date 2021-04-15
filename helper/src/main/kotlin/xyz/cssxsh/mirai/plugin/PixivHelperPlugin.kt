@@ -87,7 +87,5 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperListener.stop()
 
         PixivHelperScheduler.stop()
-
-        PixivZipper.compressData(list = getBackupList())
     }
 }
