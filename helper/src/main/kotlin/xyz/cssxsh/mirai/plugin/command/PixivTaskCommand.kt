@@ -21,11 +21,7 @@ object PixivTaskCommand : CompositeCommand(
     fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "User($uid)[${contact}]",
-            info = TimerTask.User(
-                uid = uid,
-                interval = duration.hours.toLongMilliseconds(),
-                contact = getContactInfo()
-            )
+            info = TimerTask.User(uid = uid, interval = duration.hours.toLongMilliseconds(), contact = getContactInfo())
         )
     }
 
@@ -34,10 +30,7 @@ object PixivTaskCommand : CompositeCommand(
     fun CommandSenderOnMessage<*>.rank(mode: RankMode) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Rank($mode)[${contact}]",
-            info = TimerTask.Rank(
-                mode = mode,
-                contact = getContactInfo()
-            )
+            info = TimerTask.Rank(mode = mode, contact = getContactInfo())
         )
     }
 
@@ -46,10 +39,7 @@ object PixivTaskCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Follow(${getAuthInfo().user.uid})[${contact}]",
-            info = TimerTask.Follow(
-                interval = duration.hours.toLongMilliseconds(),
-                contact = getContactInfo()
-            )
+            info = TimerTask.Follow(interval = duration.hours.toLongMilliseconds(), contact = getContactInfo())
         )
     }
 
@@ -58,10 +48,7 @@ object PixivTaskCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Recommended(${getAuthInfo().user.uid})[${contact}]",
-            info = TimerTask.Recommended(
-                interval = duration.hours.toLongMilliseconds(),
-                contact = getContactInfo()
-            )
+            info = TimerTask.Recommended(interval = duration.hours.toLongMilliseconds(), contact = getContactInfo())
         )
     }
 

@@ -23,7 +23,7 @@ object PixivHelperScheduler {
             launch {
                 runTask(name = name, info = info)
             }
-            info.delay()
+            delay(info.interval)
         }
     }
 
