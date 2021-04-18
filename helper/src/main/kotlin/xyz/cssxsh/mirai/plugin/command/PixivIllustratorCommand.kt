@@ -20,7 +20,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    @SubCommand("uid", "ID")
+    @SubCommand("uid", "id", "user")
     @Description("根据画师UID随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.uid(uid: Long) = getHelper().runCatching {
         useMappers { it.artwork.userArtWork(uid) }.also { list ->

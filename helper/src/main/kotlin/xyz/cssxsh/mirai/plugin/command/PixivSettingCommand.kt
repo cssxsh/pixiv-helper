@@ -16,7 +16,7 @@ object PixivSettingCommand : CompositeCommand(
 ) {
 
     @SubCommand
-    @Description("设置代理, 例如 http://10.21.159.95:7890")
+    @Description("设置代理, 例如 http://127.0.0.1:1080")
     fun ConsoleCommandSender.proxy(proxy: String) {
         logger.info { "proxy: ${PixivConfigData.default.proxy} -> $proxy" }
         PixivConfigData.default.proxy = proxy
