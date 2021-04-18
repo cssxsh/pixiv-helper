@@ -69,7 +69,7 @@ object PixivHelperListener {
         """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex()
 
     private suspend fun MessageEvent.sendArtworkInfo(pid: Long): MessageReceipt<Contact> =
-        subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid, save = true).toMessageChain())
+        subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid, flush = true).toMessageChain())
 
     private suspend fun MessageEvent.sendUserInfo(uid: Long): MessageReceipt<Contact> =
         subject.sendMessage(message.quote() + getHelper().buildMessageByUser(uid = uid, save = true))

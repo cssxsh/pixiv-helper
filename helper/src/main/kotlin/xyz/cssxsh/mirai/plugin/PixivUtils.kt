@@ -81,6 +81,7 @@ internal fun Url.getFilename() = encodedPath.substringAfterLast('/')
 internal fun IllustInfo.getContent(): Message = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
+    appendLine("标题: $title ")
     appendLine("PID: $pid ")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("SAN值: $sanityLevel ")
@@ -121,7 +122,7 @@ internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: Boolean): List<Message> = buildList {
+internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush: Boolean): List<Message> = buildList {
     add(illust.getContent())
     if (link) {
         add(illust.getPixivCat())
@@ -138,13 +139,15 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, save: 
     } else {
         add(PlainText("R18禁止！"))
     }
-    if (save) {
+    if (flush || useMappers { it.artwork.contains(illust.pid).not() }) {
         illust.saveToSQLite()
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, save: Boolean): List<Message> =
-    buildMessageByIllust(illust = getIllustInfo(pid = pid, flush = save), save = save)
+internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, flush: Boolean): List<Message> = buildMessageByIllust(
+    illust = getIllustInfo(pid = pid, flush = flush),
+    flush = flush
+)
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
@@ -177,8 +180,10 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail, save: Bo
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain =
-    buildMessageByUser(detail = userDetail(uid = uid), save = save)
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain = buildMessageByUser(
+    detail = userDetail(uid = uid),
+    save = save
+)
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map {
     Url(it).copy(host = PixivMirrorHost)
@@ -350,9 +355,8 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     val files = getOriginImageUrls().map { url ->
         dir.resolve(Url(url).getFilename()).apply {
             if (exists().not() && temp.resolve(name).exists()) {
+                logger.info { "从[${temp.resolve(name)}]移动文件" }
                 temp.resolve(name).renameTo(this)
-                    || temp.resolve(name).renameTo(this)
-                    || temp.resolve(name).renameTo(this)
             }
             if (exists().not()) {
                 downloads.add(url)

@@ -28,7 +28,7 @@ object PixivIllustratorCommand : CompositeCommand(
         }.random().let { info ->
             buildMessageByIllust(
                 pid = info.pid,
-                save = false
+                flush = false
             )
         }
     }.onSuccess { list ->
@@ -48,7 +48,7 @@ object PixivIllustratorCommand : CompositeCommand(
             }.random().let { info ->
                 buildMessageByIllust(
                     pid = info.pid,
-                    save = false
+                    flush = false
                 )
             }
         }
