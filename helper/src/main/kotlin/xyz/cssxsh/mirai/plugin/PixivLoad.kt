@@ -31,7 +31,7 @@ internal fun Flow<List<IllustInfo>>.eros() = map { list ->
 }
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             illustRanking(mode = mode, date = date, offset = offset).illusts
         }.onSuccess {
@@ -45,7 +45,7 @@ internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit
 }
 
 internal suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             illustFollow(offset = offset).illusts
         }.onSuccess {
@@ -59,7 +59,7 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = fl
 }
 
 internal suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
         }.onSuccess {
@@ -73,7 +73,7 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = flow
 }
 
 internal suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step AppApi.PAGE_SIZE).fold<Long, String?>(AppApi.USER_BOOKMARKS_ILLUST) { url, _ ->
+    (0 until limit step PAGE_SIZE).fold<Long, String?>(USER_BOOKMARKS_ILLUST) { url, _ ->
         runCatching {
             if (isActive.not() || url == null) return@flow
             userBookmarksIllust(uid = uid, url = url)
@@ -87,7 +87,7 @@ internal suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = LOAD_LIMI
 }
 
 internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
-    (0 until (limit ?: detail.total()) step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             userIllusts(uid = detail.user.id, offset = offset).illusts
         }.onSuccess {
@@ -99,10 +99,11 @@ internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long?
     }
 }
 
-internal suspend fun PixivHelper.getUserIllusts(uid: Long, limit: Long? = null) = getUserIllusts(userDetail(uid = uid), limit = limit)
+internal suspend fun PixivHelper.getUserIllusts(uid: Long, limit: Long? = null) =
+    getUserIllusts(userDetail(uid = uid), limit)
 
 internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = flow {
-    (0 until detail.profile.totalFollowUsers step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until detail.profile.totalFollowUsers step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             userFollowing(uid = detail.user.id, offset = offset).userPreviews
         }.onSuccess {
@@ -114,7 +115,7 @@ internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = f
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(AppApi.PAGE_SIZE.toInt()).asFlow().map { list ->
+internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(PAGE_SIZE.toInt()).asFlow().map { list ->
     list.notDeleted().mapNotNull { pid ->
         runCatching {
             getIllustInfo(pid = pid, flush = true).apply {
@@ -134,7 +135,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(Ap
 }
 
 internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             searchIllust(word = tag, offset = offset).illusts
         }.onSuccess {
@@ -148,7 +149,7 @@ internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT
 }
 
 internal suspend fun PixivHelper.getRelated(pid: Long, illusts: List<Long>) = flow {
-    (0 until AppApi.RELATED_OFFSET step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until RELATED_OFFSET step PAGE_SIZE).forEachIndexed { page, offset ->
         runCatching {
             illustRelated(pid = pid, seedIllustIds = illusts, offset = offset).illusts
         }.onSuccess {

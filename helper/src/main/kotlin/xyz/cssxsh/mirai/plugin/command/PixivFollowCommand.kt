@@ -29,7 +29,7 @@ object PixivFollowCommand : CompositeCommand(
     }.isSuccess
 
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
-        (0 until maxNum step AppApi.PAGE_SIZE).forEachIndexed { page, offset ->
+        (0 until maxNum step PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
                 userFollowing(uid = uid, offset = offset).userPreviews.map { it.user.id }
             }.onSuccess {
