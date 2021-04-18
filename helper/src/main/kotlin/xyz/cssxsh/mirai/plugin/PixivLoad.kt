@@ -22,8 +22,8 @@ internal fun Flow<List<IllustInfo>>.notCached() = map { list ->
     }
 }
 
-internal fun Flow<List<IllustInfo>>.nomanga() = map { list ->
-    list.filter { it.type != WorkContentType.MANGA }
+internal fun Flow<List<IllustInfo>>.types(type: WorkContentType) = map { list ->
+    list.filter { it.type == type }
 }
 
 internal fun Flow<List<IllustInfo>>.eros() = map { list ->
