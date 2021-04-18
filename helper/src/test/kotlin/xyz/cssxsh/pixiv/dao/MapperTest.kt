@@ -1,12 +1,10 @@
 package xyz.cssxsh.pixiv.dao
 
-import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.model.*
 import java.io.File
@@ -23,20 +21,12 @@ internal class MapperTest {
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
 
-    private val sqliteUrl get() = "jdbc:sqlite:${File("../test/pixiv.db").absolutePath}"
+    private val sqlite get() = File("../test/pixiv.sqlite")
 
     @BeforeAll
     @Suppress("unused")
     fun initSqlSession() {
-        sqlSessionFactory.configuration.apply {
-            environment = Environment(
-                environment.id,
-                environment.transactionFactory,
-                SQLiteConnectionPoolDataSource().apply {
-                    url = sqliteUrl
-                }
-            )
-        }
+        sqlSessionFactory.configuration.init(sqlite)
     }
 
     @Test

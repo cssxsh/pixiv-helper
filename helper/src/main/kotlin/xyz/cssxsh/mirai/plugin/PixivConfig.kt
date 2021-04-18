@@ -17,6 +17,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.client.PixivConfig
 import xyz.cssxsh.pixiv.dao.*
 import java.io.EOFException
+import java.io.File
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
@@ -114,7 +115,7 @@ internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
-internal fun Configuration.init() = apply {
+internal fun Configuration.init(file: File) = apply {
     environment = Environment("development", JdbcTransactionFactory(), SQLiteConnectionPoolDataSource().apply {
         config.apply {
             enforceForeignKeys(true)
@@ -129,7 +130,7 @@ internal fun Configuration.init() = apply {
                 setPragma(pragma, value)
             }
         }
-        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
+        url = "${JDBC.PREFIX}${file.absolutePath}"
     })
     addMapper(ArtWorkInfoMapper::class.java)
     addMapper(FileInfoMapper::class.java)

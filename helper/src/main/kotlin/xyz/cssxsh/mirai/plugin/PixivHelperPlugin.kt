@@ -60,7 +60,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         PixivHelperSettings.init()
 
-        sqlSessionFactory.configuration.init()
+        sqlSessionFactory.configuration.init(PixivHelperSettings.sqlite)
         // Listener
         PixivHelperListener.subscribe()
 
