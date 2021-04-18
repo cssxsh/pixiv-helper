@@ -32,8 +32,9 @@ object PixivBackupCommand : CompositeCommand(
     fun CommandSender.user(uid: Long) {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
-            sendMessage("USER[${uid}] 压缩完毕")
+            PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
+                sendMessage("${it.name} 压缩完毕")
+            }
         }
     }
 
@@ -43,8 +44,9 @@ object PixivBackupCommand : CompositeCommand(
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
             PixivAliasData.aliases.values.toSet().forEach { uid ->
-                PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
-                sendMessage("USER[${uid}] 压缩完毕")
+                PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
+                    sendMessage("${it.name} 压缩完毕")
+                }
             }
         }
     }
