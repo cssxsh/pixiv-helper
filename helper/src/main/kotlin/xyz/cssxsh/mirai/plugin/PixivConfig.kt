@@ -164,3 +164,5 @@ internal const val ERO_INTERVAL = 16
 internal const val ERO_BOOKMARKS = 10_000L
 
 internal const val ERO_PAGE_COUNT = 5
+
+internal const val LOAD_LIMIT = 3_000L

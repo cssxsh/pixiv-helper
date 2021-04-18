@@ -12,8 +12,6 @@ import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.data.apps.*
 import java.time.LocalDate
 
-private const val LOAD_LIMIT = 3_000L
-
 internal fun List<Long>.notDeleted() = useMappers { mappers ->
     filterNot { mappers.delete.contains(it) }
 }
