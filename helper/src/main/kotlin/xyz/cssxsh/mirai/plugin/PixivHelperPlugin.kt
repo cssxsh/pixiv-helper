@@ -40,8 +40,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.reload()
         // Data
         PixivConfigData.reload()
-        PixivAliasData.reload()
-        PixivSearchData.reload()
         PixivTaskData.reload()
         // Command
         PixivBackupCommand.register()

@@ -62,7 +62,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存别名画师列表作品")
     suspend fun CommandSenderOnMessage<*>.alias(): Unit = getHelper().run {
-        PixivAliasData.aliases.values.toSet().sorted().also { list ->
+        useMappers { it.statistic.alias() }.map { it.uid }.toSet().sorted().also { list ->
             logger.verbose { "别名中{${list.first()..list.last()}}共${list.size}个画师需要缓存" }
             sendMessage("别名列表中共${list.size}个画师需要缓存")
             launch {
@@ -176,11 +176,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search(): Unit = getHelper().run {
         addCacheJob(name = "SEARCH") {
-            PixivSearchData.results.map { (_, result) -> result.pid }.filter { pid ->
-                useMappers { it.artwork.contains(pid) }.not()
-            }.let {
-                getListIllusts(set = it.toSet())
-            }
+            getListIllusts(set = useMappers { it.statistic.noCacheSearchResult() }.map { it.pid }.toSet())
         }
     }
 

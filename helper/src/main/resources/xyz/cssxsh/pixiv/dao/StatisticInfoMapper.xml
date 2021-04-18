@@ -29,4 +29,26 @@
         FROM statistic_tag
         WHERE "group" = ${group};
     </select>
+    <insert id="replaceSearchResult">
+        REPLACE INTO statistic_search("md5", similarity, "pid", "uid", "content")
+        VALUES (#{md5}, #{similarity}, ${pid}, ${uid}, #{content});
+    </insert>
+    <select id="findSearchResult" resultType="xyz.cssxsh.pixiv.model.SearchResult">
+        SELECT *
+        FROM statistic_search
+        WHERE "md5" like #{md5};
+    </select>
+    <select id="noCacheSearchResult" resultType="xyz.cssxsh.pixiv.model.SearchResult">
+        SELECT *
+        FROM statistic_search
+        WHERE NOT EXISTS(SELECT * FROM artworks WHERE artworks.pid = statistic_search.pid);
+    </select>
+    <insert id="replaceAliasSetting">
+        REPLACE INTO statistic_alias("alias", "uid")
+        VALUES (#{alias}, ${uid});
+    </insert>
+    <select id="alias" resultType="xyz.cssxsh.pixiv.model.AliasSetting">
+        SELECT *
+        FROM statistic_alias;
+    </select>
 </mapper>

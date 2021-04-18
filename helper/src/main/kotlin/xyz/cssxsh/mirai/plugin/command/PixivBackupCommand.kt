@@ -43,7 +43,7 @@ object PixivBackupCommand : CompositeCommand(
     fun CommandSender.alias() {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            PixivAliasData.aliases.values.toSet().forEach { uid ->
+            useMappers { it.statistic.alias() }.map { it.uid }.toSet().forEach { uid ->
                 PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
                     sendMessage("${it.name} 压缩完毕")
                 }

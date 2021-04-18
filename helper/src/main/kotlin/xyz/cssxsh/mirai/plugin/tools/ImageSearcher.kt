@@ -7,7 +7,7 @@ import io.ktor.client.request.forms.*
 import io.ktor.utils.io.core.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.Jsoup
-import xyz.cssxsh.pixiv.data.SearchResult
+import xyz.cssxsh.pixiv.model.SearchResult
 import kotlin.io.use
 
 object ImageSearcher {

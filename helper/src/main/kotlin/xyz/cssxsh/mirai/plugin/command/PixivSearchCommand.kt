@@ -8,9 +8,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivSearchData
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.command.PixivSearchCommand.getQuoteImage
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 @Suppress("unused")
@@ -31,16 +29,14 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = runCatching {
         logger.info { "搜索 ${image.queryUrl()}" }
-        PixivSearchData.results.getOrElse(image.getMd5Hex()) {
-            ImageSearcher.getSearchResults(
-                ignore = SearchApiIgnore,
-                url = image.queryUrl().replace("http:", "https:")
-            ).run {
-                requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
-            }
+        useMappers { it.statistic.findSearchResult(image.getMd5Hex()) } ?: ImageSearcher.getSearchResults(
+            ignore = SearchApiIgnore,
+            url = image.queryUrl().replace("http:", "https:")
+        ).run {
+            requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
         }.also { result ->
             if (result.similarity > MIN_SIMILARITY) {
-                PixivSearchData.results[image.getMd5Hex()] = result
+                useMappers { it.statistic.replaceSearchResult(result.copy(md5 = image.getMd5Hex())) }
             }
         }
     }.onSuccess { result ->

@@ -7,7 +7,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.pixiv.model.AliasSetting
 
 @Suppress("unused")
 object PixivIllustratorCommand : CompositeCommand(
@@ -40,7 +40,9 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("name", "名称")
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.name(name: String) = getHelper().runCatching {
-        PixivAliasData.aliases.getOrElse(name) { useMappers { it.user.findByName(name) }?.uid }.let {
+        useMappers { mappers ->
+            mappers.statistic.alias().find { it.alias == name }?.uid ?: mappers.user.findByName(name)?.uid
+        }.let {
             requireNotNull(it) { "找不到别名'${name}'" }
         }.let { uid ->
             useMappers { it.artwork.userArtWork(uid) }.also { list ->
@@ -61,7 +63,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("alias", "别名")
     @Description("设置画师或alias")
     suspend fun CommandSenderOnMessage<*>.alias(name: String, uid: Long) = getHelper().runCatching {
-        PixivAliasData.aliases[name] = uid
+        useMappers { it.statistic.replaceAliasSetting(AliasSetting(alias = name, uid = uid)) }
     }.onSuccess {
         quoteReply("设置 [$name] -> ($uid)")
     }.onFailure {
@@ -71,9 +73,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("list", "列表")
     @Description("显示别名列表")
     suspend fun CommandSenderOnMessage<*>.list() = getHelper().runCatching {
-        PixivAliasData.aliases.map { (name, uid) ->
-            "[$name] -> ($uid)"
-        }.joinToString("\n")
+        useMappers { it.statistic.alias() }.joinToString("\n") { "[${it.alias}] -> (${it.uid})" }
     }.onSuccess {
         quoteReply(it)
     }.onFailure {

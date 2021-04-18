@@ -1,5 +1,7 @@
 package xyz.cssxsh.pixiv.dao
 
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.*
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.junit.jupiter.api.BeforeAll
@@ -62,48 +64,31 @@ internal class MapperTest {
 
     @Test
     fun saveStatisticInfo() {
+        val file = File("D:\\Users\\CSSXSH\\IdeaProjects\\pixiv-helper\\test\\data\\pixiv-helper\\PixivAlias.json")
+        val list = Json.decodeFromString<JsonObject>(file.readText()).getValue("aliases").jsonObject.map { (a, id) ->
+            AliasSetting(a, id.jsonPrimitive.long)
+        }
         sqlSessionFactory.openSession().use { session ->
             session.getMapper(StatisticInfoMapper::class.java).let { mapper ->
-                mapper.replaceEroInfo(StatisticEroInfo(
-                    sender = 0,
-                    group = 1,
-                    pid = (1 .. 10000L).random(),
-                    timestamp = System.currentTimeMillis() / 1_000
-                ))
-                mapper.replaceEroInfo(StatisticEroInfo(
-                    sender = 0,
-                    group = 1,
-                    pid = (1 .. 10000L).random(),
-                    timestamp = System.currentTimeMillis() / 1_000
-                ))
-                mapper.senderEroInfos(0).forEach {
-                    println(it)
-                }
-                mapper.groupEroInfos(1).forEach {
-                    println(it)
-                }
-                mapper.replaceTagInfo(StatisticTagInfo(
-                    sender = 0,
-                    group = 1,
-                    pid = (1 .. 10000L).random(),
-                    tag = "test",
-                    timestamp = System.currentTimeMillis() / 1_000
-                ))
-                mapper.replaceTagInfo(StatisticTagInfo(
-                    sender = 0,
-                    group = 1,
-                    pid = (1 .. 10000L).random(),
-                    tag = "test",
-                    timestamp = System.currentTimeMillis() / 1_000
-                ))
-                mapper.senderTagInfos(0).forEach {
-                    println(it)
-                }
-                mapper.groupTagInfos(1).forEach {
-                    println(it)
+                list.forEach {
+                    mapper.replaceAliasSetting(it)
                 }
             }
             session.commit()
+        }
+    }
+
+    @Test
+    fun statistic() {
+        sqlSessionFactory.openSession(true).use {
+            it.getMapper(StatisticInfoMapper::class.java).let { mapper ->
+                mapper.findSearchResult("78fcde93917b98823b20a9e553cda0b1").let {
+                    println(it)
+                }
+                mapper.noCacheSearchResult().let {
+                    println(it)
+                }
+            }
         }
     }
 }
