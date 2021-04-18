@@ -18,6 +18,8 @@ object PixivHelperListener {
 
     private val listeners = mutableMapOf<String, Listener<*>>()
 
+    internal val images = mutableMapOf<MessageSource, Image>()
+
     private infix fun String.with(listener: Listener<*>) = listeners.put(this, listener)?.cancel()
 
     fun subscribe(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
@@ -37,6 +39,33 @@ object PixivHelperListener {
                 logger.info { "匹配USER(${result.value})" }
                 sendUserInfo(account = result.value)
             }
+        }
+        "SearchImage" with subscribeMessages {
+            always {
+                message.findIsInstance<Image>()?.let { image ->
+                    synchronized(image) {
+                        images[source] = image
+                        images.keys.toList().forEach {
+                            if (it.inDuration(SEARCH_DURATION).not()) {
+                                // 超时删除
+                                images.remove(it)
+                            }
+                        }
+                    }
+                }
+            }/*
+            has<Image> { image ->
+                println(image)
+                synchronized(image) {
+                    images[source] = image
+                    images.keys.toList().forEach {
+                        if (it.inDuration(SEARCH_DURATION).not()) {
+                            // 超时删除
+                            images.remove(it)
+                        }
+                    }
+                }
+            }*/
         }
     }
 

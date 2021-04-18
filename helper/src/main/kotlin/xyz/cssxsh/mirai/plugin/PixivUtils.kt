@@ -21,6 +21,7 @@ import xyz.cssxsh.pixiv.model.*
 import java.io.File
 import java.security.MessageDigest
 import java.time.OffsetDateTime
+import kotlin.time.Duration
 
 /**
  * 获取对应subject的助手
@@ -380,3 +381,6 @@ internal fun getBackupList() = buildMap<String, File> {
         this["DATABASE"] = PixivHelperSettings.sqlite
     }
 }
+
+internal fun MessageSource.inDuration(duration: Duration) =
+    time > OffsetDateTime.now().toEpochSecond() - duration.inSeconds.toLong()

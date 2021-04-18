@@ -159,6 +159,8 @@ internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal const val MIN_SIMILARITY = 0.70
 
+internal val SEARCH_DURATION = (1).hours
+
 internal const val ERO_INTERVAL = 16
 
 internal val ERO_UP_DURATION = (10).seconds

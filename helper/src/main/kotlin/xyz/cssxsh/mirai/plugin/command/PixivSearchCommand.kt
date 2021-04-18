@@ -24,13 +24,17 @@ object PixivSearchCommand : SimpleCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
+    private fun MessageChain.getQuoteImage(): Image = requireNotNull(findIsInstance<QuoteReply>()?.let { quote ->
+        PixivHelperListener.images.entries.find { (source, _) -> source.toString() == quote.source.toString() }
+    }) { "找不到图片" }.value
+
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = runCatching {
         logger.info { "搜索 ${image.queryUrl()}" }
         PixivSearchData.results.getOrElse(image.getMd5Hex()) {
             ImageSearcher.getSearchResults(
                 ignore = SearchApiIgnore,
-                url = image.queryUrl().replace("http://", "https://")
+                url = image.queryUrl().replace("http:", "https:")
             ).run {
                 requireNotNull(maxByOrNull { it.similarity }) { "没有搜索结果" }
             }
