@@ -8,6 +8,7 @@ interface ArtWorkInfoMapper {
     fun replaceArtWork(info: ArtWorkInfo)
     fun updateArtWork(info: ArtWorkInfo)
     fun artWorks(interval: LongRange): List<ArtWorkInfo>
+    fun findByTag(tag: String): List<ArtWorkInfo>
     fun count(): Long
     fun deleteByPid(pid: Long)
     fun userArtWork(uid: Long): List<ArtWorkInfo>

@@ -3,19 +3,19 @@
 <mapper namespace="xyz.cssxsh.pixiv.dao.ArtWorkInfoMapper">
     <insert id="replaceArtWork">
         REPLACE INTO artworks("pid",
-                             "uid",
-                             "title",
-                             "caption",
-                             "create_at",
-                             "page_count",
-                             "sanity_level",
-                             "type", "width",
-                             "height",
-                             "total_bookmarks",
-                             "total_comments",
-                             "total_view",
-                             "is_r18",
-                             "is_ero")
+                              "uid",
+                              "title",
+                              "caption",
+                              "create_at",
+                              "page_count",
+                              "sanity_level",
+                              "type", "width",
+                              "height",
+                              "total_bookmarks",
+                              "total_comments",
+                              "total_view",
+                              "is_r18",
+                              "is_ero")
         VALUES (${pid},
                 ${uid},
                 #{title},
@@ -32,22 +32,21 @@
                 ${isR18},
                 ${isEro});
     </insert>
-    <update id="updateArtWork" >
+    <update id="updateArtWork">
         UPDATE artworks
-        SET
-            title = #{title},
-            caption = #{caption},
-            create_at = #{createAt},
-            page_count = ${pageCount},
-            sanity_level =${sanityLevel},
-            type = #{type},
-            width = ${width},
-            height = ${height},
+        SET title           = #{title},
+            caption         = #{caption},
+            create_at       = #{createAt},
+            page_count      = ${pageCount},
+            sanity_level    =${sanityLevel},
+            type            = #{type},
+            width           = ${width},
+            height          = ${height},
             total_bookmarks = ${totalBookmarks},
-            total_comments = ${totalComments},
-            total_view = ${totalView},
-            is_r18 = ${isR18},
-            is_ero = ${isEro}
+            total_comments  = ${totalComments},
+            total_view      = ${totalView},
+            is_r18          = ${isR18},
+            is_ero          = ${isEro}
         WHERE pid = ${pid};
     </update>
     <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
@@ -65,6 +64,16 @@
         FROM artworks
         WHERE pid BETWEEN #{first} AND #{last};
     </select>
+    <select id="findByTag" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+        SELECT *
+        FROM artworks
+        WHERE artworks.pid IN (
+            SELECT tags.pid
+            FROM tags
+            WHERE name LIKE '%' || #{tag} || '%'
+               OR translated_name LIKE '%' || #{tag} || '%'
+        );
+    </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM artworks;
@@ -72,12 +81,14 @@
     <select id="eroCount" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM artworks
-        WHERE is_ero = TRUE AND is_r18 = FALSE;
+        WHERE is_ero = TRUE
+          AND is_r18 = FALSE;
     </select>
     <select id="r18Count" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM artworks
-        WHERE is_ero = TRUE AND is_r18 = TRUE;
+        WHERE is_ero = TRUE
+          AND is_r18 = TRUE;
     </select>
     <select id="deleteByPid">
         DELETE
@@ -89,7 +100,7 @@
         FROM artworks
         WHERE uid = ${uid};
     </select>
-    <select id="userEroCount" >
+    <select id="userEroCount">
         SELECT uid, COUNT(*)
         FROM artworks
         GROUP BY uid;
@@ -97,7 +108,8 @@
     <select id="eroRandom" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
-        WHERE is_ero == TRUE AND is_r18 = FALSE
+        WHERE is_ero == TRUE
+          AND is_r18 = FALSE
         ORDER BY RANDOM()
         LIMIT ${limit};
     </select>

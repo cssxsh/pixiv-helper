@@ -42,12 +42,15 @@ internal class MapperTest {
         session.getMapper(ArtWorkInfoMapper::class.java).artWorks(interval).let {
             println(it.size)
         }
+        session.getMapper(ArtWorkInfoMapper::class.java).findByTag("淫纹").let {
+            println(it.size)
+        }
     }
 
     @Test
     fun saveIllustInfo() {
-        val dir = imagesFolder(24924)
-        dir.resolve("24924.json").readIllustInfo().run {
+        val pid = 24924L
+        imagesFolder(pid).resolve("${pid}.json").readIllustInfo().run {
             sqlSessionFactory.openSession().use { session ->
                 session.getMapper(UserInfoMapper::class.java).replaceUser(user.toUserBaseInfo())
                 session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
