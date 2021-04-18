@@ -181,7 +181,7 @@ internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): M
     buildMessageByUser(detail = userDetail(uid = uid), save = save)
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map {
-    Url(it).copy(host = "i.pixiv.cat")
+    Url(it).copy(host = PixivMirrorHost)
 }
 
 internal fun IllustInfo.isR18(): Boolean =

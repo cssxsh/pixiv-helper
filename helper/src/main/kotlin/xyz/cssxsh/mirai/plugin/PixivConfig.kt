@@ -155,6 +155,8 @@ internal fun PixivHelperSettings.init() {
     logger.info { "Sqlite: ${sqlite.absolutePath}" }
 }
 
+internal const val PixivMirrorHost = "i.pixiv.cat"
+
 internal const val MIN_SIMILARITY = 0.70
 
 internal const val ERO_INTERVAL = 16
