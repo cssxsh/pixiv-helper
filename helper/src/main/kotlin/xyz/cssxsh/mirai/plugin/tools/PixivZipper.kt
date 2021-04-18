@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.tools
 
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.pixiv.model.*
@@ -41,11 +40,14 @@ object PixivZipper {
         OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
     private fun ArtWorkInfo.getFullWidthTitle() = title.replace(FULLWIDTH_REPLACE_REGEX) {
-        FULLWIDTH_REPLACE_CHARS.getOrDefault(it.value, "")
+        FULLWIDTH_REPLACE_CHARS.getOrDefault(it.value, "#")
     }
 
     private fun getZipFile(basename: String) =
-        PixivHelperSettings.backupFolder.resolve("${basename.toUpperCase()}(${timestamp()}).zip").apply { createNewFile() }
+        PixivHelperSettings.backupFolder.resolve("${basename}(${timestamp()}).zip").apply { createNewFile() }
+
+    fun listZipFiles() =
+        PixivHelperSettings.backupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
     fun compressArtWorks(list: List<ArtWorkInfo>, basename: String): File = getZipFile(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
