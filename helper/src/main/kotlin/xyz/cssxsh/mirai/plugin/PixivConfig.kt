@@ -60,7 +60,7 @@ internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     }
 }
 
-internal val PixivDownloadIgnore: (String, Throwable, String) -> Boolean = { _, throwable, _ ->
+internal val PixivDownloadIgnore: suspend (Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
