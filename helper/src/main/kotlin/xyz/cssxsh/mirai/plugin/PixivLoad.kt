@@ -124,9 +124,9 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(Ap
             if (it.isNotCancellationException()) {
                 logger.warning({ "加载作品($pid)失败" }, it)
             }
-            if (it.message == "該当作品は削除されたか、存在しない作品IDです。") {
+            if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
                 useMappers { mappers ->
-                    mappers.delete.add(pid = pid)
+                    mappers.delete.add(pid = pid, comment = it.message!!)
                 }
             }
         }.getOrNull()

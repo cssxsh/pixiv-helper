@@ -56,7 +56,8 @@ internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
     ).let(block)
 }
 
-internal fun DeleteInfoMapper.add(pid: Long) = add(pid = pid, timestamp = OffsetDateTime.now().toEpochSecond())
+internal fun DeleteInfoMapper.add(pid: Long, comment: String) =
+    add(pid = pid, comment = comment, timestamp = OffsetDateTime.now().toEpochSecond())
 
 internal fun UserPreview.isLoaded() = useMappers { mappers ->
     illusts.all { mappers.artwork.contains(it.pid) }

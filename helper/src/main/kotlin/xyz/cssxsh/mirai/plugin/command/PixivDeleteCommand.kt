@@ -16,10 +16,10 @@ object PixivDeleteCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private fun deleteArtwork(pid: Long) {
+    private fun deleteArtwork(pid: Long, comment: String) {
         useMappers { mappers ->
             mappers.artwork.deleteByPid(pid)
-            mappers.delete.add(pid)
+            mappers.delete.add(pid = pid, comment = comment)
         }
         PixivHelperSettings.imagesFolder(pid).apply {
             listFiles()?.forEach {
@@ -29,12 +29,12 @@ object PixivDeleteCommand : CompositeCommand(
         }
     }
 
-    private fun List<ArtWorkInfo>.delete() {
+    private fun List<ArtWorkInfo>.delete(comment: String) {
         useMappers {  mappers ->
             forEach { info ->
                 logger.info { "作品(${info.pid})[${info.type}][${info.title}]{${info.totalBookmarks}}信息将从缓存移除" }
                 mappers.artwork.deleteByPid(info.pid)
-                mappers.delete.add(info.pid)
+                mappers.delete.add(pid = info.pid, comment = comment)
             }
         }
         forEach { info ->
@@ -51,7 +51,7 @@ object PixivDeleteCommand : CompositeCommand(
     @Description("删除指定作品")
     fun ConsoleCommandSender.artwork(pid: Long) {
         logger.info { "作品(${pid})信息将从缓存移除" }
-        deleteArtwork(pid)
+        deleteArtwork(pid = pid, comment = "command delete artwork")
     }
 
     @SubCommand
@@ -59,7 +59,7 @@ object PixivDeleteCommand : CompositeCommand(
     fun ConsoleCommandSender.user(uid: Long) {
         useMappers { it.artwork.userArtWork(uid) }.also {
             logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
-        }.delete()
+        }.delete(comment = "command delete user $uid")
     }
 
     private const val OFFSET_MAX = 99_999_999L
@@ -77,7 +77,7 @@ object PixivDeleteCommand : CompositeCommand(
                 it.totalBookmarks < bookmarks
             }.also {
                 logger.verbose { "{$bookmarks}(${interval})共${it.size}个作品需要删除" }
-            }.delete()
+            }.delete(comment = "command delete bookmarks $bookmarks")
         }
     }
 }
