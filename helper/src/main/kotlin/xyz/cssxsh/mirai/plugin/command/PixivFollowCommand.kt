@@ -5,7 +5,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -21,7 +20,7 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("为当前助手关注指定用户")
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.user(uid: Long) = getHelper().runCatching {
         userFollowAdd(uid = uid)
     }.onSuccess {
         logger.info { "添加关注(${uid})成功, $it" }
@@ -66,7 +65,7 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("关注色图缓存中的较好画师")
-    suspend fun CommandSenderOnMessage<MessageEvent>.good() = getHelper().follow {
+    suspend fun CommandSenderOnMessage<*>.good() = getHelper().follow {
         val followed = getFollowed(uid = getAuthInfo().user.uid)
         useMappers { it.artwork.userEroCount() }.filter { (_, count) ->
             count > PixivHelperSettings.eroInterval
@@ -83,7 +82,7 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("关注指定用户的关注")
-    suspend fun CommandSenderOnMessage<MessageEvent>.copy(uid: Long) = getHelper().follow {
+    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = getHelper().follow {
         getFollowed(uid = uid)
     }
 }

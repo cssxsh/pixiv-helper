@@ -51,7 +51,7 @@ object PixivEroCommand : SimpleCommand(
     }
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.ero() = histories.getOrPut(fromEvent.subject) { History() }.runCatching {
+    suspend fun CommandSenderOnMessage<*>.ero() = histories.getOrPut(fromEvent.subject) { History() }.runCatching {
         if ("更色" in fromEvent.message.contentToString()) {
             minSanityLevel++
         } else {

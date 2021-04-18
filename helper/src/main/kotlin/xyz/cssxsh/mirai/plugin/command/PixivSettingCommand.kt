@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.ConsoleCommandSender
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -25,7 +24,7 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
-    suspend fun CommandSenderOnMessage<MessageEvent>.link(
+    suspend fun CommandSenderOnMessage<*>.link(
         link: Boolean
     ) = getHelper().runCatching {
         "$link -> $link".also { this.link = link }

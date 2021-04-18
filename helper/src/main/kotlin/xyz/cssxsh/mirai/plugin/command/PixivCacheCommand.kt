@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -32,17 +31,17 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存关注推送")
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow() =
-        getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().nomanga() }
+    suspend fun CommandSenderOnMessage<*>.follow() =
+        getHelper().addCacheJob(name = "FOLLOW", reply = false) { getFollowIllusts().types(WorkContentType.ILLUST) }
 
     @SubCommand
     @Description("缓存指定排行榜信息")
-    suspend fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode, date: LocalDate? = null) =
+    suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode, date: LocalDate? = null) =
         getHelper().addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") { getRank(mode = mode, date = date) }
 
     @SubCommand
     @Description("以年为界限缓存月榜作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.year(year: Year) = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.year(year: Year) = getHelper().run {
         loadDayOfYears(year).forEach { date ->
             addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
                 getRank(mode = RankMode.MONTH, date = date, limit = 90).types(WorkContentType.ILLUST).notCached()
@@ -52,17 +51,17 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("从推荐画师的预览中缓存色图作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.recommended() =
+    suspend fun CommandSenderOnMessage<*>.recommended() =
         getHelper().addCacheJob(name = "RECOMMENDED") { getRecommended().eros() }
 
     @SubCommand
     @Description("从指定用户的收藏中缓存色图作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.bookmarks(uid: Long) =
+    suspend fun CommandSenderOnMessage<*>.bookmarks(uid: Long) =
         getHelper().addCacheJob(name = "BOOKMARKS") { getBookmarks(uid) }
 
     @SubCommand
     @Description("缓存别名画师列表作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.alias(): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.alias(): Unit = getHelper().run {
         PixivAliasData.aliases.values.toSet().sorted().also { list ->
             logger.verbose { "别名中{${list.first()..list.last()}}共${list.size}个画师需要缓存" }
             sendMessage("别名列表中共${list.size}个画师需要缓存")
@@ -87,8 +86,8 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("将关注画师列表检查，缓存所有作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.following(): Unit = getHelper().run {
-        getUserFollowingPreview(detail = userDetail(uid = getAuthInfo().user.uid).apply {
+    suspend fun CommandSenderOnMessage<*>.following(uid: Long? = null): Unit = getHelper().run {
+        getUserFollowingPreview(detail = userDetail(uid = uid ?: getAuthInfo().user.uid).apply {
             logger.verbose { "关注中共${profile.totalFollowUsers}个画师需要缓存" }
             sendMessage("关注列表中共${profile.totalFollowUsers}个画师需要缓存")
         }).also { flow ->
@@ -115,12 +114,12 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存指定画师作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(uid: Long) =
+    suspend fun CommandSenderOnMessage<*>.user(uid: Long) =
         getHelper().addCacheJob(name = "USER(${uid})") { getUserIllusts(uid = uid) }
 
     @SubCommand
     @Description("缓存搜索得到的tag")
-    suspend fun CommandSenderOnMessage<MessageEvent>.tag(tag: String): Unit =
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String): Unit =
         getHelper().addCacheJob(name = "TAG(${tag})") { searchTag(tag).eros() }
 
     private fun File.listDirs(regex: Regex, range: LongRange) =
@@ -133,7 +132,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载缓存文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.local(range: LongRange = MAX_RANGE): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.local(range: LongRange = MAX_RANGE): Unit = getHelper().run {
         PixivHelperSettings.cacheFolder.also {
             logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
         }.listDirs("""\d{3}______""".toRegex(), range).forEach { first ->
@@ -154,7 +153,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载临时文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<MessageEvent>.temp(path: String = ""): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.temp(path: String = ""): Unit = getHelper().run {
         val list = mutableSetOf<Long>()
         val dir = if (path.isNotBlank()) File(path) else PixivHelperSettings.tempFolder
         val exists = PixivHelperSettings.tempFolder.resolve("exists").apply { mkdirs() }
@@ -175,7 +174,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存搜索记录")
-    suspend fun CommandSenderOnMessage<MessageEvent>.search(): Unit = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.search(): Unit = getHelper().run {
         addCacheJob(name = "SEARCH") {
             PixivSearchData.results.map { (_, result) -> result.pid }.filter { pid ->
                 useMappers { it.artwork.contains(pid) }.not()
@@ -187,7 +186,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("停止当前助手缓存任务")
-    suspend fun CommandSenderOnMessage<MessageEvent>.stop() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.stop() = getHelper().runCatching {
         cacheStop()
     }.onSuccess {
         sendMessage("任务已停止")
@@ -197,7 +196,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("检查当前缓存中不可读，删除并重新下载")
-    suspend fun CommandSenderOnMessage<MessageEvent>.check(interval: LongRange) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.check(interval: LongRange) = getHelper().runCatching {
         useMappers { it.artwork.artWorks(interval) }.sortedBy { it.pid }.also {
             logger.verbose { "{${it.first().pid..it.last().pid}}共有 ${it.size} 个作品需要检查" }
         }.groupBy { info ->

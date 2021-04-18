@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
@@ -22,7 +21,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 用户名，密码")
-    suspend fun CommandSenderOnMessage<MessageEvent>.login(
+    suspend fun CommandSenderOnMessage<*>.login(
         username: String,
         password: String,
     ) = getHelper().runCatching {
@@ -38,7 +37,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 Token")
-    suspend fun CommandSenderOnMessage<MessageEvent>.refresh(
+    suspend fun CommandSenderOnMessage<*>.refresh(
         token: String,
     ) = getHelper().runCatching {
         refresh(token).let {
@@ -53,7 +52,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 配置")
-    suspend fun CommandSenderOnMessage<MessageEvent>.auto() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.auto() = getHelper().runCatching {
         autoAuth().let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }

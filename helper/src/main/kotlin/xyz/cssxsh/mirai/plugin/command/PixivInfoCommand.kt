@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 
 @Suppress("unused")
@@ -15,7 +14,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取助手信息")
-    suspend fun CommandSenderOnMessage<MessageEvent>.helper() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.helper() = getHelper().runCatching {
         buildString {
             appendLine("Id: ${getAuthInfo().user.uid}")
             appendLine("Name: ${getAuthInfo().user.name}")
@@ -31,7 +30,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取用户信息")
-    suspend fun CommandSenderOnMessage<MessageEvent>.user(target: User) = runCatching {
+    suspend fun CommandSenderOnMessage<*>.user(target: User) = runCatching {
         buildString {
             useMappers {
                 appendLine("用户: $target")
@@ -47,7 +46,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取缓存信息")
-    suspend fun CommandSenderOnMessage<MessageEvent>.cache() = runCatching {
+    suspend fun CommandSenderOnMessage<*>.cache() = runCatching {
         buildString {
             useMappers {
                 appendLine("缓存数: ${it.artwork.count()}")

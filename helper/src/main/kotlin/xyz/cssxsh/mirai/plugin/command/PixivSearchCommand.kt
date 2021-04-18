@@ -4,13 +4,13 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivSearchData.results
+import xyz.cssxsh.mirai.plugin.data.PixivSearchData
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.command.PixivSearchCommand.getQuoteImage
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 @Suppress("unused")
@@ -25,8 +25,9 @@ object PixivSearchCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.search(image: Image) = runCatching {
-        results.getOrElse(image.getMd5Hex()) {
+    suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = runCatching {
+        logger.info { "搜索 ${image.queryUrl()}" }
+        PixivSearchData.results.getOrElse(image.getMd5Hex()) {
             ImageSearcher.getSearchResults(
                 ignore = SearchApiIgnore,
                 url = image.queryUrl().replace("http://", "https://")
@@ -35,7 +36,7 @@ object PixivSearchCommand : SimpleCommand(
             }
         }.also { result ->
             if (result.similarity > MIN_SIMILARITY) {
-                results[image.getMd5Hex()] = result
+                PixivSearchData.results[image.getMd5Hex()] = result
             }
         }
     }.onSuccess { result ->

@@ -34,7 +34,7 @@ object PixivTagCommand : SimpleCommand(
     }
 
     @Handler
-    suspend fun CommandSenderOnMessage<MessageEvent>.tag(tag: String) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String) = getHelper().runCatching {
         check(tag.length <= 30) {
             "标签'$tag'过长"
         }

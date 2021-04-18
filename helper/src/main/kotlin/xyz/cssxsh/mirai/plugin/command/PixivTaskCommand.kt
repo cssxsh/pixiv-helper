@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import kotlin.time.*
@@ -19,7 +18,7 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置用户定时订阅任务")
-    fun CommandSenderOnMessage<MessageEvent>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
+    fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "User($uid)[${contact}]",
             info = TimerTask.User(
@@ -32,7 +31,7 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置排行榜定时订阅任务")
-    fun CommandSenderOnMessage<MessageEvent>.rank(mode: RankMode) = getHelper().run {
+    fun CommandSenderOnMessage<*>.rank(mode: RankMode) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Rank($mode)[${contact}]",
             info = TimerTask.Rank(
@@ -44,7 +43,7 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置关注推送定时订阅任务")
-    suspend fun CommandSenderOnMessage<MessageEvent>.follow(duration: Int = TASK_DURATION) = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Follow(${getAuthInfo().user.uid})[${contact}]",
             info = TimerTask.Follow(
@@ -56,7 +55,7 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置推荐画师定时订阅任务")
-    suspend fun CommandSenderOnMessage<MessageEvent>.recommended(duration: Int = TASK_DURATION) = getHelper().run {
+    suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = getHelper().run {
         PixivHelperScheduler.setTimerTask(
             name = "Recommended(${getAuthInfo().user.uid})[${contact}]",
             info = TimerTask.Recommended(
