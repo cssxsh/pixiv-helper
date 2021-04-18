@@ -26,7 +26,7 @@ object PixivEroCommand : SimpleCommand(
     private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
 
     private data class History(
-        val list: MutableList<Long> = mutableListOf(),
+        var last: Long = System.currentTimeMillis(),
         var minSanityLevel: Int = 0,
         var minBookmarks: Long = 0
     )
@@ -38,11 +38,8 @@ object PixivEroCommand : SimpleCommand(
     }
 
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
-        info.pid !in list && info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
-    }.ifEmpty {
-        addEroArtWorkInfos()
-        getEroArtWorkInfos()
-    }
+        info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+    }.ifEmpty { addEroArtWorkInfos(); getEroArtWorkInfos() }
 
     private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
         mappers.statistic.replaceEroInfo(StatisticEroInfo(
@@ -60,18 +57,15 @@ object PixivEroCommand : SimpleCommand(
         } else {
             minSanityLevel = 0
         }
-        if ("更好" !in fromEvent.message.contentToString()) {
+        if ("更好" !in fromEvent.message.contentToString() && System.currentTimeMillis() - last > ERO_UP_DURATION.toLongMilliseconds()) {
             minBookmarks = 0
         }
         getEroArtWorkInfos().random().also { info ->
             synchronized(this) {
                 minSanityLevel = info.sanityLevel
                 minBookmarks = info.totalBookmarks
-                if (list.size >= PixivHelperSettings.eroInterval) {
-                    addEroArtWorkInfos()
-                    list.clear()
-                }
-                list.add(info.pid)
+                caches.remove(info.pid)
+                last = System.currentTimeMillis()
                 eroStatisticAdd(fromEvent, info.pid)
             }
         }.let { info ->

@@ -161,6 +161,8 @@ internal const val MIN_SIMILARITY = 0.70
 
 internal const val ERO_INTERVAL = 16
 
+internal val ERO_UP_DURATION = (10).seconds
+
 internal const val ERO_BOOKMARKS = 10_000L
 
 internal const val ERO_PAGE_COUNT = 5
