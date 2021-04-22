@@ -169,14 +169,11 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail, save: Bo
     appendLine("TWITTER: ${detail.profile.twitterAccount}")
     runCatching {
         // px16x16, px50x50, px170x170
-        detail.user.profileImageUrls.getOrDefault("px16x16", NO_PROFILE_IMAGE).let { image ->
+        (detail.user.profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE).let { image ->
             PixivHelperSettings.profilesFolder.resolve(Url(image).getFilename()).apply {
                 if (exists().not()) {
                     parentFile.mkdirs()
-                    PixivHelperDownloader.downloadImages(
-                        urls = listOf(image),
-                        dir = parentFile
-                    ).single().getOrThrow()
+                    PixivHelperDownloader.downloadImages(urls = listOf(image), dir = parentFile).single().getOrThrow()
                 }
             }
         }.let { file ->
