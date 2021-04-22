@@ -8,6 +8,8 @@ import io.ktor.utils.io.core.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.Jsoup
 import xyz.cssxsh.pixiv.model.SearchResult
+import xyz.cssxsh.pixiv.tool.RubySSLSocketFactory
+import xyz.cssxsh.pixiv.tool.RubyX509TrustManager
 import kotlin.io.use
 
 object ImageSearcher {
@@ -16,10 +18,17 @@ object ImageSearcher {
 
     private const val DB_INDEX = 5 // Index #5: pixiv Images
 
+    private fun HttpClient() = HttpClient(OkHttp) { engine {
+        config {
+            sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
+            hostnameVerifier { _, _ -> true }
+        }
+    }}
+
     private suspend fun <R> useHttpClient(
         ignore: suspend (Throwable) -> Boolean,
         block: suspend (HttpClient) -> R,
-    ): R = HttpClient(OkHttp).use { client ->
+    ): R = HttpClient().use { client ->
         runCatching {
             block(client)
         }.getOrElse { throwable ->
@@ -36,12 +45,14 @@ object ImageSearcher {
             SearchResult(
                 similarity = content.select(".resultsimilarityinfo")
                     .text().replace("%", "").toDouble() / 100,
-                content = content.select(".resultcontent")
-                    .text(),
                 pid = content.select(".resultcontent a.linkify")
                     .first().text().toLong(),
+                title = content.select(".resultcontent")
+                    .text().substringBeforeLast("Pixiv").trim(),
                 uid = content.select(".resultcontent a.linkify")
-                    .last().attr("href").toHttpUrl().queryParameter("id")!!.toLong()
+                    .last().attr("href").toHttpUrl().queryParameter("id")!!.toLong(),
+                name = content.select(".resultcontent")
+                    .text().substringAfterLast(":").trim()
             )
         }
     }

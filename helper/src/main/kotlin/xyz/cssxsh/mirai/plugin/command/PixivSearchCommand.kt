@@ -40,10 +40,7 @@ object PixivSearchCommand : SimpleCommand(
             }
         }
     }.onSuccess { result ->
-        quoteReply(buildString {
-            appendLine("相似度: ${result.similarity * 100}%")
-            appendLine(result.content + "#${result.uid}")
-        })
+        quoteReply(result.getContent())
     }.onFailure {
         logger.verbose({ "搜索失败$image" }, it)
         quoteReply("搜索失败， ${it.message}")

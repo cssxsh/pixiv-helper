@@ -11,8 +11,10 @@ data class SearchResult(
     val similarity: Double,
     @SerialName("pid")
     val pid: Long,
+    @SerialName("title")
+    val title: String,
     @SerialName("uid")
     val uid: Long,
     @SerialName("content")
-    val content: String
+    val name: String
 )

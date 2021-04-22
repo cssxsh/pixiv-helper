@@ -99,6 +99,14 @@ internal fun IllustInfo.getPixivCat(): Message = buildMessageChain {
     }
 }
 
+internal fun SearchResult.getContent(): Message = buildMessageChain {
+    appendLine("相似度: ${similarity * 100}%")
+    appendLine("作者: $name ")
+    appendLine("UID: $uid ")
+    appendLine("标题: $title ")
+    appendLine("PID: $pid ")
+}
+
 private const val TAG_MAX = 10
 
 internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
@@ -337,7 +345,11 @@ internal fun List<IllustInfo>.writeToCache() = onEach { it.writeToCache() }
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean,
-    block: suspend PixivHelper.(Long) -> IllustInfo = { illustDetail(it).illust },
+    block: suspend PixivHelper.(Long) -> IllustInfo = {
+        illustDetail(it).illust.apply {
+            check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+        }
+    },
 ): IllustInfo = PixivHelperSettings.imagesFolder(pid).resolve("${pid}.json").let { file ->
     if (!flush && file.exists()) {
         file.readIllustInfo()

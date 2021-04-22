@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
@@ -10,11 +9,8 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
 import xyz.cssxsh.pixiv.data.apps.*
+import xyz.cssxsh.pixiv.model.*
 import java.time.LocalDate
-
-internal fun List<Long>.notDeleted() = useMappers { mappers ->
-    filterNot { mappers.delete.contains(it) }
-}
 
 internal fun Flow<List<IllustInfo>>.notCached() = map { list ->
     useMappers { mappers ->
@@ -115,24 +111,97 @@ internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = f
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = set.chunked(PAGE_SIZE.toInt()).asFlow().map { list ->
-    list.notDeleted().mapNotNull { pid ->
-        runCatching {
-            getIllustInfo(pid = pid, flush = true).apply {
-                check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-            }
-        }.onFailure {
-            if (it.isNotCancellationException()) {
-                logger.warning({ "加载作品($pid)失败" }, it)
-            }
-            if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
-                useMappers { mappers ->
-                    mappers.delete.add(pid = pid, comment = it.message!!)
+internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
+    useMappers { mappers ->
+        set.filterNot { mappers.artwork.contains(it) }
+    }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+        list.mapNotNull { pid ->
+            runCatching {
+                getIllustInfo(pid = pid, flush = true).apply {
+                    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 }
-            }
-        }.getOrNull()
+            }.onFailure {
+                if (it.isNotCancellationException()) {
+                    logger.warning({ "加载作品($pid)失败" }, it)
+                }
+                if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
+                    useMappers { mappers ->
+                        mappers.artwork.replaceArtWork(ArtWorkInfo(
+                            pid = pid,
+                            uid = 0,
+                            title = "",
+                            caption = it.message.orEmpty(),
+                            createAt = 0,
+                            pageCount = 0,
+                            sanityLevel = 7,
+                            type = 0,
+                            width = 0,
+                            height = 0,
+                            totalBookmarks = 0,
+                            totalComments = 0,
+                            totalView = 0,
+                            age = 0,
+                            isEro = false,
+                            deleted = true,
+                        ))
+                    }
+                }
+            }.getOrNull()
+        }.let {
+            emit(it)
+        }
     }
 }
+
+internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = flow {
+    useMappers { mappers ->
+        results.filterNot { mappers.artwork.contains(it.pid) }
+    }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+        list.mapNotNull { result ->
+            runCatching {
+                getIllustInfo(pid = result.pid, flush = true).apply {
+                    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+                }
+            }.onFailure {
+                if (it.isNotCancellationException()) {
+                    logger.warning({ "加载搜索结果($result)失败" }, it)
+                }
+                if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
+                    useMappers { mappers ->
+                        if (mappers.user.findByUid(result.uid) == null) {
+                            mappers.user.replaceUser(UserBaseInfo(
+                                uid = result.uid,
+                                name = result.name,
+                                account = ""
+                            ))
+                        }
+                        mappers.artwork.replaceArtWork(ArtWorkInfo(
+                            pid = result.pid,
+                            uid = result.uid,
+                            title = result.title,
+                            caption = it.message.orEmpty(),
+                            createAt = 0,
+                            pageCount = 0,
+                            sanityLevel = 7,
+                            type = 0,
+                            width = 0,
+                            height = 0,
+                            totalBookmarks = 0,
+                            totalComments = 0,
+                            totalView = 0,
+                            age = 0,
+                            isEro = false,
+                            deleted = true,
+                        ))
+                    }
+                }
+            }.getOrNull()
+        }.let {
+            emit(it)
+        }
+    }
+}
+
 
 internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
