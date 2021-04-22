@@ -33,14 +33,16 @@ object PixivTagCommand : SimpleCommand(
         ))
     }
 
+    private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
+
     @Handler
     suspend fun CommandSenderOnMessage<*>.tag(tag: String) = getHelper().runCatching {
-        check(tag.length <= 30) {
-            "标签'$tag'过长"
-        }
-        useMappers { it.tag.findByName(tag) }.apply {
-            logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" }
-        }.let { list ->
+        check(tag.length <= 30) { "标签'$tag'过长" }
+        useMappers {
+            it.tag.findByName(tag) + PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
+                it.tag.findByName(character) intersect it.tag.findByName(works)
+            }.orEmpty()
+        }.apply { logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" } }.let { list ->
             if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "TAG(${tag})", reply = false) {
                 searchTag(tag).eros()
             }
