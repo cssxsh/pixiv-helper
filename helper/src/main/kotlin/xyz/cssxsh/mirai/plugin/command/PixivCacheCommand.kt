@@ -169,10 +169,8 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存搜索记录")
-    suspend fun CommandSenderOnMessage<*>.search(): Unit = getHelper().run {
-        addCacheJob(name = "SEARCH") {
-            getListIllusts(set = useMappers { it.statistic.noCacheSearchResult() }.map { it.pid }.toSet())
-        }
+    suspend fun CommandSenderOnMessage<*>.search(): Unit = getHelper().addCacheJob(name = "SEARCH") {
+        getListIllusts(results = useMappers { it.statistic.noCacheSearchResult() })
     }
 
     @SubCommand
@@ -188,7 +186,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("检查当前缓存中不可读，删除并重新下载")
     suspend fun CommandSenderOnMessage<*>.check(interval: LongRange) = getHelper().runCatching {
-        useMappers { it.artwork.artWorks(interval) }.sortedBy { it.pid }.also {
+        useMappers { it.artwork.artworks(interval) }.sortedBy { it.pid }.also {
             logger.verbose { "{${it.first().pid..it.last().pid}}共有 ${it.size} 个作品需要检查" }
         }.groupBy { info ->
             isActive && PixivHelperSettings.imagesFolder(info.pid).runCatching {

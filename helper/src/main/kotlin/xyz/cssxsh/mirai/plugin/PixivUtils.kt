@@ -14,7 +14,6 @@ import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.api.apps.*
-import xyz.cssxsh.pixiv.api.publics.*
 import xyz.cssxsh.pixiv.dao.*
 import xyz.cssxsh.pixiv.data.apps.*
 import xyz.cssxsh.pixiv.model.*
@@ -42,7 +41,6 @@ internal data class Mappers(
     val user: UserInfoMapper,
     val tag: TagInfoMapper,
     val statistic: StatisticInfoMapper,
-    val delete: DeleteInfoMapper,
 )
 
 internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
@@ -51,13 +49,9 @@ internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
         file = session.getMapper(FileInfoMapper::class.java),
         user = session.getMapper(UserInfoMapper::class.java),
         tag = session.getMapper(TagInfoMapper::class.java),
-        statistic = session.getMapper(StatisticInfoMapper::class.java),
-        delete = session.getMapper(DeleteInfoMapper::class.java),
+        statistic = session.getMapper(StatisticInfoMapper::class.java)
     ).let(block)
 }
-
-internal fun DeleteInfoMapper.add(pid: Long, comment: String) =
-    add(pid = pid, comment = comment, timestamp = OffsetDateTime.now().toEpochSecond())
 
 internal fun UserPreview.isLoaded() = useMappers { mappers ->
     illusts.all { mappers.artwork.contains(it.pid) }
@@ -107,38 +101,13 @@ internal fun SearchResult.getContent(): Message = buildMessageChain {
     appendLine("PID: $pid ")
 }
 
-private const val TAG_MAX = 10
-
-internal suspend fun PixivHelper.checkR18(illust: IllustInfo): IllustInfo {
-    if (illust.sanityLevel == SanityLevel.BLACK && illust.isR18().not() && illust.tags.size == TAG_MAX) {
-        logger.info { "正在检查PID: ${illust.pid} 是否为R18" }
-        return when (getWork(illust.pid).works.single().ageLimit) {
-            AgeLimit.ALL -> {
-                illust
-            }
-            AgeLimit.R18 -> {
-                illust.copy(tags = illust.tags + TagInfo(
-                    name = "R-18"
-                ))
-            }
-            AgeLimit.R18G -> {
-                illust.copy(tags = illust.tags + TagInfo(
-                    name = "R-18G"
-                ))
-            }
-        }
-    } else {
-        return illust
-    }
-}
-
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush: Boolean): List<Message> = buildList {
     add(illust.getContent())
     if (link) {
         add(illust.getPixivCat())
     }
     val files = illust.getImages()
-    if (illust.isR18().not()) {
+    if (illust.age == AgeLimit.ALL) {
         files.forEachIndexed { index, file ->
             if (index < PixivHelperSettings.eroPageCount) {
                 add(file.uploadAsImage(contact))
@@ -196,11 +165,8 @@ internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map {
     Url(it).copy(host = PixivMirrorHost)
 }
 
-internal fun IllustInfo.isR18(): Boolean =
-    tags.any { """R-?18""".toRegex() in it.name }
-
 internal fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount < PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
+    totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount <= PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
 
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(
     uid = id,
@@ -216,14 +182,15 @@ internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     createAt = createAt.toEpochSecond(),
     pageCount = pageCount,
     sanityLevel = sanityLevel.ordinal,
-    type = type.value(),
+    type = type.ordinal,
     width = width,
     height = height,
     totalBookmarks = totalBookmarks ?: 0,
     totalComments = totalComments ?: 0,
     totalView = totalView ?: 0,
-    isR18 = isR18(),
-    isEro = isEro()
+    age = age.ordinal,
+    isEro = isEro(),
+    deleted = false
 )
 
 internal fun IllustInfo.getFileInfos() = getOriginImageUrls().mapIndexed { index, url ->

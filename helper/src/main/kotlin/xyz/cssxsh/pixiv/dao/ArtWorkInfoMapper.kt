@@ -7,10 +7,11 @@ interface ArtWorkInfoMapper {
     fun countByUid(uid: Long): Long
     fun replaceArtWork(info: ArtWorkInfo)
     fun updateArtWork(info: ArtWorkInfo)
-    fun artWorks(interval: LongRange): List<ArtWorkInfo>
+    fun artworks(interval: LongRange): List<ArtWorkInfo>
     fun findByTag(tag: String): List<ArtWorkInfo>
     fun count(): Long
-    fun deleteByPid(pid: Long)
+    fun deleteByPid(pid: Long, comment: String)
+    fun deleteByUid(uid: Long, comment: String)
     fun userArtWork(uid: Long): List<ArtWorkInfo>
     fun userEroCount(): Map<Long, Long>
     fun eroRandom(limit: Int): List<ArtWorkInfo>

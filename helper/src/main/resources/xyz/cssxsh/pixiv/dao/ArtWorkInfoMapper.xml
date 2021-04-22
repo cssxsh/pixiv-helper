@@ -14,8 +14,9 @@
                               "total_bookmarks",
                               "total_comments",
                               "total_view",
-                              "is_r18",
-                              "is_ero")
+                              "age",
+                              "is_ero",
+                              "deleted")
         VALUES (${pid},
                 ${uid},
                 #{title},
@@ -29,8 +30,9 @@
                 ${totalBookmarks},
                 ${totalComments},
                 ${totalView},
-                ${isR18},
-                ${isEro});
+                ${age},
+                ${isEro},
+                ${deleted});
     </insert>
     <update id="updateArtWork">
         UPDATE artworks
@@ -38,14 +40,14 @@
             caption         = #{caption},
             create_at       = #{createAt},
             page_count      = ${pageCount},
-            sanity_level    =${sanityLevel},
+            sanity_level    = ${sanityLevel},
             type            = #{type},
             width           = ${width},
             height          = ${height},
             total_bookmarks = ${totalBookmarks},
             total_comments  = ${totalComments},
             total_view      = ${totalView},
-            is_r18          = ${isR18},
+            age             = ${age},
             is_ero          = ${isEro}
         WHERE pid = ${pid};
     </update>
@@ -59,15 +61,17 @@
         FROM artworks
         WHERE uid = ${uid};
     </select>
-    <select id="artWorks" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
+    <select id="artworks" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
-        WHERE pid BETWEEN #{first} AND #{last};
+        WHERE NOT deleted
+          AND (pid BETWEEN #{first} AND #{last});
     </select>
     <select id="findByTag" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
-        WHERE artworks.pid IN (
+        WHERE NOT deleted
+          AND artworks.pid IN (
             SELECT tags.pid
             FROM tags
             WHERE name LIKE '%' || #{tag} || '%'
@@ -76,29 +80,40 @@
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
-        FROM artworks;
+        FROM artworks
+        WHERE NOT deleted;
     </select>
     <select id="eroCount" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM artworks
-        WHERE is_ero = TRUE
-          AND is_r18 = FALSE;
+        WHERE NOT deleted
+          AND is_ero
+          AND age = 0;
     </select>
     <select id="r18Count" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM artworks
-        WHERE is_ero = TRUE
-          AND is_r18 = TRUE;
+        WHERE NOT deleted
+          AND is_ero
+          AND NOT age = 0;
     </select>
-    <select id="deleteByPid">
-        DELETE
-        FROM artworks
-        WHERE pid = ${pid};
-    </select>
+    <update id="deleteByPid">
+        UPDATE artworks
+        SET deleted = true,
+            caption = #{param2}
+        WHERE pid = ${param1};
+    </update>
+    <update id="deleteByUid">
+        UPDATE artworks
+        SET deleted = true,
+            caption = #{param2}
+        WHERE uid = ${param1};
+    </update>
     <select id="userArtWork" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
-        WHERE uid = ${uid};
+        WHERE NOT deleted
+          AND uid = ${uid};
     </select>
     <select id="userEroCount">
         SELECT uid, COUNT(*)
@@ -108,8 +123,9 @@
     <select id="eroRandom" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
         FROM artworks
-        WHERE is_ero == TRUE
-          AND is_r18 = FALSE
+        WHERE NOT deleted
+          AND is_ero
+          AND age = 0
         ORDER BY RANDOM()
         LIMIT ${limit};
     </select>

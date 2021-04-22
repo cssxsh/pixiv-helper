@@ -191,7 +191,7 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     block().also {
         addCacheJob(name = "TimerTask(${name})", reply = false) { it }
     }.types(WorkContentType.ILLUST).toList().flatten().toSet().sortedBy { it.createAt }.filter {
-        it.createAt > last && it.isR18().not() && it.createAt.isToday()
+        it.createAt > last && it.age == AgeLimit.ALL && it.createAt.isToday()
     }.apply {
         maxOfOrNull { it.createAt }?.let { last = it }
     }.forEach { illust ->

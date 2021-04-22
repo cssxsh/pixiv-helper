@@ -6,7 +6,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.model.*
+import java.time.OffsetDateTime
 
 @Suppress("unused")
 object PixivDeleteCommand : CompositeCommand(
@@ -16,50 +16,34 @@ object PixivDeleteCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private fun deleteArtwork(pid: Long, comment: String) {
-        useMappers { mappers ->
-            mappers.artwork.deleteByPid(pid)
-            mappers.delete.add(pid = pid, comment = comment)
-        }
-        PixivHelperSettings.imagesFolder(pid).apply {
-            listFiles()?.forEach {
-                it.delete()
-            }
-            logger.verbose { "作品(${pid})文件夹将删除，结果${delete()}" }
-        }
-    }
-
-    private fun List<ArtWorkInfo>.delete(comment: String) {
-        useMappers {  mappers ->
-            forEach { info ->
-                logger.info { "作品(${info.pid})[${info.type}][${info.title}]{${info.totalBookmarks}}信息将从缓存移除" }
-                mappers.artwork.deleteByPid(info.pid)
-                mappers.delete.add(pid = info.pid, comment = comment)
-            }
-        }
-        forEach { info ->
-            PixivHelperSettings.imagesFolder(info.pid).apply {
-                listFiles()?.forEach {
-                    it.delete()
-                }
-                logger.verbose { "作品(${info.pid})文件夹将删除，结果${delete()}" }
-            }
-        }
-    }
+    private fun deleteImage(pid: Long) = PixivHelperSettings.imagesFolder(pid).listFiles { file ->
+        file.isFile && file.extension != "json"
+    }?.all { it.delete() }
 
     @SubCommand
     @Description("删除指定作品")
     fun ConsoleCommandSender.artwork(pid: Long) {
         logger.info { "作品(${pid})信息将从缓存移除" }
-        deleteArtwork(pid = pid, comment = "command delete artwork")
+        useMappers { mappers ->
+            mappers.artwork.deleteByPid(
+                pid = pid,
+                comment = "command delete artwork in ${OffsetDateTime.now()}"
+            )
+        }
+        logger.verbose { "作品(${pid})图片将删除，结果${deleteImage(pid)}" }
     }
 
     @SubCommand
     @Description("删除指定用户作品")
     fun ConsoleCommandSender.user(uid: Long) {
-        useMappers { it.artwork.userArtWork(uid) }.also {
-            logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
-        }.delete(comment = "command delete user $uid")
+        useMappers { mappers ->
+            mappers.artwork.userArtWork(uid).also {
+                logger.verbose { "USER(${uid})共${it.size}个作品需要删除" }
+                mappers.artwork.deleteByUid(uid = uid, comment = "command delete user in ${OffsetDateTime.now()}")
+            }
+        }.forEach {
+            logger.verbose { "作品(${it.pid})图片将删除，结果${deleteImage(it.pid)}" }
+        }
     }
 
     private const val OFFSET_MAX = 99_999_999L
@@ -73,11 +57,18 @@ object PixivDeleteCommand : CompositeCommand(
     fun ConsoleCommandSender.bookmarks(bookmarks: Long) {
         ranges.forEach { interval ->
             logger.verbose { "开始检查[$interval]" }
-            useMappers { it.artwork.artWorks(interval) }.filter {
-                it.totalBookmarks < bookmarks
-            }.also {
-                logger.verbose { "{$bookmarks}(${interval})共${it.size}个作品需要删除" }
-            }.delete(comment = "command delete bookmarks $bookmarks")
+            useMappers { mappers ->
+                mappers.artwork.artworks(interval).filter { it.totalBookmarks < bookmarks }.also {
+                    logger.verbose { "{<$bookmarks}(${interval})共${it.size}个作品需要删除" }
+                }.forEach {
+                    logger.info { "作品(${it.pid})信息将从缓存移除" }
+                    mappers.artwork.deleteByPid(
+                        pid = it.pid,
+                        comment = "command delete bookmarks $bookmarks in ${OffsetDateTime.now()}"
+                    )
+                    logger.verbose { "作品(${it.pid})图片将删除，结果${deleteImage(it.pid)}" }
+                }
+            }
         }
     }
 }

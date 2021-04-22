@@ -37,11 +37,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<CacheTask>.check() = transform { (name, write, reply, block) ->
         runCatching {
-            block.invoke(this@PixivHelper).map { list ->
-                list.map {
-                    checkR18(it)
-                }
-            }.onEach { list ->
+            block.invoke(this@PixivHelper).onEach { list ->
                 if (write && list.isNotEmpty()) {
                     list.writeToCache()
                 }

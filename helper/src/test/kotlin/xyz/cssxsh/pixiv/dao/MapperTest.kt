@@ -41,7 +41,7 @@ internal class MapperTest {
         session.getMapper(ArtWorkInfoMapper::class.java).findByPid(pid).let {
             println(it)
         }
-        session.getMapper(ArtWorkInfoMapper::class.java).artWorks(interval).let {
+        session.getMapper(ArtWorkInfoMapper::class.java).artworks(interval).let {
             println(it.size)
         }
         session.getMapper(ArtWorkInfoMapper::class.java).findByTag("淫纹").let {

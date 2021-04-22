@@ -2,7 +2,6 @@ package xyz.cssxsh.pixiv.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.time.LocalDateTime
 
 @Serializable
 data class ArtWorkInfo(
@@ -21,7 +20,7 @@ data class ArtWorkInfo(
     @SerialName("sanity_level")
     val sanityLevel: Int,
     @SerialName("type")
-    val type: String,
+    val type: Int,
     @SerialName("width")
     val width: Int,
     @SerialName("height")
@@ -32,8 +31,10 @@ data class ArtWorkInfo(
     val totalComments: Long,
     @SerialName("total_view")
     val totalView: Long,
-    @SerialName("is_r18")
-    val isR18: Boolean,
+    @SerialName("age")
+    val age: Int,
     @SerialName("is_ero")
-    val isEro: Boolean
+    val isEro: Boolean,
+    @SerialName("deleted")
+    val deleted: Boolean
 )
