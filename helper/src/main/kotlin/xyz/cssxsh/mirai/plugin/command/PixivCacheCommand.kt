@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.http.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -23,11 +22,7 @@ object PixivCacheCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private fun loadDayOfYears(year: Year, interval: Int = 5, offset: Long = 29) = buildList {
-        (1..year.length() step interval).forEach { dayOfYear ->
-            add(year.atDay(dayOfYear).plusDays(offset))
-        }
-    }
+    private val Year.days get() = (1..length()).map { index -> atDay(index) }
 
     @SubCommand
     @Description("缓存关注推送")
@@ -41,10 +36,10 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("以年为界限缓存月榜作品")
-    suspend fun CommandSenderOnMessage<*>.year(year: Year) = getHelper().run {
-        loadDayOfYears(year).forEach { date ->
-            addCacheJob(name = "YEAR[${date.year}]-MONTH($date)", reply = false) {
-                getRank(mode = RankMode.MONTH, date = date, limit = 90).types(WorkContentType.ILLUST).notCached()
+    suspend fun CommandSenderOnMessage<*>.year(year: Year, limit: LocalDate = LocalDate.now()) = getHelper().run {
+        year.days.filter { it <= limit }.forEach { date ->
+            addCacheJob(name = "YEAR[${year.value}]-MONTH($date)", reply = false) {
+                getRank(mode = RankMode.MONTH, date = date).types(WorkContentType.ILLUST).notCached()
             }
         }
     }
