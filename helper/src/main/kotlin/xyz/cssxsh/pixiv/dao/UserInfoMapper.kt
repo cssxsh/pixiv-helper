@@ -4,7 +4,7 @@ import xyz.cssxsh.pixiv.model.UserBaseInfo
 
 interface UserInfoMapper {
     fun findByUid(uid: Long): UserBaseInfo?
-    fun findByName(name: String): UserBaseInfo?
+    fun findByName(name: String): List<UserBaseInfo>
     fun replaceUser(info: UserBaseInfo): Boolean
     fun replaceUsers(list: List<UserBaseInfo>): Boolean
     fun updateUser(info: UserBaseInfo): Boolean

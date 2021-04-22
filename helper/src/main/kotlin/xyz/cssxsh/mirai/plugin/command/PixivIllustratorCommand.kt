@@ -41,18 +41,16 @@ object PixivIllustratorCommand : CompositeCommand(
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.name(name: String) = getHelper().runCatching {
         useMappers { mappers ->
-            mappers.statistic.alias().find { it.alias == name }?.uid ?: mappers.user.findByName(name)?.uid
-        }.let {
-            requireNotNull(it) { "找不到别名'${name}'" }
-        }.let { uid ->
+            mappers.statistic.alias().find { it.alias == name }?.uid ?: mappers.user.findByName(name).randomOrNull()?.uid
+        }.let { requireNotNull(it) { "找不到别名'${name}'" } }.let { uid ->
             useMappers { it.artwork.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
-            }.random().let { info ->
-                buildMessageByIllust(
-                    pid = info.pid,
-                    flush = false
-                )
-            }
+            }.random()
+        }.let { info ->
+            buildMessageByIllust(
+                pid = info.pid,
+                flush = false
+            )
         }
     }.onSuccess { list ->
         list.forEach { quoteReply(it) }
