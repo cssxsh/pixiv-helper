@@ -26,7 +26,7 @@ internal fun Flow<List<IllustInfo>>.eros() = map { list ->
     list.filter { it.isEro() }
 }
 
-internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate?, limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             illustRanking(mode = mode, date = date, offset = offset).illusts

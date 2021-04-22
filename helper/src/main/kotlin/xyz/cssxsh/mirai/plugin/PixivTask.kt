@@ -228,7 +228,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     }
     is TimerTask.Rank -> {
         info.contact.getHelper().subscribe(name) {
-            getRank(mode = info.mode, date = null, limit = 180L).types(WorkContentType.ILLUST)
+            getRank(mode = info.mode, limit = 180L).types(WorkContentType.ILLUST)
         }
     }
     is TimerTask.Follow -> {
