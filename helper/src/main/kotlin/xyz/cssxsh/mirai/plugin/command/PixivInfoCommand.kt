@@ -28,16 +28,26 @@ object PixivInfoCommand : CompositeCommand(
         quoteReply(it.toString())
     }.isSuccess
 
+    private fun User.getStatistic() = buildString {
+        useMappers {
+            appendLine("用户: $nameCardOrNick")
+            appendLine("使用色图指令次数: ${it.statistic.senderEroInfos(id).size}")
+            appendLine("使用标签指令次数: ${it.statistic.senderTagInfos(id).size}")
+        }
+    }
+
+    private fun Group.getStatistic() = buildString {
+        useMappers {
+            appendLine("群组: $name")
+            appendLine("使用色图指令次数: ${it.statistic.groupEroInfos(id).size}")
+            appendLine("使用标签指令次数: ${it.statistic.groupTagInfos(id).size}")
+        }
+    }
+
     @SubCommand
     @Description("获取用户信息")
     suspend fun CommandSenderOnMessage<*>.user(target: User) = runCatching {
-        buildString {
-            useMappers {
-                appendLine("用户: $target")
-                appendLine("使用色图指令次数: ${it.statistic.senderEroInfos(target.id)}")
-                appendLine("使用标签指令次数: ${it.statistic.senderTagInfos(target.id)}")
-            }
-        }
+        target.getStatistic()
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
@@ -47,13 +57,7 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取群组信息")
     suspend fun CommandSenderOnMessage<*>.group(target: Group) = runCatching {
-        buildString {
-            useMappers {
-                appendLine("用户: $target")
-                appendLine("使用色图指令次数: ${it.statistic.groupEroInfos(target.id)}")
-                appendLine("使用标签指令次数: ${it.statistic.groupTagInfos(target.id)}")
-            }
-        }
+        target.getStatistic()
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
@@ -63,24 +67,10 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取当前统计信息")
     suspend fun CommandSenderOnMessage<*>.statistic() = runCatching {
-        buildString {
-            useMappers {
-                when(subject) {
-                    is Group -> {
-                        appendLine("群: $subject")
-                        appendLine("使用色图指令次数: ${it.statistic.groupEroInfos(subject!!.id)}")
-                        appendLine("使用标签指令次数: ${it.statistic.groupTagInfos(subject!!.id)}")
-                    }
-                    is User -> {
-                        appendLine("用户: $subject")
-                        appendLine("使用色图指令次数: ${it.statistic.senderEroInfos(subject!!.id)}")
-                        appendLine("使用标签指令次数: ${it.statistic.senderTagInfos(subject!!.id)}")
-                    }
-                    else -> {
-                        appendLine("未知联系人: ${subject}")
-                    }
-                }
-            }
+        when(subject) {
+            is Group -> (subject as Group).getStatistic()
+            is User -> (subject as User).getStatistic()
+            else -> "未知联系人: $subject"
         }
     }.onSuccess {
         quoteReply(it)
