@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import xyz.cssxsh.mirai.plugin.*
@@ -54,6 +53,10 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置定时备份任务")
-    fun CommandSender.backup(duration: Int = TASK_DURATION) = PixivHelperScheduler
-        .setTimerTask(name = "Backup", info = TimerTask.Backup(interval = duration.hours.toLongMilliseconds()))
+    fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = getHelper().run {
+        PixivHelperScheduler.setTimerTask(
+            name = "Backup",
+            info = TimerTask.Backup(interval = duration.hours.toLongMilliseconds(), contact = getContactInfo())
+        )
+    }
 }

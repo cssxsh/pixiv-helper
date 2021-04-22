@@ -13,6 +13,8 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toMessageChain
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
+import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -70,17 +72,20 @@ internal fun PixivHelper.getContactInfo(): ContactInfo = when (contact) {
     else -> throw IllegalArgumentException("未知类型联系人")
 }
 
-internal fun ContactInfo.getHelper() = Bot.getInstance(bot).let { bot ->
+internal fun ContactInfo.getContact() = Bot.getInstance(bot).let { bot ->
     when (type) {
         ContactType.GROUP -> bot.getGroupOrFail(id)
         ContactType.USER -> bot.getFriend(id) ?: bot.getStrangerOrFail(id)
     }
-}.let { PixivHelperManager[it] }
+}
+
+internal fun ContactInfo.getHelper() = PixivHelperManager[getContact()]
 
 @Serializable
 sealed class TimerTask {
     abstract var last: OffsetDateTime
     abstract val interval: Long
+    abstract val contact: ContactInfo
 
     @Serializer(OffsetDateTime::class)
     object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
@@ -107,7 +112,7 @@ sealed class TimerTask {
         @SerialName("uid")
         val uid: Long,
         @SerialName("contact")
-        val contact: ContactInfo,
+        override val contact: ContactInfo,
     ) : TimerTask()
 
     @Serializable
@@ -118,10 +123,12 @@ sealed class TimerTask {
         @SerialName("mode")
         val mode: RankMode,
         @SerialName("contact")
-        val contact: ContactInfo,
+        override val contact: ContactInfo,
     ) : TimerTask() {
-        override val interval: Long get() =
-            OffsetDateTime.now().let { it.toNextRank().toEpochSecond() - it.toEpochSecond() }.seconds.toLongMilliseconds()
+        override val interval: Long
+            get() =
+                OffsetDateTime.now()
+                    .let { it.toNextRank().toEpochSecond() - it.toEpochSecond() }.seconds.toLongMilliseconds()
     }
 
     @Serializable
@@ -132,7 +139,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("contact")
-        val contact: ContactInfo,
+        override val contact: ContactInfo,
     ) : TimerTask()
 
     @Serializable
@@ -143,7 +150,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("contact")
-        val contact: ContactInfo,
+        override val contact: ContactInfo,
     ) : TimerTask()
 
     @Serializable
@@ -153,6 +160,8 @@ sealed class TimerTask {
         override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         override val interval: Long,
+        @SerialName("contact")
+        override val contact: ContactInfo,
     ) : TimerTask()
 }
 
@@ -173,11 +182,12 @@ internal class TaskLastDelegate(val name: String) : ReadWriteProperty<Nothing?, 
         }
     }
 
-    override fun getValue(thisRef: Nothing?, property: KProperty<*>): OffsetDateTime = PixivTaskData.tasks.getValue(name).last
+    override fun getValue(thisRef: Nothing?, property: KProperty<*>): OffsetDateTime =
+        PixivTaskData.tasks.getValue(name).last
 }
 
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    var last : OffsetDateTime by TaskLastDelegate(name)
+    var last: OffsetDateTime by TaskLastDelegate(name)
     block().also {
         addCacheJob(name = "TimerTask(${name})", reply = false) { it }
     }.types(WorkContentType.ILLUST).toList().flatten().toSet().sortedBy { it.createAt }.filter {
@@ -242,13 +252,27 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
         }
     }
     is TimerTask.Backup -> {
+        val contact = info.contact.getContact()
         PixivZipper.compressData(list = getBackupList()).forEach { file ->
-            runCatching {
-                BaiduNetDiskUpdater.uploadFile(file)
-            }.onSuccess { info ->
-                logger.info { "[${file}]上传成功: $info" }
-            }.onFailure {
-                logger.warning({ "[${file}]上传失败" }, it)
+            if (contact is Group) {
+                contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+                runCatching {
+                    contact.sendFile(path = file.name, file = file)
+                }.onFailure {
+                    contact.sendMessage("上传失败: ${it.message}")
+                }
+            } else {
+                contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                runCatching {
+                    BaiduNetDiskUpdater.uploadFile(file)
+                }.onSuccess {
+                    val code = file.getRapidUploadInfo().format()
+                    logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
+                    contact.sendMessage("[${file.name}]上传成功: $code")
+                }.onFailure {
+                    logger.warning({ "[${file.name}]上传失败" }, it)
+                    contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+                }
             }
         }
     }

@@ -8,13 +8,14 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
 import net.mamoe.mirai.message.data.buildMessageChain
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.ExternalResource.Companion.uploadTo
+import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
+import java.io.File
 
 @Suppress("unused")
 object PixivBackupCommand : CompositeCommand(
@@ -27,47 +28,65 @@ object PixivBackupCommand : CompositeCommand(
 
     private var panJob: Job? = null
 
-    @SubCommand
-    @Description("备份指定用户的作品")
-    fun CommandSender.user(uid: Long) {
+    private fun CommandSender.compress(block: PixivZipper.() -> List<File>) {
         check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
         compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
-                sendMessage("${it.name} 压缩完毕")
-            }
-        }
-    }
-
-    @SubCommand
-    @Description("备份已设定别名用户的作品")
-    fun CommandSender.alias() {
-        check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
-        compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            useMappers { it.statistic.alias() }.map { it.uid }.toSet().forEach { uid ->
-                PixivZipper.compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
-                    sendMessage("${it.name} 压缩完毕")
+            PixivZipper.block().forEach { file ->
+                if (this@compress is MemberCommandSenderOnMessage) {
+                    sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+                    runCatching {
+                        group.sendFile(path = file.name, file = file)
+                    }.onFailure {
+                        sendMessage("上传失败: ${it.message}")
+                    }
+                } else {
+                    sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                    runCatching {
+                        BaiduNetDiskUpdater.uploadFile(file)
+                    }.onSuccess {
+                        val code = file.getRapidUploadInfo().format()
+                        logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
+                        sendMessage("[${file.name}]上传成功: $code")
+                    }.onFailure {
+                        logger.warning({ "[${file.name}]上传失败" }, it)
+                        sendMessage("[${file.name}]上传失败, ${it.message}")
+                    }
                 }
             }
         }
     }
 
-    @SubCommand
-    @Description("备份指定标签的作品")
-    fun CommandSender.tag(tag: String) {
-        check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
-        compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            TODO(tag)
+    private fun CommandSender.pan(block: suspend BaiduNetDiskUpdater.() -> Unit) {
+        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
+        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
+            BaiduNetDiskUpdater.block()
         }
     }
 
     @SubCommand
-    @Description("备份插件数据")
-    fun CommandSender.data() {
-        check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
-        compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            PixivZipper.compressData(list = getBackupList())
-            sendMessage("数据备份 压缩完毕")
+    @Description("备份指定用户的作品")
+    fun CommandSender.user(uid: Long) = compress {
+        compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let(::listOf)
+    }
+
+    @SubCommand
+    @Description("备份已设定别名用户的作品")
+    fun CommandSender.alias() = compress {
+        useMappers { it.statistic.alias() }.map { it.uid }.toSet().map { uid ->
+            compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
         }
+    }
+
+    @SubCommand
+    @Description("备份指定标签的作品")
+    fun CommandSender.tag(tag: String) = compress {
+        compressArtWorks(list = useMappers { it.artwork.findByTag(tag) }, basename = "TAG[${tag}]").let(::listOf)
+    }
+
+    @SubCommand
+    @Description("备份插件数据")
+    fun CommandSender.data() = compress {
+        compressData(list = getBackupList())
     }
 
     @SubCommand
@@ -88,45 +107,42 @@ object PixivBackupCommand : CompositeCommand(
         }.let {
             requireNotNull(it) { "文件 [${name}] 不存在" }
         }.let { file ->
-            sendMessage(file.uploadTo(fromEvent.group, file.name))
+            runCatching {
+                group.sendFile(path = file.name, file = file)
+            }.onFailure {
+                sendMessage("上传失败: ${it.message}")
+            }
         }
     }
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(file: String) {
-        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
-        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            val source = PixivHelperSettings.backupFolder.resolve(file)
-            check(source.isFile) { "[${file}]不是文件或不存在" }
-            val code = source.getRapidUploadInfo().format()
-            runCatching {
-                BaiduNetDiskUpdater.uploadFile(file = source)
-            }.onSuccess { info ->
-                logger.info { "[${file}]($code)上传成功: $info" }
-                sendMessage("[${file}]($code)上传成功: $info")
-            }.onFailure {
-                logger.warning({ "[${file}]上传失败" }, it)
-                sendMessage("[${file}]上传失败")
-            }
+    fun CommandSender.upload(file: String) = pan {
+        val source = PixivHelperSettings.backupFolder.resolve(file)
+        val code = source.getRapidUploadInfo().format()
+        runCatching {
+            uploadFile(file = source)
+        }.onSuccess { info ->
+            logger.info { "[${file}]($code)上传成功: $info" }
+            sendMessage("[${file}]($code)上传成功: $info")
+        }.onFailure {
+            logger.warning({ "[${file}]上传失败" }, it)
+            sendMessage("[${file}]上传失败")
         }
     }
 
     @SubCommand
     @Description("百度云用户认证")
-    fun CommandSender.auth(code: String) {
-        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
-        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
-            runCatching {
-                BaiduNetDiskUpdater.getAuthorizeToken(code = code)
-            }.onFailure {
-                logger.warning({ "认证失败, code: $code" }, it)
-                sendMessage("认证失败, code: $code")
-            }.onSuccess { token ->
-                BaiduNetDiskUpdater.saveToken(token = token)
-                logger.info { "认证成功, $token" }
-                sendMessage("认证成功, $token")
-            }
+    fun CommandSender.auth(code: String) = pan {
+        runCatching {
+            getAuthorizeToken(code = code)
+        }.onFailure {
+            logger.warning({ "认证失败, code: $code" }, it)
+            sendMessage("认证失败, code: $code")
+        }.onSuccess { token ->
+            saveToken(token = token)
+            logger.info { "认证成功, $token" }
+            sendMessage("认证成功, $token")
         }
     }
 }
