@@ -46,7 +46,7 @@ object PixivHelperListener {
                     synchronized(image) {
                         images[source] = image
                         images.keys.toList().forEach {
-                            if (it.inDuration(SEARCH_DURATION).not()) {
+                            if (it.inDuration(SEARCH_EXPIRE).not()) {
                                 // 超时删除
                                 images.remove(it)
                             }

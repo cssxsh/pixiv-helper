@@ -57,7 +57,7 @@ object PixivEroCommand : SimpleCommand(
         } else {
             minSanityLevel = 0
         }
-        if ("更好" !in fromEvent.message.contentToString() && System.currentTimeMillis() - last > ERO_UP_DURATION.toLongMilliseconds()) {
+        if ("更好" !in fromEvent.message.contentToString() && System.currentTimeMillis() - last > ERO_UP_EXPIRE.toLongMilliseconds()) {
             minBookmarks = 0
         }
         getEroArtWorkInfos().random().also { info ->

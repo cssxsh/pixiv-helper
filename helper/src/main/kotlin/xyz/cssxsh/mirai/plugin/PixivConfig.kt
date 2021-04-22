@@ -22,6 +22,7 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
+import kotlin.math.sqrt
 import kotlin.time.*
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
@@ -158,16 +159,16 @@ internal fun PixivHelperSettings.init() {
 
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
-internal const val MIN_SIMILARITY = 0.70
+internal val MIN_SIMILARITY = (sqrt(5.0) - 1) / 2
 
-internal val SEARCH_DURATION = (1).hours
+internal val SEARCH_EXPIRE = (1).hours
 
 internal const val ERO_INTERVAL = 16
 
-internal val ERO_UP_DURATION = (10).seconds
+internal val ERO_UP_EXPIRE = (10).seconds
 
-internal const val ERO_BOOKMARKS = 10_000L
+internal const val ERO_BOOKMARKS = 1L shl 12
 
-internal const val ERO_PAGE_COUNT = 5
+internal const val ERO_PAGE_COUNT = 3
 
 internal const val LOAD_LIMIT = 3_000L
