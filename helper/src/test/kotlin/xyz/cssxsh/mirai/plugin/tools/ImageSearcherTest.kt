@@ -11,9 +11,11 @@ internal class ImageSearcherTest {
 
     private val picFile = "./test/temp.jpg"
 
+    private val ignore: suspend (Throwable) -> Boolean = { false }
+
     @Test
     fun getSearchResults(): Unit = runBlocking {
-        ImageSearcher.getSearchResults(url = picUrl).also {
+        ImageSearcher.getSearchResults(ignore = ignore, url = picUrl).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it.toString())
@@ -22,7 +24,18 @@ internal class ImageSearcherTest {
 
     @Test
     fun postSearchResults(): Unit = runBlocking {
-        ImageSearcher.postSearchResults(file = File(picFile).readBytes()).also {
+        ImageSearcher.postSearchResults(ignore = ignore, file = File(picFile).readBytes()).also {
+            assert(it.isEmpty().not()) { "搜索结果为空" }
+        }.forEach {
+            println(it)
+        }
+    }
+
+    private val twimg = "https://pbs.twimg.com/media/EaIpDtCVcAA85Hi?format=jpg&name=orig"
+
+    @Test
+    fun getTwitterImage(): Unit = runBlocking {
+        ImageSearcher.getTwitterImage(ignore = ignore, url = twimg).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it)
