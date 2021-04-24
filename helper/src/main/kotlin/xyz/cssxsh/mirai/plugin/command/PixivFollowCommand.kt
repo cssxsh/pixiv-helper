@@ -9,7 +9,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.apps.*
 
 @Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
@@ -31,7 +31,7 @@ object PixivFollowCommand : CompositeCommand(
     private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
         (0 until maxNum step PAGE_SIZE).forEachIndexed { page, offset ->
             runCatching {
-                userFollowing(uid = uid, offset = offset).userPreviews.map { it.user.id }
+                userFollowing(uid = uid, offset = offset).previews.map { it.user.id }
             }.onSuccess {
                 if (it.isEmpty()) return@buildSet
                 addAll(it)

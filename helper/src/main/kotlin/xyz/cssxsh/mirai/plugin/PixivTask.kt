@@ -19,7 +19,7 @@ import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.data.apps.*
+import xyz.cssxsh.pixiv.apps.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter

@@ -14,7 +14,7 @@ import org.sqlite.SQLiteConfig
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.pixiv.client.PixivConfig
+import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.dao.*
 import java.io.EOFException
 import java.io.File
@@ -170,4 +170,4 @@ internal const val ERO_BOOKMARKS = 1L shl 12
 
 internal const val ERO_PAGE_COUNT = 3
 
-internal const val LOAD_LIMIT = 3_000L
+internal const val LOAD_LIMIT = 5_000L

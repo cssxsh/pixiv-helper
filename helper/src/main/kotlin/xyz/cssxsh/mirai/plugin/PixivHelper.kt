@@ -7,9 +7,8 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.GrantType
-import xyz.cssxsh.pixiv.client.*
-import xyz.cssxsh.pixiv.data.*
+import xyz.cssxsh.pixiv.*
+import xyz.cssxsh.pixiv.auth.*
 import java.time.OffsetDateTime
 
 /**
@@ -122,11 +121,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     var followJob: Job? = null
 
     override suspend fun auth(
-        grantType: GrantType,
+        grant: GrantType,
         config: PixivConfig,
         time: OffsetDateTime,
-    ) = super.auth(grantType = grantType, config = config, time = time).also {
-        when (grantType) {
+    ) = super.auth(grant = grant, config = config, time = time).also {
+        when (grant) {
             GrantType.PASSWORD -> logger.info {
                 "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: ${config.account}, ExpiresTime: $expiresTime"
             }

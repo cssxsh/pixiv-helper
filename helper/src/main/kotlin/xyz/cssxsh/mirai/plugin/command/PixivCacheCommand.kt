@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.time.*
 

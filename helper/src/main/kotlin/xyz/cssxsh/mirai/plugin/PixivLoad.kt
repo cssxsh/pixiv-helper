@@ -7,8 +7,7 @@ import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.api.apps.*
-import xyz.cssxsh.pixiv.data.apps.*
+import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.model.*
 import java.time.LocalDate
 
@@ -40,7 +39,7 @@ internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null
     }
 }
 
-internal suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             illustFollow(offset = offset).illusts
@@ -54,25 +53,25 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = LOAD_LIMIT) = fl
     }
 }
 
-internal suspend fun PixivHelper.getRecommended(limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
-            userRecommended(offset = offset).userPreviews.flatMap { it.illusts }
+            illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)
-            logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页{${it.size}}成功" }
+            logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐作品第${page}页{${it.size}}成功" }
         }.onFailure {
-            logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐用户预览第${page}页失败" }, it)
+            logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐作品第${page}页失败" }, it)
         }
     }
 }
 
-internal suspend fun PixivHelper.getBookmarks(uid: Long, limit: Long = LOAD_LIMIT) = flow {
-    (0 until limit step PAGE_SIZE).fold<Long, String?>(USER_BOOKMARKS_ILLUST) { url, _ ->
+internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
+    (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         runCatching {
             if (isActive.not() || url == null) return@flow
-            userBookmarksIllust(uid = uid, url = url)
+            userBookmarksIllust(uid = uid, tag = tag, url = url)
         }.onSuccess { (list, _) ->
             emit(list)
             logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
@@ -98,10 +97,10 @@ internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long?
 internal suspend fun PixivHelper.getUserIllusts(uid: Long, limit: Long? = null) =
     getUserIllusts(userDetail(uid = uid), limit)
 
-internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail) = flow {
-    (0 until detail.profile.totalFollowUsers step PAGE_SIZE).forEachIndexed { page, offset ->
+internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
+    (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
-            userFollowing(uid = detail.user.id, offset = offset).userPreviews
+            userFollowing(uid = detail.user.id, offset = offset).previews
         }.onSuccess {
             emit(it)
             logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${it.size}}成功" }
@@ -202,8 +201,7 @@ internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = f
     }
 }
 
-
-internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (isActive) runCatching {
             searchIllust(word = tag, offset = offset).illusts
@@ -217,10 +215,10 @@ internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = LOAD_LIMIT
     }
 }
 
-internal suspend fun PixivHelper.getRelated(pid: Long, illusts: List<Long>) = flow {
-    (0 until RELATED_OFFSET step PAGE_SIZE).forEachIndexed { page, offset ->
+internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: Long = RELATED_LIMIT) = flow {
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         runCatching {
-            illustRelated(pid = pid, seedIllustIds = illusts, offset = offset).illusts
+            illustRelated(pid = pid, seeds = seeds, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)

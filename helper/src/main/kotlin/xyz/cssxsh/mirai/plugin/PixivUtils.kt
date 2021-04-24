@@ -13,9 +13,8 @@ import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.api.apps.*
+import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.dao.*
-import xyz.cssxsh.pixiv.data.apps.*
 import xyz.cssxsh.pixiv.model.*
 import java.io.File
 import java.security.MessageDigest

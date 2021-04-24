@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.data.apps.*
+import xyz.cssxsh.pixiv.apps.*
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
