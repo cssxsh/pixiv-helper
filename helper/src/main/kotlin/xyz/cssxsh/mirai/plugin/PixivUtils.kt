@@ -11,7 +11,6 @@ import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*

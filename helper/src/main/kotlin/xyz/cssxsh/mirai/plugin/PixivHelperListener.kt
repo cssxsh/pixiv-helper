@@ -12,7 +12,6 @@ import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
 object PixivHelperListener {
 

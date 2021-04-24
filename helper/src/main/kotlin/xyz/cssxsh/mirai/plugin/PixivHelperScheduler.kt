@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import kotlin.time.*
 
 object PixivHelperScheduler {

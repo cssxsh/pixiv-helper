@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.http.*
 import net.mamoe.mirai.utils.warning
 import xyz.cssxsh.pixiv.tool.PixivDownloader
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import java.io.File
 
 object PixivHelperDownloader : PixivDownloader(

@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
 import java.time.OffsetDateTime
