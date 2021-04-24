@@ -1,4 +1,4 @@
-package xyz.cssxsh.pixiv.model
+package xyz.cssxsh.mirai.plugin.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

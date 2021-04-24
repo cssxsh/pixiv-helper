@@ -5,10 +5,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import xyz.cssxsh.pixiv.model.*
 import java.time.LocalDate
 
 internal fun Flow<List<IllustInfo>>.notCached() = map { list ->

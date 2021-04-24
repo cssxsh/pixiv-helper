@@ -6,7 +6,7 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.pixiv.model.AliasSetting
+import xyz.cssxsh.mirai.plugin.model.*
 
 @Suppress("unused")
 object PixivIllustratorCommand : CompositeCommand(

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="xyz.cssxsh.pixiv.dao.TagInfoMapper">
+<mapper namespace="xyz.cssxsh.mirai.plugin.dao.TagInfoMapper">
     <insert id="replaceTags">
         REPLACE INTO
         tags("pid", "name", "translated_name")
@@ -9,15 +9,13 @@
             (${item.pid}, #{item.name}, #{item.translatedName})
         </foreach>;
     </insert>
-    <select id="findByPid" resultType="xyz.cssxsh.pixiv.model.TagBaseInfo">
+    <select id="findByPid" resultType="xyz.cssxsh.mirai.plugin.model.TagBaseInfo">
         SELECT *
         FROM tags
         WHERE pid = ${pid};
     </select>
     <select id="findByName" resultType="java.lang.Long">
         SELECT DISTINCT pid
-        FROM tags
-        WHERE (name LIKE '%' || #{text} || '%' OR translated_name LIKE '%' || #{text} || '%')
-          AND NOT pid IN (SELECT pid FROM artworks WHERE deleted);
+        FROM tags;
     </select>
 </mapper>

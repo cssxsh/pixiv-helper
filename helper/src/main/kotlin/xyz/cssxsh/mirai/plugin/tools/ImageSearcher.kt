@@ -8,9 +8,8 @@ import io.ktor.utils.io.core.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.Jsoup
 import org.jsoup.select.Elements
-import xyz.cssxsh.pixiv.model.SearchResult
-import xyz.cssxsh.pixiv.tool.RubySSLSocketFactory
-import xyz.cssxsh.pixiv.tool.RubyX509TrustManager
+import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.tool.*
 import kotlin.io.use
 
 object ImageSearcher {

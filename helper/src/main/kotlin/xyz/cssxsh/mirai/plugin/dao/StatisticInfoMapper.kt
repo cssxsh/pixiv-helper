@@ -1,6 +1,6 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
-import xyz.cssxsh.pixiv.model.*
+import xyz.cssxsh.mirai.plugin.model.*
 
 interface StatisticInfoMapper {
     fun replaceEroInfo(info: StatisticEroInfo): Boolean

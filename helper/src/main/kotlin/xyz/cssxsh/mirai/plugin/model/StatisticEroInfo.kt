@@ -1,18 +1,16 @@
-package xyz.cssxsh.pixiv.model
+package xyz.cssxsh.mirai.plugin.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class StatisticTagInfo(
+data class StatisticEroInfo(
     @SerialName("sender")
     val sender: Long,
     @SerialName("group")
     val group: Long?,
     @SerialName("pid")
-    val pid: Long?,
-    @SerialName("tag")
-    val tag: String,
+    val pid: Long,
     @SerialName("timestamp")
     val timestamp: Long
 )

@@ -1,6 +1,6 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
-import xyz.cssxsh.pixiv.model.ArtWorkInfo
+import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
 
 interface ArtWorkInfoMapper {
     fun findByPid(pid: Long): ArtWorkInfo?

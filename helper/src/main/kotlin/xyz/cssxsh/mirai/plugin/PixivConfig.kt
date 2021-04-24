@@ -12,10 +12,9 @@ import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
 import org.sqlite.JDBC
 import org.sqlite.SQLiteConfig
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.pixiv.PixivConfig
-import xyz.cssxsh.pixiv.dao.*
 import java.io.EOFException
 import java.io.File
 import java.net.ConnectException

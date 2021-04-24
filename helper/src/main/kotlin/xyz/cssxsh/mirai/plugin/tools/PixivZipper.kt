@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.plugin.tools
 
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.pixiv.model.*
+import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.*
 import java.io.File
 import java.nio.file.attribute.FileTime
 import java.time.Instant

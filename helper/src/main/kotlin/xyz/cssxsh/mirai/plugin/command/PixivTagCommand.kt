@@ -9,7 +9,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.model.*
+import xyz.cssxsh.mirai.plugin.model.*
 
 @Suppress("unused")
 object PixivTagCommand : SimpleCommand(

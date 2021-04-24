@@ -8,7 +8,7 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.pixiv.model.*
+import xyz.cssxsh.mirai.plugin.model.*
 
 @Suppress("unused")
 object PixivEroCommand : SimpleCommand(

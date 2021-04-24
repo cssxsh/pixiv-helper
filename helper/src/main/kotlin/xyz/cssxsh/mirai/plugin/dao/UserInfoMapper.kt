@@ -1,6 +1,6 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
-import xyz.cssxsh.pixiv.model.UserBaseInfo
+import xyz.cssxsh.mirai.plugin.model.UserBaseInfo
 
 interface UserInfoMapper {
     fun findByUid(uid: Long): UserBaseInfo?

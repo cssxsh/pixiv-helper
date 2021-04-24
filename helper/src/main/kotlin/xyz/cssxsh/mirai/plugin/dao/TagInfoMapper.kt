@@ -1,9 +1,9 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
-import xyz.cssxsh.pixiv.model.TagBaseInfo
+import xyz.cssxsh.mirai.plugin.model.TagBaseInfo
 
 interface TagInfoMapper {
     fun findByPid(pid: Long): List<TagBaseInfo>
-    fun findByName(name: String): List<Long>
+    fun findByName(name: String): Set<Long>
     fun replaceTags(list: List<TagBaseInfo>): Boolean
 }

@@ -1,4 +1,4 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.*
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.pixiv.model.*
+import xyz.cssxsh.mirai.plugin.model.*
 import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

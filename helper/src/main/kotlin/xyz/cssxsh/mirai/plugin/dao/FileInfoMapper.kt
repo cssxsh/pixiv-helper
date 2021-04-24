@@ -1,6 +1,6 @@
-package xyz.cssxsh.pixiv.dao
+package xyz.cssxsh.mirai.plugin.dao
 
-import xyz.cssxsh.pixiv.model.FileInfo
+import xyz.cssxsh.mirai.plugin.model.FileInfo
 
 interface FileInfoMapper {
     fun replaceFiles(list: List<FileInfo>): Boolean
