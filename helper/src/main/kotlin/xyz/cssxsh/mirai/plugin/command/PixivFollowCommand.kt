@@ -7,7 +7,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.apps.*
 
@@ -20,25 +19,9 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("为当前助手关注指定用户")
-    suspend fun CommandSenderOnMessage<*>.user(uid: Long) = getHelper().runCatching {
-        userFollowAdd(uid = uid)
-    }.onSuccess {
-        logger.info { "添加关注(${uid})成功, $it" }
-    }.onFailure {
-        quoteReply("关注添加失败， ${it.message}")
-    }.isSuccess
-
-    private suspend fun PixivHelper.getFollowed(uid: Long, maxNum: Long = 10_000) = buildSet {
-        (0 until maxNum step PAGE_SIZE).forEachIndexed { page, offset ->
-            runCatching {
-                userFollowing(uid = uid, offset = offset).previews.map { it.user.id }
-            }.onSuccess {
-                if (it.isEmpty()) return@buildSet
-                addAll(it)
-                logger.verbose { "加载(${uid})关注用户预览第${page}页{${it.size}}成功" }
-            }.onFailure {
-                logger.warning({ "加载(${uid})关注用户预览第${page}页失败" }, it)
-            }
+    suspend fun CommandSenderOnMessage<*>.user(uid: Long) = withHelper {
+        userFollowAdd(uid = uid).let {
+            "添加关注(${uid})成功, $it"
         }
     }
 

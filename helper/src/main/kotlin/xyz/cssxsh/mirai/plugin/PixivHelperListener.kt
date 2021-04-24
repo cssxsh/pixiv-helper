@@ -76,26 +76,7 @@ object PixivHelperListener {
         listeners.clear()
     }
 
-    /**
-     * https://www.pixiv.net/artworks/79695391
-     * https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433
-     */
-    private val URL_ARTWORK_REGEX =
-        """(?<=(artworks/|illust_id=))\d+""".toRegex()
-
-    /**
-     * https://www.pixiv.net/users/902077
-     * http://www.pixiv.net/member.php?id=902077
-     */
-    private val URL_USER_REGEX =
-        """(?<=(users/|member\.php\?id=))\d+""".toRegex()
-
-    /**
-     * [https://www.pixiv.net/info.php?id=1554]
-     * https://pixiv.me/milkpanda-yellow
-     */
-    private val URL_PIXIV_ME_REGEX =
-        """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex()
+    private fun MessageEvent.getHelper() = PixivHelperManager[subject]
 
     private suspend fun MessageEvent.sendArtworkInfo(pid: Long): MessageReceipt<Contact> =
         subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid, flush = true).toMessageChain())

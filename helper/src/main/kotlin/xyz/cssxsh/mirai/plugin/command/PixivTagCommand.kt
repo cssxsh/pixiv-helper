@@ -8,7 +8,6 @@ import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.model.*
 
@@ -44,26 +43,22 @@ object PixivTagCommand : SimpleCommand(
     private const val TAG_NAME_MAX = 30
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0) = sendIllust {
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark).apply { logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" } }.let { list ->
             if (list.size < PixivHelperSettings.eroInterval) {
                 addCacheJob(name = "TAG(${tag})", reply = false) { searchTag(tag).eros() }
             }
-            list.random().let { artwork ->
+            list.randomOrNull()?.also { artwork ->
                 if (list.size < PixivHelperSettings.eroInterval) {
                     addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
                         getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros()
                     }
                 }
-                tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork.pid)
-                buildMessageByIllust(pid = artwork.pid, flush = false)
+            }.let { artwork ->
+                tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork?.pid)
+                requireNotNull(artwork) { "读取色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文" }
             }
         }
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        tagStatisticAdd(event = fromEvent, tag = tag, pid = null)
-        quoteReply("读取色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文 ${it.message}")
-    }.isSuccess
+    }
 }

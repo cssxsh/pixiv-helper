@@ -6,10 +6,8 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.pixiv.model.*
 
 @Suppress("unused")
@@ -50,33 +48,30 @@ object PixivEroCommand : SimpleCommand(
         ))
     }
 
+    private val expire get() = System.currentTimeMillis() - ERO_UP_EXPIRE.toLongMilliseconds()
+
     @Handler
-    suspend fun CommandSenderOnMessage<*>.ero() = histories.getOrPut(fromEvent.subject) { History() }.runCatching {
-        if ("更色" in fromEvent.message.contentToString()) {
-            minSanityLevel++
-        } else {
-            minSanityLevel = 0
-        }
-        if ("更好" !in fromEvent.message.contentToString() && System.currentTimeMillis() - last > ERO_UP_EXPIRE.toLongMilliseconds()) {
-            minBookmarks = 0
-        }
-        getEroArtWorkInfos().random().also { info ->
-            synchronized(this) {
-                minSanityLevel = info.sanityLevel
-                minBookmarks = info.totalBookmarks
-                caches.remove(info.pid)
-                last = System.currentTimeMillis()
-                eroStatisticAdd(fromEvent, info.pid)
+    suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {
+        histories.getOrPut(fromEvent.subject) { History() }.let { history ->
+            if ("更色" in fromEvent.message.contentToString()) {
+                history.minSanityLevel++
+            } else {
+                history.minSanityLevel = 0
             }
-        }.let { info ->
-            getHelper().buildMessageByIllust(pid = info.pid, flush = false)
+            if ("更好" !in fromEvent.message.contentToString() && history.last < expire) {
+                history.minBookmarks = 0
+            }
+            history.getEroArtWorkInfos().random().also { info ->
+                synchronized(history) {
+                    history.minSanityLevel = info.sanityLevel
+                    history.minBookmarks = info.totalBookmarks
+                    caches.remove(info.pid)
+                    history.last = System.currentTimeMillis()
+                    eroStatisticAdd(fromEvent, info.pid)
+                }
+            }
         }
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        logger.warning({ "读取色图失败" }, it)
-        quoteReply("读取色图失败， ${it.message}")
-    }.isSuccess
+    }
 }
 
 

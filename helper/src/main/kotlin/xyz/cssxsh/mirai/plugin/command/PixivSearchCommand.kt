@@ -9,7 +9,6 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
 @Suppress("unused")
@@ -39,9 +38,9 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = runCatching {
+    suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
-        useMappers { it.statistic.findSearchResult(image.getMd5Hex()) } ?: ImageSearcher.getSearchResults(
+        useMappers { it.statistic.findSearchResult(image.md5.hex()) } ?: ImageSearcher.getSearchResults(
             ignore = SearchApiIgnore,
             url = image.queryUrl().replace("http:", "https:")
         ).run {
@@ -51,15 +50,10 @@ object PixivSearchCommand : SimpleCommand(
             }
         }.also { result ->
             if (result.similarity > MIN_SIMILARITY) {
-                useMappers { it.statistic.replaceSearchResult(result.copy(md5 = image.getMd5Hex())) }
+                useMappers { it.statistic.replaceSearchResult(result.copy(md5 = image.md5.hex())) }
             } else {
                 findTwitterImage(url = image.queryUrl())
             }
-        }
-    }.onSuccess { result ->
-        quoteReply(result.getContent())
-    }.onFailure {
-        logger.verbose({ "搜索失败$image" }, it)
-        quoteReply("搜索失败， ${it.message}")
-    }.isSuccess
+        }.getContent()
+    }
 }

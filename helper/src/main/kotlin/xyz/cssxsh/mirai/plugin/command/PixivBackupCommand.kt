@@ -12,7 +12,6 @@ import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File

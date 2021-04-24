@@ -2,10 +2,7 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
-import xyz.cssxsh.pixiv.apps.*
 
 @Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
@@ -15,51 +12,27 @@ object PixivMethodCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private fun IllustData.getRandom() = illusts.writeToCache().random()
-
-    private fun IllustData.getFirst() = illusts.writeToCache().first()
-
     @SubCommand
     @Description("登录 通过 用户名，密码")
-    suspend fun CommandSenderOnMessage<*>.login(
-        username: String,
-        password: String,
-    ) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.login(username: String, password: String) = withHelper {
         login(username, password).let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        logger.warning({ "[$username]登陆失败" }, it)
-        quoteReply("[$username]登陆失败， ${it.message}")
-    }.isSuccess
+    }
 
     @SubCommand
     @Description("登录 通过 Token")
-    suspend fun CommandSenderOnMessage<*>.refresh(
-        token: String,
-    ) = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.refresh(token: String) = withHelper {
         refresh(token).let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        logger.warning({ "[$token]登陆失败" }, it)
-        quoteReply("[$token]登陆失败， ${it.message}")
-    }.isSuccess
+    }
 
     @SubCommand
     @Description("登录 通过 配置")
-    suspend fun CommandSenderOnMessage<*>.auto() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.auto() = withHelper {
         autoAuth().let {
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        logger.warning({ "自动登陆失败" }, it)
-        quoteReply("自动登陆失败， ${it.message}")
-    }.isSuccess
+    }
 }

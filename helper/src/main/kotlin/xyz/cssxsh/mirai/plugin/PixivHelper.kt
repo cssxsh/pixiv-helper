@@ -38,7 +38,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         runCatching {
             block.invoke(this@PixivHelper).onEach { list ->
                 if (write && list.isNotEmpty()) {
-                    list.writeToCache()
+                    list.write()
                 }
             }.collect { list ->
                 useMappers { mappers ->
@@ -46,7 +46,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                         mappers.artwork.contains(it.pid)
                     }
                 }.also { (success, failure) ->
-                    success?.updateToSQLite()
+                    success?.update()
                     failure?.sortedBy { it.pid }?.let {
                         this@transform.emit(DownloadTask(name = name, list = it, reply = reply))
                     }
@@ -84,7 +84,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
             }
         }.runCatching {
             awaitAll().groupBy({ it.second }, { it.first }).let { (success, _) ->
-                success?.saveToSQLite()
+                success?.save()
             }
         }
     }

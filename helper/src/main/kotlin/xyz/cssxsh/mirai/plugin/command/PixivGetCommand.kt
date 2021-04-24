@@ -4,9 +4,7 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.logger
 
 @Suppress("unused")
 object PixivGetCommand : SimpleCommand(
@@ -20,12 +18,7 @@ object PixivGetCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.get(pid: Long, flush: Boolean = false) = getHelper().runCatching {
-        buildMessageByIllust(pid = pid, flush = flush)
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
-    }.onFailure {
-        logger.warning({ "读取色图失败" }, it)
-        quoteReply("读取色图失败， ${it.message}")
-    }.isSuccess
+    suspend fun CommandSenderOnMessage<*>.get(pid: Long, flush: Boolean = false) = sendIllust(flush = flush) {
+        getIllustInfo(pid = pid, flush = flush)
+    }
 }

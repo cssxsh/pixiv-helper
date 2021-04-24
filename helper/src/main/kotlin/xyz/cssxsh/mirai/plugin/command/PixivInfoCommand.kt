@@ -14,19 +14,15 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取助手信息")
-    suspend fun CommandSenderOnMessage<*>.helper() = getHelper().runCatching {
+    suspend fun CommandSenderOnMessage<*>.helper() = withHelper {
         buildString {
-            appendLine("Id: ${getAuthInfo().user.uid}")
+            appendLine("Uid: ${getAuthInfo().user.uid}")
             appendLine("Name: ${getAuthInfo().user.name}")
             appendLine("Account: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
             appendLine("ExpiresTime: $expiresTime")
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 
     private fun User.getStatistic() = buildString {
         useMappers {
@@ -46,41 +42,29 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取用户信息")
-    suspend fun CommandSenderOnMessage<*>.user(target: User) = runCatching {
+    suspend fun CommandSenderOnMessage<*>.user(target: User) = withHelper {
         target.getStatistic()
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 
     @SubCommand
     @Description("获取群组信息")
-    suspend fun CommandSenderOnMessage<*>.group(target: Group) = runCatching {
+    suspend fun CommandSenderOnMessage<*>.group(target: Group) = withHelper {
         target.getStatistic()
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 
     @SubCommand
     @Description("获取当前统计信息")
-    suspend fun CommandSenderOnMessage<*>.statistic() = runCatching {
+    suspend fun CommandSenderOnMessage<*>.statistic() = withHelper {
         when(subject) {
             is Group -> (subject as Group).getStatistic()
             is User -> (subject as User).getStatistic()
             else -> "未知联系人: $subject"
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 
     @SubCommand
     @Description("获取缓存信息")
-    suspend fun CommandSenderOnMessage<*>.cache() = runCatching {
+    suspend fun CommandSenderOnMessage<*>.cache() = withHelper {
         buildString {
             useMappers {
                 appendLine("缓存数: ${it.artwork.count()}")
@@ -88,9 +72,5 @@ object PixivInfoCommand : CompositeCommand(
                 appendLine("R18色图数: ${it.artwork.r18Count()}")
             }
         }
-    }.onSuccess {
-        quoteReply(it)
-    }.onFailure {
-        quoteReply(it.toString())
-    }.isSuccess
+    }
 }

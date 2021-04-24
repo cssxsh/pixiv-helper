@@ -11,11 +11,11 @@ object PixivHelperDownloader : PixivDownloader(
     ignore = PixivDownloadIgnore
 ) {
 
-    suspend fun downloadImages(urls: List<String>, dir: File): List<Result<File>> = downloadImageUrls(
+    suspend fun downloadImages(urls: List<Url>, dir: File): List<Result<File>> = downloadImageUrls(
         urls = urls,
         block = { url, result ->
             result.mapCatching {
-                dir.resolve(Url(url).getFilename()).apply {
+                dir.resolve(url.filename).apply {
                     writeBytes(it)
                 }
             }.onFailure {
