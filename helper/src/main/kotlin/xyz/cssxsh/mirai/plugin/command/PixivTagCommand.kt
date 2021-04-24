@@ -35,24 +35,29 @@ object PixivTagCommand : SimpleCommand(
 
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
+    private fun tags(tag: String, bookmark: Long) = useMappers {
+        it.artwork.findByTag(tag, bookmark) + PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
+            it.artwork.findByTag(character, bookmark) intersect it.artwork.findByTag(works, bookmark)
+        }.orEmpty()
+    }
+
+    private const val TAG_NAME_MAX = 30
+
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String) = getHelper().runCatching {
-        check(tag.length <= 30) { "标签'$tag'过长" }
-        useMappers {
-            it.tag.findByName(tag) + PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-                it.tag.findByName(character) intersect it.tag.findByName(works)
-            }.orEmpty()
-        }.apply { logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" } }.let { list ->
-            if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "TAG(${tag})", reply = false) {
-                searchTag(tag).eros()
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0) = getHelper().runCatching {
+        check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
+        tags(tag = tag, bookmark = bookmark).apply { logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" } }.let { list ->
+            if (list.size < PixivHelperSettings.eroInterval) {
+                addCacheJob(name = "TAG(${tag})", reply = false) { searchTag(tag).eros() }
             }
-            list.random().also { pid ->
-                if (list.size < PixivHelperSettings.eroInterval) addCacheJob(name = "RELATED(${pid})", reply = false) {
-                    getRelated(pid, list).eros()
+            list.random().let { artwork ->
+                if (list.size < PixivHelperSettings.eroInterval) {
+                    addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
+                        getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros()
+                    }
                 }
-                tagStatisticAdd(event = fromEvent, tag = tag, pid = pid)
-            }.let { pid ->
-                buildMessageByIllust(pid = pid, flush = false)
+                tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork.pid)
+                buildMessageByIllust(pid = artwork.pid, flush = false)
             }
         }
     }.onSuccess { list ->

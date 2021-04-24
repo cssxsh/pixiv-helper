@@ -63,20 +63,18 @@
     </select>
     <select id="artworks" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
-        FROM artworks
-        WHERE NOT deleted
-          AND (pid BETWEEN #{first} AND #{last});
+        FROM not_deleted
+        WHERE pid BETWEEN #{first} AND #{last};
     </select>
     <select id="findByTag" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
-        FROM artworks
-        WHERE NOT deleted
-          AND artworks.pid IN (
+        FROM not_deleted
+        WHERE pid IN (
             SELECT tags.pid
             FROM tags
-            WHERE name LIKE '%' || #{tag} || '%'
-               OR translated_name LIKE '%' || #{tag} || '%'
-        );
+            WHERE name LIKE '%' || #{param1} || '%'
+               OR translated_name LIKE '%' || #{param1} || '%'
+        ) AND total_bookmarks >= ${param2};
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
@@ -85,16 +83,14 @@
     </select>
     <select id="eroCount" resultType="java.lang.Long">
         SELECT COUNT(*)
-        FROM artworks
-        WHERE NOT deleted
-          AND is_ero
+        FROM not_deleted
+        WHERE is_ero
           AND age = 0;
     </select>
     <select id="r18Count" resultType="java.lang.Long">
         SELECT COUNT(*)
-        FROM artworks
-        WHERE NOT deleted
-          AND is_ero
+        FROM not_deleted
+        WHERE is_ero
           AND NOT age = 0;
     </select>
     <update id="deleteByPid">
@@ -111,20 +107,18 @@
     </update>
     <select id="userArtWork" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
-        FROM artworks
-        WHERE NOT deleted
-          AND uid = ${uid};
+        FROM not_deleted
+        WHERE uid = ${uid};
     </select>
     <select id="userEroCount">
         SELECT uid, COUNT(*)
-        FROM artworks
+        FROM not_deleted
         GROUP BY uid;
     </select>
     <select id="eroRandom" resultType="xyz.cssxsh.pixiv.model.ArtWorkInfo">
         SELECT *
-        FROM artworks
-        WHERE NOT deleted
-          AND is_ero
+        FROM not_deleted
+        WHERE is_ero
           AND age = 0
         ORDER BY RANDOM()
         LIMIT ${limit};
