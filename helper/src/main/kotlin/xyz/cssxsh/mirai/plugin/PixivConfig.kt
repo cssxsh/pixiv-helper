@@ -170,3 +170,5 @@ internal const val ERO_BOOKMARKS = 1L shl 12
 internal const val ERO_PAGE_COUNT = 3
 
 internal const val LOAD_LIMIT = 5_000L
+
+internal const val TAG_TOP_LIMIT = 10L

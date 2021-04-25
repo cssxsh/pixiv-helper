@@ -51,4 +51,11 @@
         SELECT *
         FROM statistic_alias;
     </select>
+    <select id="top" resultType="kotlin.Pair">
+        SELECT tag, COUNT(*)
+        FROM statistic_tag
+        GROUP BY tag
+        ORDER BY count(*) DESC
+        LIMIT ${limit};
+    </select>
 </mapper>

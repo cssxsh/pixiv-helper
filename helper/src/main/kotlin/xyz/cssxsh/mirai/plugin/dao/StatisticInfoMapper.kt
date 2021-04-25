@@ -14,4 +14,5 @@ interface StatisticInfoMapper {
     fun noCacheSearchResult(): List<SearchResult>
     fun replaceAliasSetting(result: AliasSetting): Boolean
     fun alias(): List<AliasSetting>
+    fun top(limit: Long): List<Pair<String, Long>>
 }
