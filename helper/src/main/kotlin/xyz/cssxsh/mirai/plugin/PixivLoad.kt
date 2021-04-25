@@ -94,7 +94,7 @@ internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long?
 }
 
 internal suspend fun PixivHelper.getUserIllusts(uid: Long, limit: Long? = null) =
-    getUserIllusts(userDetail(uid = uid), limit)
+    getUserIllusts(detail = userDetail(uid = uid), limit = limit)
 
 internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
@@ -113,7 +113,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
     useMappers { mappers ->
         set.filterNot { mappers.artwork.contains(it) }
     }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        list.mapNotNull { pid ->
+        if (isActive) list.mapNotNull { pid ->
             runCatching {
                 getIllustInfo(pid = pid, flush = true).apply {
                     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
@@ -145,9 +145,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
                     }
                 }
             }.getOrNull()
-        }.let {
-            emit(it)
-        }
+        }.let { emit(it) }
     }
 }
 
@@ -155,7 +153,7 @@ internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = f
     useMappers { mappers ->
         results.filterNot { mappers.artwork.contains(it.pid) }
     }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        list.mapNotNull { result ->
+        if (isActive) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {
                     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
@@ -194,9 +192,7 @@ internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = f
                     }
                 }
             }.getOrNull()
-        }.let {
-            emit(it)
-        }
+        }.let { emit(it) }
     }
 }
 
@@ -216,7 +212,7 @@ internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = SEARCH_LIM
 
 internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: Long = RELATED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        runCatching {
+        if (isActive) runCatching {
             illustRelated(pid = pid, seeds = seeds, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
