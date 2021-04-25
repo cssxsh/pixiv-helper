@@ -42,7 +42,7 @@ object PixivHelperListener {
         "SearchImage" with subscribeMessages {
             always {
                 message.findIsInstance<Image>()?.let { image ->
-                    synchronized(image) {
+                    synchronized(images) {
                         images[source] = image
                         images.keys.toList().forEach {
                             if (it.inDuration(SEARCH_EXPIRE).not()) {
@@ -52,19 +52,7 @@ object PixivHelperListener {
                         }
                     }
                 }
-            }/*
-            has<Image> { image ->
-                println(image)
-                synchronized(image) {
-                    images[source] = image
-                    images.keys.toList().forEach {
-                        if (it.inDuration(SEARCH_DURATION).not()) {
-                            // 超时删除
-                            images.remove(it)
-                        }
-                    }
-                }
-            }*/
+            }
         }
     }
 
