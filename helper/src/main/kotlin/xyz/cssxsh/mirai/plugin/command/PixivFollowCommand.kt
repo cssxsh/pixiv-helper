@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
@@ -25,7 +27,7 @@ object PixivFollowCommand : CompositeCommand(
         }
     }
 
-    private fun PixivHelper.follow(block: suspend PixivHelper.() -> Set<Long>) {
+    private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(followJob?.isActive != true) { "正在关注中, ${followJob}..." }
         launch(Dispatchers.IO) {
             block().groupBy { uid ->
@@ -46,13 +48,19 @@ object PixivFollowCommand : CompositeCommand(
         }
     }
 
+    private suspend fun PixivHelper.getFollowed(uid: Long? = null): Set<Long> {
+        return getUserFollowingPreview(detail = userDetail(uid = uid ?: getAuthInfo().user.uid)).map { list ->
+            list.map { it.user.id }
+        }.toList().flatten().toSet()
+    }
+
     @SubCommand
     @Description("关注色图缓存中的较好画师")
-    suspend fun CommandSenderOnMessage<*>.good() = getHelper().follow {
-        val followed = getFollowed(uid = getAuthInfo().user.uid)
-        useMappers { it.artwork.userEroCount() }.filter { (_, count) ->
-            count > PixivHelperSettings.eroInterval
-        }.keys.let {
+    suspend fun CommandSenderOnMessage<*>.good() = follow {
+        val followed = getFollowed()
+        useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
+            if (count > PixivHelperSettings.eroInterval) uid else null
+        }.let {
             logger.verbose { "共统计了${it.size}名画师" }
             it - followed
         }.sorted().also {
@@ -65,7 +73,7 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("关注指定用户的关注")
-    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = getHelper().follow {
+    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = follow {
         getFollowed(uid = uid)
     }
 }

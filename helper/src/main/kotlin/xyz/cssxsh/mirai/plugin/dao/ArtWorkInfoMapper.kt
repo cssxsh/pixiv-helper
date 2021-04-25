@@ -13,7 +13,7 @@ interface ArtWorkInfoMapper {
     fun deleteByPid(pid: Long, comment: String)
     fun deleteByUid(uid: Long, comment: String)
     fun userArtWork(uid: Long): List<ArtWorkInfo>
-    fun userEroCount(): Map<Long, Long>
+    fun userEroCount(): List<Pair<Long, Long>>
     fun eroRandom(limit: Int): List<ArtWorkInfo>
     fun eroCount(): Long
     fun r18Count(): Long

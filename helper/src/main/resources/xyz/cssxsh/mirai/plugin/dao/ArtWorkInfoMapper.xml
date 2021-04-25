@@ -110,7 +110,7 @@
         FROM not_deleted
         WHERE uid = ${uid};
     </select>
-    <select id="userEroCount">
+    <select id="userEroCount" resultType="kotlin.Pair">
         SELECT uid, COUNT(*)
         FROM not_deleted
         GROUP BY uid;
