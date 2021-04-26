@@ -15,7 +15,7 @@ internal class ImageSearcherTest {
 
     @Test
     fun getSearchResults(): Unit = runBlocking {
-        ImageSearcher.getSearchResults(ignore = ignore, url = picUrl).also {
+        ImageSearcher.getSearchResults(url = picUrl).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it.toString())
@@ -24,7 +24,7 @@ internal class ImageSearcherTest {
 
     @Test
     fun postSearchResults(): Unit = runBlocking {
-        ImageSearcher.postSearchResults(ignore = ignore, file = File(picFile).readBytes()).also {
+        ImageSearcher.postSearchResults(file = File(picFile).readBytes()).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it)
@@ -35,7 +35,7 @@ internal class ImageSearcherTest {
 
     @Test
     fun getTwitterImage(): Unit = runBlocking {
-        ImageSearcher.getTwitterImage(ignore = ignore, url = twimg).also {
+        ImageSearcher.getTwitterImage(url = twimg).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it)

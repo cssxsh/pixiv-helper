@@ -10,11 +10,11 @@ data class SearchResult(
     @SerialName("similarity")
     val similarity: Double,
     @SerialName("pid")
-    val pid: Long,
+    override val pid: Long,
     @SerialName("title")
-    val title: String,
+    override val title: String,
     @SerialName("uid")
-    val uid: Long,
+    override val uid: Long,
     @SerialName("content")
-    val name: String
-)
+    override val name: String
+): SimpleArtworkInfo

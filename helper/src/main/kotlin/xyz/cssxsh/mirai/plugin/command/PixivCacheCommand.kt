@@ -18,8 +18,6 @@ object PixivCacheCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    private val Year.days get() = (1..length()).map { index -> atDay(index) }
-
     @SubCommand
     @Description("缓存关注推送")
     suspend fun CommandSenderOnMessage<*>.follow() = withHelper {
@@ -33,6 +31,8 @@ object PixivCacheCommand : CompositeCommand(
         addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})") { getRank(mode = mode, date = date) }
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
     }
+
+    private fun Year.days(step: Int = 5) = (1 .. length() step step).map { index -> atDay(index) }
 
     @SubCommand
     @Description("以年为界限缓存月榜作品")
@@ -48,6 +48,13 @@ object PixivCacheCommand : CompositeCommand(
         }.let {
             "任务YEAR[${year.value}]{${start}~${end}}已添加"
         }
+    }
+
+    @SubCommand
+    @Description("缓存NaviRank榜作品")
+    suspend fun CommandSenderOnMessage<*>.navirank(year: Year? = null) = withHelper {
+        addCacheJob(name = "NAVIRANK${year?.let { "[${it}]" } ?: ""}", reply = false) { getNaviRank(year = year) }
+        "任务NAVIRANK已添加"
     }
 
     @SubCommand
@@ -136,7 +143,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
         useMappers { it.statistic.noCacheSearchResult() }.also {
-            addCacheJob(name = "SEARCH") { getListIllusts(results = it) }
+            addCacheJob(name = "SEARCH") { getListIllusts(info = it) }
         }.let {
             "搜索结果有${it.size}个作品需要缓存"
         }

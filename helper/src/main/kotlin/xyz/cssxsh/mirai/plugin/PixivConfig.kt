@@ -25,6 +25,8 @@ import javax.net.ssl.SSLException
 import kotlin.math.sqrt
 import kotlin.time.*
 
+typealias Ignore = suspend (Throwable) -> Boolean
+
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
 private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
@@ -33,7 +35,7 @@ private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } 
 
 internal val PIXIV_RATE_LIMIT_DELAY = (3).minutes
 
-internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+internal val PixivApiIgnore: Ignore = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
@@ -62,7 +64,7 @@ internal val PixivApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
     }
 }
 
-internal val PixivDownloadIgnore: suspend (Throwable) -> Boolean = { throwable ->
+internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
@@ -84,17 +86,38 @@ internal val PixivDownloadIgnore: suspend (Throwable) -> Boolean = { throwable -
     }
 }
 
-internal val SearchApiIgnore: suspend (Throwable) -> Boolean = { throwable ->
+internal val SearchApiIgnore: Ignore = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
-        is ConnectException,
+        is SocketException,
         is SocketTimeoutException,
         is HttpRequestTimeoutException,
         is StreamResetException,
+        is NullPointerException,
         is UnknownHostException,
+        is ConnectionShutdownException,
         -> {
-            logger.warning { "SEARCH API错误, 已忽略: ${throwable.message}" }
+            logger.warning { "Search Api 错误, 已忽略: ${throwable.message}" }
+            true
+        }
+        else -> false
+    }
+}
+
+internal val NaviRankApiIgnore: Ignore = { throwable ->
+    when (throwable) {
+        is SSLException,
+        is EOFException,
+        is SocketException,
+        is SocketTimeoutException,
+        is HttpRequestTimeoutException,
+        is StreamResetException,
+        is NullPointerException,
+        is UnknownHostException,
+        is ConnectionShutdownException,
+        -> {
+            logger.warning { "NaviRank API错误, 已忽略: ${throwable.message}" }
             true
         }
         else -> false

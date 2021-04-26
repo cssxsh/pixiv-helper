@@ -4,15 +4,15 @@ import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.jsoup.Jsoup
-import org.jsoup.select.Elements
+import org.jsoup.nodes.Document
+import xyz.cssxsh.mirai.plugin.SearchApiIgnore
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.tool.*
-import kotlin.io.use
 
-object ImageSearcher {
+object ImageSearcher : HtmlParser(ignore = SearchApiIgnore) {
 
     private const val API = "https://saucenao.com/search.php"
 
@@ -22,36 +22,17 @@ object ImageSearcher {
 
     private const val GELBOORU_INDEX = "35"
 
-    data class TwitterImage(
-        val similarity: Double,
-        val tweet: String,
-        val image: String
-    )
-
-    private fun HttpClient() = HttpClient(OkHttp) { engine {
-        config {
-            sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
-            hostnameVerifier { _, _ -> true }
-        }
-    }}
-
-    private suspend fun <R> useHttpClient(
-        ignore: suspend (Throwable) -> Boolean,
-        block: suspend (HttpClient) -> R,
-    ): R = HttpClient().use { client ->
-        runCatching {
-            block(client)
-        }.getOrElse { throwable ->
-            if (ignore(throwable)) {
-                useHttpClient(ignore = ignore, block = block)
-            } else {
-                throw throwable
+    override fun client() = HttpClient(OkHttp) {
+        engine {
+            config {
+                sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
+                hostnameVerifier { _, _ -> true }
             }
         }
     }
 
-    private fun String.parseSearchResult(): List<SearchResult> {
-        return Jsoup.parse(this).select(".resulttablecontent").map { content ->
+    private val pixiv: (Document) ->  List<SearchResult> = {
+        it.select(".resulttablecontent").map { content ->
             SearchResult(
                 similarity = content.select(".resultsimilarityinfo")
                     .text().replace("%", "").toDouble() / 100,
@@ -67,39 +48,39 @@ object ImageSearcher {
         }
     }
 
-    suspend fun getSearchResults(ignore: suspend (Throwable) -> Boolean, url: String) = useHttpClient(ignore) { client ->
-        client.get<String>(API) {
-            parameter("db", PIXIV_INDEX)
-            parameter("url", url)
-        }
-    }.parseSearchResult()
+    suspend fun getSearchResults(url: String): List<SearchResult> = html(pixiv) {
+        url(API)
+        method = HttpMethod.Get
+        parameter("db", PIXIV_INDEX)
+        parameter("url", url)
+    }
 
-    suspend fun postSearchResults(ignore: suspend (Throwable) -> Boolean, file: ByteArray) = useHttpClient(ignore) { client ->
-        client.post<String>(API) {
-            body = MultiPartFormDataContent(formData {
-                append("database", PIXIV_INDEX)
-                append("file", "file.jpg") {
-                    writeFully(file)
-                }
-            })
-        }
-    }.parseSearchResult()
+    suspend fun postSearchResults(file: ByteArray): List<SearchResult> = html(pixiv) {
+        url(API)
+        method = HttpMethod.Post
+        body = MultiPartFormDataContent(formData {
+            append("database", PIXIV_INDEX)
+            append("file", "file.jpg") {
+                writeFully(file)
+            }
+        })
+    }
 
     private val MD5 = """[0-9a-f]{32}""".toRegex()
 
-    private fun Elements.getGelbooruImage() = MD5.find(html())!!.value.let {
-        "https://img1.gelbooru.com/images/${it.substring(0..1)}/${it.substring(2..3)}/${it}.jpg"
+    private val image: (String) -> String = { md5 ->
+        "https://img1.gelbooru.com/images/${md5.substring(0..1)}/${md5.substring(2..3)}/${md5}.jpg"
     }
 
-    private fun String.parseTwitterImage(): List<TwitterImage> {
-        return Jsoup.parse(this).select(".resulttable").mapNotNull { content ->
+    private val twitter: (Document) ->  List<TwitterImage> = {
+        it.select(".resulttable").mapNotNull { content ->
             if ("Twitter" in content.text()) {
                 TwitterImage(
                     similarity = content.select(".resulttablecontent .resultsimilarityinfo")
                         .text().replace("%", "").toDouble() / 100,
                     tweet = content.select(".resulttablecontent .resultcontent a")
                         .first().attr("href"),
-                    image = content.select(".resulttableimage").getGelbooruImage()
+                    image = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
                 )
             } else {
                 null
@@ -107,11 +88,11 @@ object ImageSearcher {
         }
     }
 
-    suspend fun getTwitterImage(ignore: suspend (Throwable) -> Boolean, url: String) = useHttpClient(ignore) { client ->
-        client.get<String>(API) {
-            parameter("url", url)
-            parameter("dbs[]", DANBOORU_INDEX)
-            parameter("dbs[]", GELBOORU_INDEX)
-        }
-    }.parseTwitterImage()
+    suspend fun getTwitterImage(url: String): List<TwitterImage> = html(twitter) {
+        url(API)
+        method = HttpMethod.Get
+        parameter("url", url)
+        parameter("dbs[]", DANBOORU_INDEX)
+        parameter("dbs[]", GELBOORU_INDEX)
+    }
 }

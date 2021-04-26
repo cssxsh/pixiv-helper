@@ -54,6 +54,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.register()
         PixivSettingCommand.register()
         PixivTagCommand.register()
+        PixivRankCommand.register()
         PixivTaskCommand.register()
 
         PixivHelperSettings.init()
@@ -80,6 +81,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivSearchCommand.unregister()
         PixivSettingCommand.unregister()
         PixivTagCommand.unregister()
+        PixivRankCommand.unregister()
         PixivTaskCommand.unregister()
 
         PixivHelperListener.stop()

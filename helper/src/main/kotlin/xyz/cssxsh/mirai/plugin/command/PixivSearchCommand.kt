@@ -27,7 +27,7 @@ object PixivSearchCommand : SimpleCommand(
     }) { "找不到图片" }.value
 
     private fun CommandSenderOnMessage<*>.findTwitterImage(url: String) = launch {
-        ImageSearcher.getTwitterImage(ignore = SearchApiIgnore, url = url).maxByOrNull { it.similarity }?.let {
+        ImageSearcher.getTwitterImage(url = url).maxByOrNull { it.similarity }?.let {
             quoteReply(buildMessageChain {
                 appendLine("推特图源")
                 appendLine("相似度: ${it.similarity}")
@@ -40,10 +40,9 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
-        useMappers { it.statistic.findSearchResult(image.md5.hex()) } ?: ImageSearcher.getSearchResults(
-            ignore = SearchApiIgnore,
-            url = image.queryUrl().replace("http:", "https:")
-        ).run {
+        useMappers {
+            it.statistic.findSearchResult(image.md5.hex())
+        } ?: ImageSearcher.getSearchResults(url = image.queryUrl()).run {
             requireNotNull(maxByOrNull { it.similarity }) {
                 findTwitterImage(url = image.queryUrl())
                 "没有PIXIV搜索结果"

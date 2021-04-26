@@ -6,10 +6,13 @@ import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.mirai.plugin.tools.NaviRank
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.time.LocalDate
+import java.time.Year
+import java.time.YearMonth
 
 internal fun Flow<List<IllustInfo>>.notCached() = map { list ->
     useMappers { mappers ->
@@ -165,13 +168,17 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
                     }
                 }
             }.getOrNull()
-        }.let { emit(it) }
+        }.let {
+            if (it.isNotEmpty()) {
+                emit(it)
+            }
+        }
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = flow {
+internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>) = flow {
     useMappers { mappers ->
-        results.filterNot { mappers.artwork.contains(it.pid) }
+        info.filterNot { mappers.artwork.contains(it.pid) }
     }.chunked(PAGE_SIZE.toInt()).forEach { list ->
         if (currentCoroutineContext().isActive) list.mapNotNull { result ->
             runCatching {
@@ -180,7 +187,7 @@ internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = f
                 }
             }.onFailure {
                 if (it.isNotCancellationException()) {
-                    logger.warning({ "加载搜索结果($result)失败" }, it)
+                    logger.warning({ "加载作品信息($result)失败" }, it)
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
                     useMappers { mappers ->
@@ -212,11 +219,15 @@ internal suspend fun PixivHelper.getListIllusts(results: List<SearchResult>) = f
                     }
                 }
             }.getOrNull()
-        }.let { emit(it) }
+        }.let {
+            if (it.isNotEmpty()) {
+                emit(it)
+            }
+        }
     }
 }
 
-internal suspend fun PixivHelper.getAliasUserIllusts(list: List<AliasSetting>) = flow {
+internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
     useMappers { it.statistic.alias() }.map { it.uid }.toSet().sorted().also { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
@@ -262,9 +273,33 @@ internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: 
     }
 }
 
+private fun months(year: Year?) = buildList {
+    var temp = year?.atMonth(1) ?: NaviRank.START
+    val limit = minOf(year?.atMonth(12 ) ?: YearMonth.now(), YearMonth.now())
+    while (temp <= limit) {
+        add(temp)
+        temp = temp.plusMonths(1)
+    }
+}
+
+internal suspend fun PixivHelper.getNaviRank(year: Year?) = flow {
+    months(year = year).forEach { month ->
+        if (currentCoroutineContext().isActive) NaviRank.runCatching {
+            (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten()).filter {
+                it.type == WorkContentType.ILLUST
+            }.toSet()
+        }.onSuccess {
+            logger.verbose { "加载 NaviRank[$month]{${it.size}}成功" }
+            emitAll(getListIllusts(info = it))
+        }.onFailure {
+            logger.warning({ "加载 NaviRank[$month]失败" }, it)
+        }
+    }
+}
+
 private fun File.listDirs(range: LongRange) = listFiles { file ->
     file.name.matches("""\d+[_]+""".toRegex()) && file.isDirectory && intersect(file.range(), range)
-}.orEmpty()
+}
 
 private fun File.range() = name.replace('_', '0').toLong()..name.replace('_', '9').toLong()
 
@@ -273,15 +308,17 @@ private fun intersect(from: LongRange, to: LongRange) = from.first <= to.last &&
 internal fun localCache(range: LongRange) = flow {
     PixivHelperSettings.cacheFolder.also {
         logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
-    }.listDirs(range).asFlow().map { first ->
-        first.listDirs(range).forEach { second ->
-            if (currentCoroutineContext().isActive) second.listDirs(range).mapNotNull { dir ->
+    }.listDirs(range).orEmpty().asFlow().map { first ->
+        first.listDirs(range).orEmpty().forEach { second ->
+            if (currentCoroutineContext().isActive) second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
                     useMappers { it.artwork.contains(dir.name.toLong()) } && file.canRead()
                 }?.readIllustInfo()
             }.let {
-                emit(it)
+                if (it.isNotEmpty()) {
+                    emit(it)
+                }
             }
         }
     }
