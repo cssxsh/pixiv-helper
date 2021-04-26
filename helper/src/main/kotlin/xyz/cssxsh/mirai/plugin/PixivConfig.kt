@@ -15,6 +15,7 @@ import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.pixiv.PixivConfig
+import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 import java.io.EOFException
 import java.io.File
 import java.net.ConnectException
@@ -170,5 +171,7 @@ internal const val ERO_BOOKMARKS = 1L shl 12
 internal const val ERO_PAGE_COUNT = 3
 
 internal const val LOAD_LIMIT = 5_000L
+
+internal const val TASK_LOAD = PAGE_SIZE * 5
 
 internal const val TAG_TOP_LIMIT = 10L

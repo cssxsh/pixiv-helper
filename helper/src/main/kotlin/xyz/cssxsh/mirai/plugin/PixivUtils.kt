@@ -83,13 +83,9 @@ internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
     ).let(block)
 }
 
-internal fun UserPreview.isLoaded() = useMappers { mappers ->
-    illusts.all { mappers.artwork.contains(it.pid) }
-}
+internal fun UserPreview.isLoaded() = useMappers { mappers -> illusts.all { mappers.artwork.contains(it.pid) } }
 
-internal fun UserDetail.count() = useMappers { mapper ->
-    mapper.artwork.countByUid(user.id)
-}
+internal fun UserInfo.count() = useMappers { mapper -> mapper.artwork.countByUid(id) }
 
 internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
 

@@ -232,22 +232,22 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
         info.contact.getHelper().subscribe(name) {
-            getUserIllusts(uid = info.uid, limit = 30L) // one page
+            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE)
         }
     }
     is TimerTask.Rank -> {
         info.contact.getHelper().subscribe(name) {
-            getRank(mode = info.mode, limit = 180L).types(WorkContentType.ILLUST)
+            getRank(mode = info.mode, limit = TASK_LOAD).types(WorkContentType.ILLUST)
         }
     }
     is TimerTask.Follow -> {
         info.contact.getHelper().subscribe(name) {
-            getFollowIllusts(limit = 90L)
+            getFollowIllusts(limit = TASK_LOAD)
         }
     }
     is TimerTask.Recommended -> {
         info.contact.getHelper().subscribe(name) {
-            getRecommended(limit = 90L).eros()
+            getRecommended(limit = TASK_LOAD).eros()
         }
     }
     is TimerTask.Backup -> {
