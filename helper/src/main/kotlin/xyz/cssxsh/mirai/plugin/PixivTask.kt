@@ -13,7 +13,8 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toMessageChain
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
+import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsFile
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -253,10 +254,10 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.Backup -> {
         val contact = info.contact.getContact()
         PixivZipper.compressData(list = getBackupList()).forEach { file ->
-            if (contact is Group) {
+            if (contact is FileSupported) {
                 contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    contact.sendFile(path = file.name, file = file)
+                    contact.sendMessage(file.toExternalResource().uploadAsFile(contact = contact, path = file.name))
                 }.onFailure {
                     contact.sendMessage("上传失败: ${it.message}")
                 }
@@ -267,7 +268,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
                 }.onSuccess {
                     val code = file.getRapidUploadInfo().format()
                     logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                    contact.sendMessage("[${file.name}]上传成功: $code")
+                    contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
                 }.onFailure {
                     logger.warning({ "[${file.name}]上传失败" }, it)
                     contact.sendMessage("[${file.name}]上传失败, ${it.message}")

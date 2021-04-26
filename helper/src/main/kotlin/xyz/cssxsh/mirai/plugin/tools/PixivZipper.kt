@@ -7,47 +7,41 @@ import xyz.cssxsh.mirai.plugin.model.*
 import java.io.File
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 object PixivZipper {
 
-    private val FULLWIDTH_REPLACE_CHARS = mapOf(
-        "\\" to "＼",
-        "/" to "／",
-        ":" to "：",
-        "*" to "＊",
-        "?" to "？",
-        "\"" to "＂",
-        "<" to "＜",
-        ">" to "＞",
-        "|" to "｜"
-    )
-
-    private val FULLWIDTH_REPLACE_REGEX = """[\\/:*?"<>|]""".toRegex()
-
     /**
      * 64MB
      */
     private const val BUFFER_SIZE = 64 * 1024 * 1024
 
-    private fun ArtWorkInfo.toSignText() = "(${pid})[${getFullWidthTitle()}]{${pageCount}}"
+    private val FULLWIDTH = mapOf(
+        '\\' to '＼',
+        '/' to '／',
+        ':' to '：',
+        '*' to '＊',
+        '?' to '？',
+        '\\' to '＂',
+        '<' to '＜',
+        '>' to '＞',
+        '|' to '｜'
+    )
 
-    private fun timestamp() =
-        OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
+    private fun ArtWorkInfo.getFullWidthTitle() = title.fold("") { acc, char -> acc + (FULLWIDTH[char] ?: char) }
 
-    private fun ArtWorkInfo.getFullWidthTitle() = title.replace(FULLWIDTH_REPLACE_REGEX) {
-        FULLWIDTH_REPLACE_CHARS.getOrDefault(it.value, "#")
+    private fun ArtWorkInfo.toSignText() = "(${pid})[${title}]{${pageCount}}"
+
+    private fun getZipFile(basename: String) = PixivHelperSettings.backupFolder.resolve("${basename}.zip").apply {
+        renameTo(parentFile.resolve("${basename}.old").apply { delete() })
+        createNewFile()
     }
 
-    private fun getZipFile(basename: String) =
-        PixivHelperSettings.backupFolder.resolve("${basename}(${timestamp()}).zip").apply { createNewFile() }
+    fun list() = PixivHelperSettings.backupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
-    fun listZipFiles() =
-        PixivHelperSettings.backupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
+    fun find(name: String): File = list().first { file -> file.name.startsWith(name) }
 
     fun compressArtWorks(list: List<ArtWorkInfo>, basename: String): File = getZipFile(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
@@ -69,8 +63,8 @@ object PixivZipper {
         logger.info { "[${zip.name}]压缩完毕！" }
     }
 
-    private fun ZipOutputStream.addFile(file: File, path: String = "", zip: File) {
-        putNextEntry(ZipEntry("${path}${file.name}").apply {
+    private fun ZipOutputStream.addFile(file: File, zip: File, root: String = file.parent) {
+        putNextEntry(ZipEntry(file.path.removePrefix(root).removePrefix(File.separator)).apply {
             time = file.lastModified()
         })
         write(file.readBytes())
@@ -79,12 +73,12 @@ object PixivZipper {
         System.gc()
     }
 
-    private fun ZipOutputStream.addDir(dir: File, path: String = "", zip: File) {
+    private fun ZipOutputStream.addDir(dir: File, zip: File, root: String = dir.parent) {
         dir.listFiles()?.forEach {
             if (it.isFile) {
-                addFile(file = it, path = "${path}${dir.name}/", zip = zip)
+                addFile(file = it, zip = zip, root = root)
             } else {
-                addDir(dir = it, path = "${path}${dir.name}/", zip = zip)
+                addDir(dir = it, zip = zip, root = root)
             }
         }
     }

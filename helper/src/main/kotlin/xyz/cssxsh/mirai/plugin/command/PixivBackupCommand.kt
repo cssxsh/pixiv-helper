@@ -6,13 +6,12 @@ import kotlinx.coroutines.async
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
-import net.mamoe.mirai.message.data.buildMessageChain
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
+import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsFile
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 
@@ -34,18 +33,18 @@ object PixivBackupCommand : CompositeCommand(
                 if (this@compress is MemberCommandSenderOnMessage) {
                     sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                     runCatching {
-                        group.sendFile(path = file.name, file = file)
+                        sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
                     }.onFailure {
-                        sendMessage("上传失败: ${it.message}")
+                        sendMessage("[${file.name}]上传失败: ${it.message}")
                     }
                 } else {
                     sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                    val code = file.getRapidUploadInfo()
                     runCatching {
                         BaiduNetDiskUpdater.uploadFile(file)
                     }.onSuccess {
-                        val code = file.getRapidUploadInfo().format()
-                        logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                        sendMessage("[${file.name}]上传成功: $code")
+                        logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
+                        sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
                     }.onFailure {
                         logger.warning({ "[${file.name}]上传失败" }, it)
                         sendMessage("[${file.name}]上传失败, ${it.message}")
@@ -65,7 +64,9 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定用户的作品")
     fun CommandSender.user(uid: Long) = compress {
-        compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let(::listOf)
+        compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
+            listOf(it)
+        }
     }
 
     @SubCommand
@@ -79,7 +80,9 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0) = compress {
-        compressArtWorks(list = useMappers { it.artwork.findByTag(tag, bookmark) }, basename = "TAG[${tag}]").let(::listOf)
+        compressArtWorks(list = useMappers { it.artwork.findByTag(tag, bookmark) }, basename = "TAG[${tag}]").let {
+            listOf(it)
+        }
     }
 
     @SubCommand
@@ -91,42 +94,36 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("列出备份目录")
     suspend fun CommandSender.list() {
-        sendMessage(buildMessageChain {
-            PixivZipper.listZipFiles().forEach { file ->
-                appendLine(file.name)
-            }
+        sendMessage(PixivZipper.list().joinToString("\n") { file ->
+            file.name
         })
     }
 
     @SubCommand
-    @Description("列出备份目录")
+    @Description("获取备份文件")
     suspend fun MemberCommandSenderOnMessage.get(name: String) {
-        PixivZipper.listZipFiles().find { file ->
-            file.name == name || file.nameWithoutExtension == name
-        }.let {
-            requireNotNull(it) { "文件 [${name}] 不存在" }
-        }.let { file ->
-            runCatching {
-                group.sendFile(path = file.name, file = file)
-            }.onFailure {
-                sendMessage("上传失败: ${it.message}")
+        runCatching {
+            PixivZipper.find(name = name).let { file ->
+                sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
             }
+        }.onFailure {
+            sendMessage("上传失败: ${it.message}")
         }
     }
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(file: String) = pan {
-        val source = PixivHelperSettings.backupFolder.resolve(file)
-        val code = source.getRapidUploadInfo().format()
+    fun CommandSender.upload(name: String) = pan {
+        val file = PixivZipper.find(name = name)
+        val code = file.getRapidUploadInfo().format()
         runCatching {
-            uploadFile(file = source)
+            uploadFile(file = file)
         }.onSuccess { info ->
-            logger.info { "[${file}]($code)上传成功: $info" }
-            sendMessage("[${file}]($code)上传成功: $info")
+            logger.info { "[${name}]($code)上传成功: $info" }
+            sendMessage("[${name}]($code)上传成功: $info")
         }.onFailure {
-            logger.warning({ "[${file}]上传失败" }, it)
-            sendMessage("[${file}]上传失败")
+            logger.warning({ "[${name}]上传失败" }, it)
+            sendMessage("[${name}]上传失败, ${it.message}")
         }
     }
 
@@ -134,14 +131,13 @@ object PixivBackupCommand : CompositeCommand(
     @Description("百度云用户认证")
     fun CommandSender.auth(code: String) = pan {
         runCatching {
-            getAuthorizeToken(code = code)
-        }.onFailure {
-            logger.warning({ "认证失败, code: $code" }, it)
-            sendMessage("认证失败, code: $code")
+            getAuthorizeToken(code = code).also { saveToken(token = it) }
         }.onSuccess { token ->
-            saveToken(token = token)
             logger.info { "认证成功, $token" }
             sendMessage("认证成功, $token")
+        }.onFailure {
+            logger.warning({ "认证失败, code: $code" }, it)
+            sendMessage("认证失败, ${it.message}, code: $code")
         }
     }
 }
