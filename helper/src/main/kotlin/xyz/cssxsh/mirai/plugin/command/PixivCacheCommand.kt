@@ -103,7 +103,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存搜索得到的tag")
     suspend fun CommandSenderOnMessage<*>.tag(tag: String) = withHelper {
-        addCacheJob(name = "TAG(${tag})") { searchTag(tag).eros() }
+        addCacheJob(name = "TAG(${tag})") { getSearchTag(tag = tag).eros() }
         "任务TAG(${tag})已添加"
     }
 

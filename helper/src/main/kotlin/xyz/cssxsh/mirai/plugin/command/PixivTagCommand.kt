@@ -46,7 +46,7 @@ object PixivTagCommand : SimpleCommand(
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark).apply { logger.verbose { "根据TAG: $tag 在缓存中找到${size}个作品" } }.let { list ->
             if (list.size < PixivHelperSettings.eroInterval) {
-                addCacheJob(name = "TAG(${tag})", reply = false) { searchTag(tag).eros() }
+                addCacheJob(name = "TAG(${tag})", reply = false) { getSearchTag(tag).eros() }
             }
             list.randomOrNull()?.also { artwork ->
                 if (list.size < PixivHelperSettings.eroInterval) {

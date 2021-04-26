@@ -245,7 +245,7 @@ internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetti
     }
 }
 
-internal suspend fun PixivHelper.searchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
+internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (currentCoroutineContext().isActive) runCatching {
             searchIllust(word = tag, offset = offset).illusts
