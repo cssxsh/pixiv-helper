@@ -6,7 +6,6 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 
-@Suppress("unused")
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点", "GKD",

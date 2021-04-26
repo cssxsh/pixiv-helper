@@ -6,7 +6,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import kotlin.time.*
 
-@Suppress("unused")
 object PixivTaskCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "task",

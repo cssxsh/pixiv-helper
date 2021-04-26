@@ -15,7 +15,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 
-@Suppress("unused")
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "backup",
@@ -54,7 +53,7 @@ object PixivBackupCommand : CompositeCommand(
         }
     }
 
-    private fun CommandSender.pan(block: suspend BaiduNetDiskUpdater.() -> Unit) {
+    private fun pan(block: suspend BaiduNetDiskUpdater.() -> Unit) {
         check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
         panJob = PixivHelperPlugin.async(Dispatchers.IO) {
             BaiduNetDiskUpdater.block()

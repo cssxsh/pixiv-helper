@@ -11,7 +11,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 
-@Suppress("unused")
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签",

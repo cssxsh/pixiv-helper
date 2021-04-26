@@ -4,7 +4,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import xyz.cssxsh.mirai.plugin.*
 
-@Suppress("unused")
 object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "pixiv",

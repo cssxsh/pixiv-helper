@@ -12,7 +12,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.apps.*
 
-@Suppress("unused")
 object PixivFollowCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "follow",

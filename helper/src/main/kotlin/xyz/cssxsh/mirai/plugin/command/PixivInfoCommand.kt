@@ -7,7 +7,6 @@ import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.buildMessageChain
 import xyz.cssxsh.mirai.plugin.*
 
-@Suppress("unused")
 object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",

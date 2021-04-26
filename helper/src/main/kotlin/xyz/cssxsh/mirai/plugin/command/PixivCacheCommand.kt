@@ -10,7 +10,6 @@ import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.time.*
 
-@Suppress("unused")
 object PixivCacheCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "cache",

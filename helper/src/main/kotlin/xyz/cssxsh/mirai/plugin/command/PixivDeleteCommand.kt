@@ -7,7 +7,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import java.time.OffsetDateTime
 
-@Suppress("unused")
 object PixivDeleteCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "delete",

@@ -10,7 +10,6 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 
-@Suppress("unused")
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "ero", "色图", "涩图",

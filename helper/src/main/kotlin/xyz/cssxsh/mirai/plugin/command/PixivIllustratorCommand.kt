@@ -8,7 +8,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 
-@Suppress("unused")
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "illustrator", "画师",

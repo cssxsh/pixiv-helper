@@ -11,7 +11,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
-@Suppress("unused")
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",

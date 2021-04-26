@@ -7,7 +7,6 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 
-@Suppress("unused")
 object PixivSettingCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "setting",
