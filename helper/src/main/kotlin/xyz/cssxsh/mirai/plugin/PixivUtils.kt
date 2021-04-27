@@ -11,7 +11,6 @@ import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.useSession
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
@@ -20,7 +19,7 @@ import java.security.MessageDigest
 import java.time.OffsetDateTime
 import kotlin.time.Duration
 
-internal val logger = PixivHelperPlugin.logger
+internal val logger get() = PixivHelperPlugin.logger
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -73,7 +72,7 @@ internal data class Mappers(
     val statistic: StatisticInfoMapper,
 )
 
-internal fun <T> useMappers(block: (Mappers) -> T) = useSession { session ->
+internal fun <T> useMappers(block: (Mappers) -> T) = PixivHelperPlugin.useSession { session ->
     Mappers(
         artwork = session.getMapper(ArtWorkInfoMapper::class.java),
         file = session.getMapper(FileInfoMapper::class.java),
@@ -155,42 +154,28 @@ internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, flush: Boolean)
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
-internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail, save: Boolean): MessageChain =
-    buildMessageChain {
-        appendLine("NAME: ${detail.user.name}")
-        appendLine("UID: ${detail.user.id}")
-        appendLine("ACCOUNT: ${detail.user.account}")
-        appendLine("TOTAL: ${detail.total()}")
-        appendLine("TWITTER: ${detail.profile.twitterAccount}")
-        runCatching {
-            // px16x16, px50x50, px170x170
-            Url(detail.user.profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE).let { image ->
-                PixivHelperSettings.profilesFolder.resolve(image.filename).apply {
-                    if (exists().not()) {
-                        parentFile.mkdirs()
-                        PixivHelperDownloader.downloadImages(urls = listOf(image), dir = parentFile).single()
-                            .getOrThrow()
-                    }
-                }
-            }.let { file ->
-                append(file.uploadAsImage(contact))
-            }
-        }.onFailure {
-            logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
-        }
-        if (save) {
-            detail.save()
-        }
+internal suspend fun PixivHelper.buildMessageByUser(user: UserDetail, save: Boolean): MessageChain = buildMessageChain {
+    appendLine("NAME: ${user.user.name}")
+    appendLine("UID: ${user.user.id}")
+    appendLine("ACCOUNT: ${user.user.account}")
+    appendLine("TOTAL: ${user.total()}")
+    appendLine("TWITTER: ${user.profile.twitterAccount}")
+    runCatching {
+        append(user.user.getProfileImage().uploadAsImage(contact))
+    }.onFailure {
+        logger.warning({ "User(${user.user.id}) ProfileImage 下载失败" }, it)
     }
+    if (save) {
+        user.save()
+    }
+}
 
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain = buildMessageByUser(
-    detail = userDetail(uid = uid),
+    user = userDetail(uid = uid),
     save = save
 )
 
-internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map {
-    it.copy(host = PixivMirrorHost)
-}
+internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
 internal fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount <= PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
@@ -220,16 +205,6 @@ internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     deleted = false
 )
 
-internal fun IllustInfo.getFileInfos() = getOriginImageUrls().mapIndexed { index, url ->
-    FileInfo(
-        pid = pid,
-        index = index,
-        md5 = PixivHelperSettings.imagesFolder(pid).resolve(url.filename).readBytes().md5().hex(),
-        url = url.toString(),
-        size = PixivHelperSettings.imagesFolder(pid).resolve(url.filename).length()
-    )
-}
-
 internal fun IllustInfo.getTagInfo() = tags.map {
     TagBaseInfo(
         pid = pid,
@@ -238,89 +213,57 @@ internal fun IllustInfo.getTagInfo() = tags.map {
     )
 }
 
-internal fun UserInfoMapper.addUserByIllustInfo(user: UserBaseInfo) =
+internal fun UserInfoMapper.add(user: UserBaseInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
-internal fun IllustInfo.save(): Unit = useSession { session ->
-    session.getMapper(UserInfoMapper::class.java).addUserByIllustInfo(user.toUserBaseInfo())
-    session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
-    session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
+internal fun IllustInfo.save(): Unit = useMappers { mappers ->
+    mappers.user.add(user.toUserBaseInfo())
+    mappers.artwork.replaceArtWork(getArtWorkInfo())
     if (tags.isNotEmpty()) {
-        session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
+        mappers.tag.replaceTags(getTagInfo())
     }
     logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
 }
 
-internal fun Collection<IllustInfo>.update(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.update(): Unit = useMappers { mappers ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
 
-    session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
-        this@update.forEach { info ->
-            mapper.updateArtWork(info.getArtWorkInfo())
+    forEach { info ->
+        mappers.artwork.updateArtWork(info.getArtWorkInfo())
+        if (info.tags.isNotEmpty()) {
+            mappers.tag.replaceTags(info.getTagInfo())
         }
     }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]基础信息已更新" }
-
-    session.getMapper(TagInfoMapper::class.java).let { mapper ->
-        this@update.filter { it.tags.isNotEmpty() }.forEach { info ->
-            mapper.replaceTags(info.getTagInfo())
-        }
-    }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已更新" }
 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
 }
 
-internal fun Collection<IllustInfo>.save(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将插入" }
 
-    session.getMapper(UserInfoMapper::class.java).let { mapper ->
-        this@save.forEach { info ->
-            mapper.addUserByIllustInfo(info.user.toUserBaseInfo())
+    forEach { info ->
+        mappers.user.add(info.user.toUserBaseInfo())
+        mappers.artwork.replaceArtWork(info.getArtWorkInfo())
+        if (info.tags.isNotEmpty()) {
+            mappers.tag.replaceTags(info.getTagInfo())
         }
     }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]用户信息已插入" }
-
-    session.getMapper(ArtWorkInfoMapper::class.java).let { mapper ->
-        this@save.forEach { info ->
-            mapper.replaceArtWork(info.getArtWorkInfo())
-        }
-    }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]基础信息已插入" }
-
-    session.getMapper(FileInfoMapper::class.java).let { mapper ->
-        this@save.forEach { info ->
-            mapper.replaceFiles(info.getFileInfos())
-        }
-    }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]文件信息已插入" }
-
-    session.getMapper(TagInfoMapper::class.java).let { mapper ->
-        this@save.forEach { info ->
-            if (info.tags.isNotEmpty()) {
-                mapper.replaceTags(info.getTagInfo())
-            }
-        }
-    }
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]标签信息已插入" }
 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
-internal fun UserDetail.save(): Unit = useMappers { mapper ->
-    mapper.user.addUserByIllustInfo(user.toUserBaseInfo())
-}
+internal fun UserDetail.save(): Unit = useMappers { mapper -> mapper.user.add(user.toUserBaseInfo()) }
 
-internal val Json_ = Json {
+private val Json_ = Json {
     prettyPrint = true
     ignoreUnknownKeys = true
     isLenient = true
     allowStructuredMapKeys = true
 }
 
-internal fun folder(pid: Long) = PixivHelperSettings.imagesFolder(pid)
+private fun folder(pid: Long) = PixivHelperSettings.imagesFolder(pid)
 
-internal fun json(pid: Long) = folder(pid).resolve("${pid}.json")
+private fun json(pid: Long) = folder(pid).resolve("${pid}.json")
 
 internal fun File.readIllustInfo(): IllustInfo = Json_.decodeFromString(IllustInfo.serializer(), readText())
 
@@ -328,8 +271,6 @@ internal fun IllustInfo.write(file: File = json(pid)) =
     apply { file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this)) }
 
 internal fun List<IllustInfo>.write() = onEach { it.write() }
-
-internal fun ArtWorkInfo.read(): IllustInfo = json(pid).readIllustInfo()
 
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
@@ -355,17 +296,16 @@ internal suspend fun UserInfo.getProfileImage(): File {
     val dir = PixivHelperSettings.profilesFolder
     return dir.resolve(image.filename).apply {
         if (exists().not()) {
-            PixivHelperDownloader.downloadImages(urls = listOf(image), dir = dir).single().getOrThrow()
+            writeBytes(PixivHelperDownloader.downloadImage(url = image))
             logger.info { "用户 $image 下载完成" }
         }
     }
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = folder(pid)
+    val dir = folder(pid).apply { mkdirs() }
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
-    dir.mkdirs()
     val files = getOriginImageUrls().map { url ->
         dir.resolve(url.filename).apply {
             if (exists().not() && temp.resolve(name).exists()) {
@@ -377,8 +317,28 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             }
         }
     }
+    fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
+        pid = pid,
+        index = getOriginImageUrls().indexOf(url),
+        md5 = bytes.md5().hex(),
+        url = url.toString(),
+        size = bytes.size
+    )
     if (downloads.isNotEmpty()) {
-        check(PixivHelperDownloader.downloadImages(downloads, dir).all { it.isSuccess })
+        val results = PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
+            result.mapCatching {
+                dir.resolve(url.filename).writeBytes(it)
+                FileInfo(url = url, bytes = it)
+            }.onFailure {
+                if (it.isNotCancellationException()) {
+                    logger.warning({ "[$url]下载失败" }, it)
+                }
+            }
+        }
+        results.mapNotNull { it.getOrNull() }.takeIf { it.isNotEmpty() }?.let { list ->
+            useMappers { mappers -> mappers.file.replaceFiles(list = list) }
+        }
+        check(results.all { it.isSuccess }) { "作品(${pid})下载失败" }
         logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     return files

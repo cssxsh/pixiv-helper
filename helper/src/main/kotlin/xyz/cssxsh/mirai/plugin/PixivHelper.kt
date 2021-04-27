@@ -33,7 +33,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
-    private suspend fun Flow<CacheTask>.check() = transform { (name, write, reply, block) ->
+    private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
             block.invoke(this@PixivHelper).onEach { list ->
                 if (write && list.isNotEmpty()) {
@@ -47,6 +47,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 }.also { (success, failure) ->
                     success?.update()
                     failure?.sortedBy { it.pid }?.let {
+                        it.save()
                         this@transform.emit(DownloadTask(name = name, list = it, reply = reply))
                     }
                 }
@@ -59,7 +60,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    private suspend fun Flow<DownloadTask>.download() = collect { (name, list, reply) ->
+    private suspend fun Flow<DownloadTask>.download() = transform { (name, list, reply) ->
         logger.verbose {
             "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存"
         }
@@ -68,7 +69,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
         list.map { illust ->
             async {
-                illust to illust.runCatching {
+                illust.runCatching {
                     getImages()
                 }.onFailure {
                     if (it.isNotCancellationException()) {
@@ -79,38 +80,35 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                             "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
                         }
                     }
-                }.isSuccess
+                }
             }
-        }.runCatching {
-            awaitAll().groupBy({ it.second }, { it.first }).let { (success, _) ->
-                success?.save()
-            }
+        }.let {
+            emit(it)
         }
     }
 
+    private suspend fun Flow<List<Deferred<*>>>.await() = collect { it.awaitAll() }
+
     init {
-        launch(CoroutineName("PixivHelper:${contact}#CacheTask")) {
+        launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
             while (isActive) {
                 runCatching {
                     logger.info { "PixivHelper:${contact}#CacheTask start"  }
-                    cacheChannel.consumeAsFlow().check().download()
+                    cacheChannel.consumeAsFlow().save().download().await()
                 }
                 cacheChannel = Channel(Channel.BUFFERED)
             }
         }
     }
 
-    suspend fun addCacheJob(
-        name: String,
-        write: Boolean = true,
-        reply: Boolean = true,
-        block: LoadTask,
-    ) = cacheChannel.send(CacheTask(
-        name = name,
-        write = write,
-        reply = reply,
-        block = block
-    ))
+    fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) = launch {
+        cacheChannel.send(CacheTask(
+            name = name,
+            write = write,
+            reply = reply,
+            block = block
+        ))
+    }
 
     fun cacheStop() {
         cacheChannel.close()
@@ -134,14 +132,18 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    suspend fun send(block: () -> Any?) = isActive && runCatching {
-        block().let { message ->
-            when (message) {
-                null, Unit -> Unit
-                is Message -> contact.sendMessage(message)
-                is String -> contact.sendMessage(message)
-                else -> contact.sendMessage(message.toString())
+    suspend fun send(block: () -> Any?): Boolean {
+        return isActive && runCatching {
+            block().let { message ->
+                when (message) {
+                    null, Unit -> Unit
+                    is Message -> contact.sendMessage(message)
+                    is String -> contact.sendMessage(message)
+                    else -> contact.sendMessage(message.toString())
+                }
             }
-        }
-    }.onFailure { logger.warning({ "回复${contact}失败" }, it) }.isSuccess
+        }.onFailure {
+            logger.warning({ "回复${contact}失败" }, it)
+        }.isSuccess
+    }
 }

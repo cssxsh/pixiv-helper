@@ -14,5 +14,5 @@ data class FileInfo(
     @SerialName("url")
     val url: String,
     @SerialName("size")
-    val size: Long?
+    val size: Int
 )

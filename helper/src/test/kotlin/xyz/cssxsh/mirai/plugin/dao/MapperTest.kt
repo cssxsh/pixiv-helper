@@ -35,6 +35,9 @@ internal class MapperTest {
     fun useArtWorkInfoMapper(): Unit = sqlSessionFactory.openSession(true).use { session ->
         val pid = 2086L
         val interval = 0 until 1_000_000L
+        session.getMapper(ArtWorkInfoMapper::class.java).userArtWork(464).let {
+            println(it)
+        }
         session.getMapper(ArtWorkInfoMapper::class.java).count().let {
             println(it)
         }
@@ -56,7 +59,6 @@ internal class MapperTest {
             sqlSessionFactory.openSession().use { session ->
                 session.getMapper(UserInfoMapper::class.java).replaceUser(user.toUserBaseInfo())
                 session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
-                session.getMapper(FileInfoMapper::class.java).replaceFiles(getFileInfos())
                 session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
             }
         }
@@ -80,12 +82,15 @@ internal class MapperTest {
 
     @Test
     fun statistic() {
-        sqlSessionFactory.openSession(true).use {
-            it.getMapper(StatisticInfoMapper::class.java).let { mapper ->
-                mapper.findSearchResult("78fcde93917b98823b20a9e553cda0b1").let {
-                    println(it)
-                }
-                mapper.noCacheSearchResult().let {
+        sqlSessionFactory.openSession(true).use { session ->
+            session.getMapper(StatisticInfoMapper::class.java).let { mapper ->
+                buildString {
+                    appendLine("| count\t | name  ")
+                    appendLine("| -----\t | ----- ")
+                    mapper.top(10).forEach { (name, count) ->
+                        appendLine("| $count\t | $name ")
+                    }
+                }.let {
                     println(it)
                 }
             }
