@@ -49,31 +49,32 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
         .mapKeys({ SQLiteConfig.Pragma.valueOf(it) }, { it.name })
 
     private fun getPath(path: String, default: String) =
-        if (path.isEmpty()) { dataFolder.resolve(default) } else { File(".").resolve(path) }
+        if (path.isEmpty()) dataFolder.resolve(default) else File(".").resolve(path)
 
     /**
      * 压缩文件保存目录
      */
-    val backupFolder: File
-        get() = getPath(path = backupPath, default = "backup")
+    val backupFolder: File get() = getPath(path = backupPath, default = "backup")
 
     /**
      * 图片缓存保存目录
      */
-    val cacheFolder: File
-        get() = getPath(path = cachePath, default = "cache")
+    val cacheFolder: File get() = getPath(path = cachePath, default = "cache")
 
     /**
      * 临时文件保存目录
      */
-    val tempFolder: File
-        get() = getPath(path = tempPath, default = "temp")
+    val tempFolder: File get() = getPath(path = tempPath, default = "temp")
 
     /**
      * 用户文件保存目录
      */
-    val profilesFolder: File
-        get() = cacheFolder.resolve("profile")
+    val profilesFolder: File get() = cacheFolder.resolve("profile")
+
+    /**
+     * 特辑文件保存目录
+     */
+    val articlesFolder: File get() = cacheFolder.resolve("article")
 
     /**
      * 图片目录
@@ -86,6 +87,5 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
     /**
      * 数据库文件路径
      */
-    val sqlite: File
-        get() = getPath(sqliteDatabase, "pixiv.sqlite")
+    val sqlite: File get() = getPath(sqliteDatabase, "pixiv.sqlite")
 }

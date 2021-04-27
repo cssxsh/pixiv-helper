@@ -4,6 +4,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
@@ -18,6 +19,7 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import java.time.OffsetDateTime
 import kotlin.time.Duration
+import kotlin.time.seconds
 
 internal val logger get() = PixivHelperPlugin.logger
 
@@ -44,8 +46,8 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
         PixivHelperManager[fromEvent.subject].run {
             buildMessageByIllust(illust = block(), flush = flush)
         }
-    }.onSuccess { list ->
-        list.forEach { quoteReply(it) }
+    }.onSuccess {
+        quoteReply(it)
     }.onFailure {
         logger.warning({ "读取色图失败" }, it)
         quoteReply("读取色图失败， ${it.message}")
@@ -55,8 +57,13 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     block: suspend PixivHelper.() -> ArtWorkInfo,
 ) = sendIllust(flush = false) {
-    block().read()
+    getIllustInfo(pid = block().pid, flush = false)
 }
+
+/**
+ * 连续发送间隔时间
+ */
+internal val interval get() = PixivConfigData.interval.seconds
 
 internal suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) =
     sendMessage(message + fromEvent.message.quote())
@@ -125,7 +132,25 @@ internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("PID: $pid ")
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush: Boolean): List<Message> = buildList {
+internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
+    appendLine("AID: $aid")
+    appendLine("标题: $title")
+    appendLine("发布: $publish")
+    appendLine("类别: $category")
+    appendLine("类型: $type")
+    appendLine("链接: $url")
+    append(getThumbnailImage().uploadAsImage(contact))
+}
+
+internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleData) = buildMessageChain {
+    appendLine("共 ${data.articles.size} 个特辑")
+    data.articles.forEach {
+        appendLine("================")
+        append(it.getContent(contact))
+    }
+}
+
+internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush: Boolean) = buildMessageChain {
     add(illust.getContent())
     if (link) {
         add(illust.getPixivCat())
@@ -147,7 +172,7 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush:
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, flush: Boolean): List<Message> = buildMessageByIllust(
+internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, flush: Boolean) = buildMessageByIllust(
     illust = getIllustInfo(pid = pid, flush = flush),
     flush = flush
 )
@@ -342,6 +367,17 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     return files
+}
+
+internal suspend fun SpotlightArticle.getThumbnailImage(): File {
+    val image = Url(thumbnail)
+    val temp = PixivHelperSettings.articlesFolder
+    return temp.resolve(image.filename).apply {
+        if (exists().not()) {
+            writeBytes(PixivHelperDownloader.downloadImage(url = image))
+            logger.info { "特辑封面 $image 下载完成" }
+        }
+    }
 }
 
 internal fun getBackupList() = buildMap<String, File> {

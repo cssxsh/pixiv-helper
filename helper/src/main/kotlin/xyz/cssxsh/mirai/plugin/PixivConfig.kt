@@ -49,7 +49,7 @@ internal val PixivApiIgnore: Ignore = { throwable ->
         is UnknownHostException,
         is SocketException,
         -> {
-            logger.warning { "PIXIV API错误, 已忽略: $throwable" }
+            logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
             true
         }
         else -> when (throwable.message) {
@@ -89,7 +89,7 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
     }
 }
 
-internal val SearchApiIgnore: Ignore = { throwable ->
+internal fun HtmlParserIgnore(name: String): Ignore = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,
@@ -101,26 +101,7 @@ internal val SearchApiIgnore: Ignore = { throwable ->
         is UnknownHostException,
         is ConnectionShutdownException,
         -> {
-            logger.warning { "Search Api 错误, 已忽略: ${throwable.message}" }
-            true
-        }
-        else -> false
-    }
-}
-
-internal val NaviRankApiIgnore: Ignore = { throwable ->
-    when (throwable) {
-        is SSLException,
-        is EOFException,
-        is SocketException,
-        is SocketTimeoutException,
-        is HttpRequestTimeoutException,
-        is StreamResetException,
-        is NullPointerException,
-        is UnknownHostException,
-        is ConnectionShutdownException,
-        -> {
-            logger.warning { "NaviRank API错误, 已忽略: ${throwable.message}" }
+            logger.warning { "$name Api 错误, 已忽略: ${throwable.message}" }
             true
         }
         else -> false
@@ -171,6 +152,7 @@ internal fun PixivHelperSettings.init() {
     backupFolder.mkdirs()
     tempFolder.mkdirs()
     profilesFolder.mkdirs()
+    articlesFolder.mkdirs()
     if (sqlite.exists().not()) {
         this::class.java.getResourceAsStream("pixiv.sqlite")?.use {
             sqlite.writeBytes(it.readAllBytes())

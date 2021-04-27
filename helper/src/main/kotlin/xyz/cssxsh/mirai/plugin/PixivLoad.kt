@@ -6,7 +6,7 @@ import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.tools.NaviRank
+import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
@@ -26,6 +26,12 @@ internal fun Flow<List<IllustInfo>>.types(type: WorkContentType) = map { list ->
 
 internal fun Flow<List<IllustInfo>>.eros() = map { list ->
     list.filter { it.isEro() }
+}
+
+internal fun List<NaviRankRecord>.cached() = useMappers { mappers ->
+    mapNotNull { record ->
+        mappers.artwork.findByPid(record.pid)
+    }
 }
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
@@ -82,6 +88,15 @@ internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, li
             logger.warning({ "加载用户(${uid})收藏页${url}失败" }, it)
         }.getOrNull()?.nextUrl
     }
+}
+
+private const val PID_MAX = 999_999_999L
+
+internal suspend fun PixivHelper.bookmarksRandom(uid: Long, tag: String? = null, limit: Long = PID_MAX): IllustData {
+    val random = (0..limit).random()
+    return userBookmarksIllust(uid = uid, tag = tag).takeIf {
+        it.illusts.isNotEmpty()
+    } ?: bookmarksRandom(uid = uid, tag = tag, limit = random + 1)
 }
 
 internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
@@ -289,7 +304,7 @@ internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: 
 
 private fun months(year: Year?) = buildList {
     var temp = year?.atMonth(1) ?: NaviRank.START
-    val limit = minOf(year?.atMonth(12 ) ?: YearMonth.now(), YearMonth.now())
+    val limit = minOf(year?.atMonth(12) ?: YearMonth.now(), YearMonth.now())
     while (temp <= limit) {
         add(temp)
         temp = temp.plusMonths(1)
@@ -309,6 +324,17 @@ internal suspend fun PixivHelper.getNaviRank(year: Year?) = flow {
             logger.warning({ "加载 NaviRank[$month]失败" }, it)
         }
     }
+}
+
+internal suspend fun PixivHelper.getArticle(article: SpotlightArticle) = getListIllusts(
+    info = Pixivision.getArticle(aid = article.aid).illusts
+)
+
+internal suspend fun PixivHelper.articlesRandom(limit: Long = ARTICLE_LIMIT): SpotlightArticleData {
+    val random = (0..limit).random()
+    return spotlightArticles(category = CategoryType.ILLUST, offset = random).takeIf {
+        it.articles.isNotEmpty()
+    } ?: articlesRandom(limit = random - 1)
 }
 
 private fun File.listDirs(range: LongRange) = listFiles { file ->

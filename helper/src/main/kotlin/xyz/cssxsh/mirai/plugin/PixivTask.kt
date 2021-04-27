@@ -10,7 +10,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.message.data.toMessageChain
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
@@ -165,8 +164,6 @@ sealed class TimerTask {
     ) : TimerTask()
 }
 
-private val SEND_DELAY = (1).minutes
-
 internal class TaskLastDelegate(val name: String) : ReadWriteProperty<Nothing?, OffsetDateTime> {
 
     override fun setValue(thisRef: Nothing?, property: KProperty<*>, value: OffsetDateTime) {
@@ -195,8 +192,8 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     }.apply {
         maxOfOrNull { it.createAt }?.let { last = it }
     }.forEach { illust ->
-        delay(SEND_DELAY)
-        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust, flush = false).toMessageChain()).let {
+        delay(interval)
+        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust, flush = false)).let {
             send { it }
         }
     }

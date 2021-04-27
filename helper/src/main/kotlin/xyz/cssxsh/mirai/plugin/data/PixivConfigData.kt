@@ -26,6 +26,12 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     @ValueName("link")
     val link: MutableMap<String, Boolean> by value(mutableMapOf())
 
+    /**
+     * 连续发送间隔时间，单位秒
+     */
+    @ValueName("interval")
+    var interval: Long by value(10L)
+
     @ValueName("netdisk_access")
     var netdiskAccessToken: String by value("")
 

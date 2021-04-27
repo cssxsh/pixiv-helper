@@ -22,12 +22,6 @@ object PixivRankCommand: CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun List<NaviRankRecord>.cached() = useMappers { mappers ->
-        mapNotNull { record ->
-            mappers.artwork.findByPid(record.pid)
-        }
-    }
-
     private suspend fun NaviRank.rank(year: Year, vararg words: String) =
         if (words.isNotEmpty()) getTagRank(year = year, words = words) else getAllRank(year = year)
 

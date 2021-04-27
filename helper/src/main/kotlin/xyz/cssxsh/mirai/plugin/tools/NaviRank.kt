@@ -4,7 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import xyz.cssxsh.mirai.plugin.NaviRankApiIgnore
+import xyz.cssxsh.mirai.plugin.HtmlParserIgnore
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.WorkContentType
 import java.time.LocalDate
@@ -12,7 +12,7 @@ import java.time.Year
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-object NaviRank : HtmlParser(ignore = NaviRankApiIgnore) {
+object NaviRank : HtmlParser(ignore = HtmlParserIgnore(name = "NaviRank")) {
 
     private const val API = "http://pixiv.navirank.com/"
 
