@@ -350,6 +350,17 @@ internal suspend fun PixivHelper.getIllustInfo(
 internal fun Throwable.isNotCancellationException() =
     (this is CancellationException || message == "No more continuations to resume").not()
 
+internal suspend fun UserInfo.getProfileImage(): File {
+    val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
+    val dir = PixivHelperSettings.profilesFolder
+    return dir.resolve(image.filename).apply {
+        if (exists().not()) {
+            PixivHelperDownloader.downloadImages(urls = listOf(image), dir = dir).single().getOrThrow()
+            logger.info { "用户 $image 下载完成" }
+        }
+    }
+}
+
 internal suspend fun IllustInfo.getImages(): List<File> {
     val dir = folder(pid)
     val temp = PixivHelperSettings.tempFolder
