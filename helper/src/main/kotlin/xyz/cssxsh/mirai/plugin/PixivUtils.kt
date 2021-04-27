@@ -387,12 +387,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 internal fun getBackupList() = buildMap<String, File> {
     this["DATA"] = PixivHelperPlugin.dataFolder
     this["CONFIG"] = PixivHelperPlugin.configFolder
-    val lastBackup: Long = PixivHelperSettings.backupFolder.listFiles { file ->
-        file.name.startsWith("DATABASE")
-    }?.maxOf { it.lastModified() } ?: System.currentTimeMillis()
-    if (PixivHelperSettings.sqlite.lastModified() > lastBackup) {
-        this["DATABASE"] = PixivHelperSettings.sqlite
-    }
+    this["DATABASE"] = PixivHelperSettings.sqlite
 }
 
 internal fun MessageSource.inDuration(duration: Duration) =

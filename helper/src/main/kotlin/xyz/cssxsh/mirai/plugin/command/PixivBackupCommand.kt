@@ -1,8 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
@@ -21,13 +21,12 @@ object PixivBackupCommand : CompositeCommand(
     description = "PIXIV备份指令"
 ) {
 
-    private var compressJob: Job? = null
+    private val compress = Mutex()
 
-    private var panJob: Job? = null
+    private val upload = Mutex()
 
-    private fun CommandSender.compress(block: PixivZipper.() -> List<File>) {
-        check(compressJob?.isActive != true) { "其他任务正在压缩中, ${compressJob}..." }
-        compressJob = PixivHelperPlugin.async(Dispatchers.IO) {
+    private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
+        compress.withLock {
             PixivZipper.block().forEach { file ->
                 if (this@compress is MemberCommandSenderOnMessage) {
                     sendMessage("${file.name} 压缩完毕，开始上传到群文件")
@@ -37,25 +36,26 @@ object PixivBackupCommand : CompositeCommand(
                         sendMessage("[${file.name}]上传失败: ${it.message}")
                     }
                 } else {
-                    sendMessage("${file.name} 压缩完毕，开始上传到百度云")
-                    val code = file.getRapidUploadInfo()
-                    runCatching {
-                        BaiduNetDiskUpdater.uploadFile(file)
-                    }.onSuccess {
-                        logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
-                        sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
-                    }.onFailure {
-                        logger.warning({ "[${file.name}]上传失败" }, it)
-                        sendMessage("[${file.name}]上传失败, ${it.message}")
+                    upload {
+                        sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                        val code = file.getRapidUploadInfo()
+                        runCatching {
+                            uploadFile(file)
+                        }.onSuccess {
+                            logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
+                            sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
+                        }.onFailure {
+                            logger.warning({ "[${file.name}]上传失败" }, it)
+                            sendMessage("[${file.name}]上传失败, ${it.message}")
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun pan(block: suspend BaiduNetDiskUpdater.() -> Unit) {
-        check(panJob?.isActive != true) { "其他任务正在运行中, ${panJob}..." }
-        panJob = PixivHelperPlugin.async(Dispatchers.IO) {
+    private fun upload(block: suspend BaiduNetDiskUpdater.() -> Unit) = PixivHelperPlugin.launch(Dispatchers.IO) {
+        upload.withLock {
             BaiduNetDiskUpdater.block()
         }
     }
@@ -102,7 +102,7 @@ object PixivBackupCommand : CompositeCommand(
     @Description("获取备份文件")
     suspend fun MemberCommandSenderOnMessage.get(name: String) {
         runCatching {
-            PixivZipper.find(name = name).let { file ->
+            requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }.let { file ->
                 sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
             }
         }.onFailure {
@@ -112,8 +112,8 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(name: String) = pan {
-        val file = PixivZipper.find(name = name)
+    fun CommandSender.upload(name: String) = upload {
+        val file = requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }
         val code = file.getRapidUploadInfo().format()
         runCatching {
             uploadFile(file = file)
@@ -128,7 +128,7 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("百度云用户认证")
-    fun CommandSender.auth(code: String) = pan {
+    fun CommandSender.auth(code: String) = upload {
         runCatching {
             getAuthorizeToken(code = code).also { saveToken(token = it) }
         }.onSuccess { token ->

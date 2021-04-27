@@ -41,7 +41,7 @@ object PixivZipper {
 
     fun list() = PixivHelperSettings.backupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
-    fun find(name: String): File = list().first { file -> file.name.startsWith(name) }
+    fun find(name: String) = list().firstOrNull { file -> file.name.startsWith(name) }
 
     fun compressArtWorks(list: List<ArtWorkInfo>, basename: String): File = getZipFile(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
