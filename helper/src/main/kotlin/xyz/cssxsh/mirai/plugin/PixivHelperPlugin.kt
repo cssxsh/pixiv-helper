@@ -56,6 +56,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivTagCommand.register()
         PixivRankCommand.register()
         PixivTaskCommand.register()
+        PixivMarkCommand.register()
 
         PixivHelperSettings.init()
 
@@ -83,6 +84,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivTagCommand.unregister()
         PixivRankCommand.unregister()
         PixivTaskCommand.unregister()
+        PixivMarkCommand.unregister()
 
         PixivHelperListener.stop()
 

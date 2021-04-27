@@ -132,6 +132,20 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, limit: Lon
     }
 }
 
+internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_LIMIT) = flow {
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
+        if (currentCoroutineContext().isActive) runCatching {
+            userBookmarksTagsIllust(offset = offset).tags
+        }.onSuccess {
+            if (it.isEmpty()) return@flow
+            emit(it)
+            logger.verbose { "加载收藏标签第${page}页{${it.size}}成功" }
+        }.onFailure {
+            logger.warning({ "加载收藏标签第${page}页失败" }, it)
+        }
+    }
+}
+
 internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
     useMappers { mappers ->
         set.filterNot { mappers.artwork.contains(it) }
