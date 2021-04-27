@@ -27,6 +27,10 @@ object BaiduNetDiskUpdater : BaiduNetDiskClient(
         PixivConfigData.netdiskExpires = expires.toEpochSecond()
     }
 
+    public override var expires: OffsetDateTime
+        get() = super.expires
+        set(value) { super.expires = value }
+
     fun loadToken(): Unit = synchronized(expires) {
         accessTokenValue = PixivConfigData.netdiskAccessToken
         refreshTokenValue = PixivConfigData.netdiskRefreshToken

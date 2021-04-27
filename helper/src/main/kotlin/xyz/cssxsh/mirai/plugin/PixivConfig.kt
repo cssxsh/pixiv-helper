@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.utils.*
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.StreamResetException
@@ -12,8 +13,10 @@ import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
 import org.sqlite.JDBC
 import org.sqlite.SQLiteConfig
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
+import xyz.cssxsh.baidu.disk.getUserInfo
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
+import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 import java.io.EOFException
@@ -177,6 +180,19 @@ internal fun PixivHelperSettings.init() {
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     logger.info { "Sqlite: ${sqlite.absolutePath}" }
+}
+
+internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch {
+    loadToken()
+    runCatching {
+        getUserInfo()
+    }.onSuccess {
+        logger.info {
+            "百度网盘: ${it.baiduName} 已登录, 过期时间 $expires"
+        }
+    }.onFailure {
+        logger.warning({ "百度网盘初始化失败" }, it)
+    }
 }
 
 internal const val PixivMirrorHost = "i.pixiv.cat"
