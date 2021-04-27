@@ -195,6 +195,25 @@ internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch {
     }
 }
 
+/**
+ * https://www.pixiv.net/artworks/79695391
+ * https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433
+ */
+internal val URL_ARTWORK_REGEX = """(?<=(artworks/|illust_id=))\d+""".toRegex()
+
+/**
+ * https://www.pixiv.net/users/902077
+ * http://www.pixiv.net/member.php?id=902077
+ */
+internal val URL_USER_REGEX = """(?<=(users/|member\.php\?id=))\d+""".toRegex()
+
+/**
+ * [https://www.pixiv.net/info.php?id=1554]
+ *
+ * https://pixiv.me/milkpanda-yellow
+ */
+internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex()
+
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = (sqrt(5.0) - 1) / 2

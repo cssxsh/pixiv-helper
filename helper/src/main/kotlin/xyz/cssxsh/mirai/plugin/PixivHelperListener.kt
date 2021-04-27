@@ -21,7 +21,7 @@ object PixivHelperListener {
 
     private infix fun String.with(listener: Listener<*>) = listeners.put(this, listener)?.cancel()
 
-    fun subscribe(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
+    internal fun subscribe(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
         "GroupMuteAll" with subscribeAlways<GroupMuteAllEvent> {
             PixivHelperManager.remove(group)
         }
@@ -56,7 +56,7 @@ object PixivHelperListener {
         }
     }
 
-    fun stop() = synchronized(listeners) {
+    internal fun stop() = synchronized(listeners) {
         listeners.forEach { (_, listener) ->
             listener.cancel()
         }
