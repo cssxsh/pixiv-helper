@@ -15,7 +15,7 @@ import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsFile
 import xyz.cssxsh.baidu.getRapidUploadInfo
-import xyz.cssxsh.mirai.plugin.data.PixivTaskData
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
@@ -125,9 +125,7 @@ sealed class TimerTask {
         override val contact: ContactInfo,
     ) : TimerTask() {
         override val interval: Long
-            get() =
-                OffsetDateTime.now()
-                    .let { it.toNextRank().toEpochSecond() - it.toEpochSecond() }.seconds.toLongMilliseconds()
+            get() = OffsetDateTime.now().let { it.goto(next = it.toNextRank()) }.toLongMilliseconds()
     }
 
     @Serializable
@@ -193,7 +191,7 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         maxOfOrNull { it.createAt }?.let { last = it }
     }.forEach { illust ->
         delay(interval)
-        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust, flush = false)).let {
+        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust)).let {
             send { it }
         }
     }
@@ -204,23 +202,24 @@ private const val RANK_HOUR = 12
 internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
     (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0).withSecond(0)
 
-private fun OffsetDateTime.isToday(): Boolean =
-    toLocalDate() == LocalDate.now()
+internal fun OffsetDateTime.goto(next: OffsetDateTime) = (next.toEpochSecond() - toEpochSecond()).seconds
 
-private val DELAY_RANDOM = (10..30).random().minutes
+private fun OffsetDateTime.isToday(): Boolean = (toLocalDate() == LocalDate.now())
+
+private val random = (10..30).random().minutes
 
 internal suspend fun TimerTask.pre(): Unit = when (this) {
     is TimerTask.User -> {
-        delay(DELAY_RANDOM)
+        delay(random)
     }
     is TimerTask.Rank -> {
-        delay(DELAY_RANDOM)
+        delay(random)
     }
     is TimerTask.Follow -> {
-        delay(DELAY_RANDOM)
+        delay(random)
     }
     is TimerTask.Recommended -> {
-        delay(DELAY_RANDOM)
+        delay(random)
     }
     is TimerTask.Backup -> {
         delay(interval)

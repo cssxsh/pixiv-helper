@@ -66,10 +66,10 @@ object PixivHelperListener {
     private fun MessageEvent.getHelper() = PixivHelperManager[subject]
 
     private suspend fun MessageEvent.sendArtworkInfo(pid: Long): MessageReceipt<Contact> =
-        subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid, flush = true).toMessageChain())
+        subject.sendMessage(message.quote() + getHelper().buildMessageByIllust(pid = pid))
 
     private suspend fun MessageEvent.sendUserInfo(uid: Long): MessageReceipt<Contact> =
-        subject.sendMessage(message.quote() + getHelper().buildMessageByUser(uid = uid, save = true))
+        subject.sendMessage(message.quote() + getHelper().buildMessageByUser(uid = uid))
 
     private suspend fun MessageEvent.sendUserInfo(account: String): MessageReceipt<Contact> = getHelper().run {
         useHttpClient { client ->

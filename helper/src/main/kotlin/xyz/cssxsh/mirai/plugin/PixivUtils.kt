@@ -44,7 +44,9 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 ): Boolean {
     return runCatching {
         PixivHelperManager[fromEvent.subject].run {
-            buildMessageByIllust(illust = block(), flush = flush)
+            buildMessageByIllust(illust = block().also { info ->
+                if (flush || json(info.pid).exists().not()) info.write()
+            })
         }
     }.onSuccess {
         quoteReply(it)
@@ -150,7 +152,7 @@ internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleDat
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush: Boolean) = buildMessageChain {
+internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
     add(illust.getContent())
     if (link) {
         add(illust.getPixivCat())
@@ -167,19 +169,15 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo, flush:
     } else {
         add(PlainText("R18禁止！"))
     }
-    if (flush || useMappers { it.artwork.contains(illust.pid).not() }) {
-        illust.save()
-    }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(pid: Long, flush: Boolean) = buildMessageByIllust(
-    illust = getIllustInfo(pid = pid, flush = flush),
-    flush = flush
+internal suspend fun PixivHelper.buildMessageByIllust(pid: Long) = buildMessageByIllust(
+    illust = getIllustInfo(pid = pid, flush = false)
 )
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
-internal suspend fun PixivHelper.buildMessageByUser(user: UserDetail, save: Boolean): MessageChain = buildMessageChain {
+internal suspend fun PixivHelper.buildMessageByUser(user: UserDetail): MessageChain = buildMessageChain {
     appendLine("NAME: ${user.user.name}")
     appendLine("UID: ${user.user.id}")
     appendLine("ACCOUNT: ${user.user.account}")
@@ -190,14 +188,10 @@ internal suspend fun PixivHelper.buildMessageByUser(user: UserDetail, save: Bool
     }.onFailure {
         logger.warning({ "User(${user.user.id}) ProfileImage 下载失败" }, it)
     }
-    if (save) {
-        user.save()
-    }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long, save: Boolean): MessageChain = buildMessageByUser(
-    user = userDetail(uid = uid),
-    save = save
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long): MessageChain = buildMessageByUser(
+    user = userDetail(uid = uid).apply { save() }
 )
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
@@ -292,8 +286,10 @@ private fun json(pid: Long) = folder(pid).resolve("${pid}.json")
 
 internal fun File.readIllustInfo(): IllustInfo = Json_.decodeFromString(IllustInfo.serializer(), readText())
 
-internal fun IllustInfo.write(file: File = json(pid)) =
-    apply { file.apply { parentFile.mkdirs() }.writeText(Json_.encodeToString(IllustInfo.serializer(), this)) }
+internal fun IllustInfo.write(file: File = json(pid)) {
+    file.parentFile.mkdirs()
+    file.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
+}
 
 internal fun List<IllustInfo>.write() = onEach { it.write() }
 
@@ -309,7 +305,9 @@ internal suspend fun PixivHelper.getIllustInfo(
     if (!flush && file.exists()) {
         file.readIllustInfo()
     } else {
-        block(pid).write(file = file)
+        block(pid).apply {
+            write(file = file)
+        }
     }
 }
 
@@ -328,7 +326,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = folder(pid).apply { mkdirs() }
+    val dir = folder(pid)
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
     val files = getOriginImageUrls().map { url ->
@@ -361,6 +359,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             }
         }
         results.mapNotNull { it.getOrNull() }.takeIf { it.isNotEmpty() }?.let { list ->
+            if(useMappers { mappers -> mappers.artwork.contains(pid).not() }) save()
             useMappers { mappers -> mappers.file.replaceFiles(list = list) }
         }
         check(results.all { it.isSuccess }) { "作品(${pid})下载失败" }

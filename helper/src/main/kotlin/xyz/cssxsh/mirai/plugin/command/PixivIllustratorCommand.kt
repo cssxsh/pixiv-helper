@@ -18,7 +18,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    @SubCommand("uid", "id", "user")
+    @SubCommand("uid", "id", "user", "用户")
     @Description("根据画师UID随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.uid(uid: Long) = sendIllust {
         useMappers { it.artwork.userArtWork(uid) }.also { list ->
@@ -48,12 +48,14 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("list", "列表")
     @Description("显示别名列表")
     suspend fun CommandSenderOnMessage<*>.list() = withHelper {
-        useMappers { it.statistic.alias() }.joinToString("\n") { "[${it.alias}] -> (${it.uid})" }
+        useMappers { it.statistic.alias() }.joinToString("\n") {
+            "[${it.alias}] -> (${it.uid})"
+        }
     }
 
     @SubCommand("info", "信息")
     @Description("获取画师信息")
     suspend fun CommandSenderOnMessage<*>.info(uid: Long) = withHelper {
-        buildMessageByUser(uid = uid, save = true)
+        buildMessageByUser(uid = uid)
     }
 }
