@@ -14,6 +14,7 @@ import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
+import java.lang.IllegalStateException
 
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -25,11 +26,23 @@ object PixivBackupCommand : CompositeCommand(
 
     private val upload = Mutex()
 
+    private val bit: (Int) -> Long = { 1L shl it }
+
+    private fun File.size() = length().let { size ->
+        when (size) {
+            0L -> "0"
+            in bit(0) until bit(10) -> "%0.2dB".format(size)
+            in bit(10) until bit(20) -> "%0.2dMB".format(size)
+            in bit(20) until bit(30) -> "%0.2dGB".format(size)
+            else -> throw IllegalStateException("File(${absolutePath}) too big")
+        }
+    }
+
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
         compress.withLock {
             PixivZipper.block().forEach { file ->
-                if (this@compress is MemberCommandSenderOnMessage) {
-                    sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+                if (this@compress is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
+                    sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到群文件")
                     runCatching {
                         sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
                     }.onFailure {
@@ -37,7 +50,7 @@ object PixivBackupCommand : CompositeCommand(
                     }
                 } else {
                     upload {
-                        sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                        sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到百度云")
                         val code = file.getRapidUploadInfo()
                         runCatching {
                             uploadFile(file)
@@ -71,7 +84,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
-        useMappers { it.statistic.alias() }.map { it.uid }.toSet().map { uid ->
+        useMappers { it.statistic.alias() }.associateBy { it.uid }.map { (uid, _) ->
             compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
         }
     }
