@@ -22,6 +22,7 @@ import xyz.cssxsh.pixiv.apps.*
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.time.*
@@ -71,14 +72,14 @@ internal fun PixivHelper.getContactInfo(): ContactInfo = when (contact) {
     else -> throw IllegalArgumentException("未知类型联系人")
 }
 
-internal fun ContactInfo.getContact() = Bot.getInstance(bot).let { bot ->
-    when (type) {
-        ContactType.GROUP -> bot.getGroupOrFail(id)
-        ContactType.USER -> bot.getFriend(id) ?: bot.getStrangerOrFail(id)
-    }
+internal val ContactInfo.helper by ReadOnlyProperty<ContactInfo, PixivHelper> { info, _ ->
+    Bot.getInstance(info.bot).let { bot ->
+        when (info.type) {
+            ContactType.GROUP -> bot.getGroupOrFail(info.id)
+            ContactType.USER -> bot.getFriendOrFail(info.id)
+        }
+    }.getHelper()
 }
-
-internal fun ContactInfo.getHelper() = PixivHelperManager[getContact()]
 
 @Serializable
 sealed class TimerTask {
@@ -228,46 +229,46 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
-        info.contact.getHelper().subscribe(name) {
+        info.contact.helper.subscribe(name) {
             getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE)
         }
     }
     is TimerTask.Rank -> {
-        info.contact.getHelper().subscribe(name) {
+        info.contact.helper.subscribe(name) {
             getRank(mode = info.mode, limit = TASK_LOAD).types(WorkContentType.ILLUST)
         }
     }
     is TimerTask.Follow -> {
-        info.contact.getHelper().subscribe(name) {
+        info.contact.helper.subscribe(name) {
             getFollowIllusts(limit = TASK_LOAD)
         }
     }
     is TimerTask.Recommended -> {
-        info.contact.getHelper().subscribe(name) {
+        info.contact.helper.subscribe(name) {
             getRecommended(limit = TASK_LOAD).eros()
         }
     }
     is TimerTask.Backup -> {
-        val contact = info.contact.getContact()
+        val helper = info.contact.helper
         PixivZipper.compressData(list = getBackupList()).forEach { file ->
-            if (contact is FileSupported) {
-                contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+            if (helper.contact is FileSupported) {
+                helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    contact.sendMessage(file.toExternalResource().uploadAsFile(contact = contact, path = file.name))
+                    helper.contact.sendMessage(file.toExternalResource().uploadAsFile(contact = helper.contact, path = file.name))
                 }.onFailure {
-                    contact.sendMessage("上传失败: ${it.message}")
+                    helper.contact.sendMessage("上传失败: ${it.message}")
                 }
             } else {
-                contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
                 runCatching {
                     BaiduNetDiskUpdater.uploadFile(file)
                 }.onSuccess {
                     val code = file.getRapidUploadInfo().format()
                     logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                    contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
+                    helper.contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
                 }.onFailure {
                     logger.warning({ "[${file.name}]上传失败" }, it)
-                    contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+                    helper.contact.sendMessage("[${file.name}]上传失败, ${it.message}")
                 }
             }
         }

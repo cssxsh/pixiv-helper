@@ -25,7 +25,7 @@ internal val logger get() = PixivHelperPlugin.logger
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
-        PixivHelperManager[fromEvent.subject].block()
+        helper.block()
     }.onSuccess { message ->
         when (message) {
             null, Unit -> Unit
@@ -43,7 +43,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     block: suspend PixivHelper.() -> IllustInfo,
 ): Boolean {
     return runCatching {
-        PixivHelperManager[fromEvent.subject].run {
+        helper.run {
             buildMessageByIllust(illust = block().also { info ->
                 if (flush || json(info.pid).exists().not()) info.write()
             })

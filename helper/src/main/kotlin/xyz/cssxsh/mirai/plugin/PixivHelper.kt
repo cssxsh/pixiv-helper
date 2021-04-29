@@ -19,17 +19,17 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     config = DEFAULT_PIXIV_CONFIG // This config is not use
 ) {
 
-    override var config: PixivConfig by PixivHelperDelegate.config
+    override var config: PixivConfig by ConfigDelegate
 
     override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
 
-    override var authInfo: AuthResult? by PixivHelperDelegate.auth
+    override var authInfo: AuthResult? by AuthResultDelegate
 
-    public override var expiresTime: OffsetDateTime by PixivHelperDelegate.expires
+    public override var expiresTime: OffsetDateTime by ExpiresTimeDelegate
 
     override val apiIgnore: Ignore get() = PixivApiIgnore
 
-    var link: Boolean by PixivHelperDelegate.link
+    var link: Boolean by LinkDelegate
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
