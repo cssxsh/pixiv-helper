@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
@@ -17,8 +19,6 @@ import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
-import java.time.OffsetDateTime
-import kotlin.time.Duration
 import kotlin.time.seconds
 
 internal val logger get() = PixivHelperPlugin.logger
@@ -271,7 +271,11 @@ internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
-internal fun UserDetail.save(): Unit = useMappers { mapper -> mapper.user.add(user.toUserBaseInfo()) }
+internal fun UserDetail.save(): Unit = useMappers { it.user.add(user.toUserBaseInfo()) }
+
+internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.hex()) }
+
+internal fun SearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
 
 private val Json_ = Json {
     prettyPrint = true
@@ -340,6 +344,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             }
         }
     }
+
     fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
         pid = pid,
         index = getOriginImageUrls().indexOf(url),
@@ -359,8 +364,8 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             }
         }
         results.mapNotNull { it.getOrNull() }.takeIf { it.isNotEmpty() }?.let { list ->
-            if(useMappers { mappers -> mappers.artwork.contains(pid).not() }) save()
-            useMappers { mappers -> mappers.file.replaceFiles(list = list) }
+            if (useMappers { it.artwork.contains(pid).not() }) save()
+            useMappers { it.file.replaceFiles(list) }
         }
         check(results.all { it.isSuccess }) { "作品(${pid})下载失败" }
         logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
@@ -385,5 +390,26 @@ internal fun getBackupList() = buildMap<String, File> {
     this["DATABASE"] = PixivHelperSettings.sqlite
 }
 
-internal fun MessageSource.inDuration(duration: Duration) =
-    time > OffsetDateTime.now().toEpochSecond() - duration.inSeconds.toLong()
+internal suspend fun PixivHelper.jump(account: String): Long {
+    useMappers { it.user.findByAccount(account = account) }?.let { return@jump it.uid }
+    val url = Url("https://pixiv.me/$account")
+    return useHttpClient { client ->
+        client.head<HttpResponse>(url).request.url
+    }.let { location ->
+        requireNotNull(URL_USER_REGEX.find(location.encodedPath)) {
+            "跳转失败, $url -> $location"
+        }
+    }.value.toLong()
+}
+
+internal data class MessageSourceMetadata(
+    val ids: List<Int>,
+    val internalIds: List<Int>,
+    val time: Int,
+)
+
+internal fun MessageSource.metadata() = MessageSourceMetadata(
+    ids = ids.toList(),
+    internalIds = internalIds.toList(),
+    time = time
+)

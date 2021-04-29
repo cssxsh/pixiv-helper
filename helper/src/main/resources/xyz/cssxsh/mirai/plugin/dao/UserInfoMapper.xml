@@ -11,6 +11,11 @@
         FROM users
         WHERE name LIKE '%'||#{name}||'%' OR account LIKE '%'||#{name}||'%';
     </select>
+    <select id="findByAccount" resultType="xyz.cssxsh.mirai.plugin.model.UserBaseInfo">
+        SELECT *
+        FROM users
+        WHERE account LIKE #{account};
+    </select>
     <insert id="replaceUser">
         REPLACE INTO users("uid", "name", "account")
         VALUES (${uid}, #{name}, #{account});
