@@ -16,8 +16,8 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取助手信息")
     suspend fun CommandSenderOnMessage<*>.helper() = withHelper {
-        buildString {
-            appendLine("Uid: ${getAuthInfo().user.uid}")
+        buildMessageChain {
+            appendLine("User: ${getAuthInfo().user.uid}")
             appendLine("Name: ${getAuthInfo().user.name}")
             appendLine("Account: ${getAuthInfo().user.account}")
             appendLine("Token: ${getAuthInfo().accessToken}")
@@ -25,51 +25,50 @@ object PixivInfoCommand : CompositeCommand(
         }
     }
 
-    private fun User.getStatistic() = buildMessageChain {
-        appendLine("用户: $nameCardOrNick")
-        useMappers { mappers ->
-            appendLine("使用色图指令次数: ${mappers.statistic.senderEroInfos(id).size}")
-            mappers.statistic.senderTagInfos(id).run {
-                appendLine("使用标签指令次数: $size")
-                groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
-                    appendLine("检索最多的是 $tag ${list.size} 次")
-                }
-            }
-        }
-    }
-
-    private fun Group.getStatistic() = buildMessageChain {
-        appendLine("群组: $name")
-        useMappers { mappers ->
-            mappers.statistic.groupEroInfos(id).run {
-                appendLine("使用色图指令次数: $size")
-                groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                    append("使用最多的是 ")
-                    append(At(id))
-                    appendLine(" ${list.size} 次")
-                }
-            }
-            mappers.statistic.groupTagInfos(id).run {
-                appendLine("使用标签指令次数: $size")
-                groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                    append("使用最多的是 ")
-                    append(At(id))
-                    appendLine(" ${list.size} 次")
-                }
-            }
-        }
-    }
-
     @SubCommand
     @Description("获取用户信息")
-    suspend fun CommandSenderOnMessage<*>.user(target: User = user as User) = withHelper {
-        target.getStatistic()
+    suspend fun CommandSenderOnMessage<*>.user(target: User = subject as User) = withHelper {
+        buildMessageChain {
+            appendLine("用户: ${target.nameCardOrNick}")
+            useMappers { mappers ->
+                appendLine("使用色图指令次数: ${mappers.statistic.senderEroInfos(target.id).size}")
+                mappers.statistic.senderTagInfos(target.id).run {
+                    appendLine("使用标签指令次数: $size")
+                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
+                        appendLine("检索最多的是 $tag ${list.size} 次")
+                    }
+                }
+            }
+        }
     }
 
     @SubCommand
     @Description("获取群组信息")
     suspend fun CommandSenderOnMessage<*>.group(target: Group = subject as Group) = withHelper {
-        target.getStatistic()
+        buildMessageChain {
+            appendLine("群组: ${target.name}")
+            useMappers { mappers ->
+                mappers.statistic.groupEroInfos(target.id).run {
+                    appendLine("使用色图指令次数: $size")
+                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
+                        append("使用最多的是 ")
+                        append(At(id))
+                        append(" ${list.size} 次\n")
+                    }
+                }
+                mappers.statistic.groupTagInfos(target.id).run {
+                    appendLine("使用标签指令次数: $size")
+                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
+                        append("使用最多的是 ")
+                        append(At(id))
+                        append(" ${list.size} 次\n")
+                    }
+                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
+                        appendLine("检索最多的是 $tag ${list.size} 次")
+                    }
+                }
+            }
+        }
     }
 
     @SubCommand
