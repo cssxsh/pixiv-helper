@@ -132,7 +132,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
-    suspend fun send(block: () -> Any?): Boolean {
+    suspend fun send(block: suspend () -> Any?): Boolean {
         return isActive && runCatching {
             block().let { message ->
                 when (message) {

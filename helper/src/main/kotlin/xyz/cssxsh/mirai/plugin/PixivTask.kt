@@ -192,8 +192,8 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         maxOfOrNull { it.createAt }?.let { last = it }
     }.forEach { illust ->
         delay(interval)
-        ("Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust)).let {
-            send { it }
+        send {
+            "Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust)
         }
     }
 }
