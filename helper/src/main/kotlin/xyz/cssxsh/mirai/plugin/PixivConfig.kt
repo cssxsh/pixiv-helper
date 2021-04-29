@@ -89,7 +89,7 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
     }
 }
 
-internal fun HtmlParserIgnore(name: String): Ignore = { throwable ->
+internal fun ignore(name: String): Ignore = { throwable ->
     when (throwable) {
         is SSLException,
         is EOFException,

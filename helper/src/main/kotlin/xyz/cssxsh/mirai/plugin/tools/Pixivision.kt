@@ -3,11 +3,11 @@ package xyz.cssxsh.mirai.plugin.tools
 import io.ktor.client.request.*
 import io.ktor.http.*
 import org.jsoup.nodes.Document
-import xyz.cssxsh.mirai.plugin.HtmlParserIgnore
+import xyz.cssxsh.mirai.plugin.ignore
 import xyz.cssxsh.mirai.plugin.model.PixivArticle
 import java.util.*
 
-object Pixivision : HtmlParser(ignore = HtmlParserIgnore(name = "Pixivision")) {
+object Pixivision : HtmlParser(ignore = ignore(name = "Pixivision")) {
 
     private const val API = "https://www.pixivision.net/"
 

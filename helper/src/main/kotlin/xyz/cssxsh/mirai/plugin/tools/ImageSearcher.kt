@@ -8,11 +8,11 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.nodes.Document
-import xyz.cssxsh.mirai.plugin.HtmlParserIgnore
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.tool.*
 
-object ImageSearcher : HtmlParser(ignore = HtmlParserIgnore(name = "Search")) {
+object ImageSearcher : HtmlParser(ignore = ignore(name = "Search")) {
 
     private const val API = "https://saucenao.com/search.php"
 
