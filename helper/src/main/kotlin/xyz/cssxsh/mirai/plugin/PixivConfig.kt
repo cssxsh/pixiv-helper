@@ -20,7 +20,6 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 import java.io.EOFException
-import java.io.File
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
@@ -123,7 +122,7 @@ internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
-internal fun Configuration.init(file: File) = apply {
+internal fun Configuration.init() = apply {
     environment = Environment("development", JdbcTransactionFactory(), SQLiteConnectionPoolDataSource().apply {
         config.apply {
             enforceForeignKeys(true)
@@ -138,7 +137,7 @@ internal fun Configuration.init(file: File) = apply {
                 setPragma(pragma, value)
             }
         }
-        url = "${JDBC.PREFIX}${file.absolutePath}"
+        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
     })
     addMapper(ArtWorkInfoMapper::class.java)
     addMapper(FileInfoMapper::class.java)
@@ -158,10 +157,19 @@ internal fun PixivHelperSettings.init() {
             sqlite.writeBytes(it.readAllBytes())
         }
     }
+    PixivHelperPlugin.sqlSessionFactory.configuration.init()
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     logger.info { "Sqlite: ${sqlite.absolutePath}" }
+    PixivHelperPlugin.launch {
+        val count = useMappers { it.artwork.count() }
+        if (count < eroInterval) {
+            logger.warning {
+                "缓存数量过少，建议使用指令( /cache walkthrough )进行缓存"
+            }
+        }
+    }
 }
 
 internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch {

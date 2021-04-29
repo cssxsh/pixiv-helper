@@ -20,7 +20,7 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    private val sqlSessionFactory: SqlSessionFactory by lazy {
+    internal val sqlSessionFactory: SqlSessionFactory by lazy {
         SqlSessionFactoryBuilder().build(InitSqlConfiguration)
     }
 
@@ -61,8 +61,6 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivMarkCommand.register()
 
         PixivHelperSettings.init()
-
-        sqlSessionFactory.configuration.init(PixivHelperSettings.sqlite)
 
         PixivHelperListener.subscribe()
 

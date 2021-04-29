@@ -7,6 +7,8 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.sqlite.JDBC
+import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import java.io.File
@@ -28,7 +30,11 @@ internal class MapperTest {
     @BeforeAll
     @Suppress("unused")
     fun initSqlSession() {
-        sqlSessionFactory.configuration.init(sqlite)
+        sqlSessionFactory.configuration.init().apply {
+            (environment.dataSource as SQLiteConnectionPoolDataSource).apply {
+                url =  "${JDBC.PREFIX}${sqlite.absolutePath}"
+            }
+        }
     }
 
     @Test
