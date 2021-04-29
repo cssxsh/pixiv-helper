@@ -149,6 +149,13 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("缓存漫游")
+    suspend fun CommandSenderOnMessage<*>.walkthrough(times: Int = 1) = withHelper {
+        addCacheJob(name = "WALK_THROUGH(${times})") { getWalkThrough(times = times).eros() }
+        "将会随机${times}次WalkThrough加载"
+    }
+
+    @SubCommand
     @Description("停止当前助手缓存任务")
     suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
         cacheStop()

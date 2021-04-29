@@ -88,6 +88,21 @@ object PixivPlayCommand : CompositeCommand(
         "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
     }
 
+    @SubCommand("walkthrough", "random", "漫游", "随机")
+    @Description("根据 AID 播放特辑")
+    suspend fun CommandSenderOnMessage<*>.walkthrough(seconds: Int = 10) = withHelper {
+        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
+        val duration = maxOf(seconds.seconds, interval)
+        val illusts = illustWalkThrough().illusts.filter { it.age == AgeLimit.ALL && it.isEro() }
+        jobs[contact] = launch {
+            illusts.forEach {
+                delay(duration)
+                if (isActive) sendIllust(flush = true) { it }
+            }
+        }
+        "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
+    }
+
     @SubCommand("stop", "停止")
     @Description("停止播放当前列表")
     suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
