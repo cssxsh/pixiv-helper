@@ -31,22 +31,22 @@ object PixivCacheCommand : CompositeCommand(
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
     }
 
-    private fun Year.days(step: Int = 5) = (1 .. length() step step).map { index -> atDay(index) }
+    private fun Year.days() = (1 .. length()).map { index -> atDay(index) }
+
+    private fun Pair<LocalDate, LocalDate>.range() = (first.year .. second.year).flatMap { year ->
+        Year.of(year).days().filter { it >= first && it <= second }
+    }
 
     @SubCommand
-    @Description("以年为界限缓存月榜作品")
-    suspend fun CommandSenderOnMessage<*>.year(
-        year: Year,
-        start: LocalDate = year.days().first(),
-        end: LocalDate = minOf(LocalDate.now(), year.days().last()),
-    ) = withHelper {
-        year.days().filter { it >= start && it <= end }.onEach { date ->
-            addCacheJob(name = "YEAR[${year.value}]-MONTH($date)", reply = false) {
+    @Description("参数界限为解析缓存月榜作品")
+    suspend fun CommandSenderOnMessage<*>.range(start: LocalDate, end: LocalDate) = withHelper {
+        check(start <= end) {  "start 要在 end 之前" }
+        (start to end).range().forEach { date ->
+            addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = false) {
                 getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).types(WorkContentType.ILLUST).notCached()
             }
-        }.let {
-            "任务YEAR[${year.value}]{${start}~${end}}已添加"
         }
+        "任务集RANGE{${start}~${end}}已添加"
     }
 
     @SubCommand
