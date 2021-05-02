@@ -295,7 +295,7 @@ internal fun IllustInfo.write(file: File = json(pid)) {
     file.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
 }
 
-internal fun List<IllustInfo>.write() = onEach { it.write() }
+internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
@@ -333,7 +333,8 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     val dir = folder(pid)
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
-    val files = getOriginImageUrls().map { url ->
+    val urls = getOriginImageUrls()
+    val files = urls.map { url ->
         dir.resolve(url.filename).apply {
             if (exists().not() && temp.resolve(name).exists()) {
                 logger.info { "从[${temp.resolve(name)}]移动文件" }
@@ -347,7 +348,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 
     fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
         pid = pid,
-        index = getOriginImageUrls().indexOf(url),
+        index = urls.indexOf(url),
         md5 = bytes.md5().hex(),
         url = url.toString(),
         size = bytes.size
@@ -368,7 +369,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             useMappers { it.file.replaceFiles(list) }
         }
         check(results.all { it.isSuccess }) { "作品(${pid})下载失败" }
-        logger.info { "作品(${pid})<${createAt}>[${type}][${user.id}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+        logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     return files
 }
