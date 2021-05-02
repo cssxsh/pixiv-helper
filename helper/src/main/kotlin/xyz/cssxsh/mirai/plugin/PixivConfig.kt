@@ -122,7 +122,7 @@ internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
-internal fun Configuration.init() = apply {
+internal fun Configuration.init() {
     environment = Environment("development", JdbcTransactionFactory(), SQLiteConnectionPoolDataSource().apply {
         config.apply {
             enforceForeignKeys(true)

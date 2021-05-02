@@ -30,7 +30,8 @@ internal class MapperTest {
     @BeforeAll
     @Suppress("unused")
     fun initSqlSession() {
-        sqlSessionFactory.configuration.init().apply {
+        sqlSessionFactory.configuration.apply {
+            init()
             (environment.dataSource as SQLiteConnectionPoolDataSource).apply {
                 url =  "${JDBC.PREFIX}${sqlite.absolutePath}"
             }
