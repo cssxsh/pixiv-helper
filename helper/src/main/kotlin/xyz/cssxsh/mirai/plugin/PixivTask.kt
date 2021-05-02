@@ -27,8 +27,6 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.time.*
 
-typealias LoadTask = suspend PixivHelper.() -> Flow<List<IllustInfo>>
-
 internal data class CacheTask(
     val name: String,
     val write: Boolean,

@@ -217,7 +217,13 @@ internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(
     account = account
 )
 
-internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
+internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(
+    uid = uid,
+    name = name,
+    account = ""
+)
+
+internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     pid = pid,
     uid = user.id,
     title = title,
@@ -236,7 +242,45 @@ internal fun IllustInfo.getArtWorkInfo() = ArtWorkInfo(
     deleted = false
 )
 
-internal fun IllustInfo.getTagInfo() = tags.map {
+internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(
+    pid = pid,
+    uid = uid,
+    title = title,
+    caption = "",
+    createAt = 0,
+    pageCount = 0,
+    sanityLevel = 0,
+    type = 0,
+    width = 0,
+    height = 0,
+    totalBookmarks = 0,
+    totalComments = 0,
+    totalView = 0,
+    age = 0,
+    isEro = false,
+    deleted = false
+)
+
+internal fun emptyArtWorkInfo() = ArtWorkInfo(
+    pid = 0,
+    uid = 0,
+    title = "",
+    caption = "",
+    createAt = 0,
+    pageCount = 0,
+    sanityLevel = SanityLevel.NONE.ordinal,
+    type = 0,
+    width = 0,
+    height = 0,
+    totalBookmarks = 0,
+    totalComments = 0,
+    totalView = 0,
+    age = 0,
+    isEro = false,
+    deleted = false
+)
+
+internal fun IllustInfo.toTagInfo() = tags.map {
     TagBaseInfo(
         pid = pid,
         name = it.name,

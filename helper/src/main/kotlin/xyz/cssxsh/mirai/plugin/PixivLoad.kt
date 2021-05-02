@@ -14,17 +14,19 @@ import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
 
-internal fun Flow<List<IllustInfo>>.notCached() = map { list ->
+typealias LoadTask = suspend PixivHelper.() -> Flow<Collection<IllustInfo>>
+
+internal fun Flow<Collection<IllustInfo>>.notCached() = map { list ->
     useMappers { mappers ->
         list.filterNot { mappers.artwork.contains(it.pid) }
     }
 }
 
-internal fun Flow<List<IllustInfo>>.types(type: WorkContentType) = map { list ->
+internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { list ->
     list.filter { it.type == type }
 }
 
-internal fun Flow<List<IllustInfo>>.eros() = map { list ->
+internal fun Flow<Collection<IllustInfo>>.eros() = map { list ->
     list.filter { it.isEro() }
 }
 
@@ -65,7 +67,7 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = 
 internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (currentCoroutineContext().isActive) runCatching {
-            illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }
+            illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }.associateBy { it.pid }.values
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)
@@ -176,24 +178,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
                     useMappers { mappers ->
-                        mappers.artwork.replaceArtWork(ArtWorkInfo(
-                            pid = pid,
-                            uid = 0,
-                            title = "",
-                            caption = it.message.orEmpty(),
-                            createAt = 0,
-                            pageCount = 0,
-                            sanityLevel = 7,
-                            type = 0,
-                            width = 0,
-                            height = 0,
-                            totalBookmarks = 0,
-                            totalComments = 0,
-                            totalView = 0,
-                            age = 0,
-                            isEro = false,
-                            deleted = true,
-                        ))
+                        mappers.artwork.replaceArtWork(emptyArtWorkInfo().copy(pid = pid))
                     }
                 }
             }.getOrNull()
@@ -221,30 +206,9 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
                     useMappers { mappers ->
                         if (mappers.user.findByUid(result.uid) == null) {
-                            mappers.user.replaceUser(UserBaseInfo(
-                                uid = result.uid,
-                                name = result.name,
-                                account = ""
-                            ))
+                            mappers.user.replaceUser(result.toUserBaseInfo())
                         }
-                        mappers.artwork.replaceArtWork(ArtWorkInfo(
-                            pid = result.pid,
-                            uid = result.uid,
-                            title = result.title,
-                            caption = it.message.orEmpty(),
-                            createAt = 0,
-                            pageCount = 0,
-                            sanityLevel = 7,
-                            type = 0,
-                            width = 0,
-                            height = 0,
-                            totalBookmarks = 0,
-                            totalComments = 0,
-                            totalView = 0,
-                            age = 0,
-                            isEro = false,
-                            deleted = true,
-                        ))
+                        mappers.artwork.replaceArtWork(result.toArtWorkInfo().copy(caption = it.message.orEmpty()))
                     }
                 }
             }.getOrNull()
@@ -257,7 +221,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
 }
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    useMappers { it.statistic.alias() }.map { it.uid }.toSet().sorted().also { set ->
+    useMappers { it.statistic.alias() }.associateBy { it.uid }.keys.let { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
             if (currentCoroutineContext().isActive) runCatching {
@@ -311,8 +275,8 @@ private fun months(year: Year?) = buildList {
     }
 }
 
-internal suspend fun PixivHelper.getNaviRank(year: Year?) = flow {
-    months(year = year).forEach { month ->
+internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
+    list.forEach { month ->
         if (currentCoroutineContext().isActive) NaviRank.runCatching {
             (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten()).filter {
                 it.type == WorkContentType.ILLUST
@@ -326,15 +290,45 @@ internal suspend fun PixivHelper.getNaviRank(year: Year?) = flow {
     }
 }
 
+internal suspend fun PixivHelper.getNaviRank(year: Year?) = getNaviRank(list = months(year = year))
+
 internal suspend fun PixivHelper.getArticle(article: SpotlightArticle) = getListIllusts(
     info = Pixivision.getArticle(aid = article.aid).illusts
 )
 
-internal suspend fun PixivHelper.articlesRandom(limit: Long = ARTICLE_LIMIT): SpotlightArticleData {
+internal suspend fun PixivHelper.randomArticles(limit: Long = ARTICLE_LIMIT): SpotlightArticleData {
     val random = (0..limit).random()
     return spotlightArticles(category = CategoryType.ILLUST, offset = random).takeIf {
         it.articles.isNotEmpty()
-    } ?: articlesRandom(limit = random - 1)
+    } ?: randomArticles(limit = random - 1)
+}
+
+internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
+    (0 until times).forEach { page ->
+        if (currentCoroutineContext().isActive) runCatching {
+            illustWalkThrough().illusts
+        }.onSuccess { list ->
+            list.chunked(PAGE_SIZE.toInt()).forEach {
+                emit(it)
+            }
+            logger.verbose { "加载第${page}次WalkThrough成功" }
+        }.onFailure {
+            logger.warning({ "加载第${page}次WalkThrough失败" }, it)
+        }
+    }
+}
+
+internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARCH_LIMIT) = flow {
+    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
+        if (currentCoroutineContext().isActive) runCatching {
+            searchUser(word = name, offset = offset).previews
+        }.onSuccess {
+            emit(it)
+            logger.verbose { "加载搜索用户(${name})第${page}页{${it.size}}成功" }
+        }.onFailure {
+            logger.warning({ "加载搜索用户(${name})第${page}页失败" }, it)
+        }
+    }
 }
 
 private fun File.listDirs(range: LongRange) = listFiles { file ->

@@ -65,8 +65,8 @@ internal class MapperTest {
         imagesFolder(pid).resolve("${pid}.json").readIllustInfo().run {
             sqlSessionFactory.openSession().use { session ->
                 session.getMapper(UserInfoMapper::class.java).replaceUser(user.toUserBaseInfo())
-                session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(getArtWorkInfo())
-                session.getMapper(TagInfoMapper::class.java).replaceTags(getTagInfo())
+                session.getMapper(ArtWorkInfoMapper::class.java).replaceArtWork(toArtWorkInfo())
+                session.getMapper(TagInfoMapper::class.java).replaceTags(toTagInfo())
             }
         }
     }
