@@ -391,8 +391,8 @@ internal fun getBackupList() = buildMap<String, File> {
     this["DATABASE"] = PixivHelperSettings.sqlite
 }
 
-internal suspend fun PixivHelper.jump(account: String): Long {
-    useMappers { it.user.findByAccount(account = account) }?.let { return@jump it.uid }
+internal suspend fun PixivHelper.redirect(account: String): Long {
+    useMappers { it.user.findByAccount(account = account) }?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
     return useHttpClient { client ->
         client.head<HttpResponse>(url).request.url

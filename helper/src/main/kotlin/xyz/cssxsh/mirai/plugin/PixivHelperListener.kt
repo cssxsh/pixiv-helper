@@ -60,6 +60,6 @@ object PixivHelperListener {
     }
 
     private suspend fun MessageEvent.sendUserInfo(account: String) = toCommandSender().withHelper {
-        buildMessageByUser(uid = jump(account = account))
+        buildMessageByUser(uid = redirect(account = account))
     }
 }
