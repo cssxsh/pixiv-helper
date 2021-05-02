@@ -21,14 +21,14 @@ object PixivPlayCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private var PixivHelper.play: Job by PixivHelperDelegate { Job().apply { complete() } }
+    private var PixivHelper.play by PixivHelperDelegate { CancelledJob }
 
     private var PixivHelper.duration by PixivHelperDelegate { (10).seconds }
 
     @SubCommand("rank", "排行")
     @Description("根据 Tag 播放特辑")
     suspend fun CommandSenderOnMessage<*>.rank(vararg words: String) = withHelper {
-        check(play.isActive) { "其他列表播放着中" }
+        check(!play.isActive) { "其他列表播放着中" }
         val rank = NaviRank.getTagRank(words = words)
         play = launch {
             rank.records.cached().forEach {
@@ -42,7 +42,7 @@ object PixivPlayCommand : CompositeCommand(
     @SubCommand("recommended", "推荐")
     @Description("根据 系统推荐 播放图集")
     suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
-        check(play.isActive) { "其他列表播放着中" }
+        check(!play.isActive) { "其他列表播放着中" }
         val user = getAuthInfo().user
         val illusts = illustRecommended().illusts.filter { it.age == AgeLimit.ALL }
         play = launch {
@@ -57,7 +57,7 @@ object PixivPlayCommand : CompositeCommand(
     @SubCommand("mark", "收藏")
     @Description("根据 tag 播放收藏")
     suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
-        check(play.isActive) { "其他列表播放着中" }
+        check(!play.isActive) { "其他列表播放着中" }
         val user = getAuthInfo().user
         val illusts = bookmarksRandom(uid = user.uid, tag = tag).illusts
         play = launch {
@@ -72,7 +72,7 @@ object PixivPlayCommand : CompositeCommand(
     @SubCommand("article", "特辑")
     @Description("根据 AID 播放特辑")
     suspend fun CommandSenderOnMessage<*>.article(aid: Long) = withHelper {
-        check(play.isActive) { "其他列表播放着中" }
+        check(!play.isActive) { "其他列表播放着中" }
         val article = Pixivision.getArticle(aid = aid)
         play = launch {
             article.illusts.forEach {
@@ -88,7 +88,7 @@ object PixivPlayCommand : CompositeCommand(
     @SubCommand("walkthrough", "random", "漫游", "随机")
     @Description("根据 AID 播放特辑")
     suspend fun CommandSenderOnMessage<*>.walkthrough() = withHelper {
-        check(play.isActive) { "其他列表播放着中" }
+        check(!play.isActive) { "其他列表播放着中" }
         val illusts = illustWalkThrough().illusts.filter { it.age == AgeLimit.ALL && it.isEro() }
         play = launch {
             illusts.forEach {

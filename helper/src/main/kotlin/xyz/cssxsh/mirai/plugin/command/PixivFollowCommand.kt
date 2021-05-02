@@ -18,7 +18,7 @@ object PixivFollowCommand : CompositeCommand(
     description = "PIXIV关注指令"
 ) {
 
-    private var PixivHelper.follow: Job  by PixivHelperDelegate { Job().apply { complete() } }
+    private var PixivHelper.follow  by PixivHelperDelegate { CancelledJob }
 
     @SubCommand
     @Description("为当前助手关注指定用户")

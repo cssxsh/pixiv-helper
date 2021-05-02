@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.utils.*
@@ -223,3 +224,5 @@ internal const val LOAD_LIMIT = 5_000L
 internal const val TASK_LOAD = PAGE_SIZE * 5
 
 internal const val TAG_TOP_LIMIT = 10L
+
+internal val CancelledJob: Job = Job().apply { cancel() }
