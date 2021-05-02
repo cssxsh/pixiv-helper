@@ -12,8 +12,7 @@ import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
-import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsFile
+import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -252,7 +251,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
             if (helper.contact is FileSupported) {
                 helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    helper.contact.sendMessage(file.toExternalResource().uploadAsFile(contact = helper.contact, path = file.name))
+                    (helper.contact).sendFile(path = file.name, file = file)
                 }.onFailure {
                     helper.contact.sendMessage("上传失败: ${it.message}")
                 }

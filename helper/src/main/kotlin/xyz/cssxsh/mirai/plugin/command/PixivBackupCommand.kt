@@ -7,8 +7,7 @@ import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
-import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsFile
+import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
@@ -34,33 +33,31 @@ object PixivBackupCommand : CompositeCommand(
             in bit(0) until bit(10) -> "%0.2dB".format(size)
             in bit(10) until bit(20) -> "%0.2dMB".format(size)
             in bit(20) until bit(30) -> "%0.2dGB".format(size)
-            else -> throw IllegalStateException("File(${absolutePath}) too big")
+            else -> throw IllegalStateException("File(${absolutePath}) Too Big")
         }
     }
 
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
-        compress.withLock {
-            PixivZipper.block().forEach { file ->
-                if (this@compress is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
-                    sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到群文件")
+        compress.withLock { PixivZipper.block() }.forEach { file ->
+            if (this@compress is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
+                sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到群文件")
+                runCatching {
+                    group.sendFile(path = file.name, file = file)
+                }.onFailure {
+                    sendMessage("[${file.name}]上传失败: ${it.message}")
+                }
+            } else {
+                upload {
+                    sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到百度云")
+                    val code = file.getRapidUploadInfo()
                     runCatching {
-                        sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
+                        uploadFile(file)
+                    }.onSuccess {
+                        logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
+                        sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
                     }.onFailure {
-                        sendMessage("[${file.name}]上传失败: ${it.message}")
-                    }
-                } else {
-                    upload {
-                        sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到百度云")
-                        val code = file.getRapidUploadInfo()
-                        runCatching {
-                            uploadFile(file)
-                        }.onSuccess {
-                            logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
-                            sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
-                        }.onFailure {
-                            logger.warning({ "[${file.name}]上传失败" }, it)
-                            sendMessage("[${file.name}]上传失败, ${it.message}")
-                        }
+                        logger.warning({ "[${file.name}]上传失败" }, it)
+                        sendMessage("[${file.name}]上传失败, ${it.message}")
                     }
                 }
             }
@@ -107,7 +104,7 @@ object PixivBackupCommand : CompositeCommand(
     @Description("列出备份目录")
     suspend fun CommandSender.list() {
         sendMessage(PixivZipper.list().joinToString("\n") { file ->
-            file.name
+            "${file.name} ${file.size()}"
         })
     }
 
@@ -116,7 +113,7 @@ object PixivBackupCommand : CompositeCommand(
     suspend fun MemberCommandSenderOnMessage.get(name: String) {
         runCatching {
             requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }.let { file ->
-                sendMessage(file.toExternalResource().uploadAsFile(contact = group, path = file.name))
+                group.sendFile(path = file.name, file = file)
             }
         }.onFailure {
             sendMessage("上传失败: ${it.message}")
