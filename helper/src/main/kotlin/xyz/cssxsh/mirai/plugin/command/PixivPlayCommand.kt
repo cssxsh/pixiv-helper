@@ -5,7 +5,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.contact.Contact
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.AgeLimit
@@ -22,15 +21,16 @@ object PixivPlayCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private val jobs = mutableMapOf<Contact, Job>()
+    private var PixivHelper.play: Job by PixivHelperDelegate { Job().apply { complete() } }
+
+    private var PixivHelper.duration by PixivHelperDelegate { (10).seconds }
 
     @SubCommand("rank", "排行")
     @Description("根据 Tag 播放特辑")
-    suspend fun CommandSenderOnMessage<*>.rank(vararg words: String, seconds: Int = 10) = withHelper {
-        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
-        val duration = maxOf(seconds.seconds, interval)
+    suspend fun CommandSenderOnMessage<*>.rank(vararg words: String) = withHelper {
+        check(play.isActive) { "其他列表播放着中" }
         val rank = NaviRank.getTagRank(words = words)
-        jobs[contact] = launch {
+        play = launch {
             rank.records.cached().forEach {
                 delay(duration)
                 if (isActive) sendIllust { it }
@@ -41,12 +41,11 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("recommended", "推荐")
     @Description("根据 系统推荐 播放图集")
-    suspend fun CommandSenderOnMessage<*>.recommended(seconds: Int = 10) = withHelper {
-        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
-        val duration = maxOf(seconds.seconds, interval)
+    suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
+        check(play.isActive) { "其他列表播放着中" }
         val user = getAuthInfo().user
         val illusts = illustRecommended().illusts.filter { it.age == AgeLimit.ALL }
-        jobs[contact] = launch {
+        play = launch {
             illusts.forEach {
                 delay(duration)
                 if (isActive) sendIllust(flush = true) { it }
@@ -57,12 +56,11 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("mark", "收藏")
     @Description("根据 tag 播放收藏")
-    suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null, seconds: Int = 10) = withHelper {
-        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
-        val duration = maxOf(seconds.seconds, interval)
+    suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
+        check(play.isActive) { "其他列表播放着中" }
         val user = getAuthInfo().user
         val illusts = bookmarksRandom(uid = user.uid, tag = tag).illusts
-        jobs[contact] = launch {
+        play = launch {
             illusts.forEach {
                 delay(duration)
                 if (isActive) sendIllust(flush = true) { it }
@@ -73,11 +71,10 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("article", "特辑")
     @Description("根据 AID 播放特辑")
-    suspend fun CommandSenderOnMessage<*>.article(aid: Long, seconds: Int = 10) = withHelper {
-        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
-        val duration = maxOf(seconds.seconds, interval)
+    suspend fun CommandSenderOnMessage<*>.article(aid: Long) = withHelper {
+        check(play.isActive) { "其他列表播放着中" }
         val article = Pixivision.getArticle(aid = aid)
-        jobs[contact] = launch {
+        play = launch {
             article.illusts.forEach {
                 delay(duration)
                 if (isActive) sendIllust(flush = false) {
@@ -90,11 +87,10 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("walkthrough", "random", "漫游", "随机")
     @Description("根据 AID 播放特辑")
-    suspend fun CommandSenderOnMessage<*>.walkthrough(seconds: Int = 10) = withHelper {
-        check(jobs[contact]?.isActive != true) { "其他列表播放着中" }
-        val duration = maxOf(seconds.seconds, interval)
+    suspend fun CommandSenderOnMessage<*>.walkthrough() = withHelper {
+        check(play.isActive) { "其他列表播放着中" }
         val illusts = illustWalkThrough().illusts.filter { it.age == AgeLimit.ALL && it.isEro() }
-        jobs[contact] = launch {
+        play = launch {
             illusts.forEach {
                 delay(duration)
                 if (isActive) sendIllust(flush = true) { it }
@@ -118,6 +114,11 @@ object PixivPlayCommand : CompositeCommand(
     @SubCommand("stop", "停止")
     @Description("停止播放当前列表")
     suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
-        jobs.remove(contact)?.let { it.cancelAndJoin(); "当前列表已停止播放" } ?: "当前未播放"
+        if (play.isActive) {
+            play.cancelAndJoin()
+            "当前列表已停止播放"
+        } else {
+            "当前未播放"
+        }
     }
 }

@@ -115,8 +115,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         cacheChannel.cancel()
     }
 
-    var followJob: Job? = null
-
     override suspend fun auth(
         grant: GrantType,
         config: PixivConfig,

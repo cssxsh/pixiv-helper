@@ -112,3 +112,16 @@ internal fun Contact.getHelper(): PixivHelper {
 internal val CommandSenderOnMessage<*>.helper by ReadOnlyProperty<CommandSenderOnMessage<*>, PixivHelper> { sender, _ ->
     sender.fromEvent.subject.getHelper()
 }
+
+class PixivHelperDelegate<T>(private val default: (Contact) -> T) : ReadWriteProperty<PixivHelper, T> {
+
+    private val map: MutableMap<Contact, T> = mutableMapOf()
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: T) {
+        map[thisRef.contact] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): T {
+        return map.getOrPut(thisRef.contact) { default(thisRef.contact) }
+    }
+}
