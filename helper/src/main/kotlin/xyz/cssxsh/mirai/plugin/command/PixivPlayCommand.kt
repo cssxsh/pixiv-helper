@@ -103,6 +103,18 @@ object PixivPlayCommand : CompositeCommand(
         "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
     }
 
+    @SubCommand("complete", "补全", "自动补全")
+    @Description("根据 AID 播放特辑")
+    suspend fun CommandSenderOnMessage<*>.complete(vararg works: String) = withHelper {
+        check(works.isNotEmpty())
+        buildString {
+            appendLine("自动补全，共${works.size}个")
+            works.forEach { work ->
+                appendLine("[$work] => ${searchAutoComplete(word = work).tags.map { it.getContent() }}")
+            }
+        }
+    }
+
     @SubCommand("stop", "停止")
     @Description("停止播放当前列表")
     suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
