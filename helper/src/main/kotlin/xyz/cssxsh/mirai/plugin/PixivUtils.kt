@@ -110,14 +110,17 @@ internal val Url.filename get() = encodedPath.substringAfterLast('/')
 internal fun IllustInfo.getContent() = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
+    appendLine("已关注: ${user.isFollowed ?: false}")
     appendLine("标题: $title ")
     appendLine("PID: $pid ")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("SAN值: $sanityLevel ")
     appendLine("创作于: $createAt ")
     appendLine("共: $pageCount 张图片 ")
-    appendLine("标签：${tags.map { it.translatedName ?: it.name }}")
+    appendLine("标签：${tags.map { it.getContent() }}")
 }
+
+internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?: "")
 
 internal fun IllustInfo.getPixivCat() = buildMessageChain {
     appendLine("原图连接: ")
@@ -171,27 +174,36 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByIllust(pid: Long) = buildMessageByIllust(
-    illust = getIllustInfo(pid = pid, flush = false)
-)
-
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
-internal suspend fun PixivHelper.buildMessageByUser(user: UserDetail): MessageChain = buildMessageChain {
-    appendLine("NAME: ${user.user.name}")
-    appendLine("UID: ${user.user.id}")
-    appendLine("ACCOUNT: ${user.user.account}")
-    appendLine("TOTAL: ${user.total()}")
-    appendLine("TWITTER: ${user.profile.twitterAccount}")
+internal suspend fun PixivHelper.buildMessageByUser(user: UserInfo): MessageChain = buildMessageChain {
+    appendLine("NAME: ${user.name}")
+    appendLine("UID: ${user.id}")
+    appendLine("ACCOUNT: ${user.account}")
+    appendLine("FOLLOWED: ${user.isFollowed}")
     runCatching {
-        append(user.user.getProfileImage().uploadAsImage(contact))
+        append(user.getProfileImage().uploadAsImage(contact))
     }.onFailure {
-        logger.warning({ "User(${user.user.id}) ProfileImage 下载失败" }, it)
+        logger.warning({ "User(${user.id}) ProfileImage 下载失败" }, it)
+    }
+}
+
+internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail): MessageChain = buildMessageChain {
+    appendLine("NAME: ${detail.user.name}")
+    appendLine("UID: ${detail.user.id}")
+    appendLine("ACCOUNT: ${detail.user.account}")
+    appendLine("FOLLOWED: ${detail.user.isFollowed}")
+    appendLine("TOTAL: ${detail.total()}")
+    appendLine("TWITTER: ${detail.profile.twitterAccount}")
+    runCatching {
+        append(detail.user.getProfileImage().uploadAsImage(contact))
+    }.onFailure {
+        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
     }
 }
 
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long): MessageChain = buildMessageByUser(
-    user = userDetail(uid = uid).apply { save() }
+    detail = userDetail(uid = uid).apply { user.save() }
 )
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
@@ -237,9 +249,9 @@ internal fun UserInfoMapper.add(user: UserBaseInfo) =
 
 internal fun IllustInfo.save(): Unit = useMappers { mappers ->
     mappers.user.add(user.toUserBaseInfo())
-    mappers.artwork.replaceArtWork(getArtWorkInfo())
+    mappers.artwork.replaceArtWork(toArtWorkInfo())
     if (tags.isNotEmpty()) {
-        mappers.tag.replaceTags(getTagInfo())
+        mappers.tag.replaceTags(toTagInfo())
     }
     logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
 }
@@ -248,9 +260,9 @@ internal fun Collection<IllustInfo>.update(): Unit = useMappers { mappers ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
 
     forEach { info ->
-        mappers.artwork.updateArtWork(info.getArtWorkInfo())
+        mappers.artwork.updateArtWork(info.toArtWorkInfo())
         if (info.tags.isNotEmpty()) {
-            mappers.tag.replaceTags(info.getTagInfo())
+            mappers.tag.replaceTags(info.toTagInfo())
         }
     }
 
@@ -262,16 +274,16 @@ internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
 
     forEach { info ->
         mappers.user.add(info.user.toUserBaseInfo())
-        mappers.artwork.replaceArtWork(info.getArtWorkInfo())
+        mappers.artwork.replaceArtWork(info.toArtWorkInfo())
         if (info.tags.isNotEmpty()) {
-            mappers.tag.replaceTags(info.getTagInfo())
+            mappers.tag.replaceTags(info.toTagInfo())
         }
     }
 
     logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
-internal fun UserDetail.save(): Unit = useMappers { it.user.add(user.toUserBaseInfo()) }
+internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) }
 
 internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.hex()) }
 
