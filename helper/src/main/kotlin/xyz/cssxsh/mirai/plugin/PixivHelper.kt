@@ -33,22 +33,33 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
+    private var cacheJob = cache()
+
+    private fun cache() = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
+        while (isActive) {
+            runCatching {
+                logger.info { "PixivHelper:${contact}#CacheTask start"  }
+                cacheChannel.consumeAsFlow().save().download().buffer(1).await()
+            }
+            cacheChannel = Channel(Channel.BUFFERED)
+        }
+    }
+
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
-            block.invoke(this@PixivHelper).onEach { list ->
-                if (write && list.isNotEmpty()) {
-                    list.write()
-                }
-            }.collect { list ->
+            block.invoke(this@PixivHelper).collect { list ->
                 useMappers { mappers ->
                     list.groupBy {
                         mappers.artwork.contains(it.pid)
                     }
                 }.also { (success, failure) ->
-                    success?.update()
-                    failure?.sortedBy { it.pid }?.let {
-                        it.save()
-                        this@transform.emit(DownloadTask(name = name, list = it, reply = reply))
+                    success?.let { list ->
+                        if (write) list.write()
+                        list.update()
+                    }
+                    failure?.let { list ->
+                        list.write().save()
+                        this@transform.emit(DownloadTask(name = name, list = list.sortedBy { it.pid }, reply = reply))
                     }
                 }
             }
@@ -89,19 +100,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<List<Deferred<*>>>.await() = collect { it.awaitAll() }
 
-    init {
-        launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
-            while (isActive) {
-                runCatching {
-                    logger.info { "PixivHelper:${contact}#CacheTask start"  }
-                    cacheChannel.consumeAsFlow().save().download().await()
-                }
-                cacheChannel = Channel(Channel.BUFFERED)
-            }
-        }
-    }
-
     fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) = launch {
+        if (cacheJob.isActive.not()) cacheJob = cache()
         cacheChannel.send(CacheTask(
             name = name,
             write = write,
@@ -111,6 +111,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     }
 
     fun cacheStop() {
+        cacheJob.cancel("任务被停止")
         cacheChannel.close()
         cacheChannel.cancel()
     }
