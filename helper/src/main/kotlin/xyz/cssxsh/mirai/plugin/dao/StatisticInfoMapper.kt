@@ -15,4 +15,6 @@ interface StatisticInfoMapper {
     fun replaceAliasSetting(result: AliasSetting): Boolean
     fun alias(): List<AliasSetting>
     fun top(limit: Long): List<Pair<String, Long>>
+    fun addHistory(history: StatisticTaskInfo): Boolean
+    fun histories(name: String): List<StatisticTaskInfo>
 }

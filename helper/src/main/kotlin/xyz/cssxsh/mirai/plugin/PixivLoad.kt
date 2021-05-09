@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
@@ -28,6 +30,16 @@ internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { l
 
 internal fun Flow<Collection<IllustInfo>>.eros() = map { list ->
     list.filter { it.isEro() }
+}
+
+internal fun Flow<Collection<IllustInfo>>.isToday() = map { list ->
+    val now = LocalDate.now()
+    list.filter { (it.createAt.toLocalDate() == now) }
+}
+
+internal fun Flow<Collection<IllustInfo>>.notHistory(task: String) = map { list ->
+    val histories = useMappers { it.statistic.histories(name = task) }.map { it.pid }
+    list.filterNot { it.pid in histories }
 }
 
 internal fun List<NaviRankRecord>.cached() = useMappers { mappers ->
@@ -178,7 +190,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
                     useMappers { mappers ->
-                        mappers.artwork.replaceArtWork(emptyArtWorkInfo().copy(pid = pid))
+                        mappers.artwork.replaceArtWork(EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()))
                     }
                 }
             }.getOrNull()
@@ -329,6 +341,12 @@ internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARC
             logger.warning({ "加载搜索用户(${name})第${page}页失败" }, it)
         }
     }
+}
+
+internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
+    val text: String = useHttpClient { it.get(url) }
+    val result = regex.findAll(text)
+    return result.map { it.value.toLong() }.toSet()
 }
 
 private fun File.listDirs(range: LongRange) = listFiles { file ->

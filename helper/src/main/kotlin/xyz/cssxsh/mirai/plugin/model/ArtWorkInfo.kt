@@ -38,3 +38,37 @@ data class ArtWorkInfo(
     @SerialName("deleted")
     val deleted: Boolean
 )
+
+@Serializable
+data class FileInfo(
+    @SerialName("pid")
+    val pid: Long,
+    @SerialName("index")
+    val index: Int,
+    @SerialName("md5")
+    val md5: String,
+    @SerialName("url")
+    val url: String,
+    @SerialName("size")
+    val size: Int
+)
+
+@Serializable
+data class TagBaseInfo(
+    @SerialName("pid")
+    val pid: Long,
+    @SerialName("name")
+    val name: String,
+    @SerialName("translated_name")
+    val translatedName: String?
+)
+
+@Serializable
+data class UserBaseInfo(
+    @SerialName("uid")
+    val uid: Long,
+    @SerialName("name")
+    val name: String,
+    @SerialName("account")
+    val account: String
+)

@@ -1,29 +1,21 @@
 package xyz.cssxsh.mirai.plugin
 
+import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.getRapidUploadInfo
-import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.properties.ReadOnlyProperty
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 import kotlin.time.*
 
 internal data class CacheTask(
@@ -78,33 +70,17 @@ internal val ContactInfo.helper by ReadOnlyProperty<ContactInfo, PixivHelper> { 
     }.getHelper()
 }
 
+typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
+
 @Serializable
 sealed class TimerTask {
-    abstract var last: OffsetDateTime
     abstract val interval: Long
     abstract val contact: ContactInfo
 
-    @Serializer(OffsetDateTime::class)
-    object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
-
-        private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-
-        override val descriptor: SerialDescriptor =
-            PrimitiveSerialDescriptor(OffsetDateTime::class.qualifiedName!!, PrimitiveKind.STRING)
-
-        override fun deserialize(decoder: Decoder): OffsetDateTime =
-            OffsetDateTime.parse(decoder.decodeString(), formatter)
-
-        override fun serialize(encoder: Encoder, value: OffsetDateTime) =
-            encoder.encodeString(formatter.format(value))
-    }
-
     @Serializable
     data class User(
-        @SerialName("last")
-        @Serializable(OffsetDateTimeSerializer::class)
-        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
+        @Contextual
         override val interval: Long,
         @SerialName("uid")
         val uid: Long,
@@ -114,9 +90,6 @@ sealed class TimerTask {
 
     @Serializable
     data class Rank(
-        @SerialName("last")
-        @Serializable(OffsetDateTimeSerializer::class)
-        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("mode")
         val mode: RankMode,
         @SerialName("contact")
@@ -128,9 +101,6 @@ sealed class TimerTask {
 
     @Serializable
     data class Follow(
-        @SerialName("last")
-        @Serializable(OffsetDateTimeSerializer::class)
-        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         override val interval: Long,
         @SerialName("contact")
@@ -139,9 +109,6 @@ sealed class TimerTask {
 
     @Serializable
     data class Recommended(
-        @SerialName("last")
-        @Serializable(OffsetDateTimeSerializer::class)
-        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         override val interval: Long,
         @SerialName("contact")
@@ -150,47 +117,41 @@ sealed class TimerTask {
 
     @Serializable
     data class Backup(
-        @SerialName("last")
-        @Serializable(OffsetDateTimeSerializer::class)
-        override var last: OffsetDateTime = OffsetDateTime.now(),
         @SerialName("interval")
         override val interval: Long,
         @SerialName("contact")
         override val contact: ContactInfo,
     ) : TimerTask()
-}
 
-internal class TaskLastDelegate(val name: String) : ReadWriteProperty<Nothing?, OffsetDateTime> {
-
-    override fun setValue(thisRef: Nothing?, property: KProperty<*>, value: OffsetDateTime) {
-        PixivTaskData.tasks.compute(name) { _, info ->
-            when (info) {
-                is TimerTask.User -> info.copy(last = value)
-                is TimerTask.Rank -> info.copy(last = value)
-                is TimerTask.Follow -> info.copy(last = value)
-                is TimerTask.Recommended -> info.copy(last = value)
-                is TimerTask.Backup -> info.copy(last = value)
-                null -> null
-            }
-        }
-    }
-
-    override fun getValue(thisRef: Nothing?, property: KProperty<*>): OffsetDateTime =
-        PixivTaskData.tasks.getValue(name).last
+    @Serializable
+    data class Web(
+        @SerialName("interval")
+        override val interval: Long,
+        @SerialName("contact")
+        override val contact: ContactInfo,
+        @SerialName("url")
+        val url: String,
+        @SerialName("pattern")
+        val pattern: String,
+    ) : TimerTask()
 }
 
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    var last: OffsetDateTime by TaskLastDelegate(name)
-    block().also {
+    block().types(WorkContentType.ILLUST).also {
         addCacheJob(name = "TimerTask(${name})", reply = false) { it }
-    }.types(WorkContentType.ILLUST).toList().flatten().toSet().sortedBy { it.createAt }.filter {
-        it.createAt > last && it.age == AgeLimit.ALL && it.createAt.isToday()
-    }.apply {
-        maxOfOrNull { it.createAt }?.let { last = it }
-    }.forEach { illust ->
-        delay(interval)
-        send {
-            "Task: $name\n".toPlainText() + buildMessageByIllust(illust = illust)
+    }.toList().flatten().filter { it.age == AgeLimit.ALL }.toSet().sortedBy { it.createAt }.let { list ->
+        list.forEachIndexed { index, illust ->
+            delay(interval)
+            send {
+                "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
+            }
+            useMappers {
+                it.statistic.addHistory(StatisticTaskInfo(
+                    task = name,
+                    pid = illust.pid,
+                    timestamp = OffsetDateTime.now().toEpochSecond()
+                ))
+            }
         }
     }
 }
@@ -202,9 +163,7 @@ internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
 
 internal fun OffsetDateTime.goto(next: OffsetDateTime) = (next.toEpochSecond() - toEpochSecond()).seconds
 
-private fun OffsetDateTime.isToday(): Boolean = (toLocalDate() == LocalDate.now())
-
-private val random = (10..30).random().minutes
+private val random get() = (10..60).random().minutes
 
 internal suspend fun TimerTask.pre(): Unit = when (this) {
     is TimerTask.User -> {
@@ -217,32 +176,35 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
         delay(random)
     }
     is TimerTask.Recommended -> {
-        delay(random)
+        delay(interval)
     }
     is TimerTask.Backup -> {
         delay(interval)
+    }
+    is TimerTask.Web -> {
+        delay(random)
     }
 }
 
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
-        info.contact.helper.subscribe(name) {
-            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE)
+        info.contact.helper.subscribe(name = name) {
+            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday().notHistory(task = name)
         }
     }
     is TimerTask.Rank -> {
-        info.contact.helper.subscribe(name) {
-            getRank(mode = info.mode, limit = TASK_LOAD).types(WorkContentType.ILLUST)
+        info.contact.helper.subscribe(name = name) {
+            getRank(mode = info.mode, limit = TASK_LOAD).notHistory(task = name)
         }
     }
     is TimerTask.Follow -> {
         info.contact.helper.subscribe(name) {
-            getFollowIllusts(limit = TASK_LOAD)
+            getFollowIllusts(limit = TASK_LOAD).notHistory(task = name)
         }
     }
     is TimerTask.Recommended -> {
         info.contact.helper.subscribe(name) {
-            getRecommended(limit = TASK_LOAD).eros()
+            getRecommended(limit = TASK_LOAD).eros().notHistory(task = name)
         }
     }
     is TimerTask.Backup -> {
@@ -268,6 +230,11 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
                     helper.contact.sendMessage("[${file.name}]上传失败, ${it.message}")
                 }
             }
+        }
+    }
+    is TimerTask.Web -> {
+        info.contact.helper.subscribe(name) {
+            getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex())).notHistory(task = name)
         }
     }
 }

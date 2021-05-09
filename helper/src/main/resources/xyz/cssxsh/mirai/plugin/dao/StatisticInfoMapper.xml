@@ -58,4 +58,13 @@
         ORDER BY count(*) DESC
         LIMIT ${limit};
     </select>
+    <insert id="addHistory">
+        REPLACE INTO statistic_task("task", "pid", "timestamp")
+        VALUES (#{task}, ${pid}, ${timestamp});
+    </insert>
+    <select id="histories" resultType="xyz.cssxsh.mirai.plugin.model.StatisticTaskInfo">
+        SELECT *
+        FROM statistic_task
+        WHERE task like #{task};
+    </select>
 </mapper>
