@@ -7,8 +7,9 @@ import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import xyz.cssxsh.pixiv.AgeLimit
+import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import java.time.LocalDate
 import kotlin.time.seconds
 
 object PixivPlayCommand : CompositeCommand(
@@ -24,6 +25,28 @@ object PixivPlayCommand : CompositeCommand(
     private var PixivHelper.play by PixivHelperDelegate { CancelledJob }
 
     private var PixivHelper.duration by PixivHelperDelegate { (10).seconds }
+
+    @SubCommand("ranking", "排行榜")
+    @Description("根据 系统推荐 播放图集")
+    suspend fun CommandSenderOnMessage<*>.interval(seconds: Int) = withHelper {
+        duration = seconds.seconds
+        "设置间隔 $duration"
+    }
+
+    @SubCommand("ranking", "排行榜")
+    @Description("根据 系统推荐 播放图集")
+    suspend fun CommandSenderOnMessage<*>.ranking(mode: RankMode? = null, date: LocalDate? = null) = withHelper {
+        check(!play.isActive) { "其他列表播放着中" }
+        val user = getAuthInfo().user
+        val illusts = illustRanking(mode = mode, date = date).illusts.filter { it.age == AgeLimit.ALL }
+        play = launch {
+            illusts.forEach {
+                delay(duration)
+                if (isActive) sendIllust(flush = true) { it }
+            }
+        }
+        "开始播放用户[${user.name}]系统推荐，共${illusts.size}个作品，间隔 $duration"
+    }
 
     @SubCommand("rank", "排行")
     @Description("根据 Tag 播放特辑")
@@ -100,7 +123,7 @@ object PixivPlayCommand : CompositeCommand(
     }
 
     @SubCommand("complete", "补全", "自动补全")
-    @Description("根据 AID 播放特辑")
+    @Description("根据 works 自动补全")
     suspend fun CommandSenderOnMessage<*>.complete(vararg works: String) = withHelper {
         check(works.isNotEmpty())
         buildString {
