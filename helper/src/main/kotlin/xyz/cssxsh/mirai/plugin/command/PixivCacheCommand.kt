@@ -119,12 +119,12 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载临时文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<*>.temp(path: String = "") = withHelper {
+    suspend fun CommandSenderOnMessage<*>.temp(path: String? = null) = withHelper {
         val list = mutableSetOf<Long>()
-        val dir = if (path.isNotBlank()) File(path) else PixivHelperSettings.tempFolder
+        val dir = if (path.isNullOrEmpty()) PixivHelperSettings.tempFolder else File(path)
+        logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         val exists = dir.resolve("exists").apply { mkdirs() }
         val other = dir.resolve("other").apply { mkdirs() }
-        logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         dir.listFiles()?.forEach { source ->
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
                 if (useMappers { it.artwork.contains(id.toLong()) }) {

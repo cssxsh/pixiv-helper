@@ -30,13 +30,16 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
-    private fun History.addEroArtWorkInfos() = useMappers { it.artwork.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
-        caches[info.pid] = info
+    private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
+        return caches.values.filter { info ->
+            info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+        }.ifEmpty {
+            useMappers { it.artwork.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
+                caches[info.pid] = info
+            }
+            getEroArtWorkInfos()
+        }
     }
-
-    private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> = caches.values.filter { info ->
-        info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
-    }.ifEmpty { addEroArtWorkInfos(); getEroArtWorkInfos() }
 
     private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
         mappers.statistic.replaceEroInfo(StatisticEroInfo(
@@ -72,20 +75,3 @@ object PixivEroCommand : SimpleCommand(
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

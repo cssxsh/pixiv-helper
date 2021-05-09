@@ -8,6 +8,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
+import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.ImageSearcher
 
@@ -46,7 +47,7 @@ object PixivSearchCommand : SimpleCommand(
             "没有PIXIV搜索结果"
         }.also { result ->
             if (result.similarity > MIN_SIMILARITY) {
-                result.copy(md5 = image.md5.hex()).save()
+                result.copy(md5 = image.md5.toByteString().hex()).save()
             } else {
                 findTwitterImage(url = image.queryUrl())
             }

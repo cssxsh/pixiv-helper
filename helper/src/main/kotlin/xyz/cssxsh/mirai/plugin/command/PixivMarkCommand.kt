@@ -15,9 +15,8 @@ object PixivMarkCommand : CompositeCommand(
     @SubCommand
     @Description("添加指定作品收藏，并设定TAG")
     suspend fun CommandSenderOnMessage<*>.add(pid: Long, vararg words: String) = withHelper {
-        illustBookmarkAdd(pid = pid, tags = words.toSet()).let {
-            "收藏${pid} -> ${words.joinToString()} 成功, $it"
-        }
+        illustBookmarkAdd(pid = pid, tags = words.toSet())
+        "收藏${pid} -> [${words.joinToString()}] 成功"
     }
 
     @SubCommand
@@ -35,7 +34,6 @@ object PixivMarkCommand : CompositeCommand(
             addCacheJob(name = "MARK_RANDOM", reply = false) { it }
         }.toList().flatten().write().random()
     }
-
 
     @SubCommand
     @Description("显示收藏列表")

@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.contact.Contact
@@ -11,17 +12,18 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
+import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
-import java.math.BigInteger
-import java.security.MessageDigest
-import kotlin.time.seconds
+import kotlin.time.*
 
 internal val logger get() = PixivHelperPlugin.logger
+
+private val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -34,7 +36,15 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             else -> quoteReply(message.toString())
         }
     }.onFailure {
-        quoteReply(it.toString())
+        when {
+            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+                delay((1).minutes)
+                quoteReply(SendLimit.find(it.message!!)!!.value)
+            }
+            else -> {
+                quoteReply(it.toString())
+            }
+        }
     }.isSuccess
 }
 
@@ -51,8 +61,16 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     }.onSuccess {
         quoteReply(it)
     }.onFailure {
-        logger.warning({ "读取色图失败" }, it)
-        quoteReply("读取色图失败， ${it.message}")
+        when {
+            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+                delay((1).minutes)
+                quoteReply(SendLimit.find(it.message!!)!!.value)
+            }
+            else -> {
+                logger.warning({ "读取色图失败" }, it)
+                quoteReply("读取色图失败， ${it.message}")
+            }
+        }
     }.isSuccess
 }
 
@@ -67,11 +85,9 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
  */
 internal val interval get() = PixivConfigData.interval.seconds
 
-internal suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) =
-    sendMessage(message + fromEvent.message.quote())
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(message + fromEvent.message.quote())
 
-internal suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) =
-    quoteReply(message.toPlainText())
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
 
 internal data class Mappers(
     val artwork: ArtWorkInfoMapper,
@@ -93,17 +109,13 @@ internal fun <T> useMappers(block: (Mappers) -> T) = PixivHelperPlugin.useSessio
 
 internal fun UserPreview.isLoaded() = useMappers { mappers -> illusts.all { mappers.artwork.contains(it.pid) } }
 
-internal fun UserInfo.count() = useMappers { mapper -> mapper.artwork.countByUid(id) }
+internal fun UserInfo.count() = useMappers { it.artwork.countByUid(id) }
 
 internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
 
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
-
-internal fun ByteArray.hex() = """%032x""".format(BigInteger(this))
-
-internal fun ByteArray.md5(): ByteArray = MessageDigest.getInstance("md5").digest(this)
 
 internal val Url.filename get() = encodedPath.substringAfterLast('/')
 
@@ -113,6 +125,7 @@ internal fun IllustInfo.getContent() = buildMessageChain {
     appendLine("已关注: ${user.isFollowed ?: false}")
     appendLine("标题: $title ")
     appendLine("PID: $pid ")
+    appendLine("已收藏: $isBookmarked")
     appendLine("收藏数: $totalBookmarks ")
     appendLine("SAN值: $sanityLevel ")
     appendLine("创作于: $createAt ")
@@ -176,19 +189,28 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
 
 internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
-internal suspend fun PixivHelper.buildMessageByUser(user: UserInfo): MessageChain = buildMessageChain {
-    appendLine("NAME: ${user.name}")
-    appendLine("UID: ${user.id}")
-    appendLine("ACCOUNT: ${user.account}")
-    appendLine("FOLLOWED: ${user.isFollowed}")
+internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buildMessageChain {
+    appendLine("NAME: ${preview.user.name}")
+    appendLine("UID: ${preview.user.id}")
+    appendLine("ACCOUNT: ${preview.user.account}")
+    appendLine("FOLLOWED: ${preview.user.isFollowed}")
     runCatching {
-        append(user.getProfileImage().uploadAsImage(contact))
+        append(preview.user.getProfileImage().uploadAsImage(contact))
     }.onFailure {
-        logger.warning({ "User(${user.id}) ProfileImage 下载失败" }, it)
+        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, it)
+    }
+    preview.illusts.filter { it.isEro() }.forEach { illust ->
+        runCatching {
+            illust.save()
+            val files = illust.getImages()
+            if (illust.age == AgeLimit.ALL) {
+                add(files.first().uploadAsImage(contact))
+            }
+        }
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail): MessageChain = buildMessageChain {
+internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildMessageChain {
     appendLine("NAME: ${detail.user.name}")
     appendLine("UID: ${detail.user.id}")
     appendLine("ACCOUNT: ${detail.user.account}")
@@ -202,26 +224,16 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail): Message
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long): MessageChain = buildMessageByUser(
-    detail = userDetail(uid = uid).apply { user.save() }
-)
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid = uid))
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
 internal fun IllustInfo.isEro(): Boolean =
     totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount <= PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
 
-internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(
-    uid = id,
-    name = name,
-    account = account
-)
+internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, account = account)
 
-internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(
-    uid = uid,
-    name = name,
-    account = ""
-)
+internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(uid = uid, name = name, account = "")
 
 internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     pid = pid,
@@ -242,50 +254,10 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     deleted = false
 )
 
-internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(
-    pid = pid,
-    uid = uid,
-    title = title,
-    caption = "",
-    createAt = 0,
-    pageCount = 0,
-    sanityLevel = 0,
-    type = 0,
-    width = 0,
-    height = 0,
-    totalBookmarks = 0,
-    totalComments = 0,
-    totalView = 0,
-    age = 0,
-    isEro = false,
-    deleted = false
-)
-
-internal fun emptyArtWorkInfo() = ArtWorkInfo(
-    pid = 0,
-    uid = 0,
-    title = "",
-    caption = "",
-    createAt = 0,
-    pageCount = 0,
-    sanityLevel = SanityLevel.NONE.ordinal,
-    type = 0,
-    width = 0,
-    height = 0,
-    totalBookmarks = 0,
-    totalComments = 0,
-    totalView = 0,
-    age = 0,
-    isEro = false,
-    deleted = false
-)
+internal fun SimpleArtworkInfo.toArtWorkInfo() = EmptyArtWorkInfo.copy(pid = pid, uid = uid, title = title)
 
 internal fun IllustInfo.toTagInfo() = tags.map {
-    TagBaseInfo(
-        pid = pid,
-        name = it.name,
-        translatedName = it.translatedName
-    )
+    TagBaseInfo(pid = pid, name = it.name, translatedName = it.translatedName)
 }
 
 internal fun UserInfoMapper.add(user: UserBaseInfo) =
@@ -329,7 +301,7 @@ internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
 
 internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) }
 
-internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.hex()) }
+internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.toByteString().hex()) }
 
 internal fun SearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
 
@@ -363,7 +335,11 @@ internal suspend fun PixivHelper.getIllustInfo(
     },
 ): IllustInfo = json(pid).let { file ->
     if (!flush && file.exists()) {
-        file.readIllustInfo()
+        runCatching {
+            file.readIllustInfo()
+        }.onFailure {
+            logger.warning({ "文件${file.absolutePath}读取存在问题" }, it)
+        }.getOrThrow()
     } else {
         block(pid).apply {
             write(file = file)
@@ -386,7 +362,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = folder(pid)
+    val dir = folder(pid).apply { mkdirs() }
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
     val urls = getOriginImageUrls()
@@ -405,7 +381,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
         pid = pid,
         index = urls.indexOf(url),
-        md5 = bytes.md5().hex(),
+        md5 = bytes.toByteString().md5().hex(),
         url = url.toString(),
         size = bytes.size
     )

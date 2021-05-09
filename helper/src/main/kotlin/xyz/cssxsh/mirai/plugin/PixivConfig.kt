@@ -17,8 +17,10 @@ import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.baidu.disk.getUserInfo
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
+import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.PixivConfig
+import xyz.cssxsh.pixiv.SanityLevel
 import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 import java.io.EOFException
 import java.net.ConnectException
@@ -209,8 +211,6 @@ internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = (sqrt(5.0) - 1) / 2
 
-internal val SEARCH_EXPIRE = (1).hours
-
 internal const val ERO_INTERVAL = 16
 
 internal val ERO_UP_EXPIRE = (10).seconds
@@ -226,3 +226,25 @@ internal const val TASK_LOAD = PAGE_SIZE * 5
 internal const val TAG_TOP_LIMIT = 10L
 
 internal val CancelledJob: Job = Job().apply { cancel() }
+
+internal val EmptyArtWorkInfo by lazy {
+    ArtWorkInfo(
+        pid = 0,
+        uid = 0,
+        title = "",
+        caption = "",
+        createAt = 0,
+        pageCount = 0,
+        sanityLevel = SanityLevel.NONE.ordinal,
+        type = 0,
+        width = 0,
+        height = 0,
+        totalBookmarks = 0,
+        totalComments = 0,
+        totalView = 0,
+        age = 0,
+        isEro = false,
+        deleted = false
+    )
+
+}

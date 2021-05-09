@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
-import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeMessages
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -14,11 +14,13 @@ object PixivHelperListener {
 
     internal val images = mutableMapOf<MessageSourceMetadata, Image>()
 
+    private val globalEventChannel by lazy { PixivHelperPlugin.globalEventChannel() }
+
     private infix fun String.with(listener: Listener<*>) =  synchronized(listeners) {
         listeners.put(this, listener)?.cancel()
     }
 
-    internal fun subscribe(): Unit = GlobalEventChannel.parentScope(PixivHelperPlugin).run {
+    internal fun subscribe(): Unit = globalEventChannel.run {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
