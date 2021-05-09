@@ -14,11 +14,15 @@ object BaiduNetDiskUpdater : BaiduNetDiskClient(
     secretKey = "xZVvfiGNPleBbSixDaSnFbrnIux7OWmd"
 ) {
 
-    override val accessToken: String get() = runCatching { super.accessToken }.onFailure {
-        logger.warning {
-            "认证失效, 请访问以下网址，使用/backup auth <code> 输入code, ${getWebAuthorizeUrl(AuthorizeType.AUTHORIZATION)} "
-        }
-    }.getOrThrow()
+    override val accessToken: String get() {
+        return runCatching {
+            super.accessToken
+        }.onFailure {
+            logger.warning {
+                "认证失效, 请访问以下网址，使用/backup auth 指令进行认证 "
+            }
+        }.getOrThrow()
+    }
 
     override fun saveToken(token: AuthorizeAccessToken) {
         super.saveToken(token)

@@ -4,16 +4,21 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
+import net.mamoe.mirai.message.data.content
+import net.mamoe.mirai.message.nextMessage
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import xyz.cssxsh.baidu.disk.getUserInfo
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 import java.lang.IllegalStateException
+import kotlin.time.minutes
 
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -138,15 +143,17 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("百度云用户认证")
-    fun CommandSender.auth(code: String) = upload {
+    fun CommandSenderOnMessage<*>.auth() = upload {
+        sendMessage("请打开连接，然后在十分钟内输入获得的认证码: ${getWebAuthorizeUrl(type = AuthorizeType.AUTHORIZATION)}")
         runCatching {
-            getAuthorizeToken(code = code).also { saveToken(token = it) }
-        }.onSuccess { token ->
-            logger.info { "认证成功, $token" }
-            sendMessage("认证成功, $token")
+            val code = fromEvent.nextMessage(((10).minutes.toLongMilliseconds())).content
+            getAuthorizeToken(code = code).also { saveToken(token = it) } to getUserInfo()
+        }.onSuccess { (token, user) ->
+            logger.info { "百度云用户认证成功, ${user.baiduName} by $token" }
+            sendMessage("百度云用户认证成功, ${user.baiduName} by $token")
         }.onFailure {
-            logger.warning({ "认证失败, code: $code" }, it)
-            sendMessage("认证失败, ${it.message}, code: $code")
+            logger.warning({ "认证失败" }, it)
+            sendMessage("百度云用户认证失败, ${it.message}")
         }
     }
 }
