@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -19,14 +18,6 @@ object PixivFollowCommand : CompositeCommand(
 ) {
 
     private var PixivHelper.follow  by PixivHelperDelegate { CancelledJob }
-
-    @SubCommand
-    @Description("为当前助手关注指定用户")
-    suspend fun CommandSenderOnMessage<*>.user(uid: Long) = withHelper {
-        userFollowAdd(uid = uid).let {
-            "添加关注(${uid})成功, $it"
-        }
-    }
 
     private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }
@@ -48,16 +39,18 @@ object PixivFollowCommand : CompositeCommand(
         null
     }
 
-    private suspend fun PixivHelper.getFollowed(uid: Long? = null): Set<Long> {
-        return getUserFollowingPreview(detail = userDetail(uid = uid ?: getAuthInfo().user.uid)).map { list ->
-            list.map { it.user.id }
-        }.toList().flatten().toSet()
+    private suspend fun PixivHelper.getFollowed(uid: Long): Set<Long> {
+        return getUserFollowingPreview(detail = userDetail(uid = uid)).toList().flatten().map { it.user.id }.toSet()
     }
+
+    @SubCommand
+    @Description("为当前助手关注指定用户")
+    suspend fun CommandSenderOnMessage<*>.user(vararg users: String) = follow { users.map { it.toLong() }.toSet() }
 
     @SubCommand
     @Description("关注色图缓存中的较好画师")
     suspend fun CommandSenderOnMessage<*>.good() = follow {
-        val followed = getFollowed()
+        val followed = getFollowed(uid = getAuthInfo().user.uid)
         useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
             if (count > PixivHelperSettings.eroInterval) uid else null
         }.let {
@@ -73,7 +66,5 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("关注指定用户的关注")
-    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = follow {
-        getFollowed(uid = uid)
-    }
+    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = follow { getFollowed(uid = uid) }
 }
