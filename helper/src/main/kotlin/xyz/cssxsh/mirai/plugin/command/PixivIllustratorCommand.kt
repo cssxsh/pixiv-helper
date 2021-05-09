@@ -1,12 +1,16 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.flow.toList
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.message.data.toMessageChain
+import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -26,7 +30,7 @@ object PixivIllustratorCommand : CompositeCommand(
         }.random()
     }
 
-    @SubCommand("name", "名称")
+    @SubCommand("name", "名称", "名字")
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.name(name: String) = sendIllust {
         useMappers { mappers ->
@@ -57,5 +61,13 @@ object PixivIllustratorCommand : CompositeCommand(
     @Description("获取画师信息")
     suspend fun CommandSenderOnMessage<*>.info(uid: Long) = withHelper {
         buildMessageByUser(uid = uid)
+    }
+
+    @SubCommand("search", "搜索")
+    @Description("获取画师信息")
+    suspend fun CommandSenderOnMessage<*>.search(name: String, limit: Long = PAGE_SIZE) = withHelper {
+        getSearchUser(name = name, limit = limit).toList().flatten().map { preview ->
+            "===============>\n".toPlainText() + buildMessageByUser(preview = preview)
+        }.toMessageChain()
     }
 }
