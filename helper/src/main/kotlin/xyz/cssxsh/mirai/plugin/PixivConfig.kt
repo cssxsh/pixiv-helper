@@ -40,6 +40,8 @@ private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } 
 
 internal val PIXIV_RATE_LIMIT_DELAY = (3).minutes
 
+internal val PIXIV_OAUTH__DELAY = (10).seconds
+
 internal val PixivApiIgnore: Ignore = { throwable ->
     when (throwable) {
         is SSLException,
@@ -55,6 +57,11 @@ internal val PixivApiIgnore: Ignore = { throwable ->
             true
         }
         else -> when (throwable.message) {
+            "Error occurred at the OAuth process. Please check your Access Token to fix this." -> {
+                logger.warning { "PIXIV API OAuth 错误, 将延时: $PIXIV_OAUTH__DELAY" }
+                delay(PIXIV_OAUTH__DELAY)
+                true
+            }
             "Required SETTINGS preface not received" -> {
                 logger.warning { "PIXIV API错误, 已忽略: $throwable" }
                 true
