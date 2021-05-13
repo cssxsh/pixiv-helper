@@ -83,7 +83,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 /**
  * 连续发送间隔时间
  */
-internal val interval get() = PixivConfigData.interval.seconds
+internal val SendInterval get() = PixivConfigData.interval.seconds
 
 suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(message + fromEvent.message.quote())
 

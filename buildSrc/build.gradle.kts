@@ -11,7 +11,6 @@ repositories {
     maven(url = "https://bintray.proxy.ustclug.org/him188moe/mirai/")
     maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlin-dev")
     maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlinx/")
-    maven(url = "https://bintray.proxy.ustclug.org/korlibs/korlibs/")
     // central
     maven(url = "https://maven.aliyun.com/repository/central")
     mavenCentral()

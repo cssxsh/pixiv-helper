@@ -141,7 +141,7 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         addCacheJob(name = "TimerTask(${name})", reply = false) { it }
     }.toList().flatten().filter { it.age == AgeLimit.ALL }.toSet().sortedBy { it.createAt }.let { list ->
         list.forEachIndexed { index, illust ->
-            delay(interval)
+            delay(SendInterval)
             send {
                 "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
             }
