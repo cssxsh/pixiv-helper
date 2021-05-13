@@ -194,7 +194,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     }
     is TimerTask.Rank -> {
         info.contact.helper.subscribe(name = name) {
-            getRank(mode = info.mode, limit = TASK_LOAD).notHistory(task = name)
+            getRank(mode = info.mode).notHistory(task = name).eros()
         }
     }
     is TimerTask.Follow -> {
@@ -204,7 +204,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     }
     is TimerTask.Recommended -> {
         info.contact.helper.subscribe(name) {
-            getRecommended(limit = TASK_LOAD).eros().notHistory(task = name)
+            getRecommended(limit = PAGE_SIZE).notHistory(task = name).eros()
         }
     }
     is TimerTask.Backup -> {

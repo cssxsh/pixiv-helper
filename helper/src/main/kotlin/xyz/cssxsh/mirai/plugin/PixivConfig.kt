@@ -221,7 +221,7 @@ internal const val ERO_PAGE_COUNT = 3
 
 internal const val LOAD_LIMIT = 5_000L
 
-internal const val TASK_LOAD = PAGE_SIZE * 5
+internal const val TASK_LOAD = PAGE_SIZE * 3
 
 internal const val TAG_TOP_LIMIT = 10L
 
