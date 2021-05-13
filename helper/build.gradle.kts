@@ -1,8 +1,8 @@
 
 plugins {
-    kotlin("jvm") version Versions.kotlin
-    kotlin("plugin.serialization") version Versions.kotlin
-    id("net.mamoe.mirai-console") version Versions.mirai
+    kotlin("jvm")
+    kotlin("plugin.serialization")
+    id("net.mamoe.mirai-console")
 }
 
 group = "xyz.cssxsh.mirai.plugin"
@@ -40,6 +40,7 @@ dependencies {
     implementation(mybatis("mybatis", Versions.mybatis))
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
+    implementation(project(":tools"))
     implementation(cssxsh("baidu-oauth", Versions.baidu))
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
     testImplementation(kotlin("test-junit5"))

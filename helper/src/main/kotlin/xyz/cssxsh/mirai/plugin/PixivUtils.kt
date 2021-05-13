@@ -9,7 +9,6 @@ import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
@@ -22,8 +21,6 @@ import java.io.File
 import kotlin.time.*
 
 internal val logger get() = PixivHelperPlugin.logger
-
-private val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -84,10 +81,6 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
  * 连续发送间隔时间
  */
 internal val SendInterval get() = PixivConfigData.interval.seconds
-
-suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(message + fromEvent.message.quote())
-
-suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
 
 internal data class Mappers(
     val artwork: ArtWorkInfoMapper,

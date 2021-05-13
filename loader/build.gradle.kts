@@ -1,8 +1,8 @@
 import org.gradle.kotlin.dsl.support.appendReproducibleNewLine
 
 plugins {
-    kotlin("jvm") version Versions.kotlin
-    kotlin("plugin.serialization") version Versions.kotlin
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 repositories {

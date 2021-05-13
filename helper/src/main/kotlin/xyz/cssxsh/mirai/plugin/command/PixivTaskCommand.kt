@@ -29,33 +29,33 @@ object PixivTaskCommand : CompositeCommand(
     @Description("设置用户定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = setTask {
         "User($uid)[${contact}]" to
-            TimerTask.User(uid = uid, interval = duration.minutes.toLongMilliseconds(), contact = getContactInfo())
+            TimerTask.User(uid = uid, interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置排行榜定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode) = setTask {
-        "Rank($mode)[${contact}]" to TimerTask.Rank(mode = mode, contact = getContactInfo())
+        "Rank($mode)[${contact}]" to TimerTask.Rank(mode = mode, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置关注推送定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = setTask {
         "Follow(${getAuthInfo().user.uid})[${contact}]" to
-            TimerTask.Follow(interval = duration.minutes.toLongMilliseconds(), contact = getContactInfo())
+            TimerTask.Follow(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置推荐画师定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = setTask {
         "Recommended(${getAuthInfo().user.uid})[${contact}]" to
-            TimerTask.Recommended(interval = duration.minutes.toLongMilliseconds(), contact = getContactInfo())
+            TimerTask.Recommended(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置定时备份任务")
     suspend fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = setTask {
-        "Backup" to TimerTask.Backup(interval = duration.minutes.toLongMilliseconds(), contact = getContactInfo())
+        "Backup" to TimerTask.Backup(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
     }
 
     @SubCommand
@@ -68,7 +68,7 @@ object PixivTaskCommand : CompositeCommand(
         }
         "WEB(${url.host})<${pattern}>[${contact}]" to TimerTask.Web(
             interval = duration.minutes.toLongMilliseconds(),
-            contact = getContactInfo(),
+            delegate = contact.delegate,
             url = link,
             pattern = pattern
         )
@@ -90,7 +90,7 @@ object PixivTaskCommand : CompositeCommand(
         }
         "WEIBO($uid)[${contact}]" to TimerTask.Web(
             interval = duration.minutes.toLongMilliseconds(),
-            contact = getContactInfo(),
+            delegate = contact.delegate,
             url = url.toString(),
             pattern = regex.pattern
         )

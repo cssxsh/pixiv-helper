@@ -1,3 +1,6 @@
 [submodule "client"]
 	path = client
 	url = git@github.com:cssxsh/pixiv-client.git
+[submodule "tools"]
+	path = tools
+	url = git@github.com:cssxsh/mirai-console-plugin-tools.git

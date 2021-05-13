@@ -4,7 +4,6 @@ import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
-import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
@@ -31,43 +30,8 @@ internal data class DownloadTask(
     val reply: Boolean,
 )
 
-@Serializable
-enum class ContactType {
-    GROUP,
-    USER;
-}
-
-@Serializable
-data class ContactInfo(
-    @SerialName("bot")
-    val bot: Long,
-    @SerialName("id")
-    val id: Long,
-    @SerialName("type")
-    val type: ContactType,
-)
-
-internal fun PixivHelper.getContactInfo(): ContactInfo = when (contact) {
-    is User -> ContactInfo(
-        bot = contact.bot.id,
-        id = contact.id,
-        type = ContactType.USER
-    )
-    is Group -> ContactInfo(
-        bot = contact.bot.id,
-        id = contact.id,
-        type = ContactType.GROUP
-    )
-    else -> throw IllegalArgumentException("未知类型联系人")
-}
-
-internal val ContactInfo.helper by ReadOnlyProperty<ContactInfo, PixivHelper> { info, _ ->
-    Bot.getInstance(info.bot).let { bot ->
-        when (info.type) {
-            ContactType.GROUP -> bot.getGroupOrFail(info.id)
-            ContactType.USER -> bot.getFriendOrFail(info.id)
-        }
-    }.getHelper()
+internal val TimerTask.helper by ReadOnlyProperty<TimerTask, PixivHelper> { task, _ ->
+    requireNotNull(findContact(task.delegate)) { "找不到联系人" }.getHelper()
 }
 
 typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
@@ -75,7 +39,7 @@ typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
 @Serializable
 sealed class TimerTask {
     abstract val interval: Long
-    abstract val contact: ContactInfo
+    abstract val delegate: Long
 
     @Serializable
     data class User(
@@ -84,16 +48,16 @@ sealed class TimerTask {
         override val interval: Long,
         @SerialName("uid")
         val uid: Long,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
     ) : TimerTask()
 
     @Serializable
     data class Rank(
         @SerialName("mode")
         val mode: RankMode,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
     ) : TimerTask() {
         override val interval: Long
             get() = OffsetDateTime.now().let { it.goto(next = it.toNextRank()) }.toLongMilliseconds()
@@ -103,32 +67,32 @@ sealed class TimerTask {
     data class Follow(
         @SerialName("interval")
         override val interval: Long,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
     ) : TimerTask()
 
     @Serializable
     data class Recommended(
         @SerialName("interval")
         override val interval: Long,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
     ) : TimerTask()
 
     @Serializable
     data class Backup(
         @SerialName("interval")
         override val interval: Long,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
     ) : TimerTask()
 
     @Serializable
     data class Web(
         @SerialName("interval")
         override val interval: Long,
-        @SerialName("contact")
-        override val contact: ContactInfo,
+        @SerialName("delegate")
+        override val delegate: Long,
         @SerialName("url")
         val url: String,
         @SerialName("pattern")
@@ -188,27 +152,27 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
-        info.contact.helper.subscribe(name = name) {
+        info.helper.subscribe(name = name) {
             getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday().notHistory(task = name)
         }
     }
     is TimerTask.Rank -> {
-        info.contact.helper.subscribe(name = name) {
+        info.helper.subscribe(name = name) {
             getRank(mode = info.mode).notHistory(task = name).eros()
         }
     }
     is TimerTask.Follow -> {
-        info.contact.helper.subscribe(name) {
+        info.helper.subscribe(name) {
             getFollowIllusts(limit = TASK_LOAD).notHistory(task = name)
         }
     }
     is TimerTask.Recommended -> {
-        info.contact.helper.subscribe(name) {
+        info.helper.subscribe(name) {
             getRecommended(limit = PAGE_SIZE).notHistory(task = name).eros()
         }
     }
     is TimerTask.Backup -> {
-        val helper = info.contact.helper
+        val helper = info.helper
         PixivZipper.compressData(list = getBackupList()).forEach { file ->
             if (helper.contact is FileSupported) {
                 helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
@@ -233,7 +197,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
         }
     }
     is TimerTask.Web -> {
-        info.contact.helper.subscribe(name) {
+        info.helper.subscribe(name) {
             getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex())).notHistory(task = name)
         }
     }
