@@ -59,7 +59,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                     }
                     failure?.let { list ->
                         list.write().save()
-                        this@transform.emit(DownloadTask(name = name, list = list.sortedBy { it.pid }, reply = reply))
+                        val downloads = list.filter { it.isEro() }.sortedBy { it.pid }
+                        this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
                     }
                 }
             }
@@ -72,6 +73,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     }
 
     private suspend fun Flow<DownloadTask>.download() = transform { (name, list, reply) ->
+        if (list.isEmpty()) return@transform
         logger.verbose {
             "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存"
         }
@@ -80,9 +82,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
         list.map { illust ->
             async {
-                illust.runCatching {
-                    getImages()
-                }.onFailure {
+                illust.runCatching { getImages() }.onFailure {
                     if (it.isNotCancellationException()) {
                         logger.warning({
                             "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
