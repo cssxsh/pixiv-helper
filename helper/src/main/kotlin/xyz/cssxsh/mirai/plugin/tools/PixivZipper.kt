@@ -24,7 +24,7 @@ object PixivZipper {
         ':' to '：',
         '*' to '＊',
         '?' to '？',
-        '\\' to '＂',
+        '＂' to '＂',
         '<' to '＜',
         '>' to '＞',
         '|' to '｜'
