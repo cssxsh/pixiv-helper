@@ -24,16 +24,12 @@ object BaiduNetDiskUpdater : BaiduNetDiskClient(
         }.getOrThrow()
     }
 
-    override fun saveToken(token: AuthorizeAccessToken) {
+    override suspend fun saveToken(token: AuthorizeAccessToken) {
         super.saveToken(token)
         PixivConfigData.netdiskAccessToken = accessTokenValue.orEmpty()
         PixivConfigData.netdiskRefreshToken = refreshTokenValue.orEmpty()
         PixivConfigData.netdiskExpires = expires.toEpochSecond()
     }
-
-    public override var expires: OffsetDateTime
-        get() = super.expires
-        set(value) { super.expires = value }
 
     fun loadToken(): Unit = synchronized(expires) {
         accessTokenValue = PixivConfigData.netdiskAccessToken

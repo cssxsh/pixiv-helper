@@ -40,7 +40,7 @@ private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } 
 
 internal val PIXIV_RATE_LIMIT_DELAY = (3).minutes
 
-internal val PIXIV_OAUTH__DELAY = (10).seconds
+internal val PIXIV_OAUTH_DELAY = (10).seconds
 
 internal val PixivApiIgnore: Ignore = { throwable ->
     when (throwable) {
@@ -58,8 +58,8 @@ internal val PixivApiIgnore: Ignore = { throwable ->
         }
         else -> when (throwable.message) {
             "Error occurred at the OAuth process. Please check your Access Token to fix this." -> {
-                logger.warning { "PIXIV API OAuth 错误, 将延时: $PIXIV_OAUTH__DELAY" }
-                delay(PIXIV_OAUTH__DELAY)
+                logger.warning { "PIXIV API OAuth 错误, 将延时: $PIXIV_OAUTH_DELAY" }
+                delay(PIXIV_OAUTH_DELAY)
                 true
             }
             "Required SETTINGS preface not received" -> {
@@ -253,5 +253,4 @@ internal val EmptyArtWorkInfo by lazy {
         isEro = false,
         deleted = false
     )
-
 }

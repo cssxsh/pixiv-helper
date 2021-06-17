@@ -20,7 +20,7 @@ import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import kotlin.time.*
 
-internal val logger get() = PixivHelperPlugin.logger
+internal val logger by PixivHelperPlugin::logger
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -410,11 +410,11 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     }
 }
 
-internal fun getBackupList() = buildMap<String, File> {
-    this["DATA"] = PixivHelperPlugin.dataFolder
-    this["CONFIG"] = PixivHelperPlugin.configFolder
-    this["DATABASE"] = PixivHelperSettings.sqlite
-}
+internal fun getBackupList() = mapOf(
+    "DATA" to PixivHelperPlugin.dataFolder,
+    "CONFIG" to PixivHelperPlugin.configFolder,
+    "DATABASE" to PixivHelperSettings.sqlite
+)
 
 internal suspend fun PixivHelper.redirect(account: String): Long {
     useMappers { it.user.findByAccount(account = account) }?.let { return@redirect it.uid }

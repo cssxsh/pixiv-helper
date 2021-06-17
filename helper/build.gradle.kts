@@ -17,18 +17,11 @@ mirai {
 
 repositories {
     mavenLocal()
-    maven(url = "https://maven.aliyun.com/repository/releases")
-    maven(url = "https://mirrors.huaweicloud.com/repository/maven")
-    // bintray dl.bintray.com -> bintray.proxy.ustclug.org
-    maven(url = "https://bintray.proxy.ustclug.org/him188moe/mirai/")
-    maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlin-dev")
-    maven(url = "https://bintray.proxy.ustclug.org/kotlin/kotlinx/")
-    maven(url = "https://bintray.proxy.ustclug.org/desmo/baidu-client/")
-    // central
     maven(url = "https://maven.aliyun.com/repository/central")
-    mavenCentral()
-    // jcenter
     maven(url = "https://maven.aliyun.com/repository/jcenter")
+    maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
+    maven(url = "https://bintray.proxy.ustclug.org/desmo/baidu-client/")
+    mavenCentral()
     jcenter()
     gradlePluginPortal()
 }
@@ -41,6 +34,8 @@ dependencies {
     implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
     implementation(project(":client"))
     implementation(project(":tools"))
+    implementation(okhttp3("okhttp", Versions.okhttp))
+    implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     implementation(cssxsh("baidu-oauth", Versions.baidu))
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
     testImplementation(kotlin("test-junit5"))
@@ -56,6 +51,7 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
+            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
             languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
