@@ -35,9 +35,10 @@ object PixivBackupCommand : CompositeCommand(
     private fun File.size() = length().let { size ->
         when (size) {
             0L -> "0"
-            in bit(0) until bit(10) -> "%0.2dB".format(size)
-            in bit(10) until bit(20) -> "%0.2dMB".format(size)
-            in bit(20) until bit(30) -> "%0.2dGB".format(size)
+            in bit(0) until bit(10) -> "%dB".format(size)
+            in bit(10) until bit(20) -> "%dKB".format(size / bit(10))
+            in bit(20) until bit(30) -> "%dMB".format(size / bit(20))
+            in bit(20) until bit(30) -> "%dGB".format(size / bit(20))
             else -> throw IllegalStateException("File(${absolutePath}) Too Big")
         }
     }
