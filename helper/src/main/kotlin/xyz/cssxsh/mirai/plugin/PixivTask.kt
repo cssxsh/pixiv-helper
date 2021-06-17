@@ -60,7 +60,7 @@ sealed class TimerTask {
         override val delegate: Long,
     ) : TimerTask() {
         override val interval: Long
-            get() = OffsetDateTime.now().let { it.goto(next = it.toNextRank()) }.toLongMilliseconds()
+            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) }.toLongMilliseconds()
     }
 
     @Serializable
@@ -101,21 +101,20 @@ sealed class TimerTask {
 }
 
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    block().types(WorkContentType.ILLUST).also {
-        addCacheJob(name = "TimerTask(${name})", reply = false) { it }
-    }.toList().flatten().filter { it.age == AgeLimit.ALL }.toSet().sortedBy { it.createAt }.let { list ->
-        list.forEachIndexed { index, illust ->
-            delay(SendInterval)
-            send {
-                "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
-            }
-            useMappers {
-                it.statistic.addHistory(StatisticTaskInfo(
-                    task = name,
-                    pid = illust.pid,
-                    timestamp = OffsetDateTime.now().toEpochSecond()
-                ))
-            }
+    val flow = block().types(WorkContentType.ILLUST).notHistory(task = name)
+    addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
+    val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.associateBy { it.pid }.values
+    list.sortedBy { it.createAt }.forEachIndexed { index, illust ->
+        delay(SendInterval)
+        send {
+            "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
+        }
+        useMappers {
+            it.statistic.addHistory(StatisticTaskInfo(
+                task = name,
+                pid = illust.pid,
+                timestamp = OffsetDateTime.now().toEpochSecond()
+            ))
         }
     }
 }
@@ -153,22 +152,22 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
         info.helper.subscribe(name = name) {
-            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday().notHistory(task = name)
+            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday()
         }
     }
     is TimerTask.Rank -> {
         info.helper.subscribe(name = name) {
-            getRank(mode = info.mode).notHistory(task = name).eros()
+            getRank(mode = info.mode).eros()
         }
     }
     is TimerTask.Follow -> {
         info.helper.subscribe(name) {
-            getFollowIllusts(limit = TASK_LOAD).notHistory(task = name)
+            getFollowIllusts(limit = TASK_LOAD).isToday()
         }
     }
     is TimerTask.Recommended -> {
         info.helper.subscribe(name) {
-            getRecommended(limit = PAGE_SIZE).notHistory(task = name).eros()
+            getRecommended(limit = PAGE_SIZE).eros()
         }
     }
     is TimerTask.Backup -> {
@@ -198,7 +197,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     }
     is TimerTask.Web -> {
         info.helper.subscribe(name) {
-            getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex())).notHistory(task = name)
+            getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex()))
         }
     }
 }
