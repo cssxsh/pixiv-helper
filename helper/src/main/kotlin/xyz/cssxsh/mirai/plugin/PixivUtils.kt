@@ -5,6 +5,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.contact.Contact
@@ -55,8 +56,10 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
                 if (flush || json(info.pid).exists().not()) info.write()
             })
         }
-    }.onSuccess {
-        quoteReply(it)
+    }.mapCatching {
+        withTimeout(3 * 60 * 1000) {
+            quoteReply(it)
+        }
     }.onFailure {
         when {
             SendLimit.containsMatchIn(it.message.orEmpty()) -> {
