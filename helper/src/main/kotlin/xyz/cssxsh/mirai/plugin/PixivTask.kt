@@ -8,14 +8,13 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
-import xyz.cssxsh.baidu.getRapidUploadInfo
+import xyz.cssxsh.baidu.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.time.OffsetDateTime
 import kotlin.properties.ReadOnlyProperty
-import kotlin.time.*
 
 internal data class CacheTask(
     val name: String,
@@ -60,7 +59,7 @@ sealed class TimerTask {
         override val delegate: Long,
     ) : TimerTask() {
         override val interval: Long
-            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) }.toLongMilliseconds()
+            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) } * 1000L
     }
 
     @Serializable
@@ -105,7 +104,7 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.associateBy { it.pid }.values
     list.sortedBy { it.createAt }.forEachIndexed { index, illust ->
-        delay(SendInterval)
+        delay(SendInterval * 1000L)
         send {
             "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
         }
@@ -124,9 +123,9 @@ private const val RANK_HOUR = 12
 internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
     (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0).withSecond(0)
 
-internal fun OffsetDateTime.goto(next: OffsetDateTime) = (next.toEpochSecond() - toEpochSecond()).seconds
+internal fun OffsetDateTime.goto(next: OffsetDateTime) = next.toEpochSecond() - toEpochSecond()
 
-private val random get() = (10..60).random().minutes
+private val random get() = (10..60).random() * 60 * 1000L
 
 internal suspend fun TimerTask.pre(): Unit = when (this) {
     is TimerTask.User -> {

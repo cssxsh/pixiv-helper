@@ -14,7 +14,6 @@ import java.time.OffsetDateTime
  * 助手实例
  */
 class PixivHelper(val contact: Contact) : SimplePixivClient(
-    parentCoroutineContext = PixivHelperPlugin.coroutineContext,
     coroutineName = "PixivHelper:${contact}",
     config = DEFAULT_PIXIV_CONFIG // This config is not use
 ) {
@@ -33,13 +32,13 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
-    private var cacheJob = cache()
-
-    private fun cache() = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
+    private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask") + SupervisorJob()) {
         while (isActive) {
             runCatching {
-                logger.info { "PixivHelper:${contact}#CacheTask start"  }
+                logger.info { "PixivHelper:${contact}#CacheTask start" }
                 cacheChannel.consumeAsFlow().save().download().buffer(1).await()
+            }.onFailure {
+                logger.warning(it)
             }
             cacheChannel = Channel(Channel.BUFFERED)
         }
@@ -100,14 +99,17 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<List<Deferred<*>>>.await() = collect { it.awaitAll() }
 
-    fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) = launch {
-        if (cacheJob.isActive.not()) cacheJob = cache()
-        cacheChannel.send(CacheTask(
-            name = name,
-            write = write,
-            reply = reply,
-            block = block
-        ))
+    fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
+        launch(SupervisorJob()) {
+            cacheChannel.send(
+                CacheTask(
+                    name = name,
+                    write = write,
+                    reply = reply,
+                    block = block
+                )
+            )
+        }
     }
 
     fun cacheStop() {

@@ -5,7 +5,6 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScope
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
-import kotlin.time.*
 
 @ConsoleExperimentalApi
 object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("")  {
@@ -13,7 +12,7 @@ object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("") 
 
     private val jobs: MutableMap<String, Job> = mutableMapOf()
 
-    private val CHECK_DELAY = (30).minutes
+    private const val CHECK_DELAY = 30 * 60 * 1000L
 
     private fun runTimerTask(name: String, info: TimerTask) = launch {
         logger.info {

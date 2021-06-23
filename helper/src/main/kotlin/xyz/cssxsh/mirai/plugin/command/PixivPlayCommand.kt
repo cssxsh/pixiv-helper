@@ -10,7 +10,6 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.time.LocalDate
-import kotlin.time.seconds
 
 object PixivPlayCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -24,12 +23,12 @@ object PixivPlayCommand : CompositeCommand(
 
     private var PixivHelper.play by PixivHelperDelegate { CancelledJob }
 
-    private var PixivHelper.duration by PixivHelperDelegate { (10).seconds }
+    private var PixivHelper.duration by PixivHelperDelegate { 10 * 1000L }
 
     @SubCommand("ranking", "排行榜")
     @Description("根据 系统推荐 播放图集")
     suspend fun CommandSenderOnMessage<*>.interval(seconds: Int) = withHelper {
-        duration = seconds.seconds
+        duration = seconds * 1000L
         "设置间隔 $duration"
     }
 

@@ -19,7 +19,6 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
-import kotlin.time.*
 
 internal val logger by PixivHelperPlugin::logger
 
@@ -34,9 +33,10 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             else -> quoteReply(message.toString())
         }
     }.onFailure {
+        logger.warning(it)
         when {
             SendLimit.containsMatchIn(it.message.orEmpty()) -> {
-                delay((1).minutes)
+                delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
             else -> {
@@ -63,7 +63,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     }.onFailure {
         when {
             SendLimit.containsMatchIn(it.message.orEmpty()) -> {
-                delay((1).minutes)
+                delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
             else -> {
@@ -83,7 +83,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 /**
  * 连续发送间隔时间
  */
-internal val SendInterval get() = PixivConfigData.interval.seconds
+internal val SendInterval get() = PixivConfigData.interval
 
 internal data class Mappers(
     val artwork: ArtWorkInfoMapper,
@@ -278,7 +278,7 @@ internal fun Collection<IllustInfo>.update(): Unit = useMappers { mappers ->
         }
     }
 
-    logger.info { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
 }
 
 internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
@@ -292,7 +292,7 @@ internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
         }
     }
 
-    logger.info { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
+    logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
 }
 
 internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) }
@@ -382,21 +382,22 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         size = bytes.size
     )
     if (downloads.isNotEmpty()) {
-        val results = PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
+        val results = mutableListOf<FileInfo>()
+        PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
             result.mapCatching {
                 dir.resolve(url.filename).writeBytes(it)
                 FileInfo(url = url, bytes = it)
             }.onFailure {
-                if (it.isNotCancellationException()) {
-                    logger.warning({ "[$url]下载失败" }, it)
-                }
+                logger.warning({ "[$url]下载失败" }, it)
+            }.onSuccess {
+                results.add(it)
             }
+            Unit
         }
-        results.mapNotNull { it.getOrNull() }.takeIf { it.isNotEmpty() }?.let { list ->
+        results.takeIf { it.isNotEmpty() }?.let { list ->
             if (useMappers { it.artwork.contains(pid).not() }) save()
             useMappers { it.file.replaceFiles(list) }
         }
-        check(results.all { it.isSuccess }) { "作品(${pid})下载失败" }
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
     }
     return files

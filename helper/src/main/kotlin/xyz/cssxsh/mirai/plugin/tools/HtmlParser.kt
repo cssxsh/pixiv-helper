@@ -10,6 +10,8 @@ import xyz.cssxsh.mirai.plugin.Ignore
 
 abstract class HtmlParser(private val ignore: Ignore) {
 
+    constructor(name: String): this(ignore = Ignore(name))
+
     protected open fun client() = HttpClient(OkHttp)
 
     protected suspend fun html(block: HttpRequestBuilder.() -> Unit): Document {

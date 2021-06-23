@@ -4,14 +4,12 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import org.apache.ibatis.session.SqlSession
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import kotlin.time.*
 
 object PixivHelperPlugin : KotlinPlugin(
     JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "0.5.0-dev-1") {
@@ -29,10 +27,6 @@ object PixivHelperPlugin : KotlinPlugin(
             session.let(block).also { session.commit() }
         }
     }
-
-    @ConsoleExperimentalApi
-    override val autoSaveIntervalMillis: LongRange
-        get() = (10).minutes.toLongMilliseconds()..(30).minutes.toLongMilliseconds()
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {

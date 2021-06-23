@@ -50,7 +50,7 @@ object PixivEroCommand : SimpleCommand(
         ))
     }
 
-    private val expire get() = System.currentTimeMillis() - ERO_UP_EXPIRE.toLongMilliseconds()
+    private val expire get() = System.currentTimeMillis() - ERO_UP_EXPIRE
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {

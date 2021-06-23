@@ -12,13 +12,13 @@ import net.mamoe.mirai.message.nextMessage
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.disk.getUserInfo
+import xyz.cssxsh.baidu.format
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 import java.lang.IllegalStateException
-import kotlin.time.minutes
 
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -147,7 +147,7 @@ object PixivBackupCommand : CompositeCommand(
     fun CommandSenderOnMessage<*>.auth() = upload {
         sendMessage("请打开连接，然后在十分钟内输入获得的认证码: ${getWebAuthorizeUrl(type = AuthorizeType.AUTHORIZATION)}")
         runCatching {
-            val code = fromEvent.nextMessage(((10).minutes.toLongMilliseconds())).content
+            val code = fromEvent.nextMessage(10 * 60 * 1000L).content
             getAuthorizeToken(code = code).also { saveToken(token = it) } to getUserInfo()
         }.onSuccess { (token, user) ->
             logger.info { "百度云用户认证成功, ${user.baiduName} by $token" }

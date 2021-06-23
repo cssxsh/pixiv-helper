@@ -18,6 +18,8 @@ import java.time.YearMonth
 
 typealias LoadTask = suspend PixivHelper.() -> Flow<Collection<IllustInfo>>
 
+internal suspend fun active() = currentCoroutineContext().isActive
+
 internal fun Flow<Collection<IllustInfo>>.notCached() = map { list ->
     useMappers { mappers ->
         list.filterNot { mappers.artwork.contains(it.pid) }
@@ -50,7 +52,7 @@ internal fun List<NaviRankRecord>.cached() = useMappers { mappers ->
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             illustRanking(mode = mode, date = date, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -64,7 +66,7 @@ internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null
 
 internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             illustFollow(offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -78,7 +80,7 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = 
 
 internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }.associateBy { it.pid }.values
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -93,7 +95,7 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
 internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         runCatching {
-            if (currentCoroutineContext().isActive.not() || url == null) return@flow
+            if (active().not() || url == null) return@flow
             userBookmarksIllust(uid = uid, tag = tag, url = url)
         }.onSuccess { (list, _) ->
             emit(list)
@@ -115,7 +117,7 @@ internal suspend fun PixivHelper.bookmarksRandom(uid: Long, tag: String? = null,
 
 internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             userIllusts(uid = detail.user.id, offset = offset).illusts
         }.onSuccess {
             emit(it)
@@ -128,7 +130,7 @@ internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long?
 
 internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             userFollowing(uid = detail.user.id, offset = offset).previews
         }.onSuccess {
             emit(it)
@@ -145,14 +147,14 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, limit: Lon
     return getUserFollowingPreview(detail = detail, limit = limit).transform { list ->
         list.forEach { preview ->
             index++
-            if (currentCoroutineContext().isActive && (preview.isLoaded().not() || preview.user.count() < PAGE_SIZE)) {
+            if (active() && (preview.isLoaded().not() || preview.user.count() < PAGE_SIZE)) {
                 runCatching {
                     val author = userDetail(uid = preview.user.id)
                     if (author.total() > author.user.count() + preview.illusts.size) {
-                        logger.verbose { "${index}.USER(${author.user.id})有${author.total()}个作品尝试缓存" }
+                        logger.info { "${index}.USER(${author.user.id})有${author.total()}个作品尝试缓存" }
                         emitAll(getUserIllusts(author))
                     } else {
-                        logger.verbose { "${index}.USER(${author.user.id})有${preview.illusts.size}个作品尝试缓存" }
+                        logger.info { "${index}.USER(${author.user.id})有${preview.illusts.size}个作品尝试缓存" }
                         emit(preview.illusts)
                     }
                 }
@@ -163,7 +165,7 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, limit: Lon
 
 internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             userBookmarksTagsIllust(offset = offset).tags
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -179,7 +181,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
     useMappers { mappers ->
         set.filterNot { mappers.artwork.contains(it) }
     }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        if (currentCoroutineContext().isActive) list.mapNotNull { pid ->
+        if (active()) list.mapNotNull { pid ->
             runCatching {
                 getIllustInfo(pid = pid, flush = true).apply {
                     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
@@ -206,7 +208,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
     useMappers { mappers ->
         info.filterNot { mappers.artwork.contains(it.pid) }
     }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        if (currentCoroutineContext().isActive) list.mapNotNull { result ->
+        if (active()) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {
                     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
@@ -236,7 +238,7 @@ internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetti
     useMappers { it.statistic.alias() }.associateBy { it.uid }.keys.let { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
-            if (currentCoroutineContext().isActive) runCatching {
+            if (active()) runCatching {
                 userDetail(uid = uid).let { detail ->
                     if (detail.total() > detail.user.count()) {
                         logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
@@ -252,7 +254,7 @@ internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetti
 
 internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             searchIllust(word = tag, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -266,7 +268,7 @@ internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_
 
 internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: Long = RELATED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             illustRelated(pid = pid, seeds = seeds, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -289,7 +291,7 @@ private fun months(year: Year?) = buildList {
 
 internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
     list.forEach { month ->
-        if (currentCoroutineContext().isActive) NaviRank.runCatching {
+        if (active()) NaviRank.runCatching {
             (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten()).filter {
                 it.type == WorkContentType.ILLUST
             }.toSet()
@@ -317,7 +319,7 @@ internal suspend fun PixivHelper.randomArticles(limit: Long = ARTICLE_LIMIT): Sp
 
 internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
     (0 until times).forEach { page ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             illustWalkThrough().illusts
         }.onSuccess { list ->
             list.chunked(PAGE_SIZE.toInt()).forEach {
@@ -332,7 +334,7 @@ internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
 
 internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARCH_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
-        if (currentCoroutineContext().isActive) runCatching {
+        if (active()) runCatching {
             searchUser(word = name, offset = offset).previews
         }.onSuccess {
             emit(it)
@@ -362,7 +364,7 @@ internal fun localCache(range: LongRange) = flow {
         logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
     }.listDirs(range).orEmpty().asFlow().map { first ->
         first.listDirs(range).orEmpty().forEach { second ->
-            if (currentCoroutineContext().isActive) second.listDirs(range).orEmpty().mapNotNull { dir ->
+            if (active()) second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
                     useMappers { it.artwork.contains(dir.name.toLong()) } && file.canRead()

@@ -2,12 +2,8 @@ package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
 import io.ktor.network.sockets.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
-import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.http2.StreamResetException
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
@@ -22,13 +18,8 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.SanityLevel
 import xyz.cssxsh.pixiv.apps.PAGE_SIZE
-import java.io.EOFException
-import java.net.ConnectException
-import java.net.SocketException
-import java.net.UnknownHostException
-import javax.net.ssl.SSLException
+import java.io.IOException
 import kotlin.math.sqrt
-import kotlin.time.*
 
 typealias Ignore = suspend (Throwable) -> Boolean
 
@@ -38,22 +29,17 @@ private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
 
 private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
 
-internal val PIXIV_RATE_LIMIT_DELAY = (3).minutes
+internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal val PIXIV_OAUTH_DELAY = (10).seconds
+internal const val PIXIV_OAUTH_DELAY = 10 * 1000L
 
 internal val PixivApiIgnore: Ignore = { throwable ->
     when (throwable) {
-        is SSLException,
-        is EOFException,
-        is ConnectException,
-        is SocketTimeoutException,
+        is IOException,
         is HttpRequestTimeoutException,
-        is StreamResetException,
-        is UnknownHostException,
-        is SocketException,
         -> {
-            logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
+            // logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
+            logger.warning({ "Pixiv Api 错误, 已忽略: $throwable" }, throwable)
             true
         }
         else -> when (throwable.message) {
@@ -76,18 +62,23 @@ internal val PixivApiIgnore: Ignore = { throwable ->
     }
 }
 
+private var PixivDownloadDelayCount = 0
+
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
-        is SSLException,
-        is EOFException,
-        is SocketException,
-        is SocketTimeoutException,
         is HttpRequestTimeoutException,
-        is StreamResetException,
-        is NullPointerException,
-        is UnknownHostException,
-        is ConnectionShutdownException,
-        -> true
+        is SocketTimeoutException,
+        is ConnectTimeoutException -> {
+            // logger.warning { "Pixiv Download 错误, 进入延时: $throwable" }
+            delay((++PixivDownloadDelayCount) * 1000L)
+            PixivDownloadDelayCount--
+            true
+        }
+        is IOException
+        -> {
+            logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
+            true
+        }
         else -> when {
             throwable.message?.contains("Required SETTINGS preface not received") == true -> true
             throwable.message?.contains("Completed read overflow") == true -> true
@@ -98,17 +89,10 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
     }
 }
 
-internal fun ignore(name: String): Ignore = { throwable ->
+internal fun Ignore(name: String): Ignore = { throwable ->
     when (throwable) {
-        is SSLException,
-        is EOFException,
-        is SocketException,
-        is SocketTimeoutException,
+        is IOException,
         is HttpRequestTimeoutException,
-        is StreamResetException,
-        is NullPointerException,
-        is UnknownHostException,
-        is ConnectionShutdownException,
         -> {
             logger.warning { "$name Api 错误, 已忽略: ${throwable.message}" }
             true
@@ -182,7 +166,7 @@ internal fun PixivHelperSettings.init() {
     }
 }
 
-internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch {
+internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {
     loadToken()
     runCatching {
         getUserInfo()
@@ -220,7 +204,7 @@ internal val MIN_SIMILARITY = (sqrt(5.0) - 1) / 2
 
 internal const val ERO_INTERVAL = 16
 
-internal val ERO_UP_EXPIRE = (10).seconds
+internal const val ERO_UP_EXPIRE = 10 * 1000L
 
 internal const val ERO_BOOKMARKS = 1L shl 12
 

@@ -9,7 +9,6 @@ import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.pixiv.*
 import java.time.Instant
 import java.time.ZoneOffset
-import kotlin.time.*
 
 object PixivTaskCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -22,14 +21,14 @@ object PixivTaskCommand : CompositeCommand(
     private suspend fun CommandSenderOnMessage<*>.setTask(block: BuildTask) = withHelper {
         val (name, task) = block()
         PixivHelperScheduler.setTimerTask(name = name, info = task)
-        "定时任务${name}已添加，间隔${task.interval.milliseconds}"
+        "定时任务${name}已添加，间隔${task.interval}ms"
     }
 
     @SubCommand
     @Description("设置用户定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = setTask {
         "User($uid)[${contact}]" to
-            TimerTask.User(uid = uid, interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
+            TimerTask.User(uid = uid, interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
@@ -42,20 +41,20 @@ object PixivTaskCommand : CompositeCommand(
     @Description("设置关注推送定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = setTask {
         "Follow(${getAuthInfo().user.uid})[${contact}]" to
-            TimerTask.Follow(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
+            TimerTask.Follow(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置推荐画师定时订阅任务")
     suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = setTask {
         "Recommended(${getAuthInfo().user.uid})[${contact}]" to
-            TimerTask.Recommended(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
+            TimerTask.Recommended(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("设置定时备份任务")
     suspend fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = setTask {
-        "Backup" to TimerTask.Backup(interval = duration.minutes.toLongMilliseconds(), delegate = contact.delegate)
+        "Backup" to TimerTask.Backup(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
@@ -67,7 +66,7 @@ object PixivTaskCommand : CompositeCommand(
             sendMessage("来自${url}加载得到${it}，定时任务将添加")
         }
         "WEB(${url.host})<${pattern}>[${contact}]" to TimerTask.Web(
-            interval = duration.minutes.toLongMilliseconds(),
+            interval = duration * 60 * 1000L,
             delegate = contact.delegate,
             url = link,
             pattern = pattern
@@ -89,7 +88,7 @@ object PixivTaskCommand : CompositeCommand(
             sendMessage("来自${url}加载得到${it}，定时任务将添加")
         }
         "WEIBO($uid)[${contact}]" to TimerTask.Web(
-            interval = duration.minutes.toLongMilliseconds(),
+            interval = duration * 60 * 1000L,
             delegate = contact.delegate,
             url = url.toString(),
             pattern = regex.pattern
@@ -101,7 +100,7 @@ object PixivTaskCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.detail() = withHelper {
         buildMessageChain {
             PixivTaskData.tasks.forEach { (name, info) ->
-                appendLine("名称: $name , 间隔: ${info.interval.milliseconds}")
+                appendLine("名称: $name , 间隔: ${info.interval}ms")
                 useMappers { it.statistic.histories(name = name) }.maxByOrNull { it.timestamp }?.let {
                     val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
                     appendLine("最后播放作品ID ${it.pid} 时间 $time")

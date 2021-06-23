@@ -30,7 +30,7 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
      * 连续发送间隔时间，单位秒
      */
     @ValueName("interval")
-    var interval: Long by value(10L)
+    var interval: Int by value(10)
 
     @ValueName("netdisk_access")
     var netdiskAccessToken: String by value("")

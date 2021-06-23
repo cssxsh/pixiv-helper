@@ -6,7 +6,6 @@ import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
-import kotlin.time.seconds
 
 object PixivSettingCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -23,8 +22,8 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置连续发送间隔时间, 单位秒")
-    suspend fun CommandSenderOnMessage<*>.interval(new: Long) = withHelper {
-        "$SendInterval -> ${new.seconds}".also { PixivConfigData.interval = new }
+    suspend fun CommandSenderOnMessage<*>.interval(new: Int) = withHelper {
+        "$SendInterval -> ${new}s".also { PixivConfigData.interval = new }
     }
 
     @SubCommand

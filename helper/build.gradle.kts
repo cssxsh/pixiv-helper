@@ -17,12 +17,18 @@ mirai {
 
 repositories {
     mavenLocal()
-    maven(url = "https://maven.aliyun.com/repository/central")
-    maven(url = "https://maven.aliyun.com/repository/jcenter")
-    maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
-    maven(url = "https://bintray.proxy.ustclug.org/desmo/baidu-client/")
+    maven {
+        url = uri("https://maven.pkg.github.com/baidu-client")
+        credentials {
+            username = System.getenv("GITHUB_ID")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+    maven(url = "https://maven.aliyun.com/repository/releases")
+    maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
     jcenter()
+    maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
 }
 
@@ -49,7 +55,6 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
-            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
