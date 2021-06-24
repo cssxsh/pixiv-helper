@@ -211,13 +211,13 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
         if (active()) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {
-                    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+                    check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 }
             }.onFailure {
                 if (it.isNotCancellationException()) {
                     logger.warning({ "加载作品信息($result)失败" }, it)
                 }
-                if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
+                if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("该作品已被删除")) {
                     useMappers { mappers ->
                         if (mappers.user.findByUid(result.uid) == null) {
                             mappers.user.replaceUser(result.toUserBaseInfo())

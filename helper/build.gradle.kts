@@ -12,6 +12,19 @@ mirai {
     jvmTarget = JavaVersion.VERSION_11
     configureShadow {
         archiveBaseName.set(rootProject.name)
+        exclude {
+            it.path.startsWith("kotlin")
+        }
+        exclude {
+            it.path.startsWith("io/ktor") &&
+                (it.path.startsWith("io/ktor/client/features/compression") || it.path.startsWith("io/ktor/client/features/json")).not()
+        }
+        exclude {
+            it.path.startsWith("okhttp3/internal")
+        }
+        exclude {
+            it.path.startsWith("okio")
+        }
     }
 }
 

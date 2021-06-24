@@ -384,15 +384,15 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     if (downloads.isNotEmpty()) {
         val results = mutableListOf<FileInfo>()
         PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
-            result.mapCatching {
-                dir.resolve(url.filename).writeBytes(it)
-                FileInfo(url = url, bytes = it)
+            runCatching {
+                val bytes = result.getOrThrow()
+                dir.resolve(url.filename).writeBytes(bytes)
+                FileInfo(url = url, bytes = bytes)
             }.onFailure {
                 logger.warning({ "[$url]下载失败" }, it)
             }.onSuccess {
                 results.add(it)
             }
-            Unit
         }
         results.takeIf { it.isNotEmpty() }?.let { list ->
             if (useMappers { it.artwork.contains(pid).not() }) save()
