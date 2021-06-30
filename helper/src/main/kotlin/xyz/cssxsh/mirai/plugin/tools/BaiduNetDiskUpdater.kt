@@ -7,19 +7,14 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import java.time.*
 
-object BaiduNetDiskUpdater : BaiduNetDiskClient(
-    appName = "PixivHelper",
-    appId = 23705658,
-    appKey = "Ocyz2NgvSGcnZyRs7con1dQNeHPKzBd2",
-    secretKey = "xZVvfiGNPleBbSixDaSnFbrnIux7OWmd"
-) {
+object BaiduNetDiskUpdater : BaiduNetDiskClient(config = NetdiskOauthConfig) {
 
     override val accessToken: String get() {
         return runCatching {
             super.accessToken
         }.onFailure {
             logger.warning {
-                "认证失效, 请访问以下网址，使用/backup auth 指令进行认证 "
+                "使用/backup auth 指令进行认证 "
             }
         }.getOrThrow()
     }

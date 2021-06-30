@@ -16,7 +16,7 @@ object PixivHelperListener {
 
     private val globalEventChannel by lazy { PixivHelperPlugin.globalEventChannel() }
 
-    private infix fun String.with(listener: Listener<*>) =  synchronized(listeners) {
+    private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
         listeners.put(this, listener)?.cancel()
     }
 

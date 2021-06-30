@@ -18,7 +18,6 @@ import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
-import java.lang.IllegalStateException
 
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -30,23 +29,10 @@ object PixivBackupCommand : CompositeCommand(
 
     private val upload = Mutex()
 
-    private val bit: (Int) -> Long = { 1L shl it }
-
-    private fun File.size() = length().let { size ->
-        when (size) {
-            0L -> "0"
-            in bit(0) until bit(10) -> "%dB".format(size)
-            in bit(10) until bit(20) -> "%dKB".format(size / bit(10))
-            in bit(20) until bit(30) -> "%dMB".format(size / bit(20))
-            in bit(20) until bit(30) -> "%dGB".format(size / bit(20))
-            else -> throw IllegalStateException("File(${absolutePath}) Too Big")
-        }
-    }
-
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
         compress.withLock { PixivZipper.block() }.forEach { file ->
             if (this@compress is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
-                sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到群文件")
+                sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到群文件")
                 runCatching {
                     group.sendFile(path = file.name, file = file)
                 }.onFailure {
@@ -54,7 +40,7 @@ object PixivBackupCommand : CompositeCommand(
                 }
             } else {
                 upload {
-                    sendMessage("${file.name} ${file.size()} 压缩完毕，开始上传到百度云")
+                    sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到百度云")
                     val code = file.getRapidUploadInfo()
                     runCatching {
                         uploadFile(file)
@@ -110,15 +96,15 @@ object PixivBackupCommand : CompositeCommand(
     @Description("列出备份目录")
     suspend fun CommandSender.list() {
         sendMessage(PixivZipper.list().joinToString("\n") { file ->
-            "${file.name} ${file.size()}"
+            "${file.name} ${file.length().toBytesSize()}"
         })
     }
 
     @SubCommand
-    @Description("获取备份文件")
-    suspend fun MemberCommandSenderOnMessage.get(name: String) {
+    @Description("获取备份文件，发送文件消息")
+    suspend fun MemberCommandSenderOnMessage.get(filename: String) {
         runCatching {
-            requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }.let { file ->
+            requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }.let { file ->
                 group.sendFile(path = file.name, file = file)
             }
         }.onFailure {
@@ -128,8 +114,8 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(name: String) = upload {
-        val file = requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }
+    fun CommandSender.upload(filename: String) = upload {
+        val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
         val code = file.getRapidUploadInfo().format()
         runCatching {
             uploadFile(file = file)

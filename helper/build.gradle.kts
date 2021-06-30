@@ -31,7 +31,7 @@ mirai {
 repositories {
     mavenLocal()
     maven {
-        url = uri("https://maven.pkg.github.com/baidu-client")
+        url = uri("https://maven.pkg.github.com/cssxsh/baidu-client")
         credentials {
             username = System.getenv("GITHUB_ID")
             password = System.getenv("GITHUB_TOKEN")
@@ -76,6 +76,10 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
+}
+
+java {
+    disableAutoTargetJvm()
 }
 
 tasks {

@@ -13,5 +13,5 @@ object Versions {
     const val junit = "5.2.0"
     const val mybatis = "3.5.6"
     const val sqliteJdbc = "3.34.0"
-    const val baidu = "0.1.0-dev-8"
+    const val baidu = "0.1.0-dev-12"
 }
