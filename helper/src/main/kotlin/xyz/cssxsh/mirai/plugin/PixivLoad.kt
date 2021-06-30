@@ -147,19 +147,24 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, limit: Lon
     return getUserFollowingPreview(detail = detail, limit = limit).transform { list ->
         list.forEach { preview ->
             index++
-            if (active() && (preview.isLoaded().not() || preview.user.count() < PAGE_SIZE)) {
+            val count = preview.user.count()
+            val loaded = preview.isLoaded()
+            if (active() && (loaded.not() || count < PAGE_SIZE)) {
                 runCatching {
                     val author = userDetail(uid = preview.user.id)
-                    if (author.total() > author.user.count() + preview.illusts.size) {
-                        logger.info { "${index}.USER(${author.user.id})有${author.total()}个作品尝试缓存" }
+                    val total = author.total()
+                    if (total - count > preview.illusts.size) {
+                        logger.info { "${index}.USER(${author.user.id})[${total}]尝试缓存" }
                         emitAll(getUserIllusts(author))
                     } else {
-                        logger.info { "${index}.USER(${author.user.id})有${preview.illusts.size}个作品尝试缓存" }
+                        logger.info { "${index}.USER(${author.user.id})[${total}]有${preview.illusts.size}个作品尝试缓存" }
                         emit(preview.illusts)
                     }
                 }
             }
         }
+    }.onCompletion {
+        send { "共${detail.profile.totalFollowUsers}个画师处理完成" }
     }
 }
 
