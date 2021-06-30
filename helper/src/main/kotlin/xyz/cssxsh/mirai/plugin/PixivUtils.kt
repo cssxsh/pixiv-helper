@@ -19,6 +19,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
+import java.lang.IllegalStateException
 
 internal val logger by PixivHelperPlugin::logger
 
@@ -57,7 +58,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
             })
         }
     }.mapCatching {
-        withTimeout(3 * 60 * 1000) {
+        withTimeout(3 * 60 * 1000L) {
             quoteReply(it)
         }
     }.onFailure {
@@ -171,12 +172,18 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
     }
     val files = illust.getImages()
     if (illust.age == AgeLimit.ALL) {
-        files.forEachIndexed { index, file ->
-            if (index < PixivHelperSettings.eroPageCount) {
-                add(file.uploadAsImage(contact))
-            } else {
-                logger.warning { "[${illust.pid}]图片过多，跳过{$index}" }
-            }
+        if (files.size <= PixivHelperSettings.eroPageCount) {
+            files
+        } else {
+            logger.warning { "[${illust.pid}](${files.size})图片过多" }
+            add(PlainText("部分图片省略"))
+            files.subList(0, PixivHelperSettings.eroPageCount)
+        }.map { file ->
+            add(runCatching {
+                file.uploadAsImage(contact)
+            }.getOrElse {
+                PlainText("上传失败, ${it.message}")
+            })
         }
     } else {
         add(PlainText("R18禁止！"))
@@ -398,7 +405,10 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             if (useMappers { it.artwork.contains(pid).not() }) save()
             useMappers { it.file.replaceFiles(list) }
         }
-        logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${downloads.size}]{${totalBookmarks}}下载完成" }
+        val size = files.sumOf { it.length() }.toBytesSize()
+        logger.info {
+            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size}]{${totalBookmarks}}下载完成"
+        }
     }
     return files
 }
@@ -412,6 +422,17 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
             logger.info { "特辑封面 $image 下载完成" }
         }
     }
+}
+
+internal val bit: (Int) -> Long = { 1L shl it }
+
+internal fun Long.toBytesSize() = when (this) {
+    0L -> "0"
+    in bit(0) until bit(10) -> "%dB".format(this)
+    in bit(10) until bit(20) -> "%dKB".format(this / bit(10))
+    in bit(20) until bit(30) -> "%dMB".format(this / bit(20))
+    in bit(20) until bit(30) -> "%dGB".format(this / bit(20))
+    else -> throw IllegalStateException("Too Big")
 }
 
 internal fun getBackupList() = mapOf(
