@@ -73,28 +73,6 @@ object PixivTaskCommand : CompositeCommand(
         )
     }
 
-    private fun url(uid: Long) = Url(
-        urlString = "https://m.weibo.cn/api/container/getIndex?value=${uid}&containerid=1076037267021686"
-    )
-
-    private val regex = """(?<=Pixiv.{1,32})\d{8}""".toRegex()
-
-    @SubCommand
-    @Description("设置定时备份任务")
-    suspend fun CommandSenderOnMessage<*>.weibo(uid: Long, duration: Int = TASK_DURATION) = setTask {
-        val url: Url = url(uid)
-        loadWeb(url = url, regex = regex).let {
-            check(it.isNotEmpty()) { "来自${url}加载的作品ID应该不为空" }
-            sendMessage("来自${url}加载得到${it}，定时任务将添加")
-        }
-        "WEIBO($uid)[${contact}]" to TimerTask.Web(
-            interval = duration * 60 * 1000L,
-            delegate = contact.delegate,
-            url = url.toString(),
-            pattern = regex.pattern
-        )
-    }
-
     @SubCommand
     @Description("查看任务详情")
     suspend fun CommandSenderOnMessage<*>.detail() = withHelper {
