@@ -26,12 +26,4 @@ object PixivMethodCommand : CompositeCommand(
             "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
         }
     }
-
-    @SubCommand
-    @Description("登录 通过 配置")
-    suspend fun CommandSenderOnMessage<*>.auto() = withHelper {
-        autoAuth().let {
-            "${it.user.name} 登陆成功，Token ${it.accessToken}, ExpiresTime: $expiresTime"
-        }
-    }
 }
