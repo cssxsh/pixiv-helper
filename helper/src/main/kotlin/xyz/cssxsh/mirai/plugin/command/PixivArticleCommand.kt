@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.SimpleCommand
+import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import xyz.cssxsh.mirai.plugin.*
 
 object PixivArticleCommand : SimpleCommand(
@@ -9,6 +11,10 @@ object PixivArticleCommand : SimpleCommand(
     "article", "特辑",
     description = "PIXIV特辑指令"
 ) {
+
+    @ExperimentalCommandDescriptors
+    @ConsoleExperimentalApi
+    override val prefixOptional: Boolean = true
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.load() = withHelper {

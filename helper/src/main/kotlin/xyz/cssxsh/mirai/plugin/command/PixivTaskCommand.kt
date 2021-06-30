@@ -25,40 +25,40 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("设置用户定时订阅任务")
+    @Description("推送用户新作品")
     suspend fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = setTask {
         "User($uid)[${contact}]" to
             TimerTask.User(uid = uid, interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
-    @Description("设置排行榜定时订阅任务")
+    @Description("推送排行榜新作品")
     suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode) = setTask {
         "Rank($mode)[${contact}]" to TimerTask.Rank(mode = mode, delegate = contact.delegate)
     }
 
     @SubCommand
-    @Description("设置关注推送定时订阅任务")
+    @Description("推送关注用户作品")
     suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = setTask {
         "Follow(${getAuthInfo().user.uid})[${contact}]" to
             TimerTask.Follow(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
-    @Description("设置推荐画师定时订阅任务")
+    @Description("推送推荐作品")
     suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = setTask {
         "Recommended(${getAuthInfo().user.uid})[${contact}]" to
             TimerTask.Recommended(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
-    @Description("设置定时备份任务")
+    @Description("定时备份任务")
     suspend fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = setTask {
         "Backup" to TimerTask.Backup(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
-    @Description("设置定时备份任务")
+    @Description("推送，从url链接获取")
     suspend fun CommandSenderOnMessage<*>.web(pattern: String, link: String, duration: Int = TASK_DURATION) = setTask {
         val url = Url(link)
         loadWeb(url = Url(link), regex = pattern.toRegex()).let {

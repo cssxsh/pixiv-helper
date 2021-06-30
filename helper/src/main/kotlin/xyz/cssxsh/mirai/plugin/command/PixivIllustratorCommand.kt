@@ -34,7 +34,8 @@ object PixivIllustratorCommand : CompositeCommand(
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.name(name: String) = sendIllust {
         useMappers { mappers ->
-            mappers.statistic.alias().find { it.alias == name }?.uid ?: mappers.user.findByName(name).randomOrNull()?.uid
+            mappers.statistic.alias().find { it.alias == name }?.uid ?: mappers.user.findByName(name)
+                .randomOrNull()?.uid
         }.let { requireNotNull(it) { "找不到别名'${name}'" } }.let { uid ->
             useMappers { it.artwork.userArtWork(uid) }.also { list ->
                 logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
@@ -43,7 +44,7 @@ object PixivIllustratorCommand : CompositeCommand(
     }
 
     @SubCommand("alias", "别名")
-    @Description("设置画师或alias")
+    @Description("设置画师alias")
     suspend fun CommandSenderOnMessage<*>.alias(name: String, uid: Long) = withHelper {
         useMappers { it.statistic.replaceAliasSetting(AliasSetting(alias = name, uid = uid)) }
         "设置 [$name] -> ($uid)"
@@ -64,7 +65,7 @@ object PixivIllustratorCommand : CompositeCommand(
     }
 
     @SubCommand("search", "搜索")
-    @Description("获取画师信息")
+    @Description("搜索画师")
     suspend fun CommandSenderOnMessage<*>.search(name: String, limit: Long = PAGE_SIZE) = withHelper {
         getSearchUser(name = name, limit = limit).toList().flatten().map { preview ->
             "===============>\n".toPlainText() + buildMessageByUser(preview = preview)

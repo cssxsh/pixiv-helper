@@ -31,16 +31,16 @@ object PixivCacheCommand : CompositeCommand(
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
     }
 
-    private fun Year.days() = (1 .. length()).map { index -> atDay(index) }
+    private fun Year.days() = (1..length()).map { index -> atDay(index) }
 
-    private fun Pair<LocalDate, LocalDate>.range() = (first.year .. second.year).flatMap { year ->
+    private fun Pair<LocalDate, LocalDate>.range() = (first.year..second.year).flatMap { year ->
         Year.of(year).days().filter { it >= first && it <= second }
     }
 
     @SubCommand
     @Description("参数界限为解析缓存月榜作品")
     suspend fun CommandSenderOnMessage<*>.range(start: LocalDate, end: LocalDate) = withHelper {
-        check(start <= end) {  "start 要在 end 之前" }
+        check(start <= end) { "start 要在 end 之前" }
         (start to end).range().forEach { date ->
             addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = false) {
                 getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).types(WorkContentType.ILLUST).notCached()
@@ -57,7 +57,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("从推荐画师的预览中缓存色图作品")
+    @Description("从推荐画师的预览中缓存色图作品，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
         addCacheJob(name = "RECOMMENDED") { getRecommended().eros() }
         "任务RECOMMENDED已添加"
@@ -101,7 +101,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("缓存搜索得到的tag")
+    @Description("缓存搜索得到的tag，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.tag(tag: String) = withHelper {
         addCacheJob(name = "TAG(${tag})") { getSearchTag(tag = tag).eros() }
         "任务TAG(${tag})已添加"
@@ -149,7 +149,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("缓存漫游")
+    @Description("缓存漫游，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.walkthrough(times: Int = 1) = withHelper {
         addCacheJob(name = "WALK_THROUGH(${times})") { getWalkThrough(times = times).eros() }
         "将会随机${times}次WalkThrough加载"

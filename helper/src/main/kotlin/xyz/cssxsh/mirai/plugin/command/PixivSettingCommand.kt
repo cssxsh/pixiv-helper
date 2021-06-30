@@ -13,8 +13,8 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置连续发送间隔时间, 单位秒")
-    suspend fun CommandSenderOnMessage<*>.interval(new: Int) = withHelper {
-        "$SendInterval -> ${new}s".also { PixivConfigData.interval = new }
+    suspend fun CommandSenderOnMessage<*>.interval(sec: Int) = withHelper {
+        "$SendInterval -> ${sec}s".also { PixivConfigData.interval = sec }
     }
 
     @SubCommand

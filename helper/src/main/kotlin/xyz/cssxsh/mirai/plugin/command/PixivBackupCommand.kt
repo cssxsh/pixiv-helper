@@ -101,10 +101,10 @@ object PixivBackupCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("获取备份文件")
-    suspend fun MemberCommandSenderOnMessage.get(name: String) {
+    @Description("获取备份文件，发送文件消息")
+    suspend fun MemberCommandSenderOnMessage.get(filename: String) {
         runCatching {
-            requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }.let { file ->
+            requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }.let { file ->
                 group.sendFile(path = file.name, file = file)
             }
         }.onFailure {
@@ -114,8 +114,8 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(name: String) = upload {
-        val file = requireNotNull(PixivZipper.find(name = name)) { "文件不存在" }
+    fun CommandSender.upload(filename: String) = upload {
+        val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
         val code = file.getRapidUploadInfo().format()
         runCatching {
             uploadFile(file = file)
