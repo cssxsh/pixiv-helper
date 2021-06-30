@@ -19,6 +19,7 @@ import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.SanityLevel
 import xyz.cssxsh.pixiv.apps.PAGE_SIZE
 import java.io.IOException
+import javax.net.ssl.SSLProtocolException
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -68,8 +69,8 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
         is HttpRequestTimeoutException,
         is SocketTimeoutException,
-        is ConnectTimeoutException -> {
-            // logger.warning { "Pixiv Download 错误, 进入延时: $throwable" }
+        is ConnectTimeoutException,
+        is SSLProtocolException -> {
             delay((++PixivDownloadDelayCount) * 1000L)
             PixivDownloadDelayCount--
             true
