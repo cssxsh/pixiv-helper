@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
 import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
+import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import org.sqlite.SQLiteConfig
@@ -12,39 +13,35 @@ import java.io.File
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
 
     @ValueName("cache_path")
+    @ValueDescription("")
     private val cachePath: String by value("")
 
     @ValueName("backup_path")
+    @ValueDescription("备份目录")
     private val backupPath: String by value("")
 
     @ValueName("temp_path")
+    @ValueDescription("临时目录")
     private val tempPath: String by value("")
 
-    /**
-     * 色图间隔
-     */
     @ValueName("ero_interval")
+    @ValueDescription("色图间隔")
     val eroInterval: Int by value(ERO_INTERVAL)
 
-    /**
-     * 涩图标准 收藏
-     */
     @ValueName("ero_bookmarks")
+    @ValueDescription("涩图标准 收藏")
     val eroBookmarks: Long by value(ERO_BOOKMARKS)
 
-    /**
-     * 涩图标准 页数
-     */
     @ValueName("ero_page_count")
+    @ValueDescription("涩图标准 页数")
     val eroPageCount: Int by value(ERO_PAGE_COUNT)
 
     @ValueName("sqlite_database")
+    @ValueDescription("数据库文件位置")
     private val sqliteDatabase: String by value("")
 
-    /**
-     * 数据库配置
-     */
     @ValueName("sqlite_config")
+    @ValueDescription("数据库配置")
     val sqliteConfig: Map<SQLiteConfig.Pragma, String> by value<Map<String, String>>()
         .mapKeys({ SQLiteConfig.Pragma.valueOf(it) }, { it.name })
 

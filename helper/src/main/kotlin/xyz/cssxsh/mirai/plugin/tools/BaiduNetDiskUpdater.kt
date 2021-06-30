@@ -7,12 +7,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import java.time.*
 
-object BaiduNetDiskUpdater : BaiduNetDiskClient(
-    appName = "PixivHelper",
-    appId = 23705658,
-    appKey = "Ocyz2NgvSGcnZyRs7con1dQNeHPKzBd2",
-    secretKey = "xZVvfiGNPleBbSixDaSnFbrnIux7OWmd"
-) {
+object BaiduNetDiskUpdater : BaiduNetDiskClient(config = NetdiskOauthConfig) {
 
     override val accessToken: String get() {
         return runCatching {
