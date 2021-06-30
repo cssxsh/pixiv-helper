@@ -86,22 +86,12 @@ object LinkDelegate : ReadWriteProperty<PixivHelper, Boolean> {
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
 internal fun Contact.getHelper(): PixivHelper {
-    /*
-    if (contact is Group) {
-        check(contact.botMuteRemaining <= 0) {
-            "$contact 机器人被禁言中，剩余时间： ${contact.botMuteRemaining.seconds}"
-        }
-        check(contact.settings.isMuteAll.not()) {
-            "$contact 全员禁言中"
-        }
-    }
-     */
     return helpers.getOrPut(this) {
         PixivHelper(this).apply {
             if (contact is User && config == DEFAULT_PIXIV_CONFIG) {
                 launch {
                     send {
-                        "目前测试私聊模式中使用用户自己的账户，请使用 pixiv login <uid> <password> 指令尝试登陆"
+                        "私聊模式中 将会独立关联账户，请使用 /pixiv login <uid> <password> 指令尝试登陆"
                     }
                 }
             }
