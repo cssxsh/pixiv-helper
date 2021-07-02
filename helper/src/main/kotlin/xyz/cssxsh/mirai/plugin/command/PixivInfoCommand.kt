@@ -79,7 +79,7 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("| index | name | count |")
             appendLine("| --- | --- | --- |")
             useMappers { it.statistic.top(limit = limit) }.forEachIndexed { index, (name, count) ->
-                appendLine("| ${index+1} | $name | $count |")
+                appendLine("| ${index + 1} | $name | $count |")
             }
         }
     }

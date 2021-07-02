@@ -11,7 +11,7 @@ import xyz.cssxsh.mirai.plugin.tools.NaviRank
 import java.time.Year
 import java.time.YearMonth
 
-object PixivRankCommand: CompositeCommand(
+object PixivRankCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "rank", "排行",
     description = "PIXIV排行指令，通过http://pixiv.navirank.com/",

@@ -78,10 +78,6 @@ kotlin {
     }
 }
 
-java {
-    disableAutoTargetJvm()
-}
-
 tasks {
     test {
         useJUnitPlatform()
