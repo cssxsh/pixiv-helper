@@ -71,9 +71,9 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = 
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)
-            logger.verbose { "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页{${it.size}}成功" }
+            logger.verbose { "加载用户(${info().user.uid})关注用户作品时间线第${page}页{${it.size}}成功" }
         }.onFailure {
-            logger.warning({ "加载用户(${getAuthInfo().user.uid})关注用户作品时间线第${page}页失败" }, it)
+            logger.warning({ "加载用户(${info().user.uid})关注用户作品时间线第${page}页失败" }, it)
         }
     }
 }
@@ -85,9 +85,9 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)
-            logger.verbose { "加载用户(${getAuthInfo().user.uid})推荐作品第${page}页{${it.size}}成功" }
+            logger.verbose { "加载用户(${info().user.uid})推荐作品第${page}页{${it.size}}成功" }
         }.onFailure {
-            logger.warning({ "加载用户(${getAuthInfo().user.uid})推荐作品第${page}页失败" }, it)
+            logger.warning({ "加载用户(${info().user.uid})推荐作品第${page}页失败" }, it)
         }
     }
 }

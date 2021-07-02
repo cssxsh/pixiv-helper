@@ -40,14 +40,14 @@ object PixivTaskCommand : CompositeCommand(
     @SubCommand
     @Description("推送关注用户作品")
     suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = setTask {
-        "Follow(${getAuthInfo().user.uid})[${contact}]" to
+        "Follow(${info().user.uid})[${contact}]" to
             TimerTask.Follow(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("推送推荐作品")
     suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = setTask {
-        "Recommended(${getAuthInfo().user.uid})[${contact}]" to
+        "Recommended(${info().user.uid})[${contact}]" to
             TimerTask.Recommended(interval = duration * 60 * 1000L, delegate = contact.delegate)
     }
 

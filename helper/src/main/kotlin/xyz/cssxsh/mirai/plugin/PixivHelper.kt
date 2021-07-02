@@ -24,9 +24,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     override var authInfo: AuthResult? by AuthResultDelegate
 
-    public override var expiresTime: OffsetDateTime by ExpiresTimeDelegate
+    public override var expires: OffsetDateTime by ExpiresTimeDelegate
 
-    override val apiIgnore: Ignore get() = PixivApiIgnore
+    override val ignore: Ignore get() = PixivApiIgnore
 
     var link: Boolean by LinkDelegate
 
@@ -116,21 +116,6 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         cacheJob.cancel("任务被停止")
         cacheChannel.close()
         cacheChannel.cancel()
-    }
-
-    override suspend fun auth(
-        grant: GrantType,
-        config: PixivConfig,
-        time: OffsetDateTime,
-    ) = super.auth(grant = grant, config = config, time = time).also {
-        when (grant) {
-            GrantType.PASSWORD -> logger.info {
-                "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by Account: ${config.account}, ExpiresTime: $expiresTime"
-            }
-            GrantType.REFRESH_TOKEN -> logger.info {
-                "User: ${it.user.name}#${it.user.uid} AccessToken: ${it.accessToken} by RefreshToken: ${config.refreshToken}, ExpiresTime: $expiresTime"
-            }
-        }
     }
 
     suspend fun send(block: suspend () -> Any?): Boolean {

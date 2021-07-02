@@ -64,7 +64,7 @@ object PixivPlayCommand : CompositeCommand(
     @Description("根据 系统推荐 播放图集")
     suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
         check(!play.isActive) { "其他列表播放中" }
-        val user = getAuthInfo().user
+        val user = info().user
         val illusts = illustRecommended().illusts.filter { it.age == AgeLimit.ALL }
         play = launch {
             illusts.forEach {
@@ -79,7 +79,7 @@ object PixivPlayCommand : CompositeCommand(
     @Description("播放收藏")
     suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
-        val user = getAuthInfo().user
+        val user = info().user
         val illusts = bookmarksRandom(uid = user.uid, tag = tag).illusts
         play = launch {
             illusts.forEach {

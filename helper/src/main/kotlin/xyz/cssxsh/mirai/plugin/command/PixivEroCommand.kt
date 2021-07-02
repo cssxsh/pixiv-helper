@@ -42,12 +42,14 @@ object PixivEroCommand : SimpleCommand(
     }
 
     private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
-        mappers.statistic.replaceEroInfo(StatisticEroInfo(
-            sender = event.sender.id,
-            group = event.subject.takeIf { it is Group }?.id,
-            pid = pid,
-            timestamp = event.time.toLong()
-        ))
+        mappers.statistic.replaceEroInfo(
+            StatisticEroInfo(
+                sender = event.sender.id,
+                group = event.subject.takeIf { it is Group }?.id,
+                pid = pid,
+                timestamp = event.time.toLong()
+            )
+        )
     }
 
     private val expire get() = System.currentTimeMillis() - ERO_UP_EXPIRE

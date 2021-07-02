@@ -17,7 +17,7 @@ object PixivFollowCommand : CompositeCommand(
     description = "PIXIV关注指令"
 ) {
 
-    private var PixivHelper.follow  by PixivHelperDelegate { CancelledJob }
+    private var PixivHelper.follow by PixivHelperDelegate { CancelledJob }
 
     private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }
@@ -26,9 +26,9 @@ object PixivFollowCommand : CompositeCommand(
                 isActive && runCatching {
                     userFollowAdd(uid = uid)
                 }.onSuccess {
-                    logger.info { "用户(${getAuthInfo().user.uid})添加关注(${uid})成功, $it" }
+                    logger.info { "用户(${info().user.uid})添加关注(${uid})成功, $it" }
                 }.onFailure {
-                    logger.warning({ "用户(${getAuthInfo().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
+                    logger.warning({ "用户(${info().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
                 }.isSuccess
             }.let { (success, failure) ->
                 send {
@@ -45,19 +45,19 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("为当前助手关注指定用户")
-    suspend fun CommandSenderOnMessage<*>.user(vararg users: String) = follow { users.map { it.toLong() }.toSet() }
+    suspend fun CommandSenderOnMessage<*>.user(vararg uid: String) = follow { uid.map { it.toLong() }.toSet() }
 
     @SubCommand
     @Description("关注色图缓存中的较好画师")
     suspend fun CommandSenderOnMessage<*>.good() = follow {
-        val followed = getFollowed(uid = getAuthInfo().user.uid)
+        val followed = getFollowed(uid = info().user.uid)
         useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
             if (count > PixivHelperSettings.eroInterval) uid else null
         }.let {
             logger.verbose { "共统计了${it.size}名画师" }
             it - followed
         }.sorted().also {
-            logger.info { "用户(${getAuthInfo().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
+            logger.info { "用户(${info().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
             send {
                 "{${it.first()..it.last()}}共${it.size}个画师等待关注"
             }

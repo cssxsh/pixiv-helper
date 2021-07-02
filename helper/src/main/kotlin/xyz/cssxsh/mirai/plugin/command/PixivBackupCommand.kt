@@ -133,7 +133,7 @@ object PixivBackupCommand : CompositeCommand(
     fun CommandSenderOnMessage<*>.auth() = upload {
         sendMessage("请打开连接，然后在十分钟内输入获得的认证码: ${getWebAuthorizeUrl(type = AuthorizeType.AUTHORIZATION)}")
         runCatching {
-            val code = fromEvent.nextMessage(10 * 60 * 1000L).content
+            val code = fromEvent.nextMessage(10 * 60 * 1000L).content.trim()
             getAuthorizeToken(code = code).also { saveToken(token = it) } to getUserInfo()
         }.onSuccess { (token, user) ->
             logger.info { "百度云用户认证成功, ${user.baiduName} by $token" }

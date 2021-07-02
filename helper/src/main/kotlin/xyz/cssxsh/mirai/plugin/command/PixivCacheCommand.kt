@@ -66,7 +66,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("从指定用户的收藏中缓存色图作品")
     suspend fun CommandSenderOnMessage<*>.bookmarks(uid: Long? = null) = withHelper {
-        addCacheJob(name = "BOOKMARKS(${uid ?: "me"})") { getBookmarks(uid = uid ?: getAuthInfo().user.uid) }
+        addCacheJob(name = "BOOKMARKS(${uid ?: "me"})") { getBookmarks(uid = uid ?: info().user.uid) }
         "任务BOOKMARKS(${uid ?: "me"})已添加"
     }
 
@@ -83,7 +83,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("将关注画师列表检查，缓存所有作品")
     suspend fun CommandSenderOnMessage<*>.following(uid: Long? = null) = withHelper {
-        userDetail(uid = uid ?: getAuthInfo().user.uid).also {
+        userDetail(uid = uid ?: info().user.uid).also {
             addCacheJob(name = "FOLLOW_ALL(${it.user.id})", reply = false) { getUserFollowing(detail = it) }
         }.let {
             "关注列表中共${it.profile.totalFollowUsers}个画师需要缓存"
