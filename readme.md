@@ -1,4 +1,4 @@
-# PIXIV助手
+# [PIXIV助手](https://github.com/cssxsh/pixiv-helper)
 
 > 基于 [Mirai Console](https://github.com/mamoe/mirai-console) 的 [Pixiv](https://www.pixiv.net/) 插件
 
@@ -26,7 +26,7 @@ R18图会按照Pixiv所给信息过滤
 |:-----------------------------------------|:-------------------------|
 | `/<pixiv> <login> [username] [password]` | 登录 通过 用户名，密码   |
 | `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token  |
-| `/<follow> <user< {uid}`                 | 为当前助手关注指定用户   |
+| `/<follow> <user> {uid}`                 | 为当前助手关注指定用户   |
 | `/<follow> <good>`                       | 关注色图缓存中的较好画师 |
 | `/<follow> <copy> [uid]`                 | 关注指定用户的关注       |
 | `/<mark bookmark> <add> [uid] {words}?`  | 添加指定作品收藏         |
@@ -89,9 +89,11 @@ DAY_MANGA
 | `/<task> <rank> [mode]`                      | 推送排行榜新作品           |
 | `/<task> <follow> [duration]?`               | 推送关注用户作品           |
 | `/<task> <recommended> [duration]?`          | 推送推荐作品               |
-| `/<task> <backup> [duration]?`               | 获取备份文件，发送文件消息 |
+| `/<task> <backup> [duration]?`               | 数据自动备份               |
 | `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取        |
 | `/<task> <detail>`                           | 查看任务详情               |
+
+备份文件优先推送到群文件，其次百度云
 
 duration 单位分钟，默认3小时
 
