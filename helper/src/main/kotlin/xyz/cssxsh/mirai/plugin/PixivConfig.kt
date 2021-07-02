@@ -176,7 +176,11 @@ internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob
             "百度网盘: ${it.baiduName} 已登录, 过期时间 $expires"
         }
     }.onFailure {
-        logger.warning({ "百度网盘初始化失败" }, it)
+        if ("Invalid Bduss" in it.message.orEmpty()) {
+            logger.warning { "百度网盘初始化失败, 需要重新登录, $it" }
+            return@onFailure
+        }
+        logger.warning { "百度网盘初始化失败, $it" }
     }
 }
 
