@@ -22,17 +22,18 @@ R18图会按照Pixiv所给信息过滤
 
 ### Pixiv相关操作指令
 
-| 指令                                     | 描述                     |
-|:-----------------------------------------|:-------------------------|
-| `/<pixiv> <login> [username] [password]` | 登录 通过 用户名，密码   |
-| `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token  |
-| `/<follow> <user> {uid}`                 | 为当前助手关注指定用户   |
-| `/<follow> <good>`                       | 关注色图缓存中的较好画师 |
-| `/<follow> <copy> [uid]`                 | 关注指定用户的关注       |
-| `/<mark bookmark> <add> [uid] {words}?`  | 添加指定作品收藏         |
-| `/<mark bookmark> <delete> [pid]`        | 删除指定作品收藏         |
-| `/<mark bookmark> <random> [tag]?`       | 随机发送一个收藏的作品   |
-| `/<mark bookmark> <list>`                | 显示收藏列表             |
+| 指令                                     | 描述                                       |
+|:-----------------------------------------|:-------------------------------------------|
+| `/<pixiv> <login> [username] [password]` | APP 不再支持 账号 密码 直接登录，指令做废  |
+| `/<pixiv> <sina>`                        | 扫描登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token                    |
+| `/<follow> <user> {uid}`                 | 为当前助手关注指定用户                     |
+| `/<follow> <good>`                       | 关注色图缓存中的较好画师                   |
+| `/<follow> <copy> [uid]`                 | 关注指定用户的关注                         |
+| `/<mark bookmark> <add> [uid] {words}?`  | 添加指定作品收藏                           |
+| `/<mark bookmark> <delete> [pid]`        | 删除指定作品收藏                           |
+| `/<mark bookmark> <random> [tag]?`       | 随机发送一个收藏的作品                     |
+| `/<mark bookmark> <list>`                | 显示收藏列表                               |
 
 ### 色图相关指令
 
@@ -49,8 +50,7 @@ R18图会按照Pixiv所给信息过滤
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
 | `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
 
-搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 
-回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
+搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
 
 ### 缓存指令
 
@@ -127,7 +127,6 @@ duration 单位分钟，默认3小时
 | `/<info> <top> [limit]?`    | 获取TAG指令统计信息 |
 | `/<info> <cache>`           | 获取缓存信息        |
 
-
 使用百度云服务需要的准备详见配置
 
 ### 播放指令
@@ -164,5 +163,5 @@ duration 单位分钟，默认3小时
 
 ### NetdiskOauthConfig.yml
 
-插件需要百度网盘API支持，请到 https://pan.baidu.com/union/main/application/personal 申请应用，并将获得的APP信息填入
-并使用 /backup auth 认证百度账号
+插件需要百度网盘API支持，请到 https://pan.baidu.com/union/main/application/personal 申请应用，并将获得的APP信息填入  
+信息只在启动时读取，修改后重启，并使用 /backup auth 认证百度账号
