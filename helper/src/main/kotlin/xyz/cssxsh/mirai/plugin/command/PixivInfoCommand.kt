@@ -17,11 +17,11 @@ object PixivInfoCommand : CompositeCommand(
     @Description("获取助手信息")
     suspend fun CommandSenderOnMessage<*>.helper() = withHelper {
         buildMessageChain {
-            appendLine("User: ${getAuthInfo().user.uid}")
-            appendLine("Name: ${getAuthInfo().user.name}")
-            appendLine("Account: ${getAuthInfo().user.account}")
-            appendLine("Token: ${getAuthInfo().accessToken}")
-            appendLine("ExpiresTime: $expiresTime")
+            appendLine("User: ${info().user.uid}")
+            appendLine("Name: ${info().user.name}")
+            appendLine("Account: ${info().user.account}")
+            appendLine("Token: ${info().accessToken}")
+            appendLine("ExpiresTime: $expires")
         }
     }
 
