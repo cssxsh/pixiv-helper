@@ -34,7 +34,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             else -> quoteReply(message.toString())
         }
     }.onFailure {
-        logger.warning(it)
+        logger.warning({ "消息回复失败" }, it)
         when {
             SendLimit.containsMatchIn(it.message.orEmpty()) -> {
                 delay(60 * 1000L)
