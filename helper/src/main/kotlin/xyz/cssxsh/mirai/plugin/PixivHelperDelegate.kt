@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.contact.*
-import xyz.cssxsh.mirai.plugin.data.PixivConfigData
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.PixivConfig
 import xyz.cssxsh.pixiv.auth.AuthResult
 import java.time.OffsetDateTime
@@ -24,17 +24,26 @@ private var defaultExpiresTime: OffsetDateTime = now
 object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: PixivConfig) {
+        val token = value.refreshToken.orEmpty()
         when (thisRef.contact) {
-            is User -> PixivConfigData.configs[thisRef.contact.id] = value
-            is Group -> PixivConfigData.default = value
+            is User -> PixivConfigData.tokens[thisRef.contact.id] = token
+            is Group -> PixivConfigData.default = token
             else -> throw IllegalAccessException("未知类型联系人!")
         }
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): PixivConfig = when (thisRef.contact) {
-        is User -> PixivConfigData.configs.getOrPut(thisRef.contact.id) { DEFAULT_PIXIV_CONFIG }
-        is Group -> PixivConfigData.default
-        else -> throw IllegalAccessException("未知类型联系人!")
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): PixivConfig {
+        val token = when (thisRef.contact) {
+            is User -> PixivConfigData.tokens[thisRef.contact.id].orEmpty()
+            is Group -> PixivConfigData.default
+            else -> throw IllegalAccessException("未知类型联系人!")
+        }
+        val proxy = PixivHelperSettings.proxy
+        return if (proxy.isNotBlank()) {
+            DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxy, refreshToken = token, cname = emptyMap())
+        } else {
+            DEFAULT_PIXIV_CONFIG.copy(refreshToken = token)
+        }
     }
 }
 
@@ -88,7 +97,7 @@ private val helpers = mutableMapOf<Contact, PixivHelper>()
 internal fun Contact.getHelper(): PixivHelper {
     return helpers.getOrPut(this) {
         PixivHelper(this).apply {
-            if (contact is User && config == DEFAULT_PIXIV_CONFIG) {
+            if (contact is User && config.refreshToken.isNullOrBlank()) {
                 launch {
                     send {
                         "私聊模式中 将会独立关联账户，请使用 /pixiv login <uid> <password> 指令尝试登陆"

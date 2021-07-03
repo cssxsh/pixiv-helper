@@ -110,7 +110,8 @@ internal val PIXIV_HOST = mapOf(
     "public-api.secure.pixiv.net" to PIXIV_NET_IP,
     "public.pixiv.net" to PIXIV_NET_IP,
     "www.pixiv.net" to PIXIV_NET_IP,
-    "pixiv.me" to PIXIV_NET_IP
+    "pixiv.me" to PIXIV_NET_IP,
+    "accounts.pixiv.net" to PIXIV_NET_IP
 )
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
@@ -157,7 +158,7 @@ internal fun PixivHelperSettings.init() {
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     logger.info { "Sqlite: ${sqlite.absolutePath}" }
-    PixivHelperPlugin.launch {
+    PixivHelperPlugin.launch(SupervisorJob()) {
         val count = useMappers { it.artwork.count() }
         if (count < eroInterval) {
             logger.warning {

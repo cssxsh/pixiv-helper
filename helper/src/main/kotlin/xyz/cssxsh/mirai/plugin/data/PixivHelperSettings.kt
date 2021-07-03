@@ -40,6 +40,10 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
     @ValueDescription("数据库文件位置")
     private val sqliteDatabase: String by value("")
 
+    @ValueDescription("代理")
+    @ValueName("proxy")
+    val proxy: String by value("")
+
     @ValueName("sqlite_config")
     @ValueDescription("数据库配置")
     val sqliteConfig: Map<SQLiteConfig.Pragma, String> by value<Map<String, String>>()
