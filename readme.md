@@ -25,7 +25,7 @@ R18图会按照Pixiv所给信息过滤
 | 指令                                     | 描述                                       |
 |:-----------------------------------------|:-------------------------------------------|
 | `/<pixiv> <login> [username] [password]` | APP 不再支持 账号 密码 直接登录，指令做废  |
-| `/<pixiv> <sina>`                        | 扫描登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <sina>`                        | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
 | `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token                    |
 | `/<follow> <user> {uid}`                 | 为当前助手关注指定用户                     |
 | `/<follow> <good>`                       | 关注色图缓存中的较好画师                   |
@@ -160,6 +160,7 @@ duration 单位分钟，默认3小时
 ### PixivHelperSettings.yml
 
 缓存目录、涩图标准等
+proxy代理 since 0.7.0-M-2
 
 ### NetdiskOauthConfig.yml
 
