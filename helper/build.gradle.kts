@@ -16,8 +16,8 @@ mirai {
             it.path.startsWith("kotlin")
         }
         exclude {
-            it.path.startsWith("io/ktor") &&
-                (it.path.startsWith("io/ktor/client/features/compression") || it.path.startsWith("io/ktor/client/features/json")).not()
+            val features = listOf("auth", "compression", "json")
+            it.path.startsWith("io/ktor") && features.none { f ->  it.path.startsWith("io/ktor/client/features/$f") }
         }
         exclude {
             it.path.startsWith("okhttp3/internal")
@@ -37,7 +37,6 @@ repositories {
             password = System.getenv("GITHUB_TOKEN")
         }
     }
-    maven(url = "https://maven.aliyun.com/repository/releases")
     maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
     jcenter()
