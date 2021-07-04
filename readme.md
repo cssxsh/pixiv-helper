@@ -25,7 +25,8 @@ R18图会按照Pixiv所给信息过滤
 | 指令                                     | 描述                                       |
 |:-----------------------------------------|:-------------------------------------------|
 | `/<pixiv> <login> [username] [password]` | APP 不再支持 账号 密码 直接登录，指令做废  |
-| `/<pixiv> <sina>`                        | 扫描登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <sina>`                        | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <cookie>`                      | 从文件 读取 Web Cookie，登录PIXIV          |
 | `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token                    |
 | `/<follow> <user> {uid}`                 | 为当前助手关注指定用户                     |
 | `/<follow> <good>`                       | 关注色图缓存中的较好画师                   |
@@ -34,6 +35,13 @@ R18图会按照Pixiv所给信息过滤
 | `/<mark bookmark> <delete> [pid]`        | 删除指定作品收藏                           |
 | `/<mark bookmark> <random> [tag]?`       | 随机发送一个收藏的作品                     |
 | `/<mark bookmark> <list>`                | 显示收藏列表                               |
+
+cookie 文件为工作目录下的 `cookie.json`  
+内容 为 浏览器插件 [EditThisCookie](http://www.editthiscookie.com/) 导出的Json  
+EditThisCookie 安装地址
+[Chrome](https://chrome.google.com/webstore/detail/editthiscookie/fngmhnnpilhplaeedifhccceomclgfbg)
+[Firefox](https://addons.mozilla.org/firefox/downloads/file/3449327/editthiscookie2-1.5.0-fx.xpi)
+[Edge](https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/ajfboaconbpkglpfanbmlfgojgndmhmc?hl=zh-CN&gl=CN)
 
 ### 色图相关指令
 
@@ -160,6 +168,7 @@ duration 单位分钟，默认3小时
 ### PixivHelperSettings.yml
 
 缓存目录、涩图标准等
+proxy代理 since 0.7.0-M-2
 
 ### NetdiskOauthConfig.yml
 

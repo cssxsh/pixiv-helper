@@ -38,7 +38,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 cacheChannel.consumeAsFlow().save().download().buffer(1).await()
             }.onFailure {
-                logger.warning(it)
+                logger.warning({
+                    "PixivHelper:${contact}#CacheTask"
+                }, it)
             }
             cacheChannel = Channel(Channel.BUFFERED)
         }
@@ -118,8 +120,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         cacheChannel.cancel()
     }
 
-    suspend fun send(block: suspend () -> Any?): Boolean {
-        return isActive && runCatching {
+    suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
+        isActive && runCatching {
             block().let { message ->
                 when (message) {
                     null, Unit -> Unit

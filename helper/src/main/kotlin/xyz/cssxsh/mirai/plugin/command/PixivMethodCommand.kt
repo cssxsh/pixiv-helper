@@ -1,11 +1,15 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.serialization.decodeFromString
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.data.toPlainText
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.pixiv.sina
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.pixiv.*
+import java.io.File
 
 object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -17,9 +21,28 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     @Description("登录 通过 登录关联的微博")
     suspend fun CommandSenderOnMessage<*>.sina() = withHelper {
-        sina {
-            send {
-                it.inputStream().uploadAsImage(contact) + "请扫码登录关联了Pixiv的微博".toPlainText()
+        sina { url ->
+            sendMessage(
+                runCatching {
+                    PixivHelperDownloader.downloadImage(url).inputStream().uploadAsImage(contact)
+                }.getOrElse {
+                    logger.warning { "微博二维码下载失败 $it" }
+                    url.toString().toPlainText()
+                } + " 请扫码登录关联了Pixiv的微博".toPlainText()
+            )
+        }.let {
+            "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
+        }
+    }
+
+    @SubCommand
+    @Description("登录 通过 Cookie")
+    suspend fun CommandSenderOnMessage<*>.cookie() = withHelper {
+        val json = File("cookie.json")
+        sendMessage("加载 cookie 从 ${json.absolutePath}")
+        cookie {
+            PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).mapNotNull {
+                it.runCatching { toCookie() }.getOrNull()
             }
         }.let {
             "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
