@@ -4,7 +4,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.NaviRank

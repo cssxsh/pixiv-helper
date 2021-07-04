@@ -100,7 +100,7 @@ internal fun Contact.getHelper(): PixivHelper {
             if (contact is User && config.refreshToken.isNullOrBlank()) {
                 launch {
                     send {
-                        "私聊模式中 将会独立关联账户，请使用 /pixiv login <uid> <password> 指令尝试登陆"
+                        "私聊模式中 将会独立关联账户，请使用 /pixiv 指令尝试登陆"
                     }
                 }
             }
