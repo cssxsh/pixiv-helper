@@ -103,6 +103,7 @@ DAY_MANGA
 | `/<task> <backup> [duration]?`               | 数据自动备份        |
 | `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
 | `/<task> <detail>`                           | 查看任务详情        |
+| `/<task> <delete> [name]`                    | 删除任务            |
 
 备份文件优先推送到群文件，其次百度云
 
