@@ -72,9 +72,12 @@
         WHERE pid IN (
             SELECT tags.pid
             FROM tags
-            WHERE name LIKE '%' || #{param1} || '%'
-               OR translated_name LIKE '%' || #{param1} || '%'
-        ) AND total_bookmarks >= ${param2};
+            WHERE (
+                    ${param3} AND (name LIKE '%' || ${param1} || '%' OR translated_name LIKE '%' || ${param1} || '%')
+                )
+               OR (name =  ${param1} OR translated_name = ${param1})
+        )
+          AND total_bookmarks >= ${param2};
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)

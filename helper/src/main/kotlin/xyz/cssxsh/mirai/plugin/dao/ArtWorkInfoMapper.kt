@@ -8,7 +8,7 @@ interface ArtWorkInfoMapper {
     fun replaceArtWork(info: ArtWorkInfo)
     fun updateArtWork(info: ArtWorkInfo)
     fun artworks(interval: LongRange): List<ArtWorkInfo>
-    fun findByTag(tag: String, bookmark: Long): List<ArtWorkInfo>
+    fun findByTag(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo>
     fun count(): Long
     fun deleteByPid(pid: Long, comment: String)
     fun deleteByUid(uid: Long, comment: String)

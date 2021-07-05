@@ -80,8 +80,11 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("备份指定标签的作品")
-    fun CommandSender.tag(tag: String, bookmark: Long = 0) = compress {
-        compressArtWorks(list = useMappers { it.artwork.findByTag(tag, bookmark) }, basename = "TAG[${tag}]").let {
+    fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
+        compressArtWorks(
+            list = useMappers { it.artwork.findByTag(tag, bookmark, fuzzy) },
+            basename = "TAG[${tag}]"
+        ).let {
             listOf(it)
         }
     }
