@@ -231,8 +231,16 @@ internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByU
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
-internal fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount <= PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
+internal fun IllustInfo.isEro(): Boolean {
+    val ero: EroStandardConfig = PixivHelperSettings
+    if (type !in ero.types) return false
+    if (totalBookmarks ?: 0 <= ero.bookmarks) return false
+    if (pageCount > ero.pages) return false
+    val tag = ero.tagExclude.toRegex()
+    if (tags.any { it.name.matches(tag) || it.translatedName.orEmpty().matches(tag) }) return false
+    if (user.id in ero.userExclude) return true
+    return true
+}
 
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, account = account)
 
