@@ -19,7 +19,25 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
-    suspend fun CommandSenderOnMessage<*>.link(link: Boolean) = withHelper {
-        "$link -> $link".also { this.link = link }
+    suspend fun CommandSenderOnMessage<*>.link(open: Boolean) = withHelper {
+        "${this.link} -> $open".also { this.link = open }
+    }
+
+    @SubCommand
+    @Description("设置是否显示TAG INFO")
+    suspend fun CommandSenderOnMessage<*>.tag(open: Boolean) = withHelper {
+        "${this.tag} -> $open".also { this.tag = open }
+    }
+
+    @SubCommand
+    @Description("设置是否显示作品属性")
+    suspend fun CommandSenderOnMessage<*>.attr(open: Boolean) = withHelper {
+        "${this.attr} -> $open".also { this.attr = open }
+    }
+
+    @SubCommand
+    @Description("设置是否显示最大图片数")
+    suspend fun CommandSenderOnMessage<*>.max(num: Int) = withHelper {
+        "${this.max} -> $num".also { this.max = num }
     }
 }

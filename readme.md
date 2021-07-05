@@ -113,7 +113,10 @@ duration 单位分钟，默认3小时
 | 指令                          | 描述                           |
 |:------------------------------|:-------------------------------|
 | `/<setting> <interval> [sec]` | 设置连续发送间隔时间, 单位秒   |
-| `/<setting> <link> [link]`    | 设置是否显示Pixiv Cat 原图链接 |
+| `/<setting> <link> [open]`    | 设置是否显示Pixiv Cat 原图链接 |
+| `/<setting> <tag> [open]`     | 设置是否显示TAG INFO           |
+| `/<setting> <attr> [open]`    | 设置是否显示作品属性           |
+| `/<setting> <max> [num]`      | 设置是否显示最大图片数         |
 
 ### 备份指令
 

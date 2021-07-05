@@ -116,18 +116,19 @@ internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
 
 internal val Url.filename get() = encodedPath.substringAfterLast('/')
 
-internal fun IllustInfo.getContent() = buildMessageChain {
+internal fun IllustInfo.getContent(link: Boolean, tag: Boolean, attr: Boolean) = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
-    appendLine("已关注: ${user.isFollowed ?: false}")
+    if (attr) appendLine("已关注: ${user.isFollowed ?: false}")
     appendLine("标题: $title ")
     appendLine("PID: $pid ")
-    appendLine("已收藏: $isBookmarked")
-    appendLine("收藏数: $totalBookmarks ")
-    appendLine("SAN值: $sanityLevel ")
-    appendLine("创作于: $createAt ")
-    appendLine("共: $pageCount 张图片 ")
-    appendLine("标签：${tags.map { it.getContent() }}")
+    if (attr) appendLine("已收藏: $isBookmarked")
+    if (attr) appendLine("收藏数: $totalBookmarks ")
+    if (attr) appendLine("SAN值: $sanityLevel ")
+    if (attr) appendLine("创作于: $createAt ")
+    if (attr) appendLine("共: $pageCount 张图片 ")
+    if (tag) appendLine("标签：${tags.map { it.getContent() }}")
+    if (link) add(getPixivCat())
 }
 
 internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?: "")
@@ -166,18 +167,15 @@ internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleDat
 }
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
-    add(illust.getContent())
-    if (link) {
-        add(illust.getPixivCat())
-    }
+    add(illust.getContent(link, tag, attr))
     val files = illust.getImages()
     if (illust.age == AgeLimit.ALL) {
-        if (files.size <= PixivHelperSettings.eroPageCount) {
+        if (files.size <= max) {
             files
         } else {
             logger.warning { "[${illust.pid}](${files.size})图片过多" }
             add(PlainText("部分图片省略"))
-            files.subList(0, PixivHelperSettings.eroPageCount)
+            files.subList(0, max)
         }.map { file ->
             add(runCatching {
                 file.uploadAsImage(contact)

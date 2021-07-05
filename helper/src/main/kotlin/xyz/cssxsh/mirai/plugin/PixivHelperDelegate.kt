@@ -92,6 +92,39 @@ object LinkDelegate : ReadWriteProperty<PixivHelper, Boolean> {
 
 }
 
+object TagDelegate : ReadWriteProperty<PixivHelper, Boolean> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Boolean) {
+        PixivConfigData.tag[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
+        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+
+}
+
+object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Boolean) {
+        PixivConfigData.attr[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
+        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+
+}
+
+object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Int) {
+        PixivConfigData.max[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Int =
+        PixivConfigData.max.getOrPut(thisRef.contact.toString()) { 3 }
+
+}
+
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
 internal fun Contact.getHelper(): PixivHelper {
