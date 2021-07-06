@@ -4,6 +4,7 @@ import io.ktor.http.*
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.message.data.buildMessageChain
+import net.mamoe.mirai.message.data.toPlainText
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
 import xyz.cssxsh.pixiv.*
@@ -71,6 +72,13 @@ object PixivTaskCommand : CompositeCommand(
             url = link,
             pattern = pattern
         )
+    }
+
+    @SubCommand
+    @Description("推送，从url链接获取")
+    suspend fun  CommandSenderOnMessage<*>.delete(name: String) = sendMessage {
+        PixivHelperScheduler.removeTimerTask(name)
+        "定时任务${name}已删除".toPlainText()
     }
 
     @SubCommand

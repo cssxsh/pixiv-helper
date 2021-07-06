@@ -1,8 +1,8 @@
-# [PIXIV助手](https://github.com/cssxsh/pixiv-helper)
+# [Pixiv Helper](https://github.com/cssxsh/pixiv-helper)
 
 > 基于 [Mirai Console](https://github.com/mamoe/mirai-console) 的 [Pixiv](https://www.pixiv.net/) 插件
 
-基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNi审查，免代理
+基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
 目前缺乏缓存清理，请手动清理  
 R18图会按照Pixiv所给信息过滤  
@@ -19,6 +19,9 @@ R18图会按照Pixiv所给信息过滤
 `<...>`中的是指令名，由空格隔开表示或，选择其中任一名称都可执行例如`/色图`  
 `[...]`表示参数，当`[...]`后面带`?`时表示参数可选  
 `{...}`表示连续的多个参数
+
+`bookmark` 参数指收藏数过滤
+`fuzzy` 参数指模糊搜索
 
 ### Pixiv相关操作指令
 
@@ -49,7 +52,7 @@ EditThisCookie 安装地址
 |:------------------------------------------------------|:--------------------------------------|
 | `(/)<ero 色图 涩图>`                                  | 缓存中随机一张色图                    |
 | `(/)<get 搞快点 gkd> [pid] [flush]?`                  | 获取指定ID图片                        |
-| `(/)<tag 标签> [word] [bookmark]?`                    | 随机指定TAG图片                       |
+| `(/)<tag 标签> [word] [bookmark]? [fuzzy]?`           | 随机指定TAG图片                       |
 | `(/)<illustrator 画师> <uid id user 用户> [uid]`      | 根据画师UID随机发送画师作品           |
 | `(/)<illustrator 画师> <name 名称 名字> [name]`       | 根据画师name或者alias随机发送画师作品 |
 | `(/)<illustrator 画师> <alias 别名> [name] [uid]`     | 设置画师alias                         |
@@ -91,15 +94,16 @@ DAY_MANGA
 
 ### 任务指令
 
-| 指令                                         | 描述                       |
-|:---------------------------------------------|:---------------------------|
-| `/<task> <user> [uid] [duration]?`           | 推送用户新作品             |
-| `/<task> <rank> [mode]`                      | 推送排行榜新作品           |
-| `/<task> <follow> [duration]?`               | 推送关注用户作品           |
-| `/<task> <recommended> [duration]?`          | 推送推荐作品               |
-| `/<task> <backup> [duration]?`               | 数据自动备份               |
-| `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取        |
-| `/<task> <detail>`                           | 查看任务详情               |
+| 指令                                         | 描述                |
+|:---------------------------------------------|:--------------------|
+| `/<task> <user> [uid] [duration]?`           | 推送用户新作品      |
+| `/<task> <rank> [mode]`                      | 推送排行榜新作品    |
+| `/<task> <follow> [duration]?`               | 推送关注用户作品    |
+| `/<task> <recommended> [duration]?`          | 推送推荐作品        |
+| `/<task> <backup> [duration]?`               | 数据自动备份        |
+| `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
+| `/<task> <detail>`                           | 查看任务详情        |
+| `/<task> <delete> [name]`                    | 删除任务            |
 
 备份文件优先推送到群文件，其次百度云
 
@@ -110,20 +114,23 @@ duration 单位分钟，默认3小时
 | 指令                          | 描述                           |
 |:------------------------------|:-------------------------------|
 | `/<setting> <interval> [sec]` | 设置连续发送间隔时间, 单位秒   |
-| `/<setting> <link> [link]`    | 设置是否显示Pixiv Cat 原图链接 |
+| `/<setting> <link> [open]`    | 设置是否显示Pixiv Cat 原图链接 |
+| `/<setting> <tag> [open]`     | 设置是否显示TAG INFO           |
+| `/<setting> <attr> [open]`    | 设置是否显示作品属性           |
+| `/<setting> <max> [num]`      | 设置是否显示最大图片数         |
 
 ### 备份指令
 
-| 指令                               | 描述                                    |
-|:------------------------------------|:---------------------------------------|
-| `/<backup> <user> [uid]`            | 备份指定用户的作品                     |
-| `/<backup> <alias> [mode] [date]?`  | 备份已设定别名用户的作品               |
-| `/<backup> <tag> [tag] [bookmark]?` | 备份指定标签的作品，第二参数为收藏过滤 |
-| `/<backup> <data>`                  | 备份插件数据                           |
-| `/<backup> <list>`                  | 列出备份目录                           |
-| `/<backup> <get> [filename]`        | 获取备份文件，发送文件消息             |
-| `/<backup> <upload> [filename]`     | 上传插件数据到百度云                   |
-| `/<backup> <auth>`                  | 百度云用户认证                         |
+| 指令                                         | 描述                       |
+|:---------------------------------------------|:---------------------------|
+| `/<backup> <user> [uid]`                     | 备份指定用户的作品         |
+| `/<backup> <alias> [mode] [date]?`           | 备份已设定别名用户的作品   |
+| `/<backup> <tag> [tag] [bookmark]? [fuzzy]?` | 备份指定标签的作品         |
+| `/<backup> <data>`                           | 备份插件数据               |
+| `/<backup> <list>`                           | 列出备份目录               |
+| `/<backup> <get> [filename]`                 | 获取备份文件，发送文件消息 |
+| `/<backup> <upload> [filename]`              | 上传插件数据到百度云       |
+| `/<backup> <auth>`                           | 百度云用户认证             |
 
 ### 统计信息指令
 
@@ -160,15 +167,15 @@ duration 单位分钟，默认3小时
 | 指令                                | 描述                   |
 |:------------------------------------|:-----------------------|
 | `/<delete> <artwork> [pid]`         | 删除指定作品           |
-| `/<delete> <user> [user]`           | 删除指定用户作品       |
+| `/<delete> <user> [uid]`            | 删除指定用户作品       |
 | `/<delete> <bookmarks> [bookmarks]` | 删除小于指定收藏数作品 |
 
 ## 设置
 
 ### PixivHelperSettings.yml
 
-缓存目录、涩图标准等
-proxy代理 since 0.7.0-M-2
+缓存目录、涩图标准等  
+proxy代理(since 0.7.0-M-2)
 
 ### NetdiskOauthConfig.yml
 

@@ -116,18 +116,19 @@ internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
 
 internal val Url.filename get() = encodedPath.substringAfterLast('/')
 
-internal fun IllustInfo.getContent() = buildMessageChain {
+internal fun IllustInfo.getContent(link: Boolean, tag: Boolean, attr: Boolean) = buildMessageChain {
     appendLine("作者: ${user.name} ")
     appendLine("UID: ${user.id} ")
-    appendLine("已关注: ${user.isFollowed ?: false}")
+    if (attr) appendLine("已关注: ${user.isFollowed ?: false}")
     appendLine("标题: $title ")
     appendLine("PID: $pid ")
-    appendLine("已收藏: $isBookmarked")
-    appendLine("收藏数: $totalBookmarks ")
-    appendLine("SAN值: $sanityLevel ")
-    appendLine("创作于: $createAt ")
-    appendLine("共: $pageCount 张图片 ")
-    appendLine("标签：${tags.map { it.getContent() }}")
+    if (attr) appendLine("已收藏: $isBookmarked")
+    if (attr) appendLine("收藏数: $totalBookmarks ")
+    if (attr) appendLine("SAN值: $sanityLevel ")
+    if (attr) appendLine("创作于: $createAt ")
+    if (attr) appendLine("共: $pageCount 张图片 ")
+    if (tag) appendLine("标签：${tags.map { it.getContent() }}")
+    if (link) add(getPixivCat())
 }
 
 internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?: "")
@@ -166,18 +167,15 @@ internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleDat
 }
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
-    add(illust.getContent())
-    if (link) {
-        add(illust.getPixivCat())
-    }
+    add(illust.getContent(link, tag, attr))
     val files = illust.getImages()
     if (illust.age == AgeLimit.ALL) {
-        if (files.size <= PixivHelperSettings.eroPageCount) {
+        if (files.size <= max) {
             files
         } else {
             logger.warning { "[${illust.pid}](${files.size})图片过多" }
             add(PlainText("部分图片省略"))
-            files.subList(0, PixivHelperSettings.eroPageCount)
+            files.subList(0, max)
         }.map { file ->
             add(runCatching {
                 file.uploadAsImage(contact)
@@ -231,8 +229,16 @@ internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByU
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
-internal fun IllustInfo.isEro(): Boolean =
-    totalBookmarks ?: 0 >= PixivHelperSettings.eroBookmarks && pageCount <= PixivHelperSettings.eroPageCount && type == WorkContentType.ILLUST
+internal fun IllustInfo.isEro(): Boolean {
+    val ero: EroStandardConfig = PixivHelperSettings
+    if (type !in ero.types) return false
+    if (totalBookmarks ?: 0 <= ero.bookmarks) return false
+    if (pageCount > ero.pages) return false
+    val tag = ero.tagExclude.toRegex()
+    if (tags.any { it.name.matches(tag) || it.translatedName.orEmpty().matches(tag) }) return false
+    if (user.id in ero.userExclude) return true
+    return true
+}
 
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, account = account)
 
@@ -328,14 +334,16 @@ internal fun IllustInfo.write(file: File = json(pid)) {
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
+private val FlushIllustInfo : suspend PixivHelper.(Long) -> IllustInfo = {
+    illustDetail(it).illust.apply {
+        check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+    }
+}
+
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean,
-    block: suspend PixivHelper.(Long) -> IllustInfo = {
-        illustDetail(it).illust.apply {
-            check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-        }
-    },
+    block: suspend PixivHelper.(Long) -> IllustInfo = FlushIllustInfo,
 ): IllustInfo = json(pid).let { file ->
     if (!flush && file.exists()) {
         runCatching {

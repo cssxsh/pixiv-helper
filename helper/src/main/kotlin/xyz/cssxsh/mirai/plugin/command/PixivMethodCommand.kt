@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.ktor.client.request.*
 import kotlinx.serialization.decodeFromString
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -10,6 +11,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
+import java.io.InputStream
 
 object PixivMethodCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -24,7 +26,7 @@ object PixivMethodCommand : CompositeCommand(
         sina { url ->
             sendMessage(
                 runCatching {
-                    PixivHelperDownloader.downloadImage(url).inputStream().uploadAsImage(contact)
+                    useHttpClient { it.get<InputStream>(url) }.use { it.uploadAsImage(contact) }
                 }.getOrElse {
                     logger.warning { "微博二维码下载失败 $it" }
                     url.toString().toPlainText()

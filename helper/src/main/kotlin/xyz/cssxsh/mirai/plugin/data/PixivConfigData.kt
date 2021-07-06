@@ -19,10 +19,28 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     val tokens: MutableMap<Long, String> by value(mutableMapOf())
 
     /**
-     * 作品信息是否为简单构造
+     * 是否显示原图链接
      */
     @ValueName("link")
     val link: MutableMap<String, Boolean> by value(mutableMapOf())
+
+    /**
+     * 是否显示Tag信息
+     */
+    @ValueName("tag")
+    val tag: MutableMap<String, Boolean> by value(mutableMapOf())
+
+    /**
+     * 是否显示Attr信息
+     */
+    @ValueName("attr")
+    val attr: MutableMap<String, Boolean> by value(mutableMapOf())
+
+    /**
+     * 是否显示Tag信息
+     */
+    @ValueName("pages")
+    val max: MutableMap<String, Int> by value(mutableMapOf())
 
     /**
      * 连续发送间隔时间，单位秒

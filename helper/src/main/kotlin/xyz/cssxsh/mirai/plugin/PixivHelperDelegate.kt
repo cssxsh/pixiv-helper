@@ -92,6 +92,39 @@ object LinkDelegate : ReadWriteProperty<PixivHelper, Boolean> {
 
 }
 
+object TagDelegate : ReadWriteProperty<PixivHelper, Boolean> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Boolean) {
+        PixivConfigData.tag[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
+        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+
+}
+
+object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Boolean) {
+        PixivConfigData.attr[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
+        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+
+}
+
+object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Int) {
+        PixivConfigData.max[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Int =
+        PixivConfigData.max.getOrPut(thisRef.contact.toString()) { 3 }
+
+}
+
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
 internal fun Contact.getHelper(): PixivHelper {
@@ -100,7 +133,7 @@ internal fun Contact.getHelper(): PixivHelper {
             if (contact is User && config.refreshToken.isNullOrBlank()) {
                 launch {
                     send {
-                        "私聊模式中 将会独立关联账户，请使用 /pixiv login <uid> <password> 指令尝试登陆"
+                        "私聊模式中 将会独立关联账户，请使用 /pixiv 指令尝试登陆"
                     }
                 }
             }

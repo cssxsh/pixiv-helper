@@ -1,16 +1,19 @@
 package xyz.cssxsh.mirai.plugin.data
 
+import kotlinx.serialization.builtins.SetSerializer
 import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
 import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
+import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
 import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
+import xyz.cssxsh.pixiv.WorkContentType
 import java.io.File
 
-object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
+object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
 
     @ValueName("cache_path")
     @ValueDescription("")
@@ -28,13 +31,26 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings") {
     @ValueDescription("色图间隔")
     val eroInterval: Int by value(ERO_INTERVAL)
 
+    @ValueName("ero_work_types")
+    @ValueDescription("涩图标准 内容类型")
+    override val types: Set<WorkContentType> by value(setOf(WorkContentType.ILLUST))
+        .serializableValueWith(SetSerializer(WorkContentType.Companion))
+
     @ValueName("ero_bookmarks")
     @ValueDescription("涩图标准 收藏")
-    val eroBookmarks: Long by value(ERO_BOOKMARKS)
+    override val bookmarks: Long by value(ERO_BOOKMARKS)
 
     @ValueName("ero_page_count")
     @ValueDescription("涩图标准 页数")
-    val eroPageCount: Int by value(ERO_PAGE_COUNT)
+    override val pages: Int by value(ERO_PAGE_COUNT)
+
+    @ValueName("ero_tag_exclude")
+    @ValueDescription("涩图标准 排除的正则表达式")
+    override val tagExclude: String by value(ERO_TAG_EXCLUDE)
+
+    @ValueName("ero_user_exclude")
+    @ValueDescription("涩图标准 排除的UID")
+    override val userExclude: Set<Long> by value(emptySet())
 
     @ValueName("sqlite_database")
     @ValueDescription("数据库文件位置")

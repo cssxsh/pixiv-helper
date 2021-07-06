@@ -11,7 +11,7 @@ data class EditThisCookie(
     @SerialName("domain")
     val domain: String,
     @SerialName("expirationDate")
-    val expirationDate: Double,
+    val expirationDate: Double? = null,
     @SerialName("hostOnly")
     val hostOnly: Boolean,
     @SerialName("httpOnly")
@@ -38,7 +38,7 @@ fun EditThisCookie.toCookie() = Cookie(
     name = name,
     value = value,
     encoding = CookieEncoding.DQUOTES,
-    expires = GMTDate(expirationDate.toLong() * 1000),
+    expires = expirationDate?.run {  GMTDate(times(1000).toLong())},
     domain = domain,
     path = path,
     secure = secure,

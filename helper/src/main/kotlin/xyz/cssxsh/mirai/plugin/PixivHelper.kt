@@ -30,6 +30,12 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     var link: Boolean by LinkDelegate
 
+    var tag: Boolean by TagDelegate
+
+    var attr: Boolean by AttrDelegate
+
+    var max: Int by MaxDelegate
+
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
     private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask") + SupervisorJob()) {

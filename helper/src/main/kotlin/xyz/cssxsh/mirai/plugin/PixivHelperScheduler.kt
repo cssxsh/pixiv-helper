@@ -32,6 +32,11 @@ object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("") 
         }
     }
 
+    fun removeTimerTask(name: String): Unit = synchronized(jobs) {
+        tasks.remove(name)
+        jobs[name]?.cancel("命令任务终止")
+    }
+
     fun start() {
         launch {
             while (isActive) {
