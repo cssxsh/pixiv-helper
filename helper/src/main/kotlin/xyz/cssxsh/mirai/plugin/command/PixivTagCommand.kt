@@ -45,7 +45,7 @@ object PixivTagCommand : SimpleCommand(
     private const val TAG_NAME_MAX = 30
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = true) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = sendIllust {
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
@@ -60,7 +60,13 @@ object PixivTagCommand : SimpleCommand(
                 }
             }.let { artwork ->
                 tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork?.pid)
-                requireNotNull(artwork) { "读取色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文" }
+                requireNotNull(artwork) {
+                    if (fuzzy) {
+                        "读取色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
+                    } else {
+                        "读取色图失败, 请尝试模糊搜索"
+                    }
+                }
             }
         }
     }
