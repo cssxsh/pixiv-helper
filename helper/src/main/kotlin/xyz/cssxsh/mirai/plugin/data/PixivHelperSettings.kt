@@ -1,7 +1,9 @@
 package xyz.cssxsh.mirai.plugin.data
 
+import kotlinx.serialization.builtins.SetSerializer
 import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
 import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
+import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.ValueName
 import net.mamoe.mirai.console.data.value
@@ -32,6 +34,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型")
     override val types: Set<WorkContentType> by value(setOf(WorkContentType.ILLUST))
+        .serializableValueWith(SetSerializer(WorkContentType.Companion))
 
     @ValueName("ero_bookmarks")
     @ValueDescription("涩图标准 收藏")
