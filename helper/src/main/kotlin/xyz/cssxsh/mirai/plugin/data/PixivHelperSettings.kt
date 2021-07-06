@@ -1,12 +1,12 @@
+@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+
 package xyz.cssxsh.mirai.plugin.data
 
 import kotlinx.serialization.builtins.SetSerializer
+import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
-import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
 import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
-import net.mamoe.mirai.console.data.ValueDescription
-import net.mamoe.mirai.console.data.ValueName
-import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.internal.data.createCompositeSetValueImpl
 import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
@@ -16,7 +16,7 @@ import java.io.File
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
 
     @ValueName("cache_path")
-    @ValueDescription("")
+    @ValueDescription("缓存目录")
     private val cachePath: String by value("")
 
     @ValueName("backup_path")
@@ -33,7 +33,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型")
-    override val types: Set<WorkContentType> by value(setOf(WorkContentType.ILLUST))
+    @Suppress("internal")
+    override val types: Set<WorkContentType> by createCompositeSetValueImpl<WorkContentType> { v -> value(v) }
         .serializableValueWith(SetSerializer(WorkContentType.Companion))
 
     @ValueName("ero_bookmarks")
@@ -56,8 +57,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("数据库文件位置")
     private val sqliteDatabase: String by value("")
 
-    @ValueDescription("代理")
     @ValueName("proxy")
+    @ValueDescription("代理")
     val proxy: String by value("")
 
     @ValueName("sqlite_config")

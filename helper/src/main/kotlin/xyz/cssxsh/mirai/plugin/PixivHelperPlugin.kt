@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
+import net.mamoe.mirai.console.data.PluginConfig
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import org.apache.ibatis.session.SqlSession
@@ -28,11 +29,15 @@ object PixivHelperPlugin : KotlinPlugin(
         }
     }
 
+    private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
+
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
         // Settings
         PixivHelperSettings.reload()
+        PixivHelperSettings.save()
         NetdiskOauthConfig.reload()
+        PixivHelperSettings.save()
         // Data
         PixivConfigData.reload()
         PixivTaskData.reload()
