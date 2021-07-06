@@ -334,14 +334,16 @@ internal fun IllustInfo.write(file: File = json(pid)) {
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
+private val FlushIllustInfo : suspend PixivHelper.(Long) -> IllustInfo = {
+    illustDetail(it).illust.apply {
+        check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+    }
+}
+
 internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean,
-    block: suspend PixivHelper.(Long) -> IllustInfo = {
-        illustDetail(it).illust.apply {
-            check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-        }
-    },
+    block: suspend PixivHelper.(Long) -> IllustInfo = FlushIllustInfo,
 ): IllustInfo = json(pid).let { file ->
     if (!flush && file.exists()) {
         runCatching {
