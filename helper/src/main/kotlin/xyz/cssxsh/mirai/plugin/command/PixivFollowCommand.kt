@@ -52,7 +52,7 @@ object PixivFollowCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.good() = follow {
         val followed = getFollowed(uid = info().user.uid)
         useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
-            if (count > PixivHelperSettings.eroInterval) uid else null
+            if (count > EroInterval) uid else null
         }.let {
             logger.verbose { "共统计了${it.size}名画师" }
             it - followed

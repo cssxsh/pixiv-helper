@@ -49,11 +49,11 @@ object PixivTagCommand : SimpleCommand(
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
-            if (list.size < PixivHelperSettings.eroInterval) {
+            if (list.size < EroInterval) {
                 addCacheJob(name = "TAG(${tag})", reply = false) { getSearchTag(tag = tag).eros() }
             }
             list.randomOrNull()?.also { artwork ->
-                if (list.size < PixivHelperSettings.eroInterval) {
+                if (list.size < EroInterval) {
                     addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
                         getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros()
                     }

@@ -84,7 +84,12 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 /**
  * 连续发送间隔时间
  */
-internal val SendInterval get() = PixivConfigData.interval
+internal val SendInterval by PixivConfigData::interval
+
+/**
+ * 涩图防重复间隔
+ */
+internal val EroInterval by PixivHelperSettings::eroInterval
 
 internal data class Mappers(
     val artwork: ArtWorkInfoMapper,

@@ -13,11 +13,10 @@ import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.baidu.disk.getUserInfo
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
-import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import xyz.cssxsh.pixiv.PixivConfig
-import xyz.cssxsh.pixiv.SanityLevel
-import xyz.cssxsh.pixiv.apps.PAGE_SIZE
+import xyz.cssxsh.pixiv.*
+import xyz.cssxsh.pixiv.apps.*
 import java.io.IOException
 import javax.net.ssl.SSLProtocolException
 import kotlin.math.sqrt
@@ -162,7 +161,7 @@ internal fun PixivHelperSettings.init() {
         val count = useMappers { it.artwork.count() }
         if (count < eroInterval) {
             logger.warning {
-                "缓存数量过少，建议使用指令( /cache walkthrough )进行缓存"
+                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
             }
         }
     }
