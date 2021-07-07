@@ -23,7 +23,8 @@ object PixivSearchCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     private fun MessageChain.getQuoteImage(): Image {
-        return requireNotNull(findIsInstance<QuoteReply>()?.let { PixivHelperListener.images[it.source.metadata()] }) { "找不到图片" }
+        val quote = requireNotNull(findIsInstance<QuoteReply>()) { "没有回复消息" }
+        return requireNotNull(PixivHelperListener.images[quote.source.metadata()]) { "图片历史未找到" }
     }
 
     private fun CommandSenderOnMessage<*>.findTwitterImage(url: String) = launch {

@@ -30,15 +30,18 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
+    private fun History.good() = caches.values.filter { info ->
+        info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+    }
+
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
-        return caches.values.filter { info ->
-            info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
-        }.ifEmpty {
-            useMappers { it.artwork.eroRandom(PixivHelperSettings.eroInterval) }.forEach { info ->
-                caches[info.pid] = info
-            }
-            getEroArtWorkInfos()
+        var result = good()
+        for (count in (1..3)) {
+            if (result.isNotEmpty()) return result
+            useMappers { it.artwork.eroRandom(EroInterval) }.forEach { info -> caches[info.pid] = info }
+            result = good()
         }
+        throw IllegalStateException("缓存数量过少，建议使用指令( /cache recommended )进行缓存")
     }
 
     private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->

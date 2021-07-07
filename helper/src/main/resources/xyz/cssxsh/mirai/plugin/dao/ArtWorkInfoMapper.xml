@@ -73,9 +73,9 @@
             SELECT tags.pid
             FROM tags
             WHERE (
-                    ${param3} AND (name LIKE '%' || ${param1} || '%' OR translated_name LIKE '%' || ${param1} || '%')
+                    ${param3} AND (name LIKE '%' || #{param1} || '%' OR translated_name LIKE '%' || #{param1} || '%')
                 )
-               OR (name = ${param1} OR translated_name = ${param1})
+               OR (name LIKE #{param1} OR translated_name LIKE #{param1})
         )
           AND total_bookmarks >= ${param2};
     </select>
