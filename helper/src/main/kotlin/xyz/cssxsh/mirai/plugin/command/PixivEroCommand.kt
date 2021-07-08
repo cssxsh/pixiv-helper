@@ -36,7 +36,7 @@ object PixivEroCommand : SimpleCommand(
 
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
         val result = good()
-        if (result.isNotEmpty()) {
+        if (result.isEmpty()) {
             useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
                 caches[info.pid] = info
             }
