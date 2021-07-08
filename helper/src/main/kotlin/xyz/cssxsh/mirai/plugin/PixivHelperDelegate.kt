@@ -110,7 +110,7 @@ object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
-        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+        PixivConfigData.attr.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
 
 }
 

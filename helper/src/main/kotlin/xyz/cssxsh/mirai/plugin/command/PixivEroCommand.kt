@@ -35,13 +35,13 @@ object PixivEroCommand : SimpleCommand(
     }
 
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
-        var result = good()
-        for (count in (1..3)) {
-            if (result.isNotEmpty()) return result
-            useMappers { it.artwork.eroRandom(EroInterval) }.forEach { info -> caches[info.pid] = info }
-            result = good()
+        val result = good()
+        if (result.isNotEmpty()) {
+            useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
+                caches[info.pid] = info
+            }
         }
-        throw IllegalStateException("缓存数量过少，建议使用指令( /cache recommended )进行缓存")
+        return good()
     }
 
     private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->

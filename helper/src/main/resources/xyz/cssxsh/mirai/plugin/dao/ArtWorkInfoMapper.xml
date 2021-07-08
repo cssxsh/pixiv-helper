@@ -73,11 +73,11 @@
             SELECT tags.pid
             FROM tags
             WHERE (
-                    ${param3} AND (name LIKE '%' || #{param1} || '%' OR translated_name LIKE '%' || #{param1} || '%')
+                    ${fuzzy} AND (name LIKE '%' || #{tag} || '%' OR translated_name LIKE '%' || #{tag} || '%')
                 )
-               OR (name LIKE #{param1} OR translated_name LIKE #{param1})
+               OR (name LIKE #{tag} OR translated_name LIKE #{tag})
         )
-          AND total_bookmarks >= ${param2};
+          AND total_bookmarks >= ${bookmarks};
     </select>
     <select id="count" resultType="java.lang.Long">
         SELECT COUNT(*)
@@ -99,14 +99,14 @@
     <update id="deleteByPid">
         UPDATE artworks
         SET deleted = true,
-            caption = #{param2}
-        WHERE pid = ${param1};
+            caption = #{comment}
+        WHERE pid = ${pid};
     </update>
     <update id="deleteByUid">
         UPDATE artworks
         SET deleted = true,
-            caption = #{param2}
-        WHERE uid = ${param1};
+            caption = #{comment}
+        WHERE uid = ${pid};
     </update>
     <select id="userArtWork" resultType="xyz.cssxsh.mirai.plugin.model.ArtWorkInfo">
         SELECT *
@@ -123,6 +123,8 @@
         FROM not_deleted
         WHERE is_ero
           AND age = 0
+          AND sanity_level >= ${level}
+          AND total_bookmarks >= ${bookmarks}
         ORDER BY RANDOM()
         LIMIT ${limit};
     </select>
