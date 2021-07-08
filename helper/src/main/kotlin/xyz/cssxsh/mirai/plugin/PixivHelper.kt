@@ -38,15 +38,15 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
-    private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask") + SupervisorJob()) {
+    private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
         while (isActive) {
             runCatching {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
-                cacheChannel.consumeAsFlow().save().download().buffer(1).await()
+                supervisorScope {
+                    cacheChannel.consumeAsFlow().save().download().buffer(1).await()
+                }
             }.onFailure {
-                logger.warning({
-                    "PixivHelper:${contact}#CacheTask"
-                }, it)
+                logger.warning { "PixivHelper:${contact}#CacheTask $it" }
             }
             cacheChannel = Channel(Channel.BUFFERED)
         }
@@ -107,23 +107,14 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     private suspend fun Flow<List<Deferred<*>>>.await() = collect { it.awaitAll() }
 
-    fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
-        launch(SupervisorJob()) {
-            cacheChannel.send(
-                CacheTask(
-                    name = name,
-                    write = write,
-                    reply = reply,
-                    block = block
-                )
-            )
-        }
+    suspend fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
+        cacheChannel.send(CacheTask(name = name, write = write, reply = reply, block = block))
     }
 
     fun cacheStop() {
-        cacheJob.cancel("任务被停止")
-        cacheChannel.close()
-        cacheChannel.cancel()
+        launch(SupervisorJob()) {
+            cacheJob.cancelChildren(CancellationException("指令终止"))
+        }
     }
 
     suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
