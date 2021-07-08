@@ -7,7 +7,6 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.events.MessageEvent
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 
 object PixivEroCommand : SimpleCommand(
@@ -36,7 +35,7 @@ object PixivEroCommand : SimpleCommand(
 
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
         val result = good()
-        if (result.isNotEmpty()) {
+        if (result.isEmpty()) {
             useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
                 caches[info.pid] = info
             }
