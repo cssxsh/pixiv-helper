@@ -61,6 +61,7 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
 | `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
 
+使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高  
 搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
 
 ### 缓存指令
