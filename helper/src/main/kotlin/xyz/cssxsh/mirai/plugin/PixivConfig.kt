@@ -67,27 +67,14 @@ private var PixivDownloadDelayCount = 0
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
         is HttpRequestTimeoutException,
-        is SocketTimeoutException,
-        is ConnectTimeoutException,
-        is SSLProtocolException -> {
-            delay(++PixivDownloadDelayCount * 1000L)
-            PixivDownloadDelayCount--
-            true
-        }
         is IOException
         -> {
+            logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
             delay(++PixivDownloadDelayCount * 1000L)
             PixivDownloadDelayCount--
-            logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
             true
         }
-        else -> when {
-            throwable.message?.contains("Required SETTINGS preface not received") == true -> true
-            throwable.message?.contains("Completed read overflow") == true -> true
-            throwable.message?.contains("""Expected \d+, actual \d+""".toRegex()) == true -> true
-            throwable.message?.contains("closed") == true -> true
-            else -> false
-        }
+        else -> false
     }
 }
 
