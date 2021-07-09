@@ -32,7 +32,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val eroInterval: Int by value(ERO_INTERVAL)
 
     @ValueName("ero_work_types")
-    @ValueDescription("涩图标准 内容类型")
+    @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
     @Suppress("internal")
     override val types: Set<WorkContentType> by createCompositeSetValueImpl<WorkContentType> { v -> value(v) }
         .serializableValueWith(SetSerializer(WorkContentType.Companion))

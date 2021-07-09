@@ -236,7 +236,7 @@ internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(h
 
 internal fun IllustInfo.isEro(): Boolean {
     val ero: EroStandardConfig = PixivHelperSettings
-    if (type !in ero.types) return false
+    if (ero.types.isNotEmpty() && type !in ero.types) return false
     if (totalBookmarks ?: 0 <= ero.bookmarks) return false
     if (pageCount > ero.pages) return false
     val tag = ero.tagExclude.toRegex()
