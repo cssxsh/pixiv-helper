@@ -113,7 +113,7 @@ internal val PIXIV_HOST = mapOf(
     "accounts.pixiv.net" to PIXIV_NET_IP
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST + DEFAULT_PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 

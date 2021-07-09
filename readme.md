@@ -6,7 +6,8 @@
 
 目前缺乏缓存清理，请手动清理  
 R18图会按照Pixiv所给信息过滤  
-群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号
+群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
+然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
 [![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)](https://shields.io/category/downloads)
@@ -61,6 +62,7 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
 | `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
 
+色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高  
 搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
 

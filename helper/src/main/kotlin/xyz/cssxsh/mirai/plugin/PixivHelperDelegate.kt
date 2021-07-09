@@ -38,12 +38,7 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
             is Group -> PixivConfigData.default
             else -> throw IllegalAccessException("未知类型联系人!")
         }
-        val proxy = PixivHelperSettings.proxy
-        return if (proxy.isNotBlank()) {
-            DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxy, refreshToken = token, cname = emptyMap())
-        } else {
-            DEFAULT_PIXIV_CONFIG.copy(refreshToken = token)
-        }
+        return DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxy, refreshToken = token)
     }
 }
 
