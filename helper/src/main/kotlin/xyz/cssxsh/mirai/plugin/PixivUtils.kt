@@ -240,7 +240,7 @@ internal fun IllustInfo.isEro(): Boolean {
     if (totalBookmarks ?: 0 <= ero.bookmarks) return false
     if (pageCount > ero.pages) return false
     val tag = ero.tagExclude.toRegex()
-    if (tags.any { it.name.matches(tag) || it.translatedName.orEmpty().matches(tag) }) return false
+    if (tags.any { tag in it.name  || tag in it.translatedName.orEmpty() }) return false
     if (user.id in ero.userExclude) return true
     return true
 }
