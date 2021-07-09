@@ -1,16 +1,10 @@
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package xyz.cssxsh.mirai.plugin.data
 
-import kotlinx.serialization.builtins.SetSerializer
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
-import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
-import net.mamoe.mirai.console.internal.data.createCompositeSetValueImpl
 import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.PixivHelperPlugin.dataFolder
-import xyz.cssxsh.pixiv.WorkContentType
+import xyz.cssxsh.pixiv.*
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
@@ -33,9 +27,13 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
+    private val types_: Set<String> by value(setOf())
+
+
+    @ValueName("ero_work_types")
+    @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
     @Suppress("internal")
-    override val types: Set<WorkContentType> by createCompositeSetValueImpl<WorkContentType> { v -> value(v) }
-        .serializableValueWith(SetSerializer(WorkContentType.Companion))
+    override val types: Set<WorkContentType> by lazy { types_.map { WorkContentType.valueOf(it.uppercase()) }.toSet() }
 
     @ValueName("ero_bookmarks")
     @ValueDescription("涩图标准 收藏")
@@ -67,7 +65,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
         .mapKeys({ SQLiteConfig.Pragma.valueOf(it) }, { it.name })
 
     private fun getPath(path: String, default: String) =
-        if (path.isEmpty()) dataFolder.resolve(default) else File(".").resolve(path)
+        if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
 
     /**
      * 压缩文件保存目录

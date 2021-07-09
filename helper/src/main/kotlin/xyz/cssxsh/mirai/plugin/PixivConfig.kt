@@ -70,12 +70,14 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
         is SocketTimeoutException,
         is ConnectTimeoutException,
         is SSLProtocolException -> {
-            delay((++PixivDownloadDelayCount) * 1000L)
+            delay(++PixivDownloadDelayCount * 1000L)
             PixivDownloadDelayCount--
             true
         }
         is IOException
         -> {
+            delay(++PixivDownloadDelayCount * 1000L)
+            PixivDownloadDelayCount--
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
             true
         }
