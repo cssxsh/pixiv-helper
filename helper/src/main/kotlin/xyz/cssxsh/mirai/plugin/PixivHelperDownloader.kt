@@ -1,13 +1,12 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.http.*
-import net.mamoe.mirai.utils.warning
-import xyz.cssxsh.pixiv.tool.PixivDownloader
+import net.mamoe.mirai.utils.*
+import xyz.cssxsh.pixiv.tool.*
 
-object PixivHelperDownloader : PixivDownloader(
-    initHost = PIXIV_HOST,
-    ignore = PixivDownloadIgnore
-) {
+object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST) {
+
+    override val ignore: suspend (Throwable) -> Boolean = PixivDownloadIgnore
 
     suspend fun downloadImage(url: Url): ByteArray = downloadImageUrls(
         urls = listOf(url),
