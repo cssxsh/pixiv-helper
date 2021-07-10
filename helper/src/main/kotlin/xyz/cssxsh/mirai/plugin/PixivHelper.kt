@@ -4,20 +4,23 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
+import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
 import java.time.OffsetDateTime
+import kotlin.coroutines.CoroutineContext
 
 /**
  * 助手实例
  */
-class PixivHelper(val contact: Contact) : SimplePixivClient(
-    coroutineName = "PixivHelper:${contact}",
-    config = DEFAULT_PIXIV_CONFIG // This config is not use
-) {
+class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIXIV_CONFIG) {
+
+    override val coroutineContext: CoroutineContext by lazy {
+        PixivHelperPlugin.childScopeContext("PixivHelper:${contact}")
+    }
 
     override var config: PixivConfig by ConfigDelegate
 
