@@ -26,7 +26,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
 
-    override val ignore: Ignore get() = PixivApiIgnore
+    override val ignore: Ignore get() = { PixivApiIgnore(it) }
 
     internal var link: Boolean by LinkDelegate
 
