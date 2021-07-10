@@ -11,7 +11,12 @@ import org.jsoup.nodes.Document
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.tool.*
 
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 object ImageSearcher : HtmlParser(name = "Search") {
+
+    init {
+        RubySSLSocketFactory.regexes.add("""saucenao\.com""".toRegex())
+    }
 
     private const val API = "https://saucenao.com/search.php"
 
