@@ -21,7 +21,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("临时目录")
     private val tempPath: String by value("")
 
-    @ValueName("i.pximg.net 反向代理 可以使用 i.pixiv.cat")
+    @ValueName("pximg")
+    @ValueDescription("i.pximg.net 反向代理 可以使用 i.pixiv.cat")
     val pximg: String by value("")
 
     @ValueName("ero_interval")
@@ -34,7 +35,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
-    @Suppress("internal")
     override val types: Set<WorkContentType> by lazy { types_.map { WorkContentType.valueOf(it.uppercase()) }.toSet() }
 
     @ValueName("ero_bookmarks")

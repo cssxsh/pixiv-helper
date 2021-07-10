@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
+import io.ktor.client.statement.*
+import io.ktor.util.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import org.apache.ibatis.mapping.Environment
@@ -18,6 +20,7 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
+import java.time.OffsetDateTime
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -30,7 +33,7 @@ private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } 
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal val PixivApiIgnore: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
+internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is IOException,
         is HttpRequestTimeoutException,
@@ -41,8 +44,13 @@ internal val PixivApiIgnore: suspend PixivAuthClient.(Throwable) -> Boolean = { 
         is AppApiException -> {
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
-                    logger.warning { "PIXIV API OAuth 错误, 将刷新 Token" }
-                    refresh()
+                    synchronized(contact) {
+                        if (expires >= OffsetDateTime.now()) {
+                            expires = OffsetDateTime.MIN
+                            val headers = throwable.response.request.headers.toMap()
+                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $headers" }
+                        }
+                    }
                     true
                 }
                 "Rate Limit" in throwable.message -> {
