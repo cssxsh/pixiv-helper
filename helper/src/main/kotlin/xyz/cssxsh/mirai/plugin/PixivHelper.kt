@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -25,6 +26,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     override var authInfo: AuthResult? by AuthResultDelegate
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
+
+    public override val mutex: Mutex by MutexDelegate
 
     override val ignore: Ignore get() = { PixivApiIgnore(it) }
 

@@ -4,6 +4,7 @@ import io.ktor.client.features.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.utils.*
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
@@ -44,7 +45,7 @@ internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { thro
         is AppApiException -> {
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
-                    synchronized(contact) {
+                    mutex.withLock {
                         if (expires >= OffsetDateTime.now()) {
                             expires = OffsetDateTime.MIN
                             val headers = throwable.response.request.headers.toMap()
