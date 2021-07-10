@@ -21,6 +21,9 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("临时目录")
     private val tempPath: String by value("")
 
+    @ValueName("i.pximg.net 反向代理 可以使用 i.pixiv.cat")
+    val pximg: String by value("")
+
     @ValueName("ero_interval")
     @ValueDescription("色图间隔")
     val eroInterval: Int by value(ERO_INTERVAL)
@@ -28,7 +31,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
     private val types_: Set<String> by value(setOf())
-
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")

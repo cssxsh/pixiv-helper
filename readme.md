@@ -62,7 +62,7 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
 | `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
 
-色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令
+色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高  
 搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
 
@@ -178,7 +178,8 @@ duration 单位分钟，默认3小时
 ### PixivHelperSettings.yml
 
 缓存目录、涩图标准等  
-proxy代理(since 0.7.0-M-2)
+proxy 代理，针对API不针对下载 (since 0.7.0-M-2)  
+pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下可以解决下载缓慢的问题
 
 ### NetdiskOauthConfig.yml
 
