@@ -179,17 +179,17 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
             files
         } else {
             logger.warning { "[${illust.pid}](${files.size})图片过多" }
-            add(PlainText("部分图片省略"))
+            add("部分图片省略".toPlainText())
             files.subList(0, max)
         }.map { file ->
             add(runCatching {
                 file.uploadAsImage(contact)
             }.getOrElse {
-                PlainText("上传失败, ${it.message}")
+                "上传失败, $it".toPlainText()
             })
         }
     } else {
-        add(PlainText("R18禁止！"))
+        add("R18禁止！".toPlainText())
     }
 }
 

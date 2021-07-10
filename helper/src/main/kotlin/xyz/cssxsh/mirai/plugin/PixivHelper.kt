@@ -119,13 +119,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
         isActive && runCatching {
-            block().let { message ->
-                when (message) {
-                    null, Unit -> Unit
-                    is Message -> contact.sendMessage(message)
-                    is String -> contact.sendMessage(message)
-                    else -> contact.sendMessage(message.toString())
-                }
+            when (val message = block()) {
+                null, Unit -> Unit
+                is Message -> contact.sendMessage(message)
+                is String -> contact.sendMessage(message)
+                else -> contact.sendMessage(message.toString())
             }
         }.onFailure {
             logger.warning({ "回复${contact}失败" }, it)
