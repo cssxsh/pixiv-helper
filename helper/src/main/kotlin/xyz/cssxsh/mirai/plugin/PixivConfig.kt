@@ -61,7 +61,7 @@ private var PixivDownloadDelayCount = 0
 
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
-        is HttpRequestTimeoutException,
+        is HttpRequestTimeoutException -> true
         is IOException
         -> {
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }

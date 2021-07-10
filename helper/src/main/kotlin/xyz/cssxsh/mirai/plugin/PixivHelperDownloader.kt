@@ -6,7 +6,7 @@ import xyz.cssxsh.pixiv.tool.*
 
 object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, timeout = 30 * 1000L) {
 
-    override val ignore: suspend (Throwable) -> Boolean = PixivDownloadIgnore
+    override val ignore: suspend (Throwable) -> Boolean get() = PixivDownloadIgnore
 
     suspend fun downloadImage(url: Url): ByteArray = downloadImageUrls(
         urls = listOf(url),
