@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
-import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import org.apache.ibatis.mapping.Environment
@@ -17,8 +16,8 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
-import javax.net.ssl.SSLProtocolException
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -31,34 +30,30 @@ private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } 
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal const val PIXIV_OAUTH_DELAY = 10 * 1000L
-
-internal val PixivApiIgnore: Ignore = { throwable ->
+internal val PixivApiIgnore: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is IOException,
         is HttpRequestTimeoutException,
         -> {
-            // logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
-            logger.warning({ "Pixiv Api 错误, 已忽略: $throwable" }, throwable)
+            logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
             true
         }
-        else -> when (throwable.message) {
-            "Error occurred at the OAuth process. Please check your Access Token to fix this." -> {
-                logger.warning { "PIXIV API OAuth 错误, 将延时: $PIXIV_OAUTH_DELAY" }
-                delay(PIXIV_OAUTH_DELAY)
-                true
+        is AppApiException -> {
+            when {
+                "Please check your Access Token to fix this." in throwable.message -> {
+                    logger.warning { "PIXIV API OAuth 错误, 将刷新 Token" }
+                    refresh()
+                    true
+                }
+                "Rate Limit" in throwable.message -> {
+                    logger.warning { "PIXIV API限流, 将延时: ${PIXIV_RATE_LIMIT_DELAY}ms" }
+                    delay(PIXIV_RATE_LIMIT_DELAY)
+                    true
+                }
+                else -> false
             }
-            "Required SETTINGS preface not received" -> {
-                logger.warning { "PIXIV API错误, 已忽略: $throwable" }
-                true
-            }
-            "Rate Limit" -> {
-                logger.warning { "PIXIV API限流, 将延时: $PIXIV_RATE_LIMIT_DELAY" }
-                delay(PIXIV_RATE_LIMIT_DELAY)
-                true
-            }
-            else -> false
         }
+        else -> false
     }
 }
 
@@ -66,26 +61,15 @@ private var PixivDownloadDelayCount = 0
 
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
-        is HttpRequestTimeoutException,
-        is SocketTimeoutException,
-        is ConnectTimeoutException,
-        is SSLProtocolException -> {
-            delay((++PixivDownloadDelayCount) * 1000L)
-            PixivDownloadDelayCount--
-            true
-        }
+        is HttpRequestTimeoutException -> true
         is IOException
         -> {
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
+            delay(++PixivDownloadDelayCount * 1000L)
+            PixivDownloadDelayCount--
             true
         }
-        else -> when {
-            throwable.message?.contains("Required SETTINGS preface not received") == true -> true
-            throwable.message?.contains("Completed read overflow") == true -> true
-            throwable.message?.contains("""Expected \d+, actual \d+""".toRegex()) == true -> true
-            throwable.message?.contains("closed") == true -> true
-            else -> false
-        }
+        else -> false
     }
 }
 
@@ -113,7 +97,7 @@ internal val PIXIV_HOST = mapOf(
     "accounts.pixiv.net" to PIXIV_NET_IP
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST)
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST + DEFAULT_PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 

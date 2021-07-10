@@ -26,15 +26,15 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
 
-    override val ignore: Ignore get() = PixivApiIgnore
+    override val ignore: Ignore get() = { PixivApiIgnore(it) }
 
-    var link: Boolean by LinkDelegate
+    internal var link: Boolean by LinkDelegate
 
-    var tag: Boolean by TagDelegate
+    internal var tag: Boolean by TagDelegate
 
-    var attr: Boolean by AttrDelegate
+    internal var attr: Boolean by AttrDelegate
 
-    var max: Int by MaxDelegate
+    internal var max: Int by MaxDelegate
 
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 

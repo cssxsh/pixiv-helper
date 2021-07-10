@@ -11,15 +11,15 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-private val userAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
+private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
 
-private var defaultAuthInfos: AuthResult? = null
+private var DefaultAuthInfos: AuthResult? = null
 
-private val now: OffsetDateTime get() = OffsetDateTime.now().withNano(0)
+private val now: () -> OffsetDateTime = { OffsetDateTime.now().withNano(0) }
 
-private val userExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
+private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
 
-private var defaultExpiresTime: OffsetDateTime = now
+private var DefaultExpiresTime: OffsetDateTime = now()
 
 object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
@@ -38,12 +38,7 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
             is Group -> PixivConfigData.default
             else -> throw IllegalAccessException("未知类型联系人!")
         }
-        val proxy = PixivHelperSettings.proxy
-        return if (proxy.isNotBlank()) {
-            DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxy, refreshToken = token, cname = emptyMap())
-        } else {
-            DEFAULT_PIXIV_CONFIG.copy(refreshToken = token)
-        }
+        return DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxy, refreshToken = token)
     }
 }
 
@@ -51,15 +46,15 @@ object AuthResultDelegate : ReadWriteProperty<PixivHelper, AuthResult?> {
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: AuthResult?) {
         when (thisRef.contact) {
-            is User -> userAuthInfos[thisRef.contact.id] = value
-            is Group -> defaultAuthInfos = value
+            is User -> UserAuthInfos[thisRef.contact.id] = value
+            is Group -> DefaultAuthInfos = value
             else -> throw IllegalAccessException("未知类型联系人!")
         }
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult? = when (thisRef.contact) {
-        is User -> userAuthInfos[thisRef.contact.id]
-        is Group -> defaultAuthInfos
+        is User -> UserAuthInfos[thisRef.contact.id]
+        is Group -> DefaultAuthInfos
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }
@@ -68,15 +63,15 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: OffsetDateTime) {
         when (thisRef.contact) {
-            is User -> userExpiresTimes[thisRef.contact.id] = value
-            is Group -> defaultExpiresTime = value
+            is User -> UserExpiresTimes[thisRef.contact.id] = value
+            is Group -> DefaultExpiresTime = value
             else -> throw IllegalAccessException("未知类型联系人!")
         }
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): OffsetDateTime = when (thisRef.contact) {
-        is User -> userExpiresTimes.getOrPut(thisRef.contact.id) { now }
-        is Group -> defaultExpiresTime
+        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id, now)
+        is Group -> DefaultExpiresTime
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }
