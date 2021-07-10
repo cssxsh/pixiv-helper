@@ -16,12 +16,14 @@ object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取助手信息")
     suspend fun CommandSenderOnMessage<*>.helper() = withHelper {
+        val info = info()
         buildMessageChain {
-            appendLine("User: ${info().user.uid}")
-            appendLine("Name: ${info().user.name}")
-            appendLine("Account: ${info().user.account}")
-            appendLine("Token: ${info().accessToken}")
+            appendLine("User: ${info.user.uid}")
+            appendLine("Name: ${info.user.name}")
+            appendLine("Account: ${info.user.account}")
+            appendLine("AccessToken: ${info.accessToken}")
             appendLine("ExpiresTime: $expires")
+            appendLine("RefreshToken: ${info.refreshToken}")
         }
     }
 
