@@ -371,7 +371,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
     val dir = PixivHelperSettings.profilesFolder
     return dir.resolve(image.filename).apply {
         if (exists().not()) {
-            writeBytes(PixivHelperDownloader.downloadImage(url = image))
+            writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "用户 $image 下载完成" }
         }
     }
@@ -431,7 +431,7 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     val temp = PixivHelperSettings.articlesFolder
     return temp.resolve(image.filename).apply {
         if (exists().not()) {
-            writeBytes(PixivHelperDownloader.downloadImage(url = image))
+            writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "特辑封面 $image 下载完成" }
         }
     }
