@@ -4,7 +4,7 @@ import io.ktor.http.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.pixiv.tool.*
 
-object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST) {
+object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, timeout = 30 * 1000L) {
 
     override val ignore: suspend (Throwable) -> Boolean = PixivDownloadIgnore
 
