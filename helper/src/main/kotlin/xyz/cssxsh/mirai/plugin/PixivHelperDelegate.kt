@@ -16,11 +16,9 @@ private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
 
 private var DefaultAuthInfos: AuthResult? = null
 
-private val now: () -> OffsetDateTime = { OffsetDateTime.now().withNano(0) }
-
 private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
 
-private var DefaultExpiresTime: OffsetDateTime = now()
+private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
 
 private val UserMutex: MutableMap<Long, Mutex> = mutableMapOf()
 
@@ -75,7 +73,7 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): OffsetDateTime = when (thisRef.contact) {
-        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id, now)
+        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id) { OffsetDateTime.MIN }
         is Group -> DefaultExpiresTime
         else -> throw IllegalAccessException("未知类型联系人!")
     }
