@@ -74,8 +74,16 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
         is IOException
         -> {
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
-            delay(++PixivDownloadDelayCount * 1000L)
-            PixivDownloadDelayCount--
+            val message = throwable.message.orEmpty()
+            when {
+                "Not Match ContentLength" in message -> {
+                    delay(10 * 1000L)
+                }
+                else -> {
+                    delay(++PixivDownloadDelayCount * 1000L)
+                    PixivDownloadDelayCount--
+                }
+            }
             true
         }
         else -> false
