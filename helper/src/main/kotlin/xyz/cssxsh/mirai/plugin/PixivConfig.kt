@@ -114,7 +114,7 @@ internal val PIXIV_HOST = mapOf(
     "accounts.pixiv.net" to PIXIV_NET_IP
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST + DEFAULT_PIXIV_HOST)
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
@@ -198,7 +198,7 @@ internal val URL_ARTWORK_REGEX = """(?<=(artworks/|illust_id=))\d+""".toRegex()
 internal val URL_USER_REGEX = """(?<=(users/|member\.php\?id=))\d+""".toRegex()
 
 /**
- * [https://www.pixiv.net/info.php?id=1554]
+ * [リダイレクトURLサービス](https://www.pixiv.net/info.php?id=1554)
  *
  * https://pixiv.me/milkpanda-yellow
  */
