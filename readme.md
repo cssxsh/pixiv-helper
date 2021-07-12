@@ -64,7 +64,8 @@ EditThisCookie 安装地址
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高  
-搜图使用 <https://saucenao.com> 的 api 每天限额 100次， 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录
+回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录  
+搜图使用 <https://saucenao.com> 的 api 无KEY时，每天限额 100次， KEY参数在设置中添加
 
 ### 缓存指令
 
@@ -183,5 +184,11 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 
 ### NetdiskOauthConfig.yml
 
-插件需要百度网盘API支持，请到 https://pan.baidu.com/union/main/application/personal 申请应用，并将获得的APP信息填入  
-信息只在启动时读取，修改后重启，并使用 /backup auth 认证百度账号
+插件需要百度网盘API支持，请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
+信息只在启动时读取，修改后需重启，并使用 /backup auth 认证百度账号
+
+### ImageSearchConfig.yml
+
+KEY 参数请到 <https://saucenao.com/> 注册账号，
+在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
+信息只在启动时读取，修改后需重启

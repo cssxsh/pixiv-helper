@@ -38,6 +38,8 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperSettings.save()
         NetdiskOauthConfig.reload()
         NetdiskOauthConfig.save()
+        ImageSearchConfig.reload()
+        ImageSearchConfig.save()
         // Data
         PixivConfigData.reload()
         PixivTaskData.reload()

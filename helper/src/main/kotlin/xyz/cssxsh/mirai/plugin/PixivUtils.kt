@@ -147,10 +147,21 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
 
 internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
-    appendLine("作者: $name ")
-    appendLine("UID: $uid ")
-    appendLine("标题: $title ")
-    appendLine("PID: $pid ")
+    when (this@getContent) {
+        is PixivSearchResult -> {
+            appendLine("作者: $name ")
+            appendLine("UID: $uid ")
+            appendLine("标题: $title ")
+            appendLine("PID: $pid ")
+        }
+        is TwitterSearchResult -> {
+            appendLine("Tweet: $tweet")
+            appendLine("原图: $image")
+        }
+        is OtherSearchResult -> {
+            appendLine(text)
+        }
+    }
 }
 
 internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
@@ -317,7 +328,7 @@ internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) 
 
 internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.toByteString().hex()) }
 
-internal fun SearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
+internal fun PixivSearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
 
 private val Json_ = Json {
     prettyPrint = true
