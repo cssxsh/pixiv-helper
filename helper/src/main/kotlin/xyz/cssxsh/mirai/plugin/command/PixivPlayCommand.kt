@@ -43,7 +43,7 @@ object PixivPlayCommand : CompositeCommand(
                 if (isActive) sendIllust(flush = true) { it }
             }
         }
-        "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 $duration"
+        "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 ${duration / 1000}s"
     }
 
     @SubCommand("rank", "排行")

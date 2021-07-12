@@ -3,20 +3,24 @@ package xyz.cssxsh.mirai.plugin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
 import java.time.OffsetDateTime
+import kotlin.coroutines.CoroutineContext
 
 /**
  * 助手实例
  */
-class PixivHelper(val contact: Contact) : SimplePixivClient(
-    coroutineName = "PixivHelper:${contact}",
-    config = DEFAULT_PIXIV_CONFIG // This config is not use
-) {
+class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIXIV_CONFIG) {
+
+    override val coroutineContext: CoroutineContext by lazy {
+        PixivHelperPlugin.childScopeContext("PixivHelper:${contact}")
+    }
 
     override var config: PixivConfig by ConfigDelegate
 
@@ -25,6 +29,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
     override var authInfo: AuthResult? by AuthResultDelegate
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
+
+    public override val mutex: Mutex by MutexDelegate
 
     override val ignore: Ignore get() = { PixivApiIgnore(it) }
 
@@ -52,8 +58,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
         }
     }
 
+    internal var cacheName = ""
+
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
+            cacheName = name
             block.invoke(this@PixivHelper).collect { list ->
                 useMappers { mappers ->
                     list.groupBy {
@@ -119,13 +128,11 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(
 
     suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
         isActive && runCatching {
-            block().let { message ->
-                when (message) {
-                    null, Unit -> Unit
-                    is Message -> contact.sendMessage(message)
-                    is String -> contact.sendMessage(message)
-                    else -> contact.sendMessage(message.toString())
-                }
+            when (val message = block()) {
+                null, Unit -> Unit
+                is Message -> contact.sendMessage(message)
+                is String -> contact.sendMessage(message)
+                else -> contact.sendMessage(message.toString())
             }
         }.onFailure {
             logger.warning({ "回复${contact}失败" }, it)

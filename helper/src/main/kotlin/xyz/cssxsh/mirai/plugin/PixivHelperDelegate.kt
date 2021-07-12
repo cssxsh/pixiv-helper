@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.contact.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -15,11 +16,13 @@ private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
 
 private var DefaultAuthInfos: AuthResult? = null
 
-private val now: () -> OffsetDateTime = { OffsetDateTime.now().withNano(0) }
-
 private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
 
-private var DefaultExpiresTime: OffsetDateTime = now()
+private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
+
+private val UserMutex: MutableMap<Long, Mutex> = mutableMapOf()
+
+private var DefaultMutex: Mutex = Mutex()
 
 object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
@@ -70,8 +73,25 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): OffsetDateTime = when (thisRef.contact) {
-        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id, now)
+        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id) { OffsetDateTime.MIN }
         is Group -> DefaultExpiresTime
+        else -> throw IllegalAccessException("未知类型联系人!")
+    }
+}
+
+object MutexDelegate : ReadWriteProperty<PixivHelper, Mutex> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Mutex) {
+        when (thisRef.contact) {
+            is User -> UserMutex[thisRef.contact.id] = value
+            is Group -> DefaultMutex = value
+            else -> throw IllegalAccessException("未知类型联系人!")
+        }
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Mutex = when (thisRef.contact) {
+        is User -> UserMutex.getOrPut(thisRef.contact.id, ::Mutex)
+        is Group -> DefaultMutex
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }

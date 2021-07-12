@@ -9,9 +9,9 @@ interface StatisticInfoMapper {
     fun replaceTagInfo(info: StatisticTagInfo): Boolean
     fun senderTagInfos(sender: Long): List<StatisticTagInfo>
     fun groupTagInfos(group: Long): List<StatisticTagInfo>
-    fun replaceSearchResult(result: SearchResult): Boolean
-    fun findSearchResult(md5: String): SearchResult?
-    fun noCacheSearchResult(): List<SearchResult>
+    fun replaceSearchResult(result: PixivSearchResult): Boolean
+    fun findSearchResult(md5: String): PixivSearchResult?
+    fun noCacheSearchResult(): List<PixivSearchResult>
     fun replaceAliasSetting(result: AliasSetting): Boolean
     fun alias(): List<AliasSetting>
     fun top(limit: Long): List<Pair<String, Long>>

@@ -54,7 +54,8 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     @Description("登录 通过 RefreshToken")
     suspend fun CommandSenderOnMessage<*>.refresh(token: String) = withHelper {
-        refresh(token).let {
+        config { refreshToken = token }
+        refresh().let {
             "${it.user.name} 登陆成功 AccessToken: ${it.accessToken}, ExpiresTime: $expires"
         }
     }

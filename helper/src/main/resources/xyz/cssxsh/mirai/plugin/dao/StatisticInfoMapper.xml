@@ -33,12 +33,12 @@
         REPLACE INTO statistic_search("md5", similarity, "pid", "title", "uid", "name")
         VALUES (#{md5}, #{similarity}, ${pid}, #{title}, ${uid}, #{name});
     </insert>
-    <select id="findSearchResult" resultType="xyz.cssxsh.mirai.plugin.model.SearchResult">
+    <select id="findSearchResult" resultType="xyz.cssxsh.mirai.plugin.model.PixivSearchResult">
         SELECT *
         FROM statistic_search
         WHERE "md5" like #{md5};
     </select>
-    <select id="noCacheSearchResult" resultType="xyz.cssxsh.mirai.plugin.model.SearchResult">
+    <select id="noCacheSearchResult" resultType="xyz.cssxsh.mirai.plugin.model.PixivSearchResult">
         SELECT *
         FROM statistic_search
         WHERE NOT EXISTS(SELECT * FROM artworks WHERE artworks.pid = statistic_search.pid);

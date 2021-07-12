@@ -147,10 +147,21 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
 
 internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
-    appendLine("作者: $name ")
-    appendLine("UID: $uid ")
-    appendLine("标题: $title ")
-    appendLine("PID: $pid ")
+    when (this@getContent) {
+        is PixivSearchResult -> {
+            appendLine("作者: $name ")
+            appendLine("UID: $uid ")
+            appendLine("标题: $title ")
+            appendLine("PID: $pid ")
+        }
+        is TwitterSearchResult -> {
+            appendLine("Tweet: $tweet")
+            appendLine("原图: $image")
+        }
+        is OtherSearchResult -> {
+            appendLine(text)
+        }
+    }
 }
 
 internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
@@ -179,17 +190,17 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
             files
         } else {
             logger.warning { "[${illust.pid}](${files.size})图片过多" }
-            add(PlainText("部分图片省略"))
+            add("部分图片省略".toPlainText())
             files.subList(0, max)
         }.map { file ->
             add(runCatching {
                 file.uploadAsImage(contact)
             }.getOrElse {
-                PlainText("上传失败, ${it.message}")
+                "上传失败, $it".toPlainText()
             })
         }
     } else {
-        add(PlainText("R18禁止！"))
+        add("R18禁止！".toPlainText())
     }
 }
 
@@ -317,7 +328,7 @@ internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) 
 
 internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.toByteString().hex()) }
 
-internal fun SearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
+internal fun PixivSearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
 
 private val Json_ = Json {
     prettyPrint = true
@@ -371,7 +382,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
     val dir = PixivHelperSettings.profilesFolder
     return dir.resolve(image.filename).apply {
         if (exists().not()) {
-            writeBytes(PixivHelperDownloader.downloadImage(url = image))
+            writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "用户 $image 下载完成" }
         }
     }
@@ -431,7 +442,7 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     val temp = PixivHelperSettings.articlesFolder
     return temp.resolve(image.filename).apply {
         if (exists().not()) {
-            writeBytes(PixivHelperDownloader.downloadImage(url = image))
+            writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "特辑封面 $image 下载完成" }
         }
     }

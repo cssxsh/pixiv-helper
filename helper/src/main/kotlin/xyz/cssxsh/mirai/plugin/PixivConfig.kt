@@ -1,7 +1,10 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.features.*
+import io.ktor.client.statement.*
+import io.ktor.util.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.utils.*
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
@@ -18,19 +21,22 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
+import java.time.OffsetDateTime
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
-private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
+private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
 
-private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+private val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+
+private val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal val PixivApiIgnore: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
+internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { throwable ->
     when (throwable) {
         is IOException,
         is HttpRequestTimeoutException,
@@ -41,8 +47,14 @@ internal val PixivApiIgnore: suspend PixivAuthClient.(Throwable) -> Boolean = { 
         is AppApiException -> {
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
-                    logger.warning { "PIXIV API OAuth 错误, 将刷新 Token" }
-                    refresh()
+                    mutex.withLock {
+                        if (expires >= OffsetDateTime.now()) {
+                            expires = OffsetDateTime.MIN
+                            val url = throwable.response.request.url
+                            val headers = throwable.response.request.headers.toMap()
+                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $headers" }
+                        }
+                    }
                     true
                 }
                 "Rate Limit" in throwable.message -> {
@@ -65,8 +77,16 @@ internal val PixivDownloadIgnore: Ignore = { throwable ->
         is IOException
         -> {
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
-            delay(++PixivDownloadDelayCount * 1000L)
-            PixivDownloadDelayCount--
+            val message = throwable.message.orEmpty()
+            when {
+                "Not Match ContentLength" in message -> {
+                    delay(10 * 1000L)
+                }
+                else -> {
+                    delay(++PixivDownloadDelayCount * 1000L)
+                    PixivDownloadDelayCount--
+                }
+            }
             true
         }
         else -> false
@@ -86,18 +106,12 @@ internal fun Ignore(name: String): Ignore = { throwable ->
 }
 
 internal val PIXIV_HOST = mapOf(
-    "i.pximg.net" to PIXIV_IMAGE_IP,
-    "s.pximg.net" to PIXIV_IMAGE_IP,
-    "oauth.secure.pixiv.net" to PIXIV_NET_IP,
-    "app-api.pixiv.net" to PIXIV_NET_IP,
-    "public-api.secure.pixiv.net" to PIXIV_NET_IP,
-    "public.pixiv.net" to PIXIV_NET_IP,
-    "www.pixiv.net" to PIXIV_NET_IP,
-    "pixiv.me" to PIXIV_NET_IP,
-    "accounts.pixiv.net" to PIXIV_NET_IP
+    "*.pximg.net" to PIXIV_IMAGE_IP,
+    "*.pixiv.net" to PIXIV_API_IP,
+    "sketch.pixiv.net" to PIXIV_SKETCH_IP
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = PIXIV_HOST + DEFAULT_PIXIV_HOST)
+internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
 internal val InitSqlConfiguration = Configuration()
 
@@ -181,7 +195,7 @@ internal val URL_ARTWORK_REGEX = """(?<=(artworks/|illust_id=))\d+""".toRegex()
 internal val URL_USER_REGEX = """(?<=(users/|member\.php\?id=))\d+""".toRegex()
 
 /**
- * [https://www.pixiv.net/info.php?id=1554]
+ * [リダイレクトURLサービス](https://www.pixiv.net/info.php?id=1554)
  *
  * https://pixiv.me/milkpanda-yellow
  */
