@@ -7,7 +7,8 @@
 目前缺乏缓存清理，请手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
-然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令
+然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
+群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
 [![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)](https://shields.io/category/downloads)
