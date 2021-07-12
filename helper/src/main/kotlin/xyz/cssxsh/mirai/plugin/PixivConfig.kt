@@ -28,9 +28,11 @@ typealias Ignore = suspend (Throwable) -> Boolean
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
-private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" } - BAD_IP
+private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
 
-private val PIXIV_NET_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+private val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+
+private val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
@@ -103,15 +105,9 @@ internal fun Ignore(name: String): Ignore = { throwable ->
 }
 
 internal val PIXIV_HOST = mapOf(
-    "i.pximg.net" to PIXIV_IMAGE_IP,
-    "s.pximg.net" to PIXIV_IMAGE_IP,
-    "oauth.secure.pixiv.net" to PIXIV_NET_IP,
-    "app-api.pixiv.net" to PIXIV_NET_IP,
-    "public-api.secure.pixiv.net" to PIXIV_NET_IP,
-    "public.pixiv.net" to PIXIV_NET_IP,
-    "www.pixiv.net" to PIXIV_NET_IP,
-    "pixiv.me" to PIXIV_NET_IP,
-    "accounts.pixiv.net" to PIXIV_NET_IP
+    "*.pximg.net" to PIXIV_IMAGE_IP,
+    "*.pixiv.net" to PIXIV_API_IP,
+    "sketch.pixiv.net" to PIXIV_SKETCH_IP
 )
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
