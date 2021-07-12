@@ -50,8 +50,9 @@ internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { thro
                     mutex.withLock {
                         if (expires >= OffsetDateTime.now()) {
                             expires = OffsetDateTime.MIN
+                            val url = throwable.response.request.url
                             val headers = throwable.response.request.headers.toMap()
-                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $headers" }
+                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $headers" }
                         }
                     }
                     true
