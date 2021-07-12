@@ -8,7 +8,6 @@ import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 
 object PixivTagCommand : SimpleCommand(
@@ -53,7 +52,7 @@ object PixivTagCommand : SimpleCommand(
                 addCacheJob(name = "TAG(${tag})", reply = false) { getSearchTag(tag = tag).eros() }
             }
             list.randomOrNull()?.also { artwork ->
-                if (list.size < EroInterval) {
+                if (list.size < EroInterval && cacheName != "RELATED(${artwork.pid})") {
                     addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
                         getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros()
                     }
