@@ -114,7 +114,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
                         tweet = it.data.getValue("source").jsonPrimitive.content,
-                        image = MD5.matchEntire(it.info.indexName)?.value?.let(image) ?: "无"
+                        image = MD5.find(it.info.indexName)?.value?.let(image) ?: "无"
                     )
                 }
                 else -> {
