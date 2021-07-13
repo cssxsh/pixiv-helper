@@ -80,7 +80,7 @@ object PixivPlayCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
-        val illusts = bookmarksRandom(uid = user.uid, tag = tag).illusts
+        val illusts = bookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
         play = launch {
             illusts.forEach {
                 delay(duration)

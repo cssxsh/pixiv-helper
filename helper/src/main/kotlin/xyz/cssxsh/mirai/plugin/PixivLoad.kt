@@ -106,13 +106,11 @@ internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, li
     }
 }
 
-private const val PID_MAX = 999_999_999L
-
-internal suspend fun PixivHelper.bookmarksRandom(uid: Long, tag: String? = null, limit: Long = PID_MAX): IllustData {
-    val random = (0..limit).random()
-    return userBookmarksIllust(uid = uid, tag = tag).takeIf {
-        it.illusts.isNotEmpty()
-    } ?: bookmarksRandom(uid = uid, tag = tag, limit = random + 1)
+internal suspend fun PixivHelper.bookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
+    val max = (0..detail.profile.totalIllustBookmarksPublic).random() + PAGE_SIZE
+    return userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
+        check(illusts.isEmpty()) { "随机收藏USER[${detail.user.id}]<${tag}>失败" }
+    }
 }
 
 internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
