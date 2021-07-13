@@ -112,23 +112,23 @@ object ImageSearcher : HtmlParser(name = "Search") {
                 }
                 "twitter.com" in it.data["source"].toString() -> {
                     TwitterSearchResult(
-                        similarity = it.info.similarity,
+                        similarity = it.info.similarity / 100,
                         tweet = it.data.getValue("source").jsonPrimitive.content,
-                        image = MD5.matchEntire(it.info.indexName)!!.value.let(image)
+                        image = MD5.matchEntire(it.info.indexName)?.value?.let(image) ?: "无"
                     )
                 }
                 else -> {
                     OtherSearchResult(
-                        similarity = it.info.similarity,
-                        text = it.data.toString()
+                        similarity = it.info.similarity / 100,
+                        text = it.data.entries.joinToString("\n") { (value, element) -> "$value: $element" }
                     )
                 }
             }
         }
     }
 
-    suspend fun json(url: String): List<SearchResult> {
-        return client.get<JsonSearchResults>(API) {
+    suspend fun json(url: String): List<SearchResult> = http {
+        it.get<JsonSearchResults>(API) {
             parameter("url", url)
             parameter("output_type", 2)
             parameter("api_key", key)
