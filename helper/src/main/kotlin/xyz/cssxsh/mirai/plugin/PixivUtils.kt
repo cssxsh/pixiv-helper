@@ -77,9 +77,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     block: suspend PixivHelper.() -> ArtWorkInfo,
-) = sendIllust(flush = false) {
-    getIllustInfo(pid = block().pid, flush = false)
-}
+) = sendIllust(flush = false) { getIllustInfo(pid = block().pid, flush = false) }
 
 /**
  * 连续发送间隔时间
