@@ -29,4 +29,5 @@ interface ArtWorkInfoMapper {
     fun eroCount(): Long
     fun r18Count(): Long
     fun contains(pid: Long): Boolean
+    fun noCache(): Set<Long>
 }

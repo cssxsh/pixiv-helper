@@ -133,4 +133,9 @@
         FROM artworks
         WHERE pid = ${pid};
     </select>
+    <select id="noCache" resultType="java.lang.Long">
+        SELECT DISTINCT not_deleted.pid
+        FROM not_deleted
+        WHERE is_ero AND not_deleted.pid NOT IN (SELECT files.pid FROM files)
+    </select>
 </mapper>
