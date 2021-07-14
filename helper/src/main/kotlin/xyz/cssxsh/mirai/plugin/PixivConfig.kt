@@ -28,11 +28,11 @@ typealias Ignore = suspend (Throwable) -> Boolean
 
 private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
 
-private val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
+internal val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
 
-private val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+internal val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
 
-private val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
+internal val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
@@ -73,20 +73,13 @@ private var PixivDownloadDelayCount = 0
 
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
+        is MatchContentLengthException -> false
         is HttpRequestTimeoutException -> true
         is IOException
         -> {
             logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
-            val message = throwable.message.orEmpty()
-            when {
-                "Not Match ContentLength" in message -> {
-                    delay(10 * 1000L)
-                }
-                else -> {
-                    delay(++PixivDownloadDelayCount * 1000L)
-                    PixivDownloadDelayCount--
-                }
-            }
+            delay(++PixivDownloadDelayCount * 1000L)
+            PixivDownloadDelayCount--
             true
         }
         else -> false

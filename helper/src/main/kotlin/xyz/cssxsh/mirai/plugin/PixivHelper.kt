@@ -49,7 +49,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
             runCatching {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 supervisorScope {
-                    cacheChannel.consumeAsFlow().save().download().buffer(1).await()
+                    cacheChannel.consumeAsFlow().save().download().buffer(3).await()
                 }
             }.onFailure {
                 logger.warning { "PixivHelper:${contact}#CacheTask $it" }
