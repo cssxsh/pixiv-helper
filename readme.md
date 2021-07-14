@@ -76,11 +76,12 @@ EditThisCookie 安装地址
 | `/<cache> <rank> [mode] [date]?` | 缓存指定排行榜信息                      |
 | `/<cache> <recommended>`         | 从推荐画师的预览中缓存色图作品，ERO过滤 |
 | `/<cache> <bookmarks> [uid]?`    | 从用户的收藏中缓存色图作品              |
-| `/<cache> <following>`           | 将关注画师列表检查，缓存所有作品        |
+| `/<cache> <following> [fluhsh]?` | 将关注画师列表检查，缓存所有作品        |
 | `/<cache> <user> [uid]`          | 缓存指定画师作品                        |
 | `/<cache> <tag> [tag]`           | 缓存搜索得到的tag，ERO过滤              |
 | `/<cache> <search>`              | 缓存搜索记录                            |
 | `/<cache> <stop>`                | 停止当前助手缓存任务                    |
+| `/<cache> <reply> [open]`        | 为是否回复缓存细节，默认为否            |
 
 RankMode
 

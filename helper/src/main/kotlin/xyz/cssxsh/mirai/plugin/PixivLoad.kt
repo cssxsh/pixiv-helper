@@ -139,25 +139,50 @@ internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail, lim
     }
 }
 
-internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, limit: Long? = null): Flow<List<IllustInfo>> {
+internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boolean): Flow<List<IllustInfo>> {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师需要缓存" }
     var index = 0
-    return getUserFollowingPreview(detail = detail, limit = limit).transform { list ->
+    return getUserFollowingPreview(detail = detail).transform { list ->
         list.forEach { preview ->
             index++
             val count = preview.user.count()
             val loaded = preview.isLoaded()
-            if (active() && (loaded.not() || count < PAGE_SIZE)) {
+            if (active() && (loaded.not() || count < PAGE_SIZE || flush)) {
                 runCatching {
                     val author = userDetail(uid = preview.user.id)
                     val total = author.total()
-                    if (total - count > preview.illusts.size) {
+                    if (total - count > preview.illusts.size || flush) {
                         logger.info { "${index}.USER(${author.user.id})[${total}]尝试缓存" }
                         emitAll(getUserIllusts(author))
                     } else {
                         logger.info { "${index}.USER(${author.user.id})[${total}]有${preview.illusts.size}个作品尝试缓存" }
                         emit(preview.illusts)
                     }
+                }.onFailure {
+                    logger.warning { "${index}.USER(${preview.user.id})加载失败 $it" }
+                }
+            }
+        }
+    }.onCompletion {
+        send { "共${detail.profile.totalFollowUsers}个画师处理完成" }
+    }
+}
+
+internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: Int = 0): Flow<List<IllustInfo>> {
+    logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师收藏需要缓存" }
+    var index = 0
+    return getUserFollowingPreview(detail = detail).transform { list ->
+        list.forEach { preview ->
+            index++
+            if (active() && index > jump) {
+                runCatching {
+                    var count = 0
+                    emitAll(getBookmarks(preview.user.id).onEach { count += it.size })
+                    count
+                }.onSuccess {
+                    logger.info { "${index}.USER(${preview.user.id})[${it}]加载成功" }
+                }.onFailure {
+                    logger.warning { "${index}.USER(${preview.user.id})加载失败 $it" }
                 }
             }
         }
