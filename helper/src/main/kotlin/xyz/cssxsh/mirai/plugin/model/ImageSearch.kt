@@ -80,7 +80,7 @@ data class JsonSearchResults(
             @SerialName("parent_id")
             val parentId: Int,
             @SerialName("results")
-            val results: Int,
+            val results: Int = 0,
             @SerialName("status")
             val status: Int
         )
@@ -94,7 +94,6 @@ data class JsonSearchResult(
     @SerialName("header")
     val info: Info
 ) {
-
     @Serializable
     data class Info(
         @SerialName("dupes")
