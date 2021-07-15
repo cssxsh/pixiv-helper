@@ -67,8 +67,22 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private val MD5 = """[0-9a-f]{32}""".toRegex()
 
-    private val image: (String) -> String = { md5 ->
-        "https://img1.gelbooru.com/images/${md5.substring(0..1)}/${md5.substring(2..3)}/${md5}.jpg"
+    private val BASE64 = """[\w-=]{15}\.[\w]{3}""".toRegex()
+
+    private val image: (String) -> String = { name ->
+        when {
+            MD5 in name -> {
+                MD5.find(name)!!.value.let { md5 ->
+                    "https://img1.gelbooru.com/images/${md5.substring(0..1)}/${md5.substring(2..3)}/${md5}.jpg"
+                }
+            }
+            BASE64 in name -> {
+                BASE64.find(name)!!.value.let { base64 -> "https://pbs.twimg.com/media/${base64}?name=orig" }
+            }
+            else -> {
+                "无"
+            }
+        }
     }
 
     private val other: (Document) -> List<SearchResult> = {
@@ -110,11 +124,18 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         name = it.data.getValue("member_name").jsonPrimitive.content
                     )
                 }
+                "tweet_id" in it.data -> {
+                    TwitterSearchResult(
+                        similarity = it.info.similarity / 100,
+                        tweet = "https://twitter.com/detail/status/${it.data.getValue("tweet_id").jsonPrimitive.content}",
+                        image = image(it.info.indexName)
+                    )
+                }
                 "twitter.com" in it.data["source"].toString() -> {
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
                         tweet = it.data.getValue("source").jsonPrimitive.content,
-                        image = MD5.find(it.info.indexName)?.value?.let(image) ?: "无"
+                        image = image(it.info.indexName)
                     )
                 }
                 else -> {

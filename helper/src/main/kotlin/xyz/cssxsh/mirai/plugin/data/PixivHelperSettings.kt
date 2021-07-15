@@ -47,7 +47,8 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     @ValueName("ero_tag_exclude")
     @ValueDescription("涩图标准 排除的正则表达式")
-    override val tagExclude: String by value(ERO_TAG_EXCLUDE)
+    private val tagExclude0: String by value(ERO_TAG_EXCLUDE.pattern)
+    override val tagExclude: Regex by lazy { tagExclude0.toRegex() }
 
     @ValueName("ero_user_exclude")
     @ValueDescription("涩图标准 排除的UID")

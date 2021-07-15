@@ -77,9 +77,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
 
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     block: suspend PixivHelper.() -> ArtWorkInfo,
-) = sendIllust(flush = false) {
-    getIllustInfo(pid = block().pid, flush = false)
-}
+) = sendIllust(flush = false) { getIllustInfo(pid = block().pid, flush = false) }
 
 /**
  * 连续发送间隔时间
@@ -250,8 +248,7 @@ internal fun IllustInfo.isEro(): Boolean {
     if (ero.types.isNotEmpty() && type !in ero.types) return false
     if (totalBookmarks ?: 0 <= ero.bookmarks) return false
     if (pageCount > ero.pages) return false
-    val tag = ero.tagExclude.toRegex()
-    if (tags.any { tag in it.name  || tag in it.translatedName.orEmpty() }) return false
+    if (tags.any { ero.tagExclude in it.name  || ero.tagExclude in it.translatedName.orEmpty() }) return false
     if (user.id in ero.userExclude) return true
     return true
 }

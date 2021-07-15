@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
@@ -105,6 +107,25 @@ object PixivCacheCommand : CompositeCommand(
             }
         }.let {
             "@${it.user.name}关注列表中共${it.profile.totalFollowUsers}个画师的收藏需要缓存"
+        }
+    }
+
+    @SubCommand("nocache")
+    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
+    suspend fun CommandSenderOnMessage<*>.noCache() = withHelper {
+        useMappers { it.artwork.noCache() }.also { set ->
+            launch {
+                set.forEach { pid ->
+                    if (isActive.not()) return@launch
+                    runCatching {
+                        getIllustInfo(pid = pid, flush = false).getImages()
+                    }.onFailure {
+                        logger.warning { "缓存[${pid}]失败 $it" }
+                    }
+                }
+            }
+        }.let {
+            "无文件信息有${it.size}个作品需要缓存"
         }
     }
 

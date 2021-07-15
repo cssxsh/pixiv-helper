@@ -10,7 +10,7 @@ interface EroStandardConfig {
 
     val pages: Int
 
-    val tagExclude: String
+    val tagExclude: Regex
 
     val userExclude: Set<Long>
 }
