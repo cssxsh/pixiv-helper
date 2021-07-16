@@ -205,13 +205,11 @@ internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
-    useMappers { mappers ->
-        set.filterNot { mappers.artwork.contains(it) }
-    }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
+    set.chunked(PAGE_SIZE.toInt()).forEach { list ->
         if (active()) list.mapNotNull { pid ->
             runCatching {
-                getIllustInfo(pid = pid, flush = true).apply {
+                getIllustInfo(pid = pid, flush = flush).apply {
                     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 }
             }.onFailure {

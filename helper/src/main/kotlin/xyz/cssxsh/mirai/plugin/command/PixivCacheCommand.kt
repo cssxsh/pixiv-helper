@@ -1,7 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
@@ -113,17 +111,9 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand("nocache")
     @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.noCache() = withHelper {
+
         useMappers { it.artwork.noCache() }.also { set ->
-            launch {
-                set.forEach { pid ->
-                    if (isActive.not()) return@launch
-                    runCatching {
-                        getIllustInfo(pid = pid, flush = false).getImages()
-                    }.onFailure {
-                        logger.warning { "缓存[${pid}]失败 $it" }
-                    }
-                }
-            }
+            addCacheJob(name = "", write = false, reply = reply) { getListIllusts(set = set, flush = false) }
         }.let {
             "无文件信息有${it.size}个作品需要缓存"
         }
@@ -173,7 +163,7 @@ object PixivCacheCommand : CompositeCommand(
                 }
             } ?: source.renameTo(other.resolve(source.name))
         }
-        addCacheJob(name = "TEMP(${dir.absolutePath})", reply = reply) { getListIllusts(set = list) }
+        addCacheJob(name = "TEMP(${dir.absolutePath})", reply = reply) { getListIllusts(set = list, flush = true) }
         "临时文件夹${dir.absolutePath}有${list.size}个作品需要缓存"
     }
 
