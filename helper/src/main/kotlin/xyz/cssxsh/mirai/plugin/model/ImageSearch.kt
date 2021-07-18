@@ -40,32 +40,32 @@ data class JsonSearchResults(
     @SerialName("header")
     val info: Info,
     @SerialName("results")
-    val results: List<JsonSearchResult>
+    val results: List<JsonSearchResult> = emptyList()
 ) {
     @Serializable
     data class Info(
         @SerialName("account_type")
-        val accountType: String,
+        val accountType: Int,
         @SerialName("index")
-        val index: Map<Int,MapValue>,
+        val index: Map<Int,MapValue> = emptyMap(),
         @SerialName("long_limit")
-        val longLimit: String,
+        val longLimit: Int,
         @SerialName("long_remaining")
         val longRemaining: Int,
         @SerialName("minimum_similarity")
-        val minimumSimilarity: Double,
+        val minimumSimilarity: Double = 0.0,
         @SerialName("query_image")
-        val queryImage: String,
+        val queryImage: String? = null,
         @SerialName("query_image_display")
-        val queryImageDisplay: String,
+        val queryImageDisplay: String? = null,
         @SerialName("results_requested")
-        val resultsRequested: String,
+        val resultsRequested: Int,
         @SerialName("results_returned")
-        val resultsReturned: Int,
+        val resultsReturned: Int? = null,
         @SerialName("search_depth")
-        val searchDepth: String,
+        val searchDepth: Int = 0,
         @SerialName("short_limit")
-        val shortLimit: String,
+        val shortLimit: Int,
         @SerialName("short_remaining")
         val shortRemaining: Int,
         @SerialName("status")

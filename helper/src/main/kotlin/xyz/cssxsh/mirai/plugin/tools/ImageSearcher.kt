@@ -131,6 +131,15 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         image = image(it.info.indexName)
                     )
                 }
+                "i.pximg.net" in it.data["source"].toString() -> {
+                    PixivSearchResult(
+                        similarity = it.info.similarity / 100,
+                        pid = it.data.getValue("source").jsonPrimitive.content.substringAfterLast("/").toLong(),
+                        title = it.info.indexName,
+                        uid = 0,
+                        name = ""
+                    )
+                }
                 "twitter.com" in it.data["source"].toString() -> {
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
