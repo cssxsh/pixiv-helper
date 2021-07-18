@@ -30,4 +30,5 @@ interface ArtWorkInfoMapper {
     fun r18Count(): Long
     fun contains(pid: Long): Boolean
     fun noCache(): Set<Long>
+    fun noTag(): Set<Long>
 }

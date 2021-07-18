@@ -137,5 +137,12 @@
         SELECT DISTINCT not_deleted.pid
         FROM not_deleted
         WHERE is_ero AND not_deleted.pid NOT IN (SELECT files.pid FROM files)
+        ORDER BY pid DESC
+    </select>
+    <select id="noTag" resultType="java.lang.Long">
+        SELECT DISTINCT not_deleted.pid
+        FROM not_deleted
+        WHERE is_ero AND not_deleted.pid NOT IN (SELECT tags.pid FROM tags)
+        ORDER BY pid DESC
     </select>
 </mapper>
