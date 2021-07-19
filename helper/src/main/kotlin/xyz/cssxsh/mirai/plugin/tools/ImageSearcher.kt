@@ -114,6 +114,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private fun JsonSearchResults.decode(): List<SearchResult> {
         return results.map {
+            val source = it.data["source"].toString()
             when {
                 "pixiv_id" in it.data -> {
                     PixivSearchResult(
@@ -131,7 +132,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         image = image(it.info.indexName)
                     )
                 }
-                "i.pximg.net" in it.data["source"].toString() -> {
+                "i.pximg.net" in source || "www.pixiv.net" in source -> {
                     PixivSearchResult(
                         similarity = it.info.similarity / 100,
                         pid = it.data.getValue("source").jsonPrimitive.content.substringAfterLast("/").toLong(),
@@ -140,7 +141,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         name = ""
                     )
                 }
-                "twitter.com" in it.data["source"].toString() -> {
+                "pbs.twimg.com" in source || "twitter.com" in source -> {
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
                         tweet = it.data.getValue("source").jsonPrimitive.content,
