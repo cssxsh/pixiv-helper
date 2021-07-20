@@ -13,14 +13,14 @@ data class PixivSearchResult(
     @SerialName("md5")
     val md5: String = "",
     @SerialName("similarity")
-    override val similarity: Double,
-    @SerialName("pid")
+    override val similarity: Double = 0.0,
+    @SerialName("pixiv_id")
     override val pid: Long,
     @SerialName("title")
     override val title: String,
-    @SerialName("uid")
+    @SerialName("member_id")
     override val uid: Long,
-    @SerialName("content")
+    @SerialName("member_name")
     override val name: String
 ): SimpleArtworkInfo, SearchResult
 
