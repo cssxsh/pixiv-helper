@@ -212,14 +212,12 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
         if (active().not()) return@flow
         list.mapNotNull { pid ->
             runCatching {
-                getIllustInfo(pid = pid, flush = flush).apply {
-                    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-                }
+                getIllustInfo(pid = pid, flush = flush).check()
             }.onFailure {
                 if (it.isNotCancellationException()) {
                     logger.warning({ "加载作品($pid)失败" }, it)
                 }
-                if (DELETE_REGEX in  it.message.orEmpty()) {
+                if (DELETE_REGEX in it.message.orEmpty()) {
                     useMappers { mappers ->
                         mappers.artwork.replaceArtWork(EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()))
                     }
