@@ -4,7 +4,7 @@
 
 基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
-目前缺乏缓存清理，请手动清理  
+目前没有自动缓存清理，请使用 [#删除指令] 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
@@ -170,11 +170,14 @@ duration 单位分钟，默认3小时
 
 ### 删除指令
 
-| 指令                                | 描述                   |
-|:------------------------------------|:-----------------------|
-| `/<delete> <artwork> [pid]`         | 删除指定作品           |
-| `/<delete> <user> [uid]`            | 删除指定用户作品       |
-| `/<delete> <bookmarks> [bookmarks]` | 删除小于指定收藏数作品 |
+| 指令                                    | 描述                   |
+|:----------------------------------------|:-----------------------|
+| `/<delete> <artwork> [pid] [record]?`   | 删除指定作品           |
+| `/<delete> <user> [uid] [record]?`      | 删除指定用户作品       |
+| `/<delete> <bookmarks> [max] [record]?` | 删除小于指定收藏数作品 |
+| `/<delete> <page> [min] [record]?`      | 删除小于指定收藏数作品 |
+
+第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 
 ## 设置
 
