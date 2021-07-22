@@ -194,6 +194,7 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 
 ### ImageSearchConfig.yml
 
+KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户
 KEY 参数请到 <https://saucenao.com/> 注册账号，
 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
 信息只在启动时读取，修改后需重启
