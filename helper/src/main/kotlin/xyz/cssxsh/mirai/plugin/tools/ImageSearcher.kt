@@ -5,8 +5,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.long
+import kotlinx.serialization.json.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.nodes.Document
 import xyz.cssxsh.mirai.plugin.data.*
@@ -114,15 +113,11 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private fun JsonSearchResults.decode(): List<SearchResult> {
         return results.map {
+            val source = it.data["source"]?.jsonPrimitive?.content.orEmpty()
             when {
                 "pixiv_id" in it.data -> {
-                    PixivSearchResult(
-                        similarity = it.info.similarity / 100,
-                        pid = it.data.getValue("pixiv_id").jsonPrimitive.long,
-                        title = it.data.getValue("title").jsonPrimitive.content,
-                        uid = it.data.getValue("member_id").jsonPrimitive.long,
-                        name = it.data.getValue("member_name").jsonPrimitive.content
-                    )
+                    PixivJson.decodeFromJsonElement<PixivSearchResult>(it.data)
+                        .copy(similarity = it.info.similarity / 100)
                 }
                 "tweet_id" in it.data -> {
                     TwitterSearchResult(
@@ -131,10 +126,19 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         image = image(it.info.indexName)
                     )
                 }
-                "twitter.com" in it.data["source"].toString() -> {
+                "i.pximg.net" in source || "www.pixiv.net" in source -> {
+                    PixivSearchResult(
+                        similarity = it.info.similarity / 100,
+                        pid = source.substringAfterLast("/").substringAfterLast("=").toLong(),
+                        title = it.info.indexName,
+                        uid = 0,
+                        name = ""
+                    )
+                }
+                "pbs.twimg.com" in source || "twitter.com" in source -> {
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
-                        tweet = it.data.getValue("source").jsonPrimitive.content,
+                        tweet = source,
                         image = image(it.info.indexName)
                     )
                 }

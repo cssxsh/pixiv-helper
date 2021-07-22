@@ -205,20 +205,19 @@ internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(set: Set<Long>) = flow {
-    useMappers { mappers ->
-        set.filterNot { mappers.artwork.contains(it) }
-    }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        if (active()) list.mapNotNull { pid ->
+private val DELETE_REGEX = """該当作品は削除されたか|作品已删除或者被限制""".toRegex()
+
+internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
+    set.chunked(PAGE_SIZE.toInt()).forEach { list ->
+        if (active().not()) return@flow
+        list.mapNotNull { pid ->
             runCatching {
-                getIllustInfo(pid = pid, flush = true).apply {
-                    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-                }
+                getIllustInfo(pid = pid, flush = flush).check()
             }.onFailure {
                 if (it.isNotCancellationException()) {
                     logger.warning({ "加载作品($pid)失败" }, it)
                 }
-                if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("作品已删除或者被限制")) {
+                if (DELETE_REGEX in it.message.orEmpty()) {
                     useMappers { mappers ->
                         mappers.artwork.replaceArtWork(EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()))
                     }

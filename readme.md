@@ -4,7 +4,7 @@
 
 基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
-目前缺乏缓存清理，请手动清理  
+目前没有自动缓存清理，请使用 [#删除指令] 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
@@ -64,7 +64,7 @@ EditThisCookie 安装地址
 | `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
-使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高  
+使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于10秒也会触发这个效果  
 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录  
 搜图使用 <https://saucenao.com> 的 api 无KEY时，每天限额 100次， KEY参数在设置中添加
 
@@ -170,11 +170,14 @@ duration 单位分钟，默认3小时
 
 ### 删除指令
 
-| 指令                                | 描述                   |
-|:------------------------------------|:-----------------------|
-| `/<delete> <artwork> [pid]`         | 删除指定作品           |
-| `/<delete> <user> [uid]`            | 删除指定用户作品       |
-| `/<delete> <bookmarks> [bookmarks]` | 删除小于指定收藏数作品 |
+| 指令                                    | 描述                   |
+|:----------------------------------------|:-----------------------|
+| `/<delete> <artwork> [pid] [record]?`   | 删除指定作品           |
+| `/<delete> <user> [uid] [record]?`      | 删除指定用户作品       |
+| `/<delete> <bookmarks> [max] [record]?` | 删除小于指定收藏数作品 |
+| `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品   |
+
+第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 
 ## 设置
 
@@ -191,6 +194,7 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 
 ### ImageSearchConfig.yml
 
+KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户
 KEY 参数请到 <https://saucenao.com/> 注册账号，
 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
 信息只在启动时读取，修改后需重启

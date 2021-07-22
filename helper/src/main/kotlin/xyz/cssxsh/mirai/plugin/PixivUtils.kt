@@ -285,6 +285,10 @@ internal fun IllustInfo.toTagInfo() = tags.map {
 internal fun UserInfoMapper.add(user: UserBaseInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
+internal fun IllustInfo.check() = apply {
+    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+}
+
 internal fun IllustInfo.save(): Unit = useMappers { mappers ->
     mappers.user.add(user.toUserBaseInfo())
     mappers.artwork.replaceArtWork(toArtWorkInfo())
@@ -347,10 +351,8 @@ internal fun IllustInfo.write(file: File = json(pid)) {
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
-private val FlushIllustInfo : suspend PixivHelper.(Long) -> IllustInfo = {
-    illustDetail(it).illust.apply {
-        check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-    }
+private val FlushIllustInfo : suspend PixivHelper.(Long) -> IllustInfo = { pid ->
+    illustDetail(pid).illust.check().apply { save() }
 }
 
 internal suspend fun PixivHelper.getIllustInfo(

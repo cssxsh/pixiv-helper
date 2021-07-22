@@ -45,20 +45,21 @@ internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { thro
             true
         }
         is AppApiException -> {
+            val url = throwable.response.request.url
+            val request = throwable.response.request.headers.toMap()
+            val response = throwable.response.headers.toMap()
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
                     mutex.withLock {
                         if (expires >= OffsetDateTime.now()) {
                             expires = OffsetDateTime.MIN
-                            val url = throwable.response.request.url
-                            val headers = throwable.response.request.headers.toMap()
-                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $headers" }
+                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
                         }
                     }
                     true
                 }
                 "Rate Limit" in throwable.message -> {
-                    logger.warning { "PIXIV API限流, 将延时: ${PIXIV_RATE_LIMIT_DELAY}ms" }
+                    logger.warning { "PIXIV API限流, 将延时: ${PIXIV_RATE_LIMIT_DELAY}ms $url with $response" }
                     delay(PIXIV_RATE_LIMIT_DELAY)
                     true
                 }
@@ -206,7 +207,7 @@ internal const val ERO_BOOKMARKS = 1L shl 12
 
 internal const val ERO_PAGE_COUNT = 3
 
-internal val ERO_TAG_EXCLUDE = """(.*[hH]olo.*|僕のヒーローアカデミア)""".toRegex()
+internal val ERO_TAG_EXCLUDE = """([hH]olo|僕のヒーローアカデミア)""".toRegex()
 
 internal const val LOAD_LIMIT = 5_000L
 

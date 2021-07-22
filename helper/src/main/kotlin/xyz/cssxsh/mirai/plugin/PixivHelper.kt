@@ -58,11 +58,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
         }
     }
 
-    internal var cacheName = ""
-
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
-            cacheName = name
             block.invoke(this@PixivHelper).collect { list ->
                 useMappers { mappers ->
                     list.groupBy {
