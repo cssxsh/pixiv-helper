@@ -175,7 +175,7 @@ duration 单位分钟，默认3小时
 | `/<delete> <artwork> [pid] [record]?`   | 删除指定作品           |
 | `/<delete> <user> [uid] [record]?`      | 删除指定用户作品       |
 | `/<delete> <bookmarks> [max] [record]?` | 删除小于指定收藏数作品 |
-| `/<delete> <page> [min] [record]?`      | 删除小于指定收藏数作品 |
+| `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品   |
 
 第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 
