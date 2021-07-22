@@ -285,7 +285,7 @@ internal fun IllustInfo.toTagInfo() = tags.map {
 internal fun UserInfoMapper.add(user: UserBaseInfo) =
     if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
 
-internal inline fun IllustInfo.check() = apply {
+internal fun IllustInfo.check() = apply {
     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
 
