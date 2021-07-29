@@ -89,6 +89,11 @@ internal val SendInterval by PixivConfigData::interval
  */
 internal val EroInterval by PixivHelperSettings::eroInterval
 
+/**
+ * 涩图提高收藏数时间
+ */
+internal val EroUpExpire by PixivHelperSettings::eroUpExpire
+
 internal data class Mappers(
     val artwork: ArtWorkInfoMapper,
     val file: FileInfoMapper,
