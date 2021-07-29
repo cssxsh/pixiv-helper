@@ -32,7 +32,7 @@ object PixivMarkCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.random(tag: String? = null) = sendIllust(flush = false) {
         getBookmarks(uid = info().user.uid, tag = tag).also {
             addCacheJob(name = "MARK_RANDOM", reply = false) { it }
-        }.toList().flatten().write().random()
+        }.toList().flatten().random()
     }
 
     @SubCommand
