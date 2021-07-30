@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.0.3"
+version = "1.0.4"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -30,8 +30,7 @@ mirai {
 
 repositories {
     mavenLocal()
-    maven {
-        url = uri("https://maven.pkg.github.com/cssxsh/baidu-client")
+    maven(url = "https://maven.pkg.github.com/cssxsh/baidu-client") {
         credentials {
             username = System.getenv("GITHUB_ID")
             password = System.getenv("GITHUB_TOKEN")
