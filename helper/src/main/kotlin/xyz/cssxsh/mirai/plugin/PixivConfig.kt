@@ -197,7 +197,7 @@ internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex(
 
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
-internal val MIN_SIMILARITY = (sqrt(5.0) - 1) / 2
+internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
 
 internal const val ERO_INTERVAL = 16
 

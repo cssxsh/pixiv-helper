@@ -72,9 +72,9 @@ object PixivTagCommand : SimpleCommand(
                 tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork?.pid)
                 requireNotNull(artwork) {
                     if (fuzzy) {
-                        "读取Tag(${tag})色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
+                        "$subject 读取Tag(${tag})色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
                     } else {
-                        "读取Tag(${tag})色图失败, 请尝试模糊搜索"
+                        "$subject 读取Tag(${tag})色图失败, 请尝试模糊搜索"
                     }
                 }
             }
