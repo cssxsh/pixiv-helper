@@ -28,14 +28,20 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     val key by ImageSearchConfig::key
 
+    private val proxy by PixivHelperSettings::proxy
+
     override val client = super.client.config {
         Json {
             serializer = KotlinxSerializer(PixivJson)
         }
         engine {
             (this as OkHttpConfig).config {
-                sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
-                hostnameVerifier { _, _ -> true }
+                if (ImageSearcher.proxy.isNotBlank()) {
+                    proxy(Url(ImageSearcher.proxy).toProxy())
+                } else {
+                    sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
+                    hostnameVerifier { _, _ -> true }
+                }
             }
         }
     }

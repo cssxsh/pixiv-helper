@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.data
 
-
 import io.ktor.http.*
 import io.ktor.util.date.*
 import kotlinx.serialization.SerialName
@@ -38,7 +37,7 @@ fun EditThisCookie.toCookie() = Cookie(
     name = name,
     value = value,
     encoding = CookieEncoding.DQUOTES,
-    expires = expirationDate?.run {  GMTDate(times(1000).toLong())},
+    expires = expirationDate?.run { GMTDate(times(1000).toLong()) },
     domain = domain,
     path = path,
     secure = secure,

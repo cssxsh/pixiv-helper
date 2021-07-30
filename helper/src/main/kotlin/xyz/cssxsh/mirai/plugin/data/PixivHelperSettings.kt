@@ -29,12 +29,13 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("色图间隔")
     val eroInterval: Int by value(ERO_INTERVAL)
 
-    @ValueName("ero_work_types")
-    @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
-    private val types_: Set<String> by value(setOf())
+    @ValueName("ero_up_expire")
+    @ValueDescription("色图自动触发更高收藏数的最大时间，单位毫秒")
+    val eroUpExpire: Long by value(ERO_UP_EXPIRE)
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
+    private val types_: Set<String> by value(setOf())
     override val types: Set<WorkContentType> by lazy { types_.map { WorkContentType.valueOf(it.uppercase()) }.toSet() }
 
     @ValueName("ero_bookmarks")
