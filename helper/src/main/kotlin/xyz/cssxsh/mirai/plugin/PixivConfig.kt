@@ -122,10 +122,12 @@ interface SqlConfig {
     val properties: Map<String, String>
 }
 
+private fun Properties.copy(properties: Map<String, String>) = apply { properties.forEach(this::setProperty) }
+
 fun SqlConfig.toDataSource(): DataSource {
     return if (url.startsWith(JDBC.PREFIX)) {
         SQLiteConnectionPoolDataSource().apply {
-            config.apply {
+            config = config.run {
                 enforceForeignKeys(true)
                 setCacheSize(8196)
                 setPageSize(8196)
@@ -134,11 +136,13 @@ fun SqlConfig.toDataSource(): DataSource {
                 setTempStore(SQLiteConfig.TempStore.MEMORY)
                 setSynchronous(SQLiteConfig.SynchronousMode.OFF)
                 setEncoding(SQLiteConfig.Encoding.UTF8)
+
+                SQLiteConfig(toProperties().copy(properties))
             }
             url = this@toDataSource.url
         }
     } else {
-        PooledDataSource(driver, url, Properties().apply { properties.forEach(this::setProperty) })
+        PooledDataSource(driver, url, Properties().copy(properties))
     }
 }
 

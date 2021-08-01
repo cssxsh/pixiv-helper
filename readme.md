@@ -8,7 +8,7 @@
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
-群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
+群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
 [![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)](https://shields.io/category/downloads)
@@ -195,21 +195,21 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 
 ### ImageSearchConfig.yml
 
-KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户
-KEY 参数请到 <https://saucenao.com/> 注册账号，
-在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
-信息只在启动时读取，修改后需重启  
+KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
+KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
+信息只在启动时读取，修改后需重启
 
 ### PixivSqlConfig.yml
 
 1. url JDBC url 默认 为 `jdbc:sqlite:pixiv.sqlite`
 1. driver 驱动类 只有 非SQLite 时生效
-1. properties 驱动配置 只有 非SQLite 时生效
+1. properties 驱动配置
 
-MCL 配置 mysql 举例，其他数据库类推
+MCL 配置 mysql 举例，其他数据库类推  
 安装 驱动，`mysql:mysql-connector-java` 是驱动包名
 `.\mcl --update-package mysql:mysql-connector-java --type libs --channel stable`
 配置 链接
+
 ```
 url: 'jdbc:mysql://localhost:3306/pixiv'
 driver: 'com.mysql.cj.jdbc.Driver'
