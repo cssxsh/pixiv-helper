@@ -8,7 +8,6 @@ import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.apps.*
 
 object PixivFollowCommand : CompositeCommand(
@@ -17,7 +16,7 @@ object PixivFollowCommand : CompositeCommand(
     description = "PIXIV关注指令"
 ) {
 
-    private var PixivHelper.follow by PixivHelperDelegate { CancelledJob }
+    private var PixivHelper.follow by PixivHelperDelegate { CompletedJob }
 
     private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }

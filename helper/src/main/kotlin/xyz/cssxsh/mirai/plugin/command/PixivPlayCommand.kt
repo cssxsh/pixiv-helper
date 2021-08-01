@@ -21,7 +21,7 @@ object PixivPlayCommand : CompositeCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private var PixivHelper.play by PixivHelperDelegate { CancelledJob }
+    private var PixivHelper.play by PixivHelperDelegate { CompletedJob }
 
     private var PixivHelper.duration by PixivHelperDelegate { 10 * 1000L }
 
