@@ -19,15 +19,11 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    internal val sqlSessionFactory: SqlSessionFactory by lazy {
-        SqlSessionFactoryBuilder().build(InitSqlConfiguration)
-    }
+    private val sqlSessionFactory: SqlSessionFactory by lazy { SqlSessionFactoryBuilder().build(HelperSqlConfiguration()) }
 
-    internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
-        sqlSessionFactory.openSession(false).use { session ->
-            session.let(block).also { session.commit() }
-        }
-    }
+    private val session by lazy { sqlSessionFactory.openSession(true) }
+
+    internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) { session.let(block) }
 
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
@@ -40,6 +36,8 @@ object PixivHelperPlugin : KotlinPlugin(
         NetdiskOauthConfig.save()
         ImageSearchConfig.reload()
         ImageSearchConfig.save()
+        PixivSqlConfig.reload()
+        PixivSqlConfig.save()
         // Data
         PixivConfigData.reload()
         PixivTaskData.reload()
@@ -72,6 +70,7 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 
     override fun onDisable() {
+        useSession { it.commit() }
         PixivBackupCommand.unregister()
         PixivCacheCommand.unregister()
         PixivDeleteCommand.unregister()

@@ -6,6 +6,7 @@ import io.ktor.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.utils.*
+import org.apache.ibatis.datasource.pooled.PooledDataSource
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
@@ -22,6 +23,8 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
 import java.time.OffsetDateTime
+import java.util.*
+import javax.sql.DataSource
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -107,30 +110,54 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-internal val InitSqlConfiguration = Configuration()
+internal val CREATE_SQL by lazy {
+    PixivSqlConfig::class.java.getResourceAsStream("create.sql")!!.reader().readText()
+}
 
-internal fun Configuration.init() {
-    environment = Environment("development", JdbcTransactionFactory(), SQLiteConnectionPoolDataSource().apply {
-        config.apply {
-            enforceForeignKeys(true)
-            setCacheSize(8196)
-            setPageSize(8196)
-            setJournalMode(SQLiteConfig.JournalMode.MEMORY)
-            enableCaseSensitiveLike(true)
-            setTempStore(SQLiteConfig.TempStore.MEMORY)
-            setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-            setEncoding(SQLiteConfig.Encoding.UTF8)
-            PixivHelperSettings.sqliteConfig.forEach { (pragma, value) ->
-                setPragma(pragma, value)
+interface SqlConfig {
+    val url: String
+
+    val driver: String
+
+    val properties: Map<String, String>
+}
+
+fun SqlConfig.toDataSource(): DataSource {
+    return if (url.startsWith(JDBC.PREFIX)) {
+        SQLiteConnectionPoolDataSource().apply {
+            config.apply {
+                enforceForeignKeys(true)
+                setCacheSize(8196)
+                setPageSize(8196)
+                setJournalMode(SQLiteConfig.JournalMode.MEMORY)
+                enableCaseSensitiveLike(true)
+                setTempStore(SQLiteConfig.TempStore.MEMORY)
+                setSynchronous(SQLiteConfig.SynchronousMode.OFF)
+                setEncoding(SQLiteConfig.Encoding.UTF8)
             }
+            url = this@toDataSource.url
         }
-        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
-    })
-    addMapper(ArtWorkInfoMapper::class.java)
-    addMapper(FileInfoMapper::class.java)
-    addMapper(StatisticInfoMapper::class.java)
-    addMapper(TagInfoMapper::class.java)
-    addMapper(UserInfoMapper::class.java)
+    } else {
+        PooledDataSource(driver, url, Properties().apply { properties.forEach(this::setProperty) })
+    }
+}
+
+class HelperSqlConfiguration(config: SqlConfig = PixivSqlConfig) : Configuration() {
+    init {
+        val source = config.toDataSource()
+
+        source.connection.createStatement().apply {
+            CREATE_SQL.split(';').filter { it.isNotBlank() }.forEach { execute(it) }
+        }
+
+        environment = Environment("development", JdbcTransactionFactory(), source)
+
+        addMapper(ArtWorkInfoMapper::class.java)
+        addMapper(FileInfoMapper::class.java)
+        addMapper(StatisticInfoMapper::class.java)
+        addMapper(TagInfoMapper::class.java)
+        addMapper(UserInfoMapper::class.java)
+    }
 }
 
 internal fun PixivHelperSettings.init() {
@@ -139,16 +166,10 @@ internal fun PixivHelperSettings.init() {
     tempFolder.mkdirs()
     profilesFolder.mkdirs()
     articlesFolder.mkdirs()
-    if (sqlite.exists().not()) {
-        this::class.java.getResourceAsStream("pixiv.sqlite")?.use {
-            sqlite.writeBytes(it.readAllBytes())
-        }
-    }
-    PixivHelperPlugin.sqlSessionFactory.configuration.init()
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    logger.info { "Sqlite: ${sqlite.absolutePath}" }
+    logger.info { "SQL: ${PixivSqlConfig.url}" }
     PixivHelperPlugin.launch(SupervisorJob()) {
         val count = useMappers { it.artwork.count() }
         if (count < eroInterval) {

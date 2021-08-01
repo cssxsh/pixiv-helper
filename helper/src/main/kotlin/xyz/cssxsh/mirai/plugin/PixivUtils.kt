@@ -13,6 +13,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
+import org.sqlite.JDBC
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
@@ -463,11 +464,13 @@ internal fun Long.toBytesSize() = when (this) {
     else -> throw IllegalStateException("Too Big")
 }
 
-internal fun getBackupList() = mapOf(
-    "DATA" to PixivHelperPlugin.dataFolder,
-    "CONFIG" to PixivHelperPlugin.configFolder,
-    "DATABASE" to PixivHelperSettings.sqlite
-)
+internal fun getBackupList(): Map<String, File> {
+    return mutableMapOf("DATA" to PixivHelperPlugin.dataFolder, "CONFIG" to PixivHelperPlugin.configFolder).apply {
+        File(PixivSqlConfig.url.removePrefix(JDBC.PREFIX)).also {
+            if (it.exists()) put("DATABASE", it)
+        }
+    }
+}
 
 internal suspend fun PixivHelper.redirect(account: String): Long {
     useMappers { it.user.findByAccount(account = account) }?.let { return@redirect it.uid }

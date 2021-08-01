@@ -198,4 +198,22 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户
 KEY 参数请到 <https://saucenao.com/> 注册账号，
 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
-信息只在启动时读取，修改后需重启
+信息只在启动时读取，修改后需重启  
+
+### PixivSqlConfig.yml
+
+1. url JDBC url 默认 为 `jdbc:sqlite:pixiv.sqlite`
+1. driver 驱动类 只有 非SQLite 时生效
+1. properties 驱动配置 只有 非SQLite 时生效
+
+MCL 配置 mysql 举例，其他数据库类推
+安装 驱动，`mysql:mysql-connector-java` 是驱动包名
+`.\mcl --update-package mysql:mysql-connector-java --type libs --channel stable`
+配置 链接
+```
+url: 'jdbc:mysql://localhost:3306/pixiv'
+driver: 'com.mysql.cj.jdbc.Driver'
+properties: 
+  'user': 'root'
+  'password': 'root'
+```
