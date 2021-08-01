@@ -190,7 +190,7 @@ pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下�
 
 ### NetdiskOauthConfig.yml
 
-插件需要百度网盘API支持，请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
+插件备份文件功能需要百度网盘API支持，请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
 信息只在启动时读取，修改后需重启，并使用 /backup auth 认证百度账号
 
 ### ImageSearchConfig.yml
