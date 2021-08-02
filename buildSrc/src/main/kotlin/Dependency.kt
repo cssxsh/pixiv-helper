@@ -20,6 +20,12 @@ fun DependencyHandler.jsoup(version: String) =
 fun DependencyHandler.mybatis(module: String, version: String) =
     "org.mybatis:${module}:${version}"
 
+fun DependencyHandler.mysql(module: String, version: String) =
+    "mysql:${module}:${version}"
+
+fun DependencyHandler.hibernate(module: String, version: String) =
+    "org.hibernate:${module}:${version}"
+
 fun DependencyHandler.xerial(module: String, version: String) =
     "org.xerial:${module}:${version}"
 
