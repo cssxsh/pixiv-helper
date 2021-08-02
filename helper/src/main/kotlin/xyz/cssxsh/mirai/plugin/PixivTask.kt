@@ -108,13 +108,11 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         send {
             "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
         }
-        useMappers {
-            it.statistic.addHistory(StatisticTaskInfo(
-                task = name,
-                pid = illust.pid,
-                timestamp = OffsetDateTime.now().toEpochSecond()
-            ))
-        }
+        StatisticTaskInfo(
+            task = name,
+            pid = illust.pid,
+            timestamp = OffsetDateTime.now().toEpochSecond()
+        ).saveOrUpdate()
     }
 }
 

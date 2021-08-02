@@ -16,6 +16,8 @@ import xyz.cssxsh.baidu.format
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.model.AliasSetting
+import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 
@@ -65,7 +67,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定用户的作品")
     fun CommandSender.user(uid: Long) = compress {
-        compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
+        compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]").let {
             listOf(it)
         }
     }
@@ -73,8 +75,8 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
-        useMappers { it.statistic.alias() }.associateBy { it.uid }.map { (uid, _) ->
-            compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
+        AliasSetting.all().map { it.uid }.toSet().map { uid ->
+            compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
         }
     }
 
@@ -82,7 +84,7 @@ object PixivBackupCommand : CompositeCommand(
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
         compressArtWorks(
-            list = useMappers { it.artwork.findByTag(tag, bookmark, fuzzy) },
+            list = ArtWorkInfo.tag(tag, bookmark, fuzzy),
             basename = "TAG[${tag}]"
         ).let {
             listOf(it)

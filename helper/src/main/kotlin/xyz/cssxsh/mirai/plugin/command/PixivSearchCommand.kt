@@ -7,7 +7,6 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
-import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -34,7 +33,7 @@ object PixivSearchCommand : SimpleCommand(
     private suspend fun json(image: Image) = ImageSearcher.json(url = image.queryUrl())
 
     private fun List<PixivSearchResult>.save(image: Image) = filter { it.similarity > MIN_SIMILARITY }.apply {
-        (maxByOrNull { it.similarity } ?: return@apply).copy(md5 = image.md5.toByteString().hex()).save()
+        (maxByOrNull { it.similarity } ?: return@apply).save(image)
     }
 
     @Handler

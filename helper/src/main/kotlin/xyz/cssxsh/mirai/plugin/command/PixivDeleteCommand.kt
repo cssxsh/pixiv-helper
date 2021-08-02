@@ -25,19 +25,21 @@ object PixivDeleteCommand : CompositeCommand(
     @Description("删除指定作品")
     suspend fun CommandSender.artwork(pid: Long, record: Boolean = false) {
         logger.info { "作品(${pid})信息将从缓存移除" }
-        if (record) useMappers { mappers ->
-            mappers.artwork.deleteByPid(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
-        }
+        // TODO
+//        if (record) useMappers { mappers ->
+//            mappers.artwork.deleteByPid(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
+//        }
         sendMessage("作品(${pid})图片将删除，结果${EmptyArtWorkInfo.copy(pid = pid).delete()}")
     }
 
     @SubCommand
     @Description("删除指定用户作品")
     suspend fun CommandSender.user(uid: Long, record: Boolean = false) {
-        val artworks = useMappers { it.artwork.userArtWork(uid) }
-        if (record) useMappers { mappers ->
-            mappers.artwork.deleteByUid(uid = uid, comment = "command delete user in ${OffsetDateTime.now()}")
-        }
+        val artworks = ArtWorkInfo.user(uid)
+        // TODO
+//        if (record) useMappers { mappers ->
+//            mappers.artwork.deleteByPid(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
+//        }
         sendMessage("USER(${uid})共${artworks.size}个作品需要删除")
         artworks.forEach {
             logger.info { "作品(${it.pid})信息将从缓存移除" }
@@ -57,22 +59,23 @@ object PixivDeleteCommand : CompositeCommand(
     suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) {
         ranges.forEach { interval ->
             logger.verbose { "开始检查[$interval]" }
-            val artworks = useMappers { mappers ->
-                mappers.artwork.artworks(interval).filter { it.totalBookmarks < min }
-            }
-            if (artworks.isEmpty()) return@forEach
-            sendMessage("{$min}(${interval})共${artworks.size}个作品需要删除")
-            useMappers { mappers ->
-                artworks.forEach {
-                    logger.info { "作品(${it.pid})信息将从缓存移除" }
-                    if (record) mappers.artwork.deleteByPid(
-                        pid = it.pid,
-                        comment = "command delete bookmarks $min in ${OffsetDateTime.now()}"
-                    )
-                    it.delete()
-                }
-            }
-            sendMessage("删除完毕")
+            TODO()
+//            val artworks = useMappers { mappers ->
+//                mappers.artwork.artworks(interval).filter { it.totalBookmarks < min }
+//            }
+//            if (artworks.isEmpty()) return@forEach
+//            sendMessage("{$min}(${interval})共${artworks.size}个作品需要删除")
+//            useMappers { mappers ->
+//                artworks.forEach {
+//                    logger.info { "作品(${it.pid})信息将从缓存移除" }
+//                    if (record) mappers.artwork.deleteByPid(
+//                        pid = it.pid,
+//                        comment = "command delete bookmarks $min in ${OffsetDateTime.now()}"
+//                    )
+//                    it.delete()
+//                }
+//            }
+//            sendMessage("删除完毕")
         }
     }
 
@@ -81,22 +84,23 @@ object PixivDeleteCommand : CompositeCommand(
     suspend fun CommandSender.page(max: Int, record: Boolean = false) {
         ranges.forEach { interval ->
             logger.verbose { "开始检查[$interval]" }
-            val artworks = useMappers { mappers ->
-                mappers.artwork.artworks(interval).filter { it.pageCount > max }
-            }
-            if (artworks.isEmpty()) return@forEach
-            sendMessage("[$max](${interval})共${artworks.size}个作品需要删除")
-           useMappers { mappers ->
-                artworks.forEach {
-                    logger.info { "作品(${it.pid})信息将从缓存移除" }
-                    if (record) mappers.artwork.deleteByPid(
-                        pid = it.pid,
-                        comment = "command delete page_count $max in ${OffsetDateTime.now()}"
-                    )
-                    it.delete()
-                }
-            }
-            sendMessage("删除完毕")
+            TODO()
+//            val artworks = useMappers { mappers ->
+//                mappers.artwork.artworks(interval).filter { it.pageCount > max }
+//            }
+//            if (artworks.isEmpty()) return@forEach
+//            sendMessage("[$max](${interval})共${artworks.size}个作品需要删除")
+//            useMappers { mappers ->
+//                artworks.forEach {
+//                    logger.info { "作品(${it.pid})信息将从缓存移除" }
+//                    if (record) mappers.artwork.deleteByPid(
+//                        pid = it.pid,
+//                        comment = "command delete page_count $max in ${OffsetDateTime.now()}"
+//                    )
+//                    it.delete()
+//                }
+//            }
+//            sendMessage("删除完毕")
         }
     }
 }

@@ -21,25 +21,25 @@ object PixivTagCommand : SimpleCommand(
     @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?): Boolean = useMappers { mappers ->
-        mappers.statistic.replaceTagInfo(StatisticTagInfo(
+    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?) {
+        StatisticTagInfo(
             sender = event.sender.id,
             group = event.subject.takeIf { it is Group }?.id,
             pid = pid,
             tag = tag,
             timestamp = event.time.toLong()
-        ))
+        ).saveOrUpdate()
     }
 
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
-    private fun tags(tag: String, bookmark: Long, fuzzy: Boolean) = useMappers {
-        val direct = it.artwork.findByTag(tag, bookmark, fuzzy)
+    private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
+        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy)
         val persona = PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-            it.artwork.findByTag(character, bookmark, fuzzy) intersect it.artwork.findByTag(works, bookmark, fuzzy)
+            ArtWorkInfo.tag(character, bookmark, fuzzy) intersect ArtWorkInfo.tag(works, bookmark, fuzzy)
         }.orEmpty()
 
-        direct + persona
+        return direct + persona
     }
 
     private const val TAG_NAME_MAX = 30

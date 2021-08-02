@@ -3,11 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.data.PluginConfig
-import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
-import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import org.apache.ibatis.session.SqlSession
-import org.apache.ibatis.session.SqlSessionFactory
-import org.apache.ibatis.session.SqlSessionFactoryBuilder
+import net.mamoe.mirai.console.plugin.jvm.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -19,11 +15,9 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    private val sqlSessionFactory: SqlSessionFactory by lazy { SqlSessionFactoryBuilder().build(HelperSqlConfiguration()) }
+    internal val factory by lazy { HelperSqlConfiguration().buildSessionFactory() }
 
-    private val session by lazy { sqlSessionFactory.openSession(true) }
-
-    internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) { session.let(block) }
+    internal val session by lazy { factory.openSession() }
 
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
@@ -36,8 +30,6 @@ object PixivHelperPlugin : KotlinPlugin(
         NetdiskOauthConfig.save()
         ImageSearchConfig.reload()
         ImageSearchConfig.save()
-        PixivSqlConfig.reload()
-        PixivSqlConfig.save()
         // Data
         PixivConfigData.reload()
         PixivTaskData.reload()
@@ -70,7 +62,7 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 
     override fun onDisable() {
-        useSession { it.commit() }
+        synchronized(factory) { session.flush() }
         PixivBackupCommand.unregister()
         PixivCacheCommand.unregister()
         PixivDeleteCommand.unregister()

@@ -6,16 +6,8 @@ import io.ktor.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.utils.*
-import org.apache.ibatis.datasource.pooled.PooledDataSource
-import org.apache.ibatis.mapping.Environment
-import org.apache.ibatis.session.Configuration
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
-import org.sqlite.JDBC
-import org.sqlite.SQLiteConfig
-import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import xyz.cssxsh.baidu.disk.getUserInfo
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
@@ -23,8 +15,6 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
 import java.time.OffsetDateTime
-import java.util.*
-import javax.sql.DataSource
 import kotlin.math.sqrt
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -110,60 +100,6 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-internal val CREATE_SQL by lazy {
-    PixivSqlConfig::class.java.getResourceAsStream("create.sql")!!.reader().readText()
-}
-
-interface SqlConfig {
-    val url: String
-
-    val driver: String
-
-    val properties: Map<String, String>
-}
-
-private fun Properties.copy(properties: Map<String, String>) = apply { properties.forEach(this::setProperty) }
-
-fun SqlConfig.toDataSource(): DataSource {
-    return if (url.startsWith(JDBC.PREFIX)) {
-        SQLiteConnectionPoolDataSource().apply {
-            config = config.run {
-                enforceForeignKeys(true)
-                setCacheSize(8196)
-                setPageSize(8196)
-                setJournalMode(SQLiteConfig.JournalMode.MEMORY)
-                enableCaseSensitiveLike(true)
-                setTempStore(SQLiteConfig.TempStore.MEMORY)
-                setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-                setEncoding(SQLiteConfig.Encoding.UTF8)
-
-                SQLiteConfig(toProperties().copy(properties))
-            }
-            url = this@toDataSource.url
-        }
-    } else {
-        PooledDataSource(driver, url, Properties().copy(properties))
-    }
-}
-
-class HelperSqlConfiguration(config: SqlConfig = PixivSqlConfig) : Configuration() {
-    init {
-        val source = config.toDataSource()
-
-        source.connection.createStatement().apply {
-            CREATE_SQL.split(';').filter { it.isNotBlank() }.forEach { execute(it) }
-        }
-
-        environment = Environment("development", JdbcTransactionFactory(), source)
-
-        addMapper(ArtWorkInfoMapper::class.java)
-        addMapper(FileInfoMapper::class.java)
-        addMapper(StatisticInfoMapper::class.java)
-        addMapper(TagInfoMapper::class.java)
-        addMapper(UserInfoMapper::class.java)
-    }
-}
-
 internal fun PixivHelperSettings.init() {
     cacheFolder.mkdirs()
     backupFolder.mkdirs()
@@ -173,15 +109,15 @@ internal fun PixivHelperSettings.init() {
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    logger.info { "SQL: ${PixivSqlConfig.url}" }
-    PixivHelperPlugin.launch(SupervisorJob()) {
-        val count = useMappers { it.artwork.count() }
-        if (count < eroInterval) {
-            logger.warning {
-                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
-            }
-        }
-    }
+    // XXX
+//    PixivHelperPlugin.launch(SupervisorJob()) {
+//        val count = useMappers { it.artwork.count() }
+//        if (count < eroInterval) {
+//            logger.warning {
+//                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
+//            }
+//        }
+//    }
 }
 
 internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {

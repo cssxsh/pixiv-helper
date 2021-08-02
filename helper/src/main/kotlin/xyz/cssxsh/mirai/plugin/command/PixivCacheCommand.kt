@@ -5,6 +5,8 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.AliasSetting
+import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
@@ -77,7 +79,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存别名画师列表作品")
     suspend fun CommandSenderOnMessage<*>.alias() = withHelper {
-        useMappers { it.statistic.alias() }.also { list ->
+        AliasSetting.all().also { list ->
             addCacheJob(name = "ALIAS", reply = reply) { getAliasUserIllusts(list = list) }
         }.let {
             "别名列表中共${it.size}个画师需要缓存"
@@ -108,25 +110,25 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    @SubCommand("nocache")
-    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.noCache() = withHelper {
-        useMappers { it.artwork.noCache() }.also { set ->
-            addCacheJob(name = "NO_CACHE", write = false, reply = reply) { getListIllusts(set = set, flush = false) }
-        }.let {
-            "无文件信息有${it.size}个作品需要缓存"
-        }
-    }
-
-    @SubCommand("notag")
-    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.noTag() = withHelper {
-        useMappers { it.artwork.noTag() }.also { set ->
-            addCacheJob(name = "NO_TAG", write = false, reply = reply) { getListIllusts(set = set, flush = true) }
-        }.let {
-            "无标签信息有${it.size}个作品需要缓存"
-        }
-    }
+//    @SubCommand("nocache")
+//    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
+//    suspend fun CommandSenderOnMessage<*>.noCache() = withHelper {
+//        useMappers { it.artwork.noCache() }.also { set ->
+//            addCacheJob(name = "NO_CACHE", write = false, reply = reply) { getListIllusts(set = set, flush = false) }
+//        }.let {
+//            "无文件信息有${it.size}个作品需要缓存"
+//        }
+//    }
+//
+//    @SubCommand("notag")
+//    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
+//    suspend fun CommandSenderOnMessage<*>.noTag() = withHelper {
+//        useMappers { it.artwork.noTag() }.also { set ->
+//            addCacheJob(name = "NO_TAG", write = false, reply = reply) { getListIllusts(set = set, flush = true) }
+//        }.let {
+//            "无标签信息有${it.size}个作品需要缓存"
+//        }
+//    }
 
     @SubCommand
     @Description("缓存指定画师作品")
@@ -165,7 +167,7 @@ object PixivCacheCommand : CompositeCommand(
         val other = dir.resolve("other").apply { mkdirs() }
         dir.listFiles()?.forEach { source ->
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
-                if (useMappers { it.artwork.contains(id.toLong()) }) {
+                if (ArtWorkInfo.contains(id.toLong())) {
                     source.renameTo(exists.resolve(source.name))
                 } else {
                     list.add(id.toLong())
@@ -179,11 +181,12 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
-        useMappers { it.statistic.noCacheSearchResult() }.also {
-            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it) }
-        }.let {
-            "搜索结果有${it.size}个作品需要缓存"
-        }
+        TODO()
+//        useMappers { it.statistic.noCacheSearchResult() }.also {
+//            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it) }
+//        }.let {
+//            "搜索结果有${it.size}个作品需要缓存"
+//        }
     }
 
     @SubCommand

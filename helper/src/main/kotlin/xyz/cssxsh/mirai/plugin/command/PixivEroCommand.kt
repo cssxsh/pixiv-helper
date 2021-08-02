@@ -36,22 +36,21 @@ object PixivEroCommand : SimpleCommand(
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
         val result = good()
         if (result.isEmpty()) {
-            useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
-                caches[info.pid] = info
-            }
+            TODO()
+//            useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
+//                caches[info.pid] = info
+//            }
         }
         return good()
     }
 
-    private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
-        mappers.statistic.replaceEroInfo(
-            StatisticEroInfo(
-                sender = event.sender.id,
-                group = event.subject.takeIf { it is Group }?.id,
-                pid = pid,
-                timestamp = event.time.toLong()
-            )
-        )
+    private fun eroStatisticAdd(event: MessageEvent, pid: Long) {
+        StatisticEroInfo(
+            sender = event.sender.id,
+            group = event.subject.takeIf { it is Group }?.id,
+            pid = pid,
+            timestamp = event.time.toLong()
+        ).saveOrUpdate()
     }
 
     private val expire get() = System.currentTimeMillis() - EroUpExpire

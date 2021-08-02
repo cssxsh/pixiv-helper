@@ -6,7 +6,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
@@ -18,13 +18,11 @@ import java.time.YearMonth
 
 typealias LoadTask = suspend PixivHelper.() -> Flow<Collection<IllustInfo>>
 
-internal suspend fun active() = currentCoroutineContext().isActive
+private suspend fun active() = currentCoroutineContext().isActive
 
-internal fun Flow<Collection<IllustInfo>>.notCached() = map { list ->
-    useMappers { mappers ->
-        list.filterNot { mappers.artwork.contains(it.pid) }
-    }
-}
+internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
+
+internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filterNot { ArtWorkInfo.contains(it.pid) } }
 
 internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { list ->
     list.filter { it.type == type }
@@ -40,15 +38,11 @@ internal fun Flow<Collection<IllustInfo>>.isToday() = map { list ->
 }
 
 internal fun Flow<Collection<IllustInfo>>.notHistory(task: String) = map { list ->
-    val histories = useMappers { it.statistic.histories(name = task) }.map { it.pid }
+    val histories = emptyList<Long>() // XXX useMappers { it.statistic.histories(name = task) }.map { it.pid }
     list.filterNot { it.pid in histories }
 }
 
-internal fun List<NaviRankRecord>.cached() = useMappers { mappers ->
-    mapNotNull { record ->
-        mappers.artwork.findByPid(record.pid)
-    }
-}
+internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
 
 internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
@@ -218,9 +212,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
                     logger.warning({ "加载作品($pid)失败" }, it)
                 }
                 if (DELETE_REGEX in it.message.orEmpty()) {
-                    useMappers { mappers ->
-                        mappers.artwork.replaceArtWork(EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()))
-                    }
+                    EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()).saveOrUpdate()
                 }
             }.getOrNull()
         }.let {
@@ -232,9 +224,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
 }
 
 internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>) = flow {
-    useMappers { mappers ->
-        info.filterNot { mappers.artwork.contains(it.pid) }
-    }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+    info.filterNot { ArtWorkInfo.contains(it.pid) }.chunked(PAGE_SIZE.toInt()).forEach { list ->
         if (active()) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {
@@ -245,12 +235,8 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
                     logger.warning({ "加载作品信息($result)失败" }, it)
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("该作品已被删除")) {
-                    useMappers { mappers ->
-                        if (mappers.user.findByUid(result.uid) == null) {
-                            mappers.user.replaceUser(result.toUserBaseInfo())
-                        }
-                        mappers.artwork.replaceArtWork(result.toArtWorkInfo().copy(caption = it.message.orEmpty()))
-                    }
+                    result.toUserBaseInfo().save()
+                    result.toArtWorkInfo().copy(caption = it.message.orEmpty()).saveOrUpdate()
                 }
             }.getOrNull()
         }.let {
@@ -262,7 +248,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
 }
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    useMappers { it.statistic.alias() }.associateBy { it.uid }.keys.let { set ->
+    AliasSetting.all().associateBy { it.uid }.keys.let { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
             if (active()) runCatching {
@@ -394,7 +380,7 @@ internal fun localCache(range: LongRange) = flow {
             if (active()) second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
-                    useMappers { it.artwork.contains(dir.name.toLong()) } && file.canRead()
+                    ArtWorkInfo.contains(dir.name.toLong()) && file.canRead()
                 }?.readIllustInfo()
             }.let {
                 if (it.isNotEmpty()) {

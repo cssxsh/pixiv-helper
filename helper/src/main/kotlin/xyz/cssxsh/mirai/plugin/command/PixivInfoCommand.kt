@@ -32,15 +32,16 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.user(target: User = subject as User) = withHelper {
         buildMessageChain {
             appendLine("用户: ${target.nameCardOrNick}")
-            useMappers { mappers ->
-                appendLine("使用色图指令次数: ${mappers.statistic.senderEroInfos(target.id).size}")
-                mappers.statistic.senderTagInfos(target.id).run {
-                    appendLine("使用标签指令次数: $size")
-                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
-                        appendLine("检索最多的是 $tag ${list.size} 次")
-                    }
-                }
-            }
+            TODO()
+//            useMappers { mappers ->
+//                appendLine("使用色图指令次数: ${mappers.statistic.senderEroInfos(target.id).size}")
+//                mappers.statistic.senderTagInfos(target.id).run {
+//                    appendLine("使用标签指令次数: $size")
+//                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
+//                        appendLine("检索最多的是 $tag ${list.size} 次")
+//                    }
+//                }
+//            }
         }
     }
 
@@ -49,27 +50,28 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.group(target: Group = subject as Group) = withHelper {
         buildMessageChain {
             appendLine("群组: ${target.name}")
-            useMappers { mappers ->
-                mappers.statistic.groupEroInfos(target.id).run {
-                    appendLine("使用色图指令次数: $size")
-                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                        append("使用最多的是 ")
-                        append(At(id))
-                        append(" ${list.size} 次\n")
-                    }
-                }
-                mappers.statistic.groupTagInfos(target.id).run {
-                    appendLine("使用标签指令次数: $size")
-                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                        append("使用最多的是 ")
-                        append(At(id))
-                        append(" ${list.size} 次\n")
-                    }
-                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
-                        appendLine("检索最多的是 $tag ${list.size} 次")
-                    }
-                }
-            }
+            TODO()
+//            useMappers { mappers ->
+//                mappers.statistic.groupEroInfos(target.id).run {
+//                    appendLine("使用色图指令次数: $size")
+//                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
+//                        append("使用最多的是 ")
+//                        append(At(id))
+//                        append(" ${list.size} 次\n")
+//                    }
+//                }
+//                mappers.statistic.groupTagInfos(target.id).run {
+//                    appendLine("使用标签指令次数: $size")
+//                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
+//                        append("使用最多的是 ")
+//                        append(At(id))
+//                        append(" ${list.size} 次\n")
+//                    }
+//                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
+//                        appendLine("检索最多的是 $tag ${list.size} 次")
+//                    }
+//                }
+//            }
         }
     }
 
@@ -80,9 +82,10 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("# TAG指令关键词排行")
             appendLine("| index | name | count |")
             appendLine("| --- | --- | --- |")
-            useMappers { it.statistic.top(limit = limit) }.forEachIndexed { index, (name, count) ->
-                appendLine("| ${index + 1} | $name | $count |")
-            }
+            TODO()
+//            useMappers { it.statistic.top(limit = limit) }.forEachIndexed { index, (name, count) ->
+//                appendLine("| ${index + 1} | $name | $count |")
+//            }
         }
     }
 
@@ -90,11 +93,12 @@ object PixivInfoCommand : CompositeCommand(
     @Description("获取缓存信息")
     suspend fun CommandSenderOnMessage<*>.cache() = withHelper {
         buildMessageChain {
-            useMappers {
-                appendLine("缓存数: ${it.artwork.count()}")
-                appendLine("全年龄色图数: ${it.artwork.eroCount()}")
-                appendLine("R18色图数: ${it.artwork.r18Count()}")
-            }
+            TODO()
+//            useMappers {
+//                appendLine("缓存数: ${it.artwork.count()}")
+//                appendLine("全年龄色图数: ${it.artwork.eroCount()}")
+//                appendLine("R18色图数: ${it.artwork.r18Count()}")
+//            }
         }
     }
 }

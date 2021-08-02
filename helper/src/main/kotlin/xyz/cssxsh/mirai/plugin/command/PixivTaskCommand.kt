@@ -87,10 +87,11 @@ object PixivTaskCommand : CompositeCommand(
         buildMessageChain {
             PixivTaskData.tasks.forEach { (name, info) ->
                 appendLine("名称: $name , 间隔: ${info.interval}ms")
-                useMappers { it.statistic.histories(name = name) }.maxByOrNull { it.timestamp }?.let {
-                    val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
-                    appendLine("最后播放作品ID ${it.pid} 时间 $time")
-                }
+                // TODO
+//                useMappers { it.statistic.histories(name = name) }.maxByOrNull { it.timestamp }?.let {
+//                    val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
+//                    appendLine("最后播放作品ID ${it.pid} 时间 $time")
+//                }
             }
         }
     }
