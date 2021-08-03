@@ -11,7 +11,8 @@ object Versions {
     const val jsoup = "1.13.1"
     // other
     const val junit = "5.2.0"
+    const val hibernate = "5.5.5.Final"
     const val mybatis = "3.5.6"
-    const val sqliteJdbc = "3.34.0"
+    const val sqlite = "3.34.0"
     const val baidu = "0.1.0-dev-13"
 }

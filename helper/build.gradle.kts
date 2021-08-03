@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.0.4"
+version = "1.1.0"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -30,15 +30,15 @@ mirai {
 
 repositories {
     mavenLocal()
+    maven(url = "https://maven.aliyun.com/repository/public")
+    mavenCentral()
+    jcenter()
     maven(url = "https://maven.pkg.github.com/cssxsh/baidu-client") {
         credentials {
             username = System.getenv("GITHUB_ID")
             password = System.getenv("GITHUB_TOKEN")
         }
     }
-    maven(url = "https://maven.aliyun.com/repository/public")
-    mavenCentral()
-    jcenter()
     maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
 }
@@ -47,8 +47,10 @@ dependencies {
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
-    implementation(mybatis("mybatis", Versions.mybatis))
-    implementation(xerial("sqlite-jdbc", Versions.sqliteJdbc))
+    // implementation(mybatis("mybatis", Versions.mybatis))
+    implementation(hibernate("hibernate-core", Versions.hibernate))
+    implementation("com.github.gwenn:sqlite-dialect:0.1.2")
+    implementation(xerial("sqlite-jdbc", Versions.sqlite))
     implementation(project(":client"))
     implementation(project(":tools"))
     implementation(okhttp3("okhttp", Versions.okhttp))

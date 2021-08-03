@@ -11,7 +11,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.0.4") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.1.0") {
         name("pixiv-helper")
         author("cssxsh")
     }
@@ -19,7 +19,6 @@ object PixivHelperPlugin : KotlinPlugin(
 
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
-    // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
         Logger.getLogger("org.hibernate").level = Level.OFF
         HelperSqlConfiguration.load(configFolder)
