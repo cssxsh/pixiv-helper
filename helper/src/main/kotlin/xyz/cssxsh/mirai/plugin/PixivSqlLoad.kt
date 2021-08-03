@@ -84,7 +84,7 @@ internal fun reload(path: String, chunk: Int, callback: (Result<Pair<Table, Long
                 .forEach { list ->
                     session.transaction.begin()
                     runCatching {
-                        list.forEach { session.saveOrUpdate(it) }
+                        list.forEach { session.replicate(it, ReplicationMode.EXCEPTION) }
                         count += list.size
                         annotation to count
                     }.onSuccess {
@@ -313,9 +313,11 @@ internal fun Collection<IllustInfo>.saveOrUpdate(): Unit = useSession { session 
 
     runCatching {
         associate { info -> info.user.id to info.user }.values.forEach { user ->
+            if (user.id == 0L) return@forEach
             session.saveOrUpdate(user.toUserBaseInfo())
         }
         forEach { info ->
+            if (info.pid == 0L) return@forEach
             session.saveOrUpdate(info.toArtWorkInfo())
             info.toTagInfo().forEach { session.saveOrUpdate(it) }
         }
