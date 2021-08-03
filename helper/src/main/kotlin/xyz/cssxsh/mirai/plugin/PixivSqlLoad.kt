@@ -301,12 +301,13 @@ internal fun IllustInfo.saveOrUpdate(): Unit = useSession { session ->
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
     }.onFailure {
         session.transaction.rollback()
-        logger.info { "作品(${pid})信息记录失败" }
-    }
+        logger.warning({ "作品(${pid})信息记录失败 " }, it)
+    }.getOrThrow()
 }
 
 internal fun Collection<IllustInfo>.saveOrUpdate(): Unit = useSession { session ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
+    if (isEmpty()) return@useSession
     session.transaction.begin()
 
     runCatching {
@@ -320,8 +321,8 @@ internal fun Collection<IllustInfo>.saveOrUpdate(): Unit = useSession { session 
         logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
     }.onFailure {
         session.transaction.rollback()
-        logger.info { "作品{${first().pid..last().pid}}[${size}]信息记录失败" }
-    }
+        logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, it)
+    }.getOrThrow()
 }
 
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(id, name, account)
