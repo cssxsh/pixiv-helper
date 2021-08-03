@@ -312,8 +312,10 @@ internal fun Collection<IllustInfo>.saveOrUpdate(): Unit = useSession { session 
     session.transaction.begin()
 
     runCatching {
+        associate { info -> info.user.id to info.user }.values.forEach { user ->
+            session.saveOrUpdate(user.toUserBaseInfo())
+        }
         forEach { info ->
-            session.saveOrUpdate(info.user.toUserBaseInfo())
             session.saveOrUpdate(info.toArtWorkInfo())
             info.toTagInfo().forEach { session.saveOrUpdate(it) }
         }
