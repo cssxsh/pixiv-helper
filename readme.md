@@ -138,7 +138,7 @@ duration 单位分钟，默认3小时
 | `/<backup> <get> [filename]`                 | 获取备份文件，发送文件消息 |
 | `/<backup> <upload> [filename]`              | 上传插件数据到百度云       |
 | `/<backup> <auth>`                           | 百度云用户认证             |
-| `/<backup> <path> [path] [chunk]?`           | 从 sqlite 备份中导入数据   |
+| `/<backup> [reload] [path] [chunk]?`         | 从 sqlite 备份中导入数据   |
 
 ### 统计信息指令
 
