@@ -173,7 +173,7 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
             if (helper.contact is FileSupported) {
                 helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    (helper.contact).sendFile(path = file.name, file = file)
+                    helper.contact.sendFile(path = file.name, file = file)
                 }.onFailure {
                     helper.contact.sendMessage("上传失败: ${it.message}")
                 }
