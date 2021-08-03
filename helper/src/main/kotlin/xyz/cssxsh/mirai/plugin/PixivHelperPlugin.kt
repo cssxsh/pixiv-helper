@@ -7,6 +7,8 @@ import net.mamoe.mirai.console.plugin.jvm.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
+import java.util.logging.Level
+import java.util.logging.Logger
 
 object PixivHelperPlugin : KotlinPlugin(
     JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.0.4") {
@@ -19,6 +21,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
+        Logger.getLogger("org.hibernate").level = Level.OFF
         HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()

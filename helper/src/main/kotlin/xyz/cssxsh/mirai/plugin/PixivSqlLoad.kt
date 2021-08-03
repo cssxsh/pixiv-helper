@@ -11,8 +11,6 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.io.Serializable
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.persistence.criteria.*
 
 object HelperSqlConfiguration : Configuration() {
@@ -26,7 +24,6 @@ object HelperSqlConfiguration : Configuration() {
             """.trimIndent()
 
     init {
-        Logger.getLogger("org.hibernate").level = Level.OFF
         addAnnotatedClass(ArtWorkInfo::class.java)
         addAnnotatedClass(FileInfo::class.java)
         addAnnotatedClass(TagBaseInfo::class.java)
