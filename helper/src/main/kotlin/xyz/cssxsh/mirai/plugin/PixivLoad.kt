@@ -212,7 +212,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
                     logger.warning({ "加载作品($pid)失败" }, it)
                 }
                 if (DELETE_REGEX in it.message.orEmpty()) {
-                    EmptyArtWorkInfo.copy(pid = pid, caption = it.message.orEmpty()).saveOrUpdate()
+                    ArtWorkInfo(pid = pid, caption = it.message.orEmpty()).saveOrUpdate()
                 }
             }.getOrNull()
         }.let {

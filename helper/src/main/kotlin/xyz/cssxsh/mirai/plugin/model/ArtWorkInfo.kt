@@ -19,7 +19,7 @@ data class ArtWorkInfo(
     @Column(name = "page_count", nullable = false)
     val pageCount: Int = 0,
     @Column(name = "sanity_level", nullable = false)
-    val sanityLevel: Int = 0,
+    val sanityLevel: Int = SanityLevel.NONE.ordinal,
     @Column(name = "type", nullable = false)
     val type: Int = 0,
     @Column(name = "width", nullable = false)

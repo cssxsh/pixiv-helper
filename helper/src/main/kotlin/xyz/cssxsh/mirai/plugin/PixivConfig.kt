@@ -177,24 +177,3 @@ internal const val TASK_LOAD = PAGE_SIZE * 3
 internal const val TAG_TOP_LIMIT = 10L
 
 internal val CompletedJob: Job = Job().apply { complete() }
-
-internal val EmptyArtWorkInfo by lazy {
-    ArtWorkInfo(
-        pid = 0,
-        uid = 0,
-        title = "",
-        caption = "",
-        createAt = 0,
-        pageCount = 0,
-        sanityLevel = SanityLevel.NONE.ordinal,
-        type = 0,
-        width = 0,
-        height = 0,
-        totalBookmarks = 0,
-        totalComments = 0,
-        totalView = 0,
-        age = 0,
-        isEro = false,
-        deleted = false
-    )
-}

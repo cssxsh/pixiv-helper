@@ -59,7 +59,7 @@ internal fun ArtWorkInfo.saveOrUpdate() = useSession { session -> session.saveOr
 
 internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(uid = uid, name = name, account = "")
 
-internal fun SimpleArtworkInfo.toArtWorkInfo() = EmptyArtWorkInfo.copy(pid = pid, uid = uid, title = title)
+internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(pid, uid, title)
 
 internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     pid = pid,
