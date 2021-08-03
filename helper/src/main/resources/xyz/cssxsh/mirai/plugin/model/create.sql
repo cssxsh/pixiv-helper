@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER     NOT NULL,
     `name`            VARCHAR(30) NOT NULL,
-    `translated_name` VARCHAR(30),
+    `translated_name` TEXT,
     PRIMARY KEY (`name`, `pid`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
