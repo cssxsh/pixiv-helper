@@ -138,6 +138,7 @@ duration 单位分钟，默认3小时
 | `/<backup> <get> [filename]`                 | 获取备份文件，发送文件消息 |
 | `/<backup> <upload> [filename]`              | 上传插件数据到百度云       |
 | `/<backup> <auth>`                           | 百度云用户认证             |
+| `/<backup> <path> [path] [chunk]?`           | 从 sqlite 备份中导入数据   |
 
 ### 统计信息指令
 
@@ -202,8 +203,8 @@ KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https:
 ### hibernate.properties
 
 MCL 配置 mysql 举例，其他数据库类推  
-安装 驱动，`mysql:mysql-connector-java` 是驱动包名
-`.\mcl --update-package mysql:mysql-connector-java --type libs --channel stable`
+安装 驱动，`mysql:mysql-connector-java` 是驱动包名  
+`.\mcl --update-package mysql:mysql-connector-java --type libs --channel stable`  
 配置 链接
 
 ```
