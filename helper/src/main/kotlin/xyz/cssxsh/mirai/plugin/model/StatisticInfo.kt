@@ -9,7 +9,7 @@ data class StatisticEroInfo(
     @Id
     @Column(name = "sender", nullable = false)
     val sender: Long = 0,
-    @Column(name = "group", nullable = true)
+    @Column(name = "`group`", nullable = true)
     val group: Long? = null,
     @Column(name = "pid", nullable = false)
     val pid: Long = 0,
@@ -26,7 +26,7 @@ data class StatisticTagInfo(
     @Id
     @Column(name = "sender", nullable = false)
     val sender: Long = 0,
-    @Column(name = "group", nullable = true)
+    @Column(name = "`group`", nullable = true)
     val group: Long? = null,
     @Column(name = "pid", nullable = false)
     val pid: Long? = null,
