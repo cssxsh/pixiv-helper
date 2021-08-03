@@ -62,9 +62,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
             block.invoke(this@PixivHelper).collect { list ->
-                list.groupBy {
-                    ArtWorkInfo.contains(it.pid)
-                }.also { (success, failure) ->
+                list.groupBy { it.pid in ArtWorkInfo }.also { (success, failure) ->
                     list.saveOrUpdate()
                     success?.let { list ->
                         if (write) list.write()

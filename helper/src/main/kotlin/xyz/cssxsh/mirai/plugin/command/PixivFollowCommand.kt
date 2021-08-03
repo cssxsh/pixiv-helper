@@ -47,23 +47,6 @@ object PixivFollowCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.user(vararg uid: String) = follow { uid.map { it.toLong() }.toSet() }
 
     @SubCommand
-    @Description("关注色图缓存中的较好画师")
-    suspend fun CommandSenderOnMessage<*>.good() = follow {
-        val followed = getFollowed(uid = info().user.uid)
-        useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
-            if (count > EroInterval) uid else null
-        }.let {
-            logger.verbose { "共统计了${it.size}名画师" }
-            it - followed
-        }.sorted().also {
-            logger.info { "用户(${info().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
-            send {
-                "{${it.first()..it.last()}}共${it.size}个画师等待关注"
-            }
-        }.toSet()
-    }
-
-    @SubCommand
     @Description("关注指定用户的关注")
     suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = follow { getFollowed(uid = uid) }
 }

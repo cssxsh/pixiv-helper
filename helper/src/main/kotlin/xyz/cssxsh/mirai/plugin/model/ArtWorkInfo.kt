@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin.model
 
+import xyz.cssxsh.pixiv.*
 import javax.persistence.*
+import java.io.Serializable
 
 @Entity
 @Table(name = "artworks")
@@ -39,6 +41,15 @@ data class ArtWorkInfo(
     @Column(name = "deleted", nullable = false)
     val deleted: Boolean = true
 ) {
+//    @ManyToOne
+//    lateinit var author: UserBaseInfo
+//
+//    @OneToMany
+//    lateinit var files: List<FileInfo>
+//
+//    @OneToMany
+//    lateinit var tags: List<TagBaseInfo>
+
     companion object
 }
 
@@ -57,7 +68,7 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-)
+): Serializable
 
 @Entity
 @Table(name = "tags")
@@ -66,11 +77,11 @@ data class TagBaseInfo(
     @Column(name = "pid", nullable = false)
     val pid: Long = 0,
     @Id
-    @Column(name = "pid", nullable = false, length = 30)
+    @Column(name = "name", nullable = false, length = 30)
     val name: String = "",
     @Column(name = "translated_name", nullable = true, length = 30)
     val translatedName: String? = null
-)
+): Serializable
 
 @Entity
 @Table(name = "users")
@@ -83,5 +94,8 @@ data class UserBaseInfo(
     @Column(name = "account", nullable = false)
     val account: String = ""
 ) {
+    @OneToMany
+    lateinit var artworks: List<ArtWorkInfo>
+
     companion object
 }

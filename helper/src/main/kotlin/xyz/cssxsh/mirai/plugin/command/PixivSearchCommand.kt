@@ -39,7 +39,7 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
-        val cache = image.findSearchResult()
+        val cache = PixivSearchResult.find(image)
         if (cache != null) return@withHelper cache.getContent()
 
         if (ImageSearcher.key.isNotBlank()) {

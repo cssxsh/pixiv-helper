@@ -34,9 +34,9 @@ object PixivTagCommand : SimpleCommand(
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
     private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
-        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy)
+        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy, 1024)
         val persona = PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-            ArtWorkInfo.tag(character, bookmark, fuzzy) intersect ArtWorkInfo.tag(works, bookmark, fuzzy)
+            ArtWorkInfo.tag(character, bookmark, fuzzy, 1024) intersect ArtWorkInfo.tag(works, bookmark, fuzzy, 1024)
         }.orEmpty()
 
         return direct + persona

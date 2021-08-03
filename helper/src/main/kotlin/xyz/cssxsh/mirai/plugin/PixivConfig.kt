@@ -109,15 +109,13 @@ internal fun PixivHelperSettings.init() {
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    // XXX
-//    PixivHelperPlugin.launch(SupervisorJob()) {
-//        val count = useMappers { it.artwork.count() }
-//        if (count < eroInterval) {
-//            logger.warning {
-//                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
-//            }
-//        }
-//    }
+    PixivHelperPlugin.launch(SupervisorJob()) {
+        if (ArtWorkInfo.count() < eroInterval) {
+            logger.warning {
+                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
+            }
+        }
+    }
 }
 
 internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {
@@ -174,6 +172,6 @@ internal const val LOAD_LIMIT = 5_000L
 
 internal const val TASK_LOAD = PAGE_SIZE * 3
 
-internal const val TAG_TOP_LIMIT = 10L
+internal const val TAG_TOP_LIMIT = 10
 
 internal val CompletedJob: Job = Job().apply { complete() }

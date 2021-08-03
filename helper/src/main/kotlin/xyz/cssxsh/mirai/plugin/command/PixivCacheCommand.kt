@@ -7,6 +7,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.AliasSetting
 import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
+import xyz.cssxsh.mirai.plugin.model.PixivSearchResult
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
@@ -167,7 +168,7 @@ object PixivCacheCommand : CompositeCommand(
         val other = dir.resolve("other").apply { mkdirs() }
         dir.listFiles()?.forEach { source ->
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
-                if (ArtWorkInfo.contains(id.toLong())) {
+                if (id.toLong() in ArtWorkInfo) {
                     source.renameTo(exists.resolve(source.name))
                 } else {
                     list.add(id.toLong())
@@ -181,12 +182,11 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
-        TODO()
-//        useMappers { it.statistic.noCacheSearchResult() }.also {
-//            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it) }
-//        }.let {
-//            "搜索结果有${it.size}个作品需要缓存"
-//        }
+        PixivSearchResult.noCached().also {
+            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it) }
+        }.let {
+            "搜索结果有${it.size}个作品需要缓存"
+        }
     }
 
     @SubCommand

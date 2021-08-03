@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin.model
 
 import javax.persistence.*
+import java.io.Serializable
 
 @Entity
 @Table(name = "statistic_ero")
@@ -15,7 +16,9 @@ data class StatisticEroInfo(
     @Id
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
-)
+): Serializable {
+    companion object
+}
 
 @Entity
 @Table(name = "statistic_tag")
@@ -32,7 +35,9 @@ data class StatisticTagInfo(
     @Id
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
-)
+): Serializable {
+    companion object
+}
 
 @Entity
 @Table(name = "statistic_task")
@@ -45,7 +50,9 @@ data class StatisticTaskInfo(
     val pid: Long = 0,
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
-)
+): Serializable {
+    companion object
+}
 
 @Entity
 @Table(name = "statistic_alias")
@@ -56,6 +63,6 @@ data class AliasSetting(
     @Id
     @Column(name = "uid", nullable = false)
     val uid: Long = 0
-) {
+): Serializable {
     companion object
 }

@@ -22,24 +22,19 @@ private suspend fun active() = currentCoroutineContext().isActive
 
 internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
 
-internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filterNot { ArtWorkInfo.contains(it.pid) } }
+internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filterNot { it.pid in ArtWorkInfo } }
 
-internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { list ->
-    list.filter { it.type == type }
-}
+internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { list -> list.filter { it.type == type } }
 
-internal fun Flow<Collection<IllustInfo>>.eros() = map { list ->
-    list.filter { it.isEro() }
-}
+internal fun Flow<Collection<IllustInfo>>.eros() = map { list -> list.filter { it.isEro() } }
 
 internal fun Flow<Collection<IllustInfo>>.isToday() = map { list ->
     val now = LocalDate.now()
-    list.filter { (it.createAt.toLocalDate() == now) }
+    list.filter { it.createAt.toLocalDate() == now }
 }
 
 internal fun Flow<Collection<IllustInfo>>.notHistory(task: String) = map { list ->
-    val histories = emptyList<Long>() // XXX useMappers { it.statistic.histories(name = task) }.map { it.pid }
-    list.filterNot { it.pid in histories }
+    list.filterNot { (task to it.pid) in StatisticTaskInfo }
 }
 
 internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
@@ -224,7 +219,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
 }
 
 internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>) = flow {
-    info.filterNot { ArtWorkInfo.contains(it.pid) }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+    info.filterNot { it.pid in ArtWorkInfo }.chunked(PAGE_SIZE.toInt()).forEach { list ->
         if (active()) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {
@@ -380,7 +375,7 @@ internal fun localCache(range: LongRange) = flow {
             if (active()) second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
-                    ArtWorkInfo.contains(dir.name.toLong()) && file.canRead()
+                    dir.name.toLong() in ArtWorkInfo && file.canRead()
                 }?.readIllustInfo()
             }.let {
                 if (it.isNotEmpty()) {

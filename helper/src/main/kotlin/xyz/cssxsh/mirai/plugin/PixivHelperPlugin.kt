@@ -15,14 +15,11 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    internal val factory by lazy { HelperSqlConfiguration().buildSessionFactory() }
-
-    internal val session by lazy { factory.openSession() }
-
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
+        HelperSqlConfiguration.load(dataFolder)
         // Settings
         PixivHelperSettings.reload()
         PixivHelperSettings.save()
@@ -62,7 +59,6 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 
     override fun onDisable() {
-        synchronized(factory) { session.flush() }
         PixivBackupCommand.unregister()
         PixivCacheCommand.unregister()
         PixivDeleteCommand.unregister()
@@ -84,5 +80,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperListener.stop()
 
         PixivHelperScheduler.stop()
+
+        useSession { it.flush() }
     }
 }

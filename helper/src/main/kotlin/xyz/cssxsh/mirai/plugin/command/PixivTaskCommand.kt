@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.data.buildMessageChain
 import net.mamoe.mirai.message.data.toPlainText
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.PixivTaskData
+import xyz.cssxsh.mirai.plugin.model.StatisticTaskInfo
 import xyz.cssxsh.pixiv.*
 import java.time.Instant
 import java.time.ZoneOffset
@@ -87,11 +88,10 @@ object PixivTaskCommand : CompositeCommand(
         buildMessageChain {
             PixivTaskData.tasks.forEach { (name, info) ->
                 appendLine("名称: $name , 间隔: ${info.interval}ms")
-                // TODO
-//                useMappers { it.statistic.histories(name = name) }.maxByOrNull { it.timestamp }?.let {
-//                    val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
-//                    appendLine("最后播放作品ID ${it.pid} 时间 $time")
-//                }
+                StatisticTaskInfo.last(name)?.let {
+                    val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
+                    appendLine("最后播放作品ID ${it.pid} 时间 $time")
+                }
             }
         }
     }
