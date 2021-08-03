@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 
 @Serializable
 data class PixivArticle(

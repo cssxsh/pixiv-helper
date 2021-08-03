@@ -1,10 +1,8 @@
 package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
-import net.mamoe.mirai.event.Listener
-import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.event.globalEventChannel
-import net.mamoe.mirai.event.subscribeMessages
+import net.mamoe.mirai.event.*
+import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 

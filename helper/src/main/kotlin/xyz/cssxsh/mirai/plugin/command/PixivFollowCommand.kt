@@ -1,14 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.apps.*
 
 object PixivFollowCommand : CompositeCommand(
@@ -17,7 +13,7 @@ object PixivFollowCommand : CompositeCommand(
     description = "PIXIV关注指令"
 ) {
 
-    private var PixivHelper.follow by PixivHelperDelegate { CancelledJob }
+    private var PixivHelper.follow by PixivHelperDelegate { CompletedJob }
 
     private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }
@@ -46,23 +42,6 @@ object PixivFollowCommand : CompositeCommand(
     @SubCommand
     @Description("为当前助手关注指定用户")
     suspend fun CommandSenderOnMessage<*>.user(vararg uid: String) = follow { uid.map { it.toLong() }.toSet() }
-
-    @SubCommand
-    @Description("关注色图缓存中的较好画师")
-    suspend fun CommandSenderOnMessage<*>.good() = follow {
-        val followed = getFollowed(uid = info().user.uid)
-        useMappers { it.artwork.userEroCount() }.mapNotNull { (uid, count) ->
-            if (count > EroInterval) uid else null
-        }.let {
-            logger.verbose { "共统计了${it.size}名画师" }
-            it - followed
-        }.sorted().also {
-            logger.info { "用户(${info().user.uid})已关注${followed.size}, 共有${it.size}个用户等待关注" }
-            send {
-                "{${it.first()..it.last()}}共${it.size}个画师等待关注"
-            }
-        }.toSet()
-    }
 
     @SubCommand
     @Description("关注指定用户的关注")

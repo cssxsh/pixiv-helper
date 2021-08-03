@@ -2,8 +2,7 @@ package xyz.cssxsh.mirai.plugin.data
 
 import io.ktor.http.*
 import io.ktor.util.date.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 
 @Serializable
 data class EditThisCookie(

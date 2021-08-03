@@ -4,25 +4,18 @@ import io.ktor.client.features.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.utils.*
-import org.apache.ibatis.mapping.Environment
-import org.apache.ibatis.session.Configuration
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
-import org.sqlite.JDBC
-import org.sqlite.SQLiteConfig
-import org.sqlite.javax.SQLiteConnectionPoolDataSource
-import xyz.cssxsh.baidu.disk.getUserInfo
+import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
-import java.io.IOException
-import java.time.OffsetDateTime
-import kotlin.math.sqrt
+import java.io.*
+import java.time.*
+import kotlin.math.*
 
 typealias Ignore = suspend (Throwable) -> Boolean
 
@@ -107,51 +100,17 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-internal val InitSqlConfiguration = Configuration()
-
-internal fun Configuration.init() {
-    environment = Environment("development", JdbcTransactionFactory(), SQLiteConnectionPoolDataSource().apply {
-        config.apply {
-            enforceForeignKeys(true)
-            setCacheSize(8196)
-            setPageSize(8196)
-            setJournalMode(SQLiteConfig.JournalMode.MEMORY)
-            enableCaseSensitiveLike(true)
-            setTempStore(SQLiteConfig.TempStore.MEMORY)
-            setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-            setEncoding(SQLiteConfig.Encoding.UTF8)
-            PixivHelperSettings.sqliteConfig.forEach { (pragma, value) ->
-                setPragma(pragma, value)
-            }
-        }
-        url = "${JDBC.PREFIX}${PixivHelperSettings.sqlite.absolutePath}"
-    })
-    addMapper(ArtWorkInfoMapper::class.java)
-    addMapper(FileInfoMapper::class.java)
-    addMapper(StatisticInfoMapper::class.java)
-    addMapper(TagInfoMapper::class.java)
-    addMapper(UserInfoMapper::class.java)
-}
-
 internal fun PixivHelperSettings.init() {
     cacheFolder.mkdirs()
     backupFolder.mkdirs()
     tempFolder.mkdirs()
     profilesFolder.mkdirs()
     articlesFolder.mkdirs()
-    if (sqlite.exists().not()) {
-        this::class.java.getResourceAsStream("pixiv.sqlite")?.use {
-            sqlite.writeBytes(it.readAllBytes())
-        }
-    }
-    PixivHelperPlugin.sqlSessionFactory.configuration.init()
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
-    logger.info { "Sqlite: ${sqlite.absolutePath}" }
     PixivHelperPlugin.launch(SupervisorJob()) {
-        val count = useMappers { it.artwork.count() }
-        if (count < eroInterval) {
+        if (ArtWorkInfo.count() < eroInterval) {
             logger.warning {
                 "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
             }
@@ -213,27 +172,6 @@ internal const val LOAD_LIMIT = 5_000L
 
 internal const val TASK_LOAD = PAGE_SIZE * 3
 
-internal const val TAG_TOP_LIMIT = 10L
+internal const val TAG_TOP_LIMIT = 10
 
-internal val CancelledJob: Job = Job().apply { cancel() }
-
-internal val EmptyArtWorkInfo by lazy {
-    ArtWorkInfo(
-        pid = 0,
-        uid = 0,
-        title = "",
-        caption = "",
-        createAt = 0,
-        pageCount = 0,
-        sanityLevel = SanityLevel.NONE.ordinal,
-        type = 0,
-        width = 0,
-        height = 0,
-        totalBookmarks = 0,
-        totalComments = 0,
-        totalView = 0,
-        age = 0,
-        isEro = false,
-        deleted = false
-    )
-}
+internal val CompletedJob: Job = Job().apply { complete() }

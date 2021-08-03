@@ -3,23 +3,20 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.data.*
-import xyz.cssxsh.mirai.plugin.dao.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
-import java.lang.IllegalStateException
+import java.lang.*
 
 internal val logger by PixivHelperPlugin::logger
 
@@ -93,30 +90,6 @@ internal val EroInterval by PixivHelperSettings::eroInterval
  * 涩图提高收藏数时间
  */
 internal val EroUpExpire by PixivHelperSettings::eroUpExpire
-
-internal data class Mappers(
-    val artwork: ArtWorkInfoMapper,
-    val file: FileInfoMapper,
-    val user: UserInfoMapper,
-    val tag: TagInfoMapper,
-    val statistic: StatisticInfoMapper,
-)
-
-internal fun <T> useMappers(block: (Mappers) -> T) = PixivHelperPlugin.useSession { session ->
-    Mappers(
-        artwork = session.getMapper(ArtWorkInfoMapper::class.java),
-        file = session.getMapper(FileInfoMapper::class.java),
-        user = session.getMapper(UserInfoMapper::class.java),
-        tag = session.getMapper(TagInfoMapper::class.java),
-        statistic = session.getMapper(StatisticInfoMapper::class.java)
-    ).let(block)
-}
-
-internal fun UserPreview.isLoaded() = useMappers { mappers -> illusts.all { mappers.artwork.contains(it.pid) } }
-
-internal fun UserInfo.count() = useMappers { it.artwork.countByUid(id) }
-
-internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
 
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
@@ -221,7 +194,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }
     preview.illusts.filter { it.isEro() }.forEach { illust ->
         runCatching {
-            illust.save()
+            illust.saveOrUpdate()
             val files = illust.getImages()
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
@@ -253,88 +226,14 @@ internal fun IllustInfo.isEro(): Boolean {
     if (ero.types.isNotEmpty() && type !in ero.types) return false
     if (totalBookmarks ?: 0 <= ero.bookmarks) return false
     if (pageCount > ero.pages) return false
-    if (tags.any { ero.tagExclude in it.name  || ero.tagExclude in it.translatedName.orEmpty() }) return false
+    if (tags.any { ero.tagExclude in it.name || ero.tagExclude in it.translatedName.orEmpty() }) return false
     if (user.id in ero.userExclude) return true
     return true
 }
 
-internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, account = account)
-
-internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(uid = uid, name = name, account = "")
-
-internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
-    pid = pid,
-    uid = user.id,
-    title = title,
-    caption = caption,
-    createAt = createAt.toEpochSecond(),
-    pageCount = pageCount,
-    sanityLevel = sanityLevel.ordinal,
-    type = type.ordinal,
-    width = width,
-    height = height,
-    totalBookmarks = totalBookmarks ?: 0,
-    totalComments = totalComments ?: 0,
-    totalView = totalView ?: 0,
-    age = age.ordinal,
-    isEro = isEro(),
-    deleted = false
-)
-
-internal fun SimpleArtworkInfo.toArtWorkInfo() = EmptyArtWorkInfo.copy(pid = pid, uid = uid, title = title)
-
-internal fun IllustInfo.toTagInfo() = tags.map {
-    TagBaseInfo(pid = pid, name = it.name, translatedName = it.translatedName)
-}
-
-internal fun UserInfoMapper.add(user: UserBaseInfo) =
-    if (findByUid(user.uid) != null) updateUser(user) else replaceUser(user)
-
 internal fun IllustInfo.check() = apply {
     check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
-
-internal fun IllustInfo.save(): Unit = useMappers { mappers ->
-    mappers.user.add(user.toUserBaseInfo())
-    mappers.artwork.replaceArtWork(toArtWorkInfo())
-    if (tags.isNotEmpty()) {
-        mappers.tag.replaceTags(toTagInfo())
-    }
-    logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已设置" }
-}
-
-internal fun Collection<IllustInfo>.update(): Unit = useMappers { mappers ->
-    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
-
-    forEach { info ->
-        mappers.artwork.updateArtWork(info.toArtWorkInfo())
-        if (info.tags.isNotEmpty()) {
-            mappers.tag.replaceTags(info.toTagInfo())
-        }
-    }
-
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
-}
-
-internal fun Collection<IllustInfo>.save(): Unit = useMappers { mappers ->
-    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将插入" }
-
-    forEach { info ->
-        mappers.user.add(info.user.toUserBaseInfo())
-        mappers.artwork.replaceArtWork(info.toArtWorkInfo())
-        if (info.tags.isNotEmpty()) {
-            mappers.tag.replaceTags(info.toTagInfo())
-        }
-    }
-
-    logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已插入" }
-}
-
-internal fun UserInfo.save(): Unit = useMappers { it.user.add(toUserBaseInfo()) }
-
-internal fun Image.findSearchResult() = useMappers { it.statistic.findSearchResult(md5.toByteString().hex()) }
-
-internal fun PixivSearchResult.save() = useMappers { it.statistic.replaceSearchResult(this) }
 
 private val Json_ = Json {
     prettyPrint = true
@@ -356,8 +255,8 @@ internal fun IllustInfo.write(file: File = json(pid)) {
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
-private val FlushIllustInfo : suspend PixivHelper.(Long) -> IllustInfo = { pid ->
-    illustDetail(pid).illust.check().apply { save() }
+private val FlushIllustInfo: suspend PixivHelper.(Long) -> IllustInfo = { pid ->
+    illustDetail(pid).illust.check().apply { saveOrUpdate() }
 }
 
 internal suspend fun PixivHelper.getIllustInfo(
@@ -429,10 +328,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
-        results.takeIf { it.isNotEmpty() }?.let { list ->
-            if (useMappers { it.artwork.contains(pid).not() }) save()
-            useMappers { it.file.replaceFiles(list) }
-        }
+        results.saveOrUpdate()
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
             "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size}]{${totalBookmarks}}下载完成"
@@ -463,14 +359,13 @@ internal fun Long.toBytesSize() = when (this) {
     else -> throw IllegalStateException("Too Big")
 }
 
-internal fun getBackupList() = mapOf(
-    "DATA" to PixivHelperPlugin.dataFolder,
-    "CONFIG" to PixivHelperPlugin.configFolder,
-    "DATABASE" to PixivHelperSettings.sqlite
-)
+internal fun getBackupList(): Map<String, File> {
+    return mapOf("DATA" to PixivHelperPlugin.dataFolder, "CONFIG" to PixivHelperPlugin.configFolder)
+}
 
 internal suspend fun PixivHelper.redirect(account: String): Long {
-    useMappers { it.user.findByAccount(account = account) }?.let { return@redirect it.uid }
+    check(account.isNotBlank()) { "Account is Blank" }
+    UserBaseInfo.account(account)?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
     return useHttpClient { client ->
         client.head<HttpResponse>(url).request.url

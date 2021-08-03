@@ -1,17 +1,18 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
-import java.time.OffsetDateTime
-import kotlin.coroutines.CoroutineContext
+import java.time.*
+import kotlin.coroutines.*
 
 /**
  * 助手实例
@@ -61,17 +62,13 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         runCatching {
             block.invoke(this@PixivHelper).collect { list ->
-                useMappers { mappers ->
-                    list.groupBy {
-                        mappers.artwork.contains(it.pid)
-                    }
-                }.also { (success, failure) ->
+                list.groupBy { it.pid in ArtWorkInfo }.also { (success, failure) ->
+                    list.saveOrUpdate()
                     success?.let { list ->
                         if (write) list.write()
-                        list.update()
                     }
                     failure?.let { list ->
-                        list.write().save()
+                        list.write()
                         val downloads = list.filter { it.isEro() }.sortedBy { it.pid }
                         this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
                     }

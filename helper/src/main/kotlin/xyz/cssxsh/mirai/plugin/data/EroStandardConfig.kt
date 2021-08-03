@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.plugin.data
 
-import xyz.cssxsh.pixiv.WorkContentType
+import xyz.cssxsh.pixiv.*
 
 interface EroStandardConfig {
 

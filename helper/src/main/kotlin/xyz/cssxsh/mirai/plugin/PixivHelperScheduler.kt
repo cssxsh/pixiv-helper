@@ -1,12 +1,10 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.*
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScope
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.mirai.plugin.data.PixivTaskData
+import xyz.cssxsh.mirai.plugin.data.*
 
-@ConsoleExperimentalApi
 object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("")  {
     private val tasks by PixivTaskData::tasks
 

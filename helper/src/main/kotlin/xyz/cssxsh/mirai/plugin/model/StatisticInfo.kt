@@ -1,40 +1,68 @@
 package xyz.cssxsh.mirai.plugin.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import javax.persistence.*
+import java.io.*
 
-@Serializable
+@Entity
+@Table(name = "statistic_ero")
 data class StatisticEroInfo(
-    @SerialName("sender")
-    val sender: Long,
-    @SerialName("group")
-    val group: Long?,
-    @SerialName("pid")
-    val pid: Long,
-    @SerialName("timestamp")
-    val timestamp: Long
-)
+    @Id
+    @Column(name = "sender", nullable = false)
+    val sender: Long = 0,
+    @Column(name = "`group`", nullable = true)
+    val group: Long? = null,
+    @Column(name = "pid", nullable = false)
+    val pid: Long = 0,
+    @Id
+    @Column(name = "timestamp", nullable = false)
+    val timestamp: Long = 0
+): Serializable {
+    companion object
+}
 
-@Serializable
+@Entity
+@Table(name = "statistic_tag")
 data class StatisticTagInfo(
-    @SerialName("sender")
-    val sender: Long,
-    @SerialName("group")
-    val group: Long?,
-    @SerialName("pid")
-    val pid: Long?,
-    @SerialName("tag")
-    val tag: String,
-    @SerialName("timestamp")
-    val timestamp: Long
-)
+    @Id
+    @Column(name = "sender", nullable = false)
+    val sender: Long = 0,
+    @Column(name = "`group`", nullable = true)
+    val group: Long? = null,
+    @Column(name = "pid", nullable = false)
+    val pid: Long? = null,
+    @Column(name = "tag", nullable = false)
+    val tag: String = "",
+    @Id
+    @Column(name = "timestamp", nullable = false)
+    val timestamp: Long = 0
+): Serializable {
+    companion object
+}
 
-@Serializable
+@Entity
+@Table(name = "statistic_task")
 data class StatisticTaskInfo(
-    @SerialName("sender")
-    val task: String,
-    @SerialName("pid")
-    val pid: Long,
-    @SerialName("timestamp")
-    val timestamp: Long
-)
+    @Id
+    @Column(name = "task", nullable = false)
+    val task: String = "",
+    @Id
+    @Column(name = "pid", nullable = false)
+    val pid: Long = 0,
+    @Column(name = "timestamp", nullable = false)
+    val timestamp: Long = 0
+): Serializable {
+    companion object
+}
+
+@Entity
+@Table(name = "statistic_alias")
+data class AliasSetting(
+    @Id
+    @Column(name = "alias", nullable = false)
+    val alias: String = "",
+    @Id
+    @Column(name = "uid", nullable = false)
+    val uid: Long = 0
+): Serializable {
+    companion object
+}

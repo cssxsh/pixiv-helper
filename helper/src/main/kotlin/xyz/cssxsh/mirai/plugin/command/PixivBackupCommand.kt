@@ -1,21 +1,17 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import net.mamoe.mirai.console.command.CommandSender
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.MemberCommandSenderOnMessage
-import net.mamoe.mirai.message.data.content
-import net.mamoe.mirai.message.nextMessage
+import kotlinx.coroutines.sync.*
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
-import xyz.cssxsh.baidu.disk.getUserInfo
-import xyz.cssxsh.baidu.format
+import xyz.cssxsh.baidu.disk.*
+import xyz.cssxsh.baidu.*
 import xyz.cssxsh.baidu.oauth.*
-import xyz.cssxsh.baidu.getRapidUploadInfo
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.io.File
 
@@ -65,7 +61,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定用户的作品")
     fun CommandSender.user(uid: Long) = compress {
-        compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]").let {
+        compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]").let {
             listOf(it)
         }
     }
@@ -73,8 +69,8 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
-        useMappers { it.statistic.alias() }.associateBy { it.uid }.map { (uid, _) ->
-            compressArtWorks(list = useMappers { it.artwork.userArtWork(uid) }, basename = "USER[${uid}]")
+        AliasSetting.all().map { it.uid }.toSet().map { uid ->
+            compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
         }
     }
 
@@ -82,7 +78,7 @@ object PixivBackupCommand : CompositeCommand(
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
         compressArtWorks(
-            list = useMappers { it.artwork.findByTag(tag, bookmark, fuzzy) },
+            list = ArtWorkInfo.tag(tag, bookmark, fuzzy, Int.MAX_VALUE),
             basename = "TAG[${tag}]"
         ).let {
             listOf(it)
@@ -134,7 +130,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("百度云用户认证")
     fun CommandSenderOnMessage<*>.auth() = upload {
-        sendMessage("请打开连接，然后在十分钟内输入获得的认证码: ${getWebAuthorizeUrl(type = AuthorizeType.AUTHORIZATION)}")
+        sendMessage("请打开连接，然后在十分钟内输入获得的授权码: ${getWebAuthorizeUrl(type = AuthorizeType.AUTHORIZATION)}")
         runCatching {
             val code = fromEvent.nextMessage(10 * 60 * 1000L).content.trim()
             getAuthorizeToken(code = code).also { saveToken(token = it) } to getUserInfo()
@@ -145,5 +141,18 @@ object PixivBackupCommand : CompositeCommand(
             logger.warning({ "认证失败" }, it)
             sendMessage("百度云用户认证失败, ${it.message}")
         }
+    }
+
+    @SubCommand
+    @Description("从 sqlite 备份中导入数据")
+    suspend fun CommandSender.reload(path: String, chunk: Int = 8196) {
+        reload(path, chunk) { result ->
+            result.onSuccess { (table, count) ->
+                logger.info { "${table.name}已导入${count}条数据" }
+            }.onFailure {
+                logger.warning { "导入失败 ${it}" }
+            }
+        }
+        sendMessage("导入完成")
     }
 }

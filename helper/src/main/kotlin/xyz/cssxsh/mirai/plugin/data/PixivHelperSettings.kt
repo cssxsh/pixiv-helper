@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.*
-import net.mamoe.mirai.console.data.PluginDataExtensions.mapKeys
-import org.sqlite.SQLiteConfig
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
@@ -55,18 +53,9 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("涩图标准 排除的UID")
     override val userExclude: Set<Long> by value(emptySet())
 
-    @ValueName("sqlite_database")
-    @ValueDescription("数据库文件位置")
-    private val sqliteDatabase: String by value("")
-
     @ValueName("proxy")
     @ValueDescription("代理")
     val proxy: String by value("")
-
-    @ValueName("sqlite_config")
-    @ValueDescription("数据库配置")
-    val sqliteConfig: Map<SQLiteConfig.Pragma, String> by value<Map<String, String>>()
-        .mapKeys({ SQLiteConfig.Pragma.valueOf(it) }, { it.name })
 
     private fun getPath(path: String, default: String) =
         if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
@@ -103,9 +92,4 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
         .resolve("%03d______".format(pid / 1_000_000))
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
-
-    /**
-     * 数据库文件路径
-     */
-    val sqlite: File get() = getPath(sqliteDatabase, "pixiv.sqlite")
 }

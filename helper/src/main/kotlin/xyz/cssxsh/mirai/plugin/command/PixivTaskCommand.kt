@@ -1,15 +1,13 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import io.ktor.http.*
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.message.data.buildMessageChain
-import net.mamoe.mirai.message.data.toPlainText
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.PixivTaskData
+import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
-import java.time.Instant
-import java.time.ZoneOffset
+import java.time.*
 
 object PixivTaskCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -87,7 +85,7 @@ object PixivTaskCommand : CompositeCommand(
         buildMessageChain {
             PixivTaskData.tasks.forEach { (name, info) ->
                 appendLine("名称: $name , 间隔: ${info.interval}ms")
-                useMappers { it.statistic.histories(name = name) }.maxByOrNull { it.timestamp }?.let {
+                StatisticTaskInfo.last(name)?.let {
                     val time = Instant.ofEpochSecond(it.timestamp).atOffset(ZoneOffset.UTC)
                     appendLine("最后播放作品ID ${it.pid} 时间 $time")
                 }

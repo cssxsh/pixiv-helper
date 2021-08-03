@@ -1,13 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.descriptor.*
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.utils.*
-import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -18,8 +14,6 @@ object PixivSearchCommand : SimpleCommand(
     description = "PIXIV搜索指令，通过https://saucenao.com/"
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private fun MessageChain.getQuoteImage(): Image {
@@ -34,13 +28,13 @@ object PixivSearchCommand : SimpleCommand(
     private suspend fun json(image: Image) = ImageSearcher.json(url = image.queryUrl())
 
     private fun List<PixivSearchResult>.save(image: Image) = filter { it.similarity > MIN_SIMILARITY }.apply {
-        (maxByOrNull { it.similarity } ?: return@apply).copy(md5 = image.md5.toByteString().hex()).save()
+        (maxByOrNull { it.similarity } ?: return@apply).save(image)
     }
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
-        val cache = image.findSearchResult()
+        val cache = PixivSearchResult.find(image)
         if (cache != null) return@withHelper cache.getContent()
 
         if (ImageSearcher.key.isNotBlank()) {

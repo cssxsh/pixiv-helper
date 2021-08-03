@@ -1,11 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.event.events.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 
@@ -15,8 +12,6 @@ object PixivEroCommand : SimpleCommand(
     description = "PIXIV色图指令"
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
@@ -36,22 +31,18 @@ object PixivEroCommand : SimpleCommand(
     private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
         val result = good()
         if (result.isEmpty()) {
-            useMappers { it.artwork.eroRandom(EroInterval, minSanityLevel, minBookmarks) }.forEach { info ->
-                caches[info.pid] = info
-            }
+            ArtWorkInfo.random(minSanityLevel, minBookmarks, EroInterval).forEach { info -> caches[info.pid] = info }
         }
         return good()
     }
 
-    private fun eroStatisticAdd(event: MessageEvent, pid: Long): Boolean = useMappers { mappers ->
-        mappers.statistic.replaceEroInfo(
-            StatisticEroInfo(
-                sender = event.sender.id,
-                group = event.subject.takeIf { it is Group }?.id,
-                pid = pid,
-                timestamp = event.time.toLong()
-            )
-        )
+    private fun eroStatisticAdd(event: MessageEvent, pid: Long) {
+        StatisticEroInfo(
+            sender = event.sender.id,
+            group = event.subject.takeIf { it is Group }?.id,
+            pid = pid,
+            timestamp = event.time.toLong()
+        ).saveOrUpdate()
     }
 
     private val expire get() = System.currentTimeMillis() - EroUpExpire

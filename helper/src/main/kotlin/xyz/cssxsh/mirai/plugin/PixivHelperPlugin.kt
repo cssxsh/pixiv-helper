@@ -2,37 +2,25 @@ package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
-import net.mamoe.mirai.console.data.PluginConfig
-import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
-import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import org.apache.ibatis.session.SqlSession
-import org.apache.ibatis.session.SqlSessionFactory
-import org.apache.ibatis.session.SqlSessionFactoryBuilder
+import net.mamoe.mirai.console.data.*
+import net.mamoe.mirai.console.plugin.jvm.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
+import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.0.4") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.1.0") {
         name("pixiv-helper")
         author("cssxsh")
     }
 ) {
 
-    internal val sqlSessionFactory: SqlSessionFactory by lazy {
-        SqlSessionFactoryBuilder().build(InitSqlConfiguration)
-    }
-
-    internal fun <T> useSession(block: (SqlSession) -> T) = synchronized(sqlSessionFactory) {
-        sqlSessionFactory.openSession(false).use { session ->
-            session.let(block).also { session.commit() }
-        }
-    }
-
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
-    // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
+        Logger.getLogger("org.hibernate").level = Level.OFF
+        HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()
         PixivHelperSettings.save()
@@ -93,5 +81,7 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperListener.stop()
 
         PixivHelperScheduler.stop()
+
+        useSession { it.flush() }
     }
 }

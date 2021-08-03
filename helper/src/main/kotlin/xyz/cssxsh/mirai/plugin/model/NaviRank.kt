@@ -1,7 +1,7 @@
 package xyz.cssxsh.mirai.plugin.model
 
-import xyz.cssxsh.pixiv.WorkContentType
-import java.time.LocalDate
+import xyz.cssxsh.pixiv.*
+import java.time.*
 
 data class NaviRankAllTime(
     val title: String,

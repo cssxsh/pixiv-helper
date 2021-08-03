@@ -1,12 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.flow.onCompletion
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import kotlinx.coroutines.flow.*
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
@@ -17,29 +14,27 @@ object PixivTagCommand : SimpleCommand(
     description = "PIXIV标签"
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
-    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?): Boolean = useMappers { mappers ->
-        mappers.statistic.replaceTagInfo(StatisticTagInfo(
+    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?) {
+        StatisticTagInfo(
             sender = event.sender.id,
             group = event.subject.takeIf { it is Group }?.id,
             pid = pid,
             tag = tag,
             timestamp = event.time.toLong()
-        ))
+        ).saveOrUpdate()
     }
 
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
-    private fun tags(tag: String, bookmark: Long, fuzzy: Boolean) = useMappers {
-        val direct = it.artwork.findByTag(tag, bookmark, fuzzy)
+    private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
+        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy, 1024)
         val persona = PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-            it.artwork.findByTag(character, bookmark, fuzzy) intersect it.artwork.findByTag(works, bookmark, fuzzy)
+            ArtWorkInfo.tag(character, bookmark, fuzzy, 1024) intersect ArtWorkInfo.tag(works, bookmark, fuzzy, 1024)
         }.orEmpty()
 
-        direct + persona
+        return direct + persona
     }
 
     private const val TAG_NAME_MAX = 30

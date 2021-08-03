@@ -2,14 +2,11 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.request.*
 import io.ktor.http.*
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import org.jsoup.nodes.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.pixiv.WorkContentType
-import java.time.LocalDate
-import java.time.Year
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
+import xyz.cssxsh.pixiv.*
+import java.time.*
+import java.time.format.*
 
 object NaviRank : HtmlParser(name = "NaviRank") {
 

@@ -2,8 +2,8 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.request.*
 import io.ktor.http.*
-import org.jsoup.nodes.Document
-import xyz.cssxsh.mirai.plugin.model.PixivArticle
+import org.jsoup.nodes.*
+import xyz.cssxsh.mirai.plugin.model.*
 import java.util.*
 
 object Pixivision : HtmlParser(name = "Pixivision") {

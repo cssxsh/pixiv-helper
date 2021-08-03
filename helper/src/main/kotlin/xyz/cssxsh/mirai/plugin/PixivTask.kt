@@ -1,11 +1,11 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.http.*
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.message.data.toPlainText
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.*
@@ -13,8 +13,8 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.time.OffsetDateTime
-import kotlin.properties.ReadOnlyProperty
+import java.time.*
+import kotlin.properties.*
 
 internal data class CacheTask(
     val name: String,
@@ -108,13 +108,11 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         send {
             "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
         }
-        useMappers {
-            it.statistic.addHistory(StatisticTaskInfo(
-                task = name,
-                pid = illust.pid,
-                timestamp = OffsetDateTime.now().toEpochSecond()
-            ))
-        }
+        StatisticTaskInfo(
+            task = name,
+            pid = illust.pid,
+            timestamp = OffsetDateTime.now().toEpochSecond()
+        ).saveOrUpdate()
     }
 }
 
@@ -150,12 +148,12 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 
 internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
     is TimerTask.User -> {
-        info.helper.subscribe(name = name) {
+        info.helper.subscribe(name) {
             getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday()
         }
     }
     is TimerTask.Rank -> {
-        info.helper.subscribe(name = name) {
+        info.helper.subscribe(name) {
             getRank(mode = info.mode).eros()
         }
     }

@@ -1,28 +1,39 @@
 package xyz.cssxsh.mirai.plugin.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import javax.persistence.*
 
 sealed interface SearchResult {
     val similarity: Double
 }
 
 @Serializable
+@Entity
+@Table(name = "statistic_search")
 data class PixivSearchResult(
+    @Id
+    @Column(name = "md5", nullable = false)
     @SerialName("md5")
     val md5: String = "",
+    @Column(name = "similarity", nullable = false)
     @SerialName("similarity")
     override val similarity: Double = 0.0,
+    @Column(name = "pid", nullable = false)
     @SerialName("pixiv_id")
-    override val pid: Long,
+    override val pid: Long = 0,
+    @Column(name = "title", nullable = false)
     @SerialName("title")
-    override val title: String,
+    override val title: String = "",
+    @Column(name = "uid", nullable = false)
     @SerialName("member_id")
-    override val uid: Long,
+    override val uid: Long = 0,
+    @Column(name = "name", nullable = false)
     @SerialName("member_name")
-    override val name: String
-): SimpleArtworkInfo, SearchResult
+    override val name: String = ""
+): SimpleArtworkInfo, SearchResult {
+    companion object
+}
 
 data class TwitterSearchResult(
     override val similarity: Double,
