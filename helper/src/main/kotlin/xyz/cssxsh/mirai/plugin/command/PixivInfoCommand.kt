@@ -1,14 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.message.data.At
-import net.mamoe.mirai.message.data.buildMessageChain
+import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.model.ArtWorkInfo
-import xyz.cssxsh.mirai.plugin.model.StatisticEroInfo
-import xyz.cssxsh.mirai.plugin.model.StatisticTagInfo
+import xyz.cssxsh.mirai.plugin.model.*
 
 object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,

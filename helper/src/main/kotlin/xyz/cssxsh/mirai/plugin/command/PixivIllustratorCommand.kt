@@ -1,16 +1,12 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.flow.toList
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.data.toMessageChain
-import net.mamoe.mirai.message.data.toPlainText
+import kotlinx.coroutines.flow.*
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.pixiv.apps.PAGE_SIZE
+import xyz.cssxsh.pixiv.apps.*
 
 object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -18,8 +14,6 @@ object PixivIllustratorCommand : CompositeCommand(
     description = "PIXIV画师指令"
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     @SubCommand("uid", "id", "user", "用户")

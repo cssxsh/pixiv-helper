@@ -1,12 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.flow.onCompletion
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import kotlinx.coroutines.flow.*
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
@@ -17,8 +14,6 @@ object PixivTagCommand : SimpleCommand(
     description = "PIXIV标签"
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?) {

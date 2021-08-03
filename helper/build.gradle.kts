@@ -70,6 +70,7 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
+            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors")
             languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
             languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")

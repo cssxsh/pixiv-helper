@@ -1,14 +1,10 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSenderOnMessage
-import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.console.command.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.tools.NaviRank
-import java.time.Year
-import java.time.YearMonth
+import xyz.cssxsh.mirai.plugin.tools.*
+import java.time.*
 
 object PixivRankCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -17,8 +13,6 @@ object PixivRankCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ) {
 
-    @ExperimentalCommandDescriptors
-    @ConsoleExperimentalApi
     override val prefixOptional: Boolean = true
 
     private suspend fun NaviRank.rank(year: Year, vararg words: String) =
