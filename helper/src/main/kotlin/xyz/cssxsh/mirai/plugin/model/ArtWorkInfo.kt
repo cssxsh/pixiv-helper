@@ -2,7 +2,7 @@ package xyz.cssxsh.mirai.plugin.model
 
 import xyz.cssxsh.pixiv.*
 import javax.persistence.*
-import java.io.Serializable
+import java.io.*
 
 @Entity
 @Table(name = "artworks")

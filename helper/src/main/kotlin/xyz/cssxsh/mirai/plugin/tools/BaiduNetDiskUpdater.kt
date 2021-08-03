@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.plugin.tools
 
-import xyz.cssxsh.baidu.BaiduNetDiskClient
+import xyz.cssxsh.baidu.*
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.mirai.plugin.data.*
 import java.time.*

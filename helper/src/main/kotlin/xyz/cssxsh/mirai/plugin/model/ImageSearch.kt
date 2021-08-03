@@ -1,8 +1,7 @@
 package xyz.cssxsh.mirai.plugin.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 import javax.persistence.*
 
 sealed interface SearchResult {

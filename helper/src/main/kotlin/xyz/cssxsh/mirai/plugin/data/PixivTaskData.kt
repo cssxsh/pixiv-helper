@@ -1,9 +1,7 @@
 package xyz.cssxsh.mirai.plugin.data
 
-import net.mamoe.mirai.console.data.AutoSavePluginConfig
-import net.mamoe.mirai.console.data.ValueName
-import net.mamoe.mirai.console.data.value
-import xyz.cssxsh.mirai.plugin.TimerTask
+import net.mamoe.mirai.console.data.*
+import xyz.cssxsh.mirai.plugin.*
 
 object PixivTaskData : AutoSavePluginConfig("PixivTask") {
 

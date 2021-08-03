@@ -1,7 +1,7 @@
 package xyz.cssxsh.mirai.plugin.model
 
 import javax.persistence.*
-import java.io.Serializable
+import java.io.*
 
 @Entity
 @Table(name = "statistic_ero")

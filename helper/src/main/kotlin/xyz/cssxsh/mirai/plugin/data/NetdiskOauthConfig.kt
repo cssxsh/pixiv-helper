@@ -1,9 +1,7 @@
 package xyz.cssxsh.mirai.plugin.data
 
-import net.mamoe.mirai.console.data.ReadOnlyPluginConfig
-import net.mamoe.mirai.console.data.ValueName
-import net.mamoe.mirai.console.data.value
-import xyz.cssxsh.baidu.BaiduAuthConfig
+import net.mamoe.mirai.console.data.*
+import xyz.cssxsh.baidu.*
 
 object NetdiskOauthConfig : ReadOnlyPluginConfig("NetdiskOauthConfig"), BaiduAuthConfig {
     @ValueName("app_id")

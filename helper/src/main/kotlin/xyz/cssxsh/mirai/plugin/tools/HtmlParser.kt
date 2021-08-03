@@ -3,13 +3,11 @@ package xyz.cssxsh.mirai.plugin.tools
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.supervisorScope
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
-import org.jsoup.select.Elements
-import xyz.cssxsh.mirai.plugin.Ignore
+import kotlinx.coroutines.*
+import org.jsoup.*
+import org.jsoup.nodes.*
+import org.jsoup.select.*
+import xyz.cssxsh.mirai.plugin.*
 
 abstract class HtmlParser(private val ignore: Ignore) {
 
