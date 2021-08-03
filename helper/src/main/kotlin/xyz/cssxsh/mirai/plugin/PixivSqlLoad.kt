@@ -19,6 +19,7 @@ object HelperSqlConfiguration : Configuration() {
                 hibernate.connection.url=jdbc:sqlite:pixiv.sqlite
                 hibernate.connection.driver_class=org.sqlite.JDBC
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
+                hibernate.hbm2ddl.auto=none
                 hibernate-connection-autocommit=true
                 show_sql=false
             """.trimIndent()
