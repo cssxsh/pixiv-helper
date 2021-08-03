@@ -8,6 +8,7 @@ import org.hibernate.cfg.*
 import org.hibernate.query.criteria.internal.*
 import org.hibernate.query.criteria.internal.expression.function.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.*
 import javax.persistence.*
@@ -119,7 +120,7 @@ internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
     }.uniqueResult() ?: 0
 }
 
-internal fun ArtWorkInfo.Companion.eros(r18: Boolean): Long = useSession { session ->
+internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
@@ -127,7 +128,7 @@ internal fun ArtWorkInfo.Companion.eros(r18: Boolean): Long = useSession { sessi
                 and(
                     isFalse(artwork.get("deleted")),
                     isTrue(artwork.get("isEro")),
-                    equal(artwork.get<Boolean>("age"), r18)
+                    equal(artwork.get<Int>("age"), age.ordinal)
                 )
             )
     }.uniqueResult() ?: 0

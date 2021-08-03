@@ -5,6 +5,7 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.*
 
 object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -86,8 +87,9 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.cache() = withHelper {
         buildMessageChain {
             appendLine("缓存数: ${ArtWorkInfo.count()}")
-            appendLine("全年龄色图数: ${ArtWorkInfo.eros(false)}")
-            appendLine("R18色图数: ${ArtWorkInfo.eros(true)}")
+            appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")
+            appendLine("R18色图数: ${ArtWorkInfo.eros(AgeLimit.R18)}")
+            appendLine("R18G色图数: ${ArtWorkInfo.eros(AgeLimit.R18G)}")
         }
     }
 }
