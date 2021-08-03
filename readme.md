@@ -202,10 +202,10 @@ KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https:
 
 ### hibernate.properties
 
-MCL 配置 mysql 举例，其他数据库类推  
-安装 驱动，`mysql:mysql-connector-java` 是驱动包名  
-`.\mcl --update-package mysql:mysql-connector-java --type libs --channel stable`  
-配置 链接
+配置 mysql 举例，其他数据库类推
+下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar), 
+然后放进 `plugins` 文件夹  
+配置 文件
 
 ```
 hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv
