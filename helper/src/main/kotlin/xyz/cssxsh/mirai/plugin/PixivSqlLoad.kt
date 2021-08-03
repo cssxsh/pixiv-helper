@@ -11,7 +11,21 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.io.Serializable
+import javax.persistence.Table
 import javax.persistence.criteria.*
+import kotlin.streams.asSequence
+
+private val Entities = listOf(
+    UserBaseInfo::class.java,
+    ArtWorkInfo::class.java,
+    TagBaseInfo::class.java,
+    FileInfo::class.java,
+    PixivSearchResult::class.java,
+    StatisticEroInfo::class.java,
+    StatisticTagInfo::class.java,
+    StatisticTaskInfo::class.java,
+    AliasSetting::class.java
+)
 
 object HelperSqlConfiguration : Configuration() {
 
@@ -25,15 +39,7 @@ object HelperSqlConfiguration : Configuration() {
             """.trimIndent()
 
     init {
-        addAnnotatedClass(ArtWorkInfo::class.java)
-        addAnnotatedClass(FileInfo::class.java)
-        addAnnotatedClass(TagBaseInfo::class.java)
-        addAnnotatedClass(UserBaseInfo::class.java)
-        addAnnotatedClass(PixivSearchResult::class.java)
-        addAnnotatedClass(StatisticEroInfo::class.java)
-        addAnnotatedClass(StatisticTagInfo::class.java)
-        addAnnotatedClass(StatisticTaskInfo::class.java)
-        addAnnotatedClass(AliasSetting::class.java)
+        Entities.forEach { addAnnotatedClass(it) }
     }
 
     fun load(dir: File = File(".")) {
@@ -58,16 +64,52 @@ private val session by lazy {
 
 internal fun <R> useSession(block: (session: Session) -> R) = synchronized(factory) { session.let(block) }
 
+internal fun reload(path: String, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit = {}) {
+    val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
+    val config = Configuration().apply { Entities.forEach { addAnnotatedClass(it) } }
+    config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
+    config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
+    config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
+    val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
+    useSession { session ->
+        Entities.map { clazz ->
+            val annotation = clazz.getAnnotation(Table::class.java)
+            var count = 0L
+            new.withCriteria<Any> { it.select(it.from(clazz)) }
+                .setReadOnly(true)
+                .setCacheable(false)
+                .resultStream
+                .asSequence()
+                .chunked(chunk)
+                .forEach { list ->
+                    session.transaction.begin()
+                    runCatching {
+                        list.forEach { session.saveOrUpdate(it) }
+                        count += list.size
+                        annotation to count
+                    }.onSuccess {
+                        session.transaction.commit()
+                    }.onFailure {
+                        session.transaction.rollback()
+                    }.let(callback)
+                    session.clear()
+                    System.gc()
+                }
+            clazz
+        }
+    }
+}
+
 internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
     BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "RANDOM"), Serializable
 
 internal fun CriteriaBuilder.random() = RandomFunction(this as CriteriaBuilderImpl)
 
-private inline fun <reified T> Session.withCriteria(
+internal inline fun <reified T> Session.withCriteria(
     block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit
 ) = createQuery(criteriaBuilder.run { createQuery(T::class.java).also { block(it) } })
 
-private inline fun <reified T> Session.withCriteriaUpdate(
+internal inline fun <reified T> Session.withCriteriaUpdate(
     block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit
 ) = createQuery(criteriaBuilder.run { createCriteriaUpdate(T::class.java).also { block(it) } })
 

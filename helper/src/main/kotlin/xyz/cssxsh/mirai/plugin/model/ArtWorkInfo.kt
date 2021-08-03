@@ -60,7 +60,7 @@ data class FileInfo(
     @Column(name = "pid", nullable = false)
     val pid: Long = 0,
     @Id
-    @Column(name = "index", nullable = false)
+    @Column(name = "`index`", nullable = false)
     val index: Int = 0,
     @Column(name = "md5", nullable = false, length = 32)
     val md5: String = "",
@@ -94,8 +94,8 @@ data class UserBaseInfo(
     @Column(name = "account", nullable = false)
     val account: String = ""
 ) {
-    @OneToMany
-    lateinit var artworks: List<ArtWorkInfo>
+//    @OneToMany
+//    lateinit var artworks: List<ArtWorkInfo>
 
     companion object
 }
