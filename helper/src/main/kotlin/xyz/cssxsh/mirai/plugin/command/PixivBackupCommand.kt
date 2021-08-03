@@ -142,4 +142,17 @@ object PixivBackupCommand : CompositeCommand(
             sendMessage("百度云用户认证失败, ${it.message}")
         }
     }
+
+    @SubCommand
+    @Description("从 sqlite 备份中导入数据")
+    suspend fun CommandSender.reload(path: String, chunk: Int = 8196) {
+        reload(path, chunk) { result ->
+            result.onSuccess { (table, count) ->
+                logger.info { "${table.name}已导入${count}条数据" }
+            }.onFailure {
+                logger.warning { "导入失败 ${it}" }
+            }
+        }
+        sendMessage("导入完成")
+    }
 }
