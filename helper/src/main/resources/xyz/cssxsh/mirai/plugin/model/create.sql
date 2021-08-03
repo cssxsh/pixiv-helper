@@ -55,7 +55,7 @@ FROM artworks
 WHERE NOT deleted;
 
 -- User Data
-CREATE TABLE IF NOT EXISTS ID
+CREATE TABLE IF NOT EXISTS statistic_ero
 (
     `sender`    INTEGER NOT NULL,
     `group`     INTEGER,

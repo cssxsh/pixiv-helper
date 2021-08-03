@@ -19,7 +19,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
     // /permission permit u* plugin.xyz.cssxsh.mirai.plugin.pixiv-helper:*
     override fun onEnable() {
-        HelperSqlConfiguration.load(dataFolder)
+        HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()
         PixivHelperSettings.save()
