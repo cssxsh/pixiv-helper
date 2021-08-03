@@ -199,11 +199,7 @@ KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有
 KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
 信息只在启动时读取，修改后需重启
 
-### PixivSqlConfig.yml
-
-1. url JDBC url 默认 为 `jdbc:sqlite:pixiv.sqlite`
-1. driver 驱动类 只有 非SQLite 时生效
-1. properties 驱动配置
+### hibernate.properties
 
 MCL 配置 mysql 举例，其他数据库类推  
 安装 驱动，`mysql:mysql-connector-java` 是驱动包名
@@ -211,9 +207,12 @@ MCL 配置 mysql 举例，其他数据库类推
 配置 链接
 
 ```
-url: 'jdbc:mysql://localhost:3306/pixiv'
-driver: 'com.mysql.cj.jdbc.Driver'
-properties: 
-  'user': 'root'
-  'password': 'root'
+hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv
+hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
+hibernate.connection.username=username
+hibernate.connection.password=password
+hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+hibernate.hbm2ddl.auto=none
+hibernate-connection-autocommit=true
+show_sql=true
 ```
