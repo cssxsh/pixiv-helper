@@ -210,6 +210,9 @@ KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https:
 ```
 hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv
 hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
+hibernate.connection.CharSet=utf8mb4
+hibernate.connection.characterEncoding=utf8
+hibernate.connection.useUnicode=true
 hibernate.connection.username=username
 hibernate.connection.password=password
 hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
