@@ -227,7 +227,6 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
                     logger.warning({ "加载作品信息($result)失败" }, it)
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("该作品已被删除")) {
-                    result.toUserBaseInfo().replicate()
                     result.toArtWorkInfo().copy(caption = it.message.orEmpty()).replicate()
                 }
             }.getOrNull()

@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 
@@ -25,16 +25,16 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
-    private fun History.good() = caches.values.filter { info ->
-        info.sanityLevel >= minSanityLevel && info.totalBookmarks > minBookmarks
+    private fun good(sanity: Int, marks: Long) = caches.values.filter { info ->
+        info.sanity >= sanity && info.bookmarks > marks
     }
 
-    private fun History.getEroArtWorkInfos(): List<ArtWorkInfo> {
-        val result = good()
+    private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
+        val result = good(sanity, marks)
         if (result.isEmpty()) {
-            ArtWorkInfo.random(minSanityLevel, minBookmarks, EroInterval).forEach { info -> caches[info.pid] = info }
+            ArtWorkInfo.random(sanity, marks, EroInterval).forEach { info -> caches[info.pid] = info }
         }
-        return good()
+        return good(sanity, marks)
     }
 
     private fun CommandSenderOnMessage<*>.record(pid: Long) = launch(SupervisorJob()) {
@@ -51,19 +51,19 @@ object PixivEroCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {
         histories.getOrPut(fromEvent.subject) { History() }.let { history ->
-            if ("更色" in fromEvent.message.contentToString()) {
+            if ("更色" in fromEvent.message.content) {
                 history.minSanityLevel++
             } else {
                 history.minSanityLevel = 0
             }
-            if ("更好" !in fromEvent.message.contentToString() && history.last < expire) {
+            if ("更好" !in fromEvent.message.content && history.last < expire) {
                 history.minBookmarks = 0
             }
-            history.getEroArtWorkInfos().random().also { info ->
+            randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).random().also { info ->
                 synchronized(history) {
-                    history.minSanityLevel = info.sanityLevel
-                    history.minBookmarks = info.totalBookmarks
                     caches.remove(info.pid)
+                    history.minSanityLevel = info.sanity
+                    history.minBookmarks = info.bookmarks
                     history.last = System.currentTimeMillis()
                     record(pid = info.pid)
                 }

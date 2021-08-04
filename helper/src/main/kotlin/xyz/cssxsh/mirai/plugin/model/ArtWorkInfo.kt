@@ -8,20 +8,20 @@ import java.io.*
 @Table(name = "artworks")
 data class ArtWorkInfo(
     @Id
-    @Column(name = "pid", nullable = false)
+    @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
-    @Column(name = "uid", nullable = false)
+    @Column(name = "uid", nullable = false, insertable = false, updatable = false)
     val uid: Long = 0,
     @Column(name = "title", nullable = false, length = 32)
     val title: String = "",
     @Column(name = "caption", nullable = false)
     val caption: String = "",
     @Column(name = "create_at", nullable = false)
-    val createAt: Long = 0,
+    val created: Long = 0,
     @Column(name = "page_count", nullable = false)
-    val pageCount: Int = 0,
+    val pages: Int = 0,
     @Column(name = "sanity_level", nullable = false)
-    val sanityLevel: Int = SanityLevel.NONE.ordinal,
+    val sanity: Int = SanityLevel.NONE.ordinal,
     @Column(name = "type", nullable = false)
     val type: Int = 0,
     @Column(name = "width", nullable = false)
@@ -29,30 +29,27 @@ data class ArtWorkInfo(
     @Column(name = "height", nullable = false)
     val height: Int = 0,
     @Column(name = "total_bookmarks", nullable = false)
-    val totalBookmarks: Long = 0,
+    val bookmarks: Long = 0,
     @Column(name = "total_comments", nullable = false)
-    val totalComments: Long = 0,
+    val comments: Long = 0,
     @Column(name = "total_view", nullable = false)
-    val totalView: Long = 0,
+    val view: Long = 0,
     @Column(name = "age", nullable = false)
     val age: Int = 0,
     @Column(name = "is_ero", nullable = false)
-    val isEro: Boolean = false,
+    val ero: Boolean = false,
     @Column(name = "deleted", nullable = false)
-    val deleted: Boolean = true
-) {
-//    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "uid", referencedColumnName = "uid")
-//    lateinit var author: UserBaseInfo
-//
-//    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var files: List<FileInfo>
-
+    val deleted: Boolean = true,
+    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinColumn(name = "uid", insertable = false, updatable = false)
+    val author: UserBaseInfo = UserBaseInfo(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", referencedColumnName = "pid")
-    lateinit var tags: List<TagBaseInfo>
-
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
+    val tags: List<TagBaseInfo> = emptyList(),
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
+    val files: List<FileInfo> = emptyList()
+) {
     companion object
 }
 
@@ -60,7 +57,7 @@ data class ArtWorkInfo(
 @Table(name = "files")
 data class FileInfo(
     @Id
-    @Column(name = "pid", nullable = false)
+    @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
     @Id
     @Column(name = "`index`", nullable = false)
@@ -71,43 +68,31 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-): Serializable {
-//    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var artwork: ArtWorkInfo
-}
+): Serializable
 
 @Entity
 @Table(name = "tags")
 data class TagBaseInfo(
     @Id
-    @Column(name = "pid", nullable = false)
+    @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
     @Id
     @Column(name = "name", nullable = false, length = 30)
     val name: String = "",
     @Column(name = "translated_name", nullable = true)
-    val translatedName: String? = null
-): Serializable {
-//    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var artwork: ArtWorkInfo
-}
+    val translated: String? = null
+): Serializable
 
 @Entity
 @Table(name = "users")
 data class UserBaseInfo(
     @Id
-    @Column(name = "uid", nullable = false)
+    @Column(name = "uid", nullable = false, updatable = false)
     val uid: Long = 0,
     @Column(name = "name", nullable = false, length = 15)
     val name: String = "",
     @Column(name = "account", nullable = false, length = 32)
     val account: String = ""
 ) {
-//    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "uid", referencedColumnName = "uid")
-//    lateinit var artworks: List<ArtWorkInfo>
-
     companion object
 }

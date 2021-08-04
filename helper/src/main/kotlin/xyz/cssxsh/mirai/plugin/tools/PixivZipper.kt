@@ -30,7 +30,7 @@ object PixivZipper {
 
     private fun ArtWorkInfo.getFullWidthTitle() = title.fold("") { acc, char -> acc + (FULLWIDTH[char] ?: char) }
 
-    private fun ArtWorkInfo.toSignText() = "(${pid})[${title}]{${pageCount}}"
+    private fun ArtWorkInfo.toSignText() = "(${pid})[${title}]{${pages}}"
 
     private fun getZipFile(basename: String) = PixivHelperSettings.backupFolder.resolve("${basename}.zip").apply {
         renameTo(parentFile.resolve("${basename}.old").apply { delete() })
@@ -48,8 +48,8 @@ object PixivZipper {
             list.forEach { info ->
                 PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
                     stream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
-                        creationTime = FileTime.from(Instant.ofEpochSecond(info.createAt))
-                        lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.createAt))
+                        creationTime = FileTime.from(Instant.ofEpochSecond(info.created))
+                        lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.created))
                     })
                     stream.write(file.readBytes())
                 }

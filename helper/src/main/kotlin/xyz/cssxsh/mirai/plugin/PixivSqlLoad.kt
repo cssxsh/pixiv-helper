@@ -72,7 +72,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
-        Entities.map { clazz ->
+        Entities.onEach { clazz ->
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
             new.withCriteria<Any> { it.select(it.from(clazz)) }
@@ -95,7 +95,6 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
                     session.clear()
                     System.gc()
                 }
-            clazz
         }
     }
 }
@@ -127,7 +126,7 @@ internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { sess
             .where(
                 and(
                     isFalse(artwork.get("deleted")),
-                    isTrue(artwork.get("isEro")),
+                    isTrue(artwork.get("ero")),
                     equal(artwork.get<Int>("age"), age.ordinal)
                 )
             )
@@ -157,8 +156,8 @@ internal fun ArtWorkInfo.Companion.interval(range: LongRange, bookmarks: Long, p
             .where(
                 and(
                     between(artwork.get("pid"), range.first, range.last),
-                    lt(artwork.get("totalBookmarks"), bookmarks),
-                    gt(artwork.get("pageCount"), pages)
+                    lt(artwork.get("bookmarks"), bookmarks),
+                    gt(artwork.get("pages"), pages)
                 )
             )
     }.resultList.orEmpty()
@@ -185,10 +184,10 @@ internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, 
             .where(
                 and(
                     isFalse(artwork.get("deleted")),
-                    gt(artwork.get<Long>("totalBookmarks"), min),
+                    gt(artwork.get<Long>("bookmarks"), min),
                     or(
                         like(tag.get("name"), if (fuzzy) "%$name%" else name),
-                        like(tag.get("translatedName"), if (fuzzy) "%$name%" else name)
+                        like(tag.get("translated"), if (fuzzy) "%$name%" else name)
                     )
                 )
             )
@@ -204,9 +203,9 @@ internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, limit: In
             .where(
                 and(
                     isFalse(artwork.get("deleted")),
-                    isTrue(artwork.get("isEro")),
-                    gt(artwork.get<Int>("sanityLevel"), level),
-                    gt(artwork.get<Long>("totalBookmarks"), bookmarks)
+                    isTrue(artwork.get("ero")),
+                    gt(artwork.get<Int>("sanity"), level),
+                    gt(artwork.get<Long>("bookmarks"), bookmarks)
                 )
             )
             .orderBy(asc(random()))
@@ -254,27 +253,32 @@ internal fun ArtWorkInfo.replicate() = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun SimpleArtworkInfo.toUserBaseInfo() = UserBaseInfo(uid, name, "")
-
-internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(pid, uid, title)
+internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(
+    pid = pid,
+    uid = uid,
+    title = title,
+    author = UserBaseInfo(uid, name, "")
+)
 
 internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     pid = pid,
     uid = user.id,
     title = title,
     caption = caption,
-    createAt = createAt.toEpochSecond(),
-    pageCount = pageCount,
-    sanityLevel = sanityLevel.ordinal,
+    created = createAt.toEpochSecond(),
+    pages = pageCount,
+    sanity = sanityLevel.ordinal,
     type = type.ordinal,
     width = width,
     height = height,
-    totalBookmarks = totalBookmarks ?: 0,
-    totalComments = totalComments ?: 0,
-    totalView = totalView ?: 0,
+    bookmarks = totalBookmarks ?: 0,
+    comments = totalComments ?: 0,
+    view = totalView ?: 0,
     age = age.ordinal,
-    isEro = isEro(),
-    deleted = false
+    ero = isEro(),
+    deleted = false,
+    author = user.toUserBaseInfo(),
+    tags = toTagInfo()
 )
 
 internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
@@ -291,7 +295,7 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
     }.onFailure {
         session.transaction.rollback()
-        logger.warning({ "作品(${pid})信息记录失败 " }, it)
+        logger.warning({ "作品(${pid})信息记录失败" }, it)
     }.getOrThrow()
 }
 
@@ -324,17 +328,6 @@ internal fun UserInfo.count(): Long = useSession { session ->
         criteria.select(count(artwork))
             .where(equal(artwork.get<Long>("uid"), id))
     }.singleResult ?: 0
-}
-
-internal fun UserBaseInfo.replicate(): Unit = useSession { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.IGNORE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
 }
 
 internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = useSession { session ->
@@ -500,13 +493,9 @@ internal fun PixivSearchResult.Companion.find(image: Image): PixivSearchResult? 
 internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->
     session.withCriteria<PixivSearchResult> { criteria ->
         val search = criteria.from(PixivSearchResult::class.java)
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artworks", JoinType.LEFT)
         criteria.select(search)
-            .where(
-                search.get<Long>("pid").`in`(
-                    criteria.select(artwork.get("pid"))
-                ).not()
-            )
+            .where(artwork.get<Long?>("pid").isNull)
     }.resultList.orEmpty()
 }
 
