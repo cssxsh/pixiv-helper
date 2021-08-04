@@ -35,7 +35,7 @@ object HelperSqlConfiguration : Configuration() {
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
                 hibernate.hbm2ddl.auto=none
                 hibernate-connection-autocommit=true
-                show_sql=false
+                hibernate.connection.show_sql=false
             """.trimIndent()
 
     init {

@@ -222,5 +222,5 @@ hibernate.connection.password=password
 hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
 hibernate.hbm2ddl.auto=none
 hibernate-connection-autocommit=true
-show_sql=true
+hibernate.connection.show_sql=false=true
 ```
