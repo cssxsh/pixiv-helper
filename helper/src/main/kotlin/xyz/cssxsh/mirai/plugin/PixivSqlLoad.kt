@@ -117,7 +117,7 @@ internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-    }.uniqueResult() ?: 0
+    }.singleResult ?: 0
 }
 
 internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { session ->
@@ -131,7 +131,7 @@ internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { sess
                     equal(artwork.get<Int>("age"), age.ordinal)
                 )
             )
-    }.uniqueResult() ?: 0
+    }.singleResult ?: 0
 }
 
 internal operator fun ArtWorkInfo.Companion.contains(pid: Long): Boolean = useSession { session ->
@@ -139,7 +139,7 @@ internal operator fun ArtWorkInfo.Companion.contains(pid: Long): Boolean = useSe
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
             .where(equal(artwork.get<Long>("pid"), pid))
-    }.uniqueResult() > 0
+    }.singleResult > 0
 }
 
 internal fun ArtWorkInfo.Companion.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
@@ -177,37 +177,25 @@ fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { sess
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.tag(name: String, bookmarks: Long, fuzzy: Boolean, limit: Int) =
-    useSession { session ->
-        session.withCriteria<ArtWorkInfo> { criteria ->
-            val artwork = criteria.from(ArtWorkInfo::class.java)
-            val tag = criteria.from(TagBaseInfo::class.java)
-            criteria.select(artwork)
-                .where(
-                    and(
-                        isFalse(artwork.get("deleted")),
-                        gt(artwork.get<Long>("totalBookmarks"), bookmarks),
-                        artwork.get<Long>("pid").`in`(
-                            criteria.select(tag.get("pid"))
-                                .where(
-                                    if (fuzzy) {
-                                        or(
-                                            like(tag.get("name"), "%$name%"),
-                                            like(tag.get("translated_name"), "%$name%")
-                                        )
-                                    } else {
-                                        or(
-                                            like(tag.get("name"), name),
-                                            like(tag.get("translated_name"), name)
-                                        )
-                                    }
-                                )
-                        )
+internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, limit: Int) = useSession { session ->
+    session.withCriteria<ArtWorkInfo> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val tag = artwork.join<ArtWorkInfo, TagBaseInfo>("tags")
+        criteria.select(artwork)
+            .where(
+                and(
+                    isFalse(artwork.get("deleted")),
+                    gt(artwork.get<Long>("totalBookmarks"), min),
+                    or(
+                        like(tag.get("name"), if (fuzzy) "%$name%" else name),
+                        like(tag.get("translatedName"), if (fuzzy) "%$name%" else name)
                     )
                 )
-                .orderBy(asc(random()))
-        }.setMaxResults(limit).resultList.orEmpty()
-    }
+            )
+            .orderBy(asc(random()))
+            .distinct(true)
+    }.setMaxResults(limit).resultList.orEmpty()
+}
 
 internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, limit: Int) = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
@@ -289,7 +277,7 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     deleted = false
 )
 
-internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName) }
+internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
 
 internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
@@ -335,7 +323,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
             .where(equal(artwork.get<Long>("uid"), id))
-    }.uniqueResult() ?: 0
+    }.singleResult ?: 0
 }
 
 internal fun UserBaseInfo.replicate(): Unit = useSession { session ->
@@ -354,7 +342,7 @@ internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = us
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
             .where(equal(user.get<String>("account"), account))
-    }.uniqueResult()
+    }.singleResult
 }
 
 internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSession { session ->
@@ -362,7 +350,7 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
             .where(equal(user.get<String>("name"), name))
-    }.uniqueResult()
+    }.singleResult
 }
 
 internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
@@ -398,7 +386,7 @@ internal operator fun StatisticTaskInfo.Companion.contains(pair: Pair<String, Lo
                     equal(task.get<String>("task"), name)
                 )
             )
-    }.uniqueResult() > 0
+    }.singleResult > 0
 }
 
 internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? = useSession { session ->
@@ -407,7 +395,7 @@ internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? 
         criteria.select(task)
             .where(equal(task.get<String>("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
-    }.uniqueResult()
+    }.singleResult
 }
 
 internal fun StatisticTagInfo.replicate(): Unit = useSession { session ->

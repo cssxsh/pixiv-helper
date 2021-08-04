@@ -2,6 +2,7 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
+    kotlin("plugin.jpa")
     id("net.mamoe.mirai-console")
 }
 
