@@ -112,7 +112,7 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
             task = name,
             pid = illust.pid,
             timestamp = OffsetDateTime.now().toEpochSecond()
-        ).saveOrUpdate()
+        ).replicate()
     }
 }
 

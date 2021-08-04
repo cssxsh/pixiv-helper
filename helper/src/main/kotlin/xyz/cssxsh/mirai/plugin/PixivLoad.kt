@@ -204,7 +204,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
                     logger.warning({ "加载作品($pid)失败" }, it)
                 }
                 if (DELETE_REGEX in it.message.orEmpty()) {
-                    ArtWorkInfo(pid = pid, caption = it.message.orEmpty()).saveOrUpdate()
+                    ArtWorkInfo(pid = pid, caption = it.message.orEmpty()).replicate()
                 }
             }.getOrNull()
         }.let {
@@ -227,8 +227,8 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
                     logger.warning({ "加载作品信息($result)失败" }, it)
                 }
                 if (it.message == "該当作品は削除されたか、存在しない作品IDです。" || it.message.orEmpty().contains("该作品已被删除")) {
-                    result.toUserBaseInfo().save()
-                    result.toArtWorkInfo().copy(caption = it.message.orEmpty()).saveOrUpdate()
+                    result.toUserBaseInfo().replicate()
+                    result.toArtWorkInfo().copy(caption = it.message.orEmpty()).replicate()
                 }
             }.getOrNull()
         }.let {

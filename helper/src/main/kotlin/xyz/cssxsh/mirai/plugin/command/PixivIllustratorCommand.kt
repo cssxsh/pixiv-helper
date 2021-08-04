@@ -39,7 +39,7 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("alias", "别名")
     @Description("设置画师alias")
     suspend fun CommandSenderOnMessage<*>.alias(name: String, uid: Long) = withHelper {
-        AliasSetting(alias = name, uid = uid).saveOrUpdate()
+        AliasSetting(alias = name, uid = uid).replicate()
         "设置 [$name] -> ($uid)"
     }
 

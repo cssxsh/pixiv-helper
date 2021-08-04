@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
+import org.hibernate.*
 import org.junit.jupiter.api.Test
 import xyz.cssxsh.mirai.plugin.model.*
 import java.io.*
@@ -22,7 +23,7 @@ internal class PixivSqlLoadKtTest {
 
     @Test
     fun reload() {
-        reload(path = "../test/pixiv.sqlite", chunk = 8196) { result ->
+        reload(path = "../test/pixiv.sqlite", chunk = 1 shl 16, mode = ReplicationMode.OVERWRITE) { result ->
             result.onSuccess { (table, count) ->
                 println("${table.name}:${count}")
             }.onFailure {

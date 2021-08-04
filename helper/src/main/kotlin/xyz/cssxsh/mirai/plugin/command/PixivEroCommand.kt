@@ -42,7 +42,7 @@ object PixivEroCommand : SimpleCommand(
             group = event.subject.takeIf { it is Group }?.id,
             pid = pid,
             timestamp = event.time.toLong()
-        ).saveOrUpdate()
+        ).replicate()
     }
 
     private val expire get() = System.currentTimeMillis() - EroUpExpire

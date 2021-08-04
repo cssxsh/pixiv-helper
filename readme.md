@@ -138,7 +138,11 @@ duration 单位分钟，默认3小时
 | `/<backup> <get> [filename]`                 | 获取备份文件，发送文件消息 |
 | `/<backup> <upload> [filename]`              | 上传插件数据到百度云       |
 | `/<backup> <auth>`                           | 百度云用户认证             |
-| `/<backup> [reload] [path] [chunk]?`         | 从 sqlite 备份中导入数据   |
+| `/<backup> <reload> [path] [mode] [chunk]?`  | 从 sqlite 备份中导入数据   |
+
+reload 的 mode 可选 有以下几种  
+`EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
+reload 的 chunk 为分段提交数量的大小, 默认8196   
 
 ### 统计信息指令
 

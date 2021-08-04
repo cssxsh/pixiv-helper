@@ -23,7 +23,7 @@ object PixivTagCommand : SimpleCommand(
             pid = pid,
             tag = tag,
             timestamp = event.time.toLong()
-        ).saveOrUpdate()
+        ).replicate()
     }
 
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()

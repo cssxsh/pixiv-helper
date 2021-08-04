@@ -63,7 +63,7 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
         runCatching {
             block.invoke(this@PixivHelper).collect { list ->
                 list.groupBy { it.pid in ArtWorkInfo }.also { (success, failure) ->
-                    list.saveOrUpdate()
+                    list.replicate()
                     success?.let { list ->
                         if (write) list.write()
                     }
