@@ -19,7 +19,7 @@ data class PixivSearchResult(
     @Column(name = "similarity", nullable = false)
     @SerialName("similarity")
     override val similarity: Double = 0.0,
-    @Column(name = "pid", nullable = false)
+    @Column(name = "pid", nullable = false, updatable = false)
     @SerialName("pixiv_id")
     override val pid: Long = 0,
     @Column(name = "title", nullable = false)
@@ -31,7 +31,14 @@ data class PixivSearchResult(
     @Column(name = "name", nullable = false)
     @SerialName("member_name")
     override val name: String = ""
-): SimpleArtworkInfo, SearchResult {
+): SimpleArtworkInfo, SearchResult, java.io.Serializable {
+    @OneToMany(cascade = [], fetch = FetchType.LAZY)
+    @JoinColumn(name = "pid", referencedColumnName = "pid", insertable = false, updatable = false)
+    @kotlinx.serialization.Transient
+    private val artworks: List<ArtWorkInfo> = emptyList()
+
+    val artwork get() = artworks.singleOrNull()
+
     companion object
 }
 
