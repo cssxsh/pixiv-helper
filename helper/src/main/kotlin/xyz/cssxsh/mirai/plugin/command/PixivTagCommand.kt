@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
@@ -16,13 +16,13 @@ object PixivTagCommand : SimpleCommand(
 
     override val prefixOptional: Boolean = true
 
-    private fun tagStatisticAdd(event: MessageEvent, tag: String, pid: Long?) {
+    private fun CommandSenderOnMessage<*>.record(tag: String, pid: Long?) = launch(SupervisorJob()) {
         StatisticTagInfo(
-            sender = event.sender.id,
-            group = event.subject.takeIf { it is Group }?.id,
+            sender = fromEvent.sender.id,
+            group = fromEvent.subject.takeIf { it is Group }?.id,
             pid = pid,
             tag = tag,
-            timestamp = event.time.toLong()
+            timestamp = fromEvent.time.toLong()
         ).replicate()
     }
 
@@ -64,7 +64,7 @@ object PixivTagCommand : SimpleCommand(
                     }
                 }
             }.let { artwork ->
-                tagStatisticAdd(event = fromEvent, tag = tag, pid = artwork?.pid)
+                record(tag = tag, pid = artwork?.pid)
                 requireNotNull(artwork) {
                     if (fuzzy) {
                         "$subject 读取Tag(${tag})色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
