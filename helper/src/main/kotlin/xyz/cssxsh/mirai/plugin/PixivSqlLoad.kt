@@ -277,8 +277,7 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     age = age.ordinal,
     ero = isEro(),
     deleted = false,
-    author = user.toUserBaseInfo(),
-    tags = toTagInfo()
+    author = user.toUserBaseInfo()
 )
 
 internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
@@ -287,7 +286,7 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
-        session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+        // session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
         toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
@@ -307,7 +306,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
     runCatching {
         forEach { info ->
             if (info.pid == 0L) return@forEach
-            session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+            // session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
             session.replicate(info.toArtWorkInfo(), ReplicationMode.OVERWRITE)
             info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
         }
