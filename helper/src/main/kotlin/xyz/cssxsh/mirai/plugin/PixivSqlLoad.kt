@@ -64,7 +64,7 @@ private val session by lazy {
 
 internal fun <R> useSession(block: (session: Session) -> R) = synchronized(factory) { session.let(block) }
 
-internal fun reload(path: String, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit = {}) {
+internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
     val config = Configuration().apply { Entities.forEach { addAnnotatedClass(it) } }
     config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
@@ -84,7 +84,7 @@ internal fun reload(path: String, chunk: Int, callback: (Result<Pair<Table, Long
                 .forEach { list ->
                     session.transaction.begin()
                     runCatching {
-                        list.forEach { session.replicate(it, ReplicationMode.EXCEPTION) }
+                        list.forEach { session.replicate(it, mode) }
                         count += list.size
                         annotation to count
                     }.onSuccess {
@@ -255,10 +255,10 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
     }.getOrThrow()
 }
 
-internal fun ArtWorkInfo.saveOrUpdate() = useSession { session ->
+internal fun ArtWorkInfo.replicate() = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -291,13 +291,13 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
 
 internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName) }
 
-internal fun IllustInfo.saveOrUpdate(): Unit = useSession { session ->
+internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
-        session.saveOrUpdate(user.toUserBaseInfo())
-        session.saveOrUpdate(toArtWorkInfo())
-        toTagInfo().forEach { session.saveOrUpdate(it) }
+        session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+        session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
+        toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
@@ -307,20 +307,17 @@ internal fun IllustInfo.saveOrUpdate(): Unit = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun Collection<IllustInfo>.saveOrUpdate(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     if (isEmpty()) return@useSession
     session.transaction.begin()
 
     runCatching {
-        associate { info -> info.user.id to info.user }.values.forEach { user ->
-            if (user.id == 0L) return@forEach
-            session.saveOrUpdate(user.toUserBaseInfo())
-        }
         forEach { info ->
             if (info.pid == 0L) return@forEach
-            session.saveOrUpdate(info.toArtWorkInfo())
-            info.toTagInfo().forEach { session.saveOrUpdate(it) }
+            session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+            session.replicate(info.toArtWorkInfo(), ReplicationMode.OVERWRITE)
+            info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
         }
     }.onSuccess {
         session.transaction.commit()
@@ -341,11 +338,10 @@ internal fun UserInfo.count(): Long = useSession { session ->
     }.uniqueResult() ?: 0
 }
 
-internal fun UserBaseInfo.save(): Unit = useSession { session ->
-    if (session.find(UserBaseInfo::class.java, uid) != null) return@useSession
+internal fun UserBaseInfo.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -369,10 +365,10 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.uniqueResult()
 }
 
-internal fun List<FileInfo>.saveOrUpdate(): Unit = useSession { session ->
+internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        forEach { session.saveOrUpdate(it) }
+        forEach { session.replicate(it, ReplicationMode.OVERWRITE) }
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -380,10 +376,10 @@ internal fun List<FileInfo>.saveOrUpdate(): Unit = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun StatisticTaskInfo.saveOrUpdate(): Unit = useSession { session ->
+internal fun StatisticTaskInfo.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -414,10 +410,10 @@ internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? 
     }.uniqueResult()
 }
 
-internal fun StatisticTagInfo.saveOrUpdate(): Unit = useSession { session ->
+internal fun StatisticTagInfo.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -451,10 +447,10 @@ internal fun StatisticTagInfo.Companion.top(limit: Int): List<Pair<String, Int>>
     }.setMaxResults(limit).resultList.orEmpty() as List<Pair<String, Int>>
 }
 
-internal fun StatisticEroInfo.saveOrUpdate(): Unit = useSession { session ->
+internal fun StatisticEroInfo.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -480,10 +476,10 @@ internal fun StatisticEroInfo.Companion.group(id: Long): List<StatisticEroInfo> 
 
 internal fun UserPreview.isLoaded() = illusts.all { it.pid in ArtWorkInfo }
 
-internal fun AliasSetting.saveOrUpdate(): Unit = useSession { session ->
+internal fun AliasSetting.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(this)
+        session.replicate(this, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -501,7 +497,7 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
 internal fun PixivSearchResult.save(image: Image): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.saveOrUpdate(copy(md5 = image.md5.toByteString().hex()))
+        session.replicate(copy(md5 = image.md5.toByteString().hex()), ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {

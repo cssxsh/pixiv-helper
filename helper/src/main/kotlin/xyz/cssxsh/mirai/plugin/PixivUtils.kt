@@ -194,7 +194,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }
     preview.illusts.filter { it.isEro() }.forEach { illust ->
         runCatching {
-            illust.saveOrUpdate()
+            illust.replicate()
             val files = illust.getImages()
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
@@ -256,7 +256,7 @@ internal fun IllustInfo.write(file: File = json(pid)) {
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
 private val FlushIllustInfo: suspend PixivHelper.(Long) -> IllustInfo = { pid ->
-    illustDetail(pid).illust.check().apply { saveOrUpdate() }
+    illustDetail(pid).illust.check().apply { replicate() }
 }
 
 internal suspend fun PixivHelper.getIllustInfo(
@@ -328,7 +328,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
-        results.saveOrUpdate()
+        results.replicate()
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
             "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size}]{${totalBookmarks}}下载完成"

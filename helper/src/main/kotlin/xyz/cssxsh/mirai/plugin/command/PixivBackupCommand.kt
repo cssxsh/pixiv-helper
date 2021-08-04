@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import org.hibernate.*
 import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.baidu.*
 import xyz.cssxsh.baidu.oauth.*
@@ -145,8 +146,8 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("从 sqlite 备份中导入数据")
-    suspend fun CommandSender.reload(path: String, chunk: Int = 8196) {
-        reload(path, chunk) { result ->
+    suspend fun CommandSender.reload(path: String, mode: ReplicationMode, chunk: Int = 8196) {
+        reload(path, mode, chunk) { result ->
             result.onSuccess { (table, count) ->
                 logger.info { "${table.name}已导入${count}条数据" }
             }.onFailure {
