@@ -41,17 +41,15 @@ data class ArtWorkInfo(
     @Column(name = "deleted", nullable = false)
     val deleted: Boolean = true,
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid", referencedColumnName = "uid")
+    @JoinColumn(name = "uid")
     val author: UserBaseInfo = UserBaseInfo(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", referencedColumnName = "pid")
-    val tags: List<TagBaseInfo> = emptyList()
+    @JoinColumn(name = "pid")
+    val tags: List<TagBaseInfo> = emptyList(),
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
+    val files: List<FileInfo> = emptyList()
 ) {
-//
-//    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var files: List<FileInfo>
-
     companion object
 }
 
@@ -70,11 +68,7 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-): Serializable {
-//    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var artwork: ArtWorkInfo
-}
+): Serializable
 
 @Entity
 @Table(name = "tags")
@@ -87,11 +81,7 @@ data class TagBaseInfo(
     val name: String = "",
     @Column(name = "translated_name", nullable = true)
     val translated: String? = null
-): Serializable {
-//    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "pid", referencedColumnName = "pid")
-//    lateinit var artwork: ArtWorkInfo
-}
+): Serializable
 
 @Entity
 @Table(name = "users")
@@ -104,9 +94,5 @@ data class UserBaseInfo(
     @Column(name = "account", nullable = false, length = 32)
     val account: String = ""
 ) {
-//    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-//    @JoinColumn(name = "uid", referencedColumnName = "uid")
-//    lateinit var artworks: List<ArtWorkInfo>
-
     companion object
 }

@@ -33,7 +33,7 @@ data class PixivSearchResult(
     override val name: String = ""
 ): SimpleArtworkInfo, SearchResult, java.io.Serializable {
     @OneToMany(cascade = [], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", referencedColumnName = "pid", insertable = false, updatable = false)
+    @JoinColumn(name = "pid", insertable = false, updatable = false, nullable = true)
     @kotlinx.serialization.Transient
     private val artworks: List<ArtWorkInfo> = emptyList()
 

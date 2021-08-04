@@ -72,7 +72,11 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
-        Entities.map { clazz ->
+        (Entities - listOf(
+            UserBaseInfo::class.java,
+            TagBaseInfo::class.java,
+            FileInfo::class.java
+        )).onEach { clazz ->
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
             new.withCriteria<Any> { it.select(it.from(clazz)) }
@@ -95,7 +99,6 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
                     session.clear()
                     System.gc()
                 }
-            clazz
         }
     }
 }
@@ -296,7 +299,7 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
     }.onFailure {
         session.transaction.rollback()
-        logger.warning({ "作品(${pid})信息记录失败 " }, it)
+        logger.warning({ "作品(${pid})信息记录失败" }, it)
     }.getOrThrow()
 }
 
