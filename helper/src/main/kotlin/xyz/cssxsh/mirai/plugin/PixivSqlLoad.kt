@@ -308,8 +308,8 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
 }
 
 internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
-    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     if (isEmpty()) return@useSession
+    logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
 
     runCatching {
