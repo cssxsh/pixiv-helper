@@ -1,8 +1,9 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.event.events.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 
@@ -36,12 +37,12 @@ object PixivEroCommand : SimpleCommand(
         return good()
     }
 
-    private fun eroStatisticAdd(event: MessageEvent, pid: Long) {
+    private fun CommandSenderOnMessage<*>.record(pid: Long) = launch(SupervisorJob()) {
         StatisticEroInfo(
-            sender = event.sender.id,
-            group = event.subject.takeIf { it is Group }?.id,
+            sender = fromEvent.sender.id,
+            group = fromEvent.subject.takeIf { it is Group }?.id,
             pid = pid,
-            timestamp = event.time.toLong()
+            timestamp = fromEvent.time.toLong()
         ).replicate()
     }
 
@@ -64,7 +65,7 @@ object PixivEroCommand : SimpleCommand(
                     history.minBookmarks = info.totalBookmarks
                     caches.remove(info.pid)
                     history.last = System.currentTimeMillis()
-                    eroStatisticAdd(fromEvent, info.pid)
+                    record(pid = info.pid)
                 }
             }
         }

@@ -2,11 +2,12 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
+    kotlin("plugin.jpa")
     id("net.mamoe.mirai-console")
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.1.2"
+version = "1.1.3"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11

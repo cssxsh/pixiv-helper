@@ -28,7 +28,7 @@ data class StatisticTagInfo(
     val sender: Long = 0,
     @Column(name = "`group`", nullable = true)
     val group: Long? = null,
-    @Column(name = "pid", nullable = false)
+    @Column(name = "pid", nullable = true)
     val pid: Long? = null,
     @Column(name = "tag", nullable = false)
     val tag: String = "",
