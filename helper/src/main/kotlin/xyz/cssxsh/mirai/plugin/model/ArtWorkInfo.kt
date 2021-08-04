@@ -41,10 +41,10 @@ data class ArtWorkInfo(
     @Column(name = "deleted", nullable = false)
     val deleted: Boolean = true,
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid")
+    @JoinColumn(name = "uid", insertable = false, updatable = false)
     val author: UserBaseInfo = UserBaseInfo(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid")
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
     val tags: List<TagBaseInfo> = emptyList(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "pid", insertable = false, updatable = false)
