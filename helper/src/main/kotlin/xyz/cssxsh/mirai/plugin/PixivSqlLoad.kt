@@ -72,11 +72,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
-        (Entities - listOf(
-            UserBaseInfo::class.java,
-            TagBaseInfo::class.java,
-            FileInfo::class.java
-        )).onEach { clazz ->
+        Entities.onEach { clazz ->
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
             new.withCriteria<Any> { it.select(it.from(clazz)) }
@@ -291,9 +287,9 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
-        // session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+        session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
-        // toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+        toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
@@ -311,9 +307,9 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
     runCatching {
         forEach { info ->
             if (info.pid == 0L) return@forEach
-            // session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+            session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
             session.replicate(info.toArtWorkInfo(), ReplicationMode.OVERWRITE)
-            // info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+            info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
         }
     }.onSuccess {
         session.transaction.commit()
