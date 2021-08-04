@@ -202,7 +202,7 @@ KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https:
 
 ### hibernate.properties
 
-配置 mysql 举例，其他数据库类推
+配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推
 下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar), 
 然后放进 `plugins` 文件夹  
 配置 文件

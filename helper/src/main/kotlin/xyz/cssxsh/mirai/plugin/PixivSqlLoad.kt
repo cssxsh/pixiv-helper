@@ -292,6 +292,7 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
 internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName) }
 
 internal fun IllustInfo.saveOrUpdate(): Unit = useSession { session ->
+    if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
         session.saveOrUpdate(user.toUserBaseInfo())

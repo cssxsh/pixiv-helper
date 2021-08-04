@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS tags
     `pid`             INTEGER     NOT NULL,
     `name`            VARCHAR(30) NOT NULL,
     `translated_name` TEXT,
-    PRIMARY KEY (`name`, `pid`),
+    PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS files
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS files
     `url`   VARCHAR(200) NOT NULL,
     -- file size max 32MB
     `size`  INTEGER      NOT NULL,
-    PRIMARY KEY (`index`, `pid`),
+    PRIMARY KEY (`pid`, `index`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 

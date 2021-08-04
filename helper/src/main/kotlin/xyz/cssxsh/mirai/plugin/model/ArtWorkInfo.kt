@@ -14,7 +14,7 @@ data class ArtWorkInfo(
     val uid: Long = 0,
     @Column(name = "title", nullable = false, length = 32)
     val title: String = "",
-    @Column(name = "caption", nullable = false, length = 3000)
+    @Column(name = "caption", nullable = false)
     val caption: String = "",
     @Column(name = "create_at", nullable = false)
     val createAt: Long = 0,
@@ -79,7 +79,7 @@ data class TagBaseInfo(
     @Id
     @Column(name = "name", nullable = false, length = 30)
     val name: String = "",
-    @Column(name = "translated_name", nullable = true, length = 30)
+    @Column(name = "translated_name", nullable = true)
     val translatedName: String? = null
 ): Serializable
 
@@ -89,9 +89,9 @@ data class UserBaseInfo(
     @Id
     @Column(name = "uid", nullable = false)
     val uid: Long = 0,
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 15)
     val name: String = "",
-    @Column(name = "account", nullable = false)
+    @Column(name = "account", nullable = false, length = 32)
     val account: String = ""
 ) {
 //    @OneToMany
