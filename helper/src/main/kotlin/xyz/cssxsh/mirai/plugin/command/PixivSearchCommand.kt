@@ -34,6 +34,17 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
+
+        val files = FileInfo.find(image)
+        if (files.isEmpty()) {
+            return@withHelper buildMessageChain {
+                appendLine("根据MD5")
+                files.forEach {
+                    appendLine("PID: ${it.pid}")
+                }
+            }
+        }
+
         val cache = PixivSearchResult.find(image)
         if (cache != null) return@withHelper cache.getContent()
 

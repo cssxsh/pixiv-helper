@@ -345,6 +345,14 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.singleResult
 }
 
+internal fun FileInfo.Companion.find(image: Image): List<FileInfo> = useSession { session ->
+    session.withCriteria<FileInfo> { criteria ->
+        val file = criteria.from(FileInfo::class.java)
+        criteria.select(file)
+            .where(equal(file.get<String>("md5"), image.md5.toByteString().hex()))
+    }.resultList
+}
+
 internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {

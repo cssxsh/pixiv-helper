@@ -69,7 +69,9 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-): Serializable
+): Serializable {
+    companion object
+}
 
 @Entity
 @Table(name = "tags")
