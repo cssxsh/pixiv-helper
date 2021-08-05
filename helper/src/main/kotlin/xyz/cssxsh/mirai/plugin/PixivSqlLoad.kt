@@ -502,12 +502,19 @@ internal fun PixivSearchResult.Companion.find(image: Image): PixivSearchResult? 
     session.find(PixivSearchResult::class.java, image.md5.toByteString().hex())
 }
 
+internal fun PixivSearchResult.Companion.all(): List<PixivSearchResult> = useSession { session ->
+    session.withCriteria<PixivSearchResult> { criteria ->
+        val search = criteria.from(PixivSearchResult::class.java)
+        criteria.select(search)
+    }.resultList.orEmpty()
+}
+
 internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->
     session.withCriteria<PixivSearchResult> { criteria ->
         val search = criteria.from(PixivSearchResult::class.java)
-        val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artworks", JoinType.LEFT)
+        val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)
         criteria.select(search)
-            .where(artwork.get<Long?>("pid").isNull)
+            .where(artwork.isNull)
     }.resultList.orEmpty()
 }
 
