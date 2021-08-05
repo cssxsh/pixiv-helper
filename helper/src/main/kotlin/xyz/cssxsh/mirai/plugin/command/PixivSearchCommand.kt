@@ -36,7 +36,7 @@ object PixivSearchCommand : SimpleCommand(
         logger.info { "搜索 ${image.queryUrl()}" }
 
         val files = FileInfo.find(image)
-        if (files.isEmpty()) {
+        if (files.isNotEmpty()) {
             return@withHelper buildMessageChain {
                 appendLine("根据MD5")
                 files.forEach {
