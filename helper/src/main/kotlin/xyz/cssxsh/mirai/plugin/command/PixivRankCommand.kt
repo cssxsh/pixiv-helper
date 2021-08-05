@@ -22,9 +22,7 @@ object PixivRankCommand : CompositeCommand(
         if (words.isNotEmpty()) getTagRank(month = month, words = words) else getAllRank(month = month)
 
     private suspend fun NaviRankAllTime.cached(helper: PixivHelper): ArtWorkInfo {
-        helper.addCacheJob(name = "NAVIRANK[${title}]", reply = false) {
-            getListIllusts(info = records)
-        }
+        helper.addCacheJob(name = "NAVIRANK[${title}]", reply = false) { getListIllusts(info = records) }
         return records.cached().random()
     }
 
