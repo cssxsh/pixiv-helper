@@ -38,7 +38,7 @@ data class ArtWorkInfo(
     val age: Int = 0,
     @Column(name = "is_ero", nullable = false)
     val ero: Boolean = false,
-    @Column(name = "deleted", nullable = false)
+    @Column(name = "deleted", nullable = false, updatable = false)
     val deleted: Boolean = true,
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "uid")
