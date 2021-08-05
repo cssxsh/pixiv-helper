@@ -5,8 +5,10 @@ import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import org.hibernate.*
 import org.hibernate.cfg.*
+import org.hibernate.dialect.function.*
 import org.hibernate.query.criteria.internal.*
 import org.hibernate.query.criteria.internal.expression.function.*
+import org.hibernate.type.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
@@ -46,6 +48,9 @@ object HelperSqlConfiguration : Configuration() {
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
+        if (properties.getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+            addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
+        }
     }
 }
 
@@ -100,16 +105,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
 }
 
 internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
-    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "rand"), Serializable {
-    override fun getFunctionName(): String {
-        val dialect = criteriaBuilder().entityManagerFactory.jdbcServices.dialect
-        return if ("sqlite" in dialect::class.java.name.lowercase()) {
-            "random"
-        } else {
-            "rand"
-        }
-    }
-}
+    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "rand"), Serializable
 
 internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
 
