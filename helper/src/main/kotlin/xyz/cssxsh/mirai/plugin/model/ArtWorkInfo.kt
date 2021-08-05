@@ -38,18 +38,19 @@ data class ArtWorkInfo(
     val age: Int = 0,
     @Column(name = "is_ero", nullable = false)
     val ero: Boolean = false,
-    @Column(name = "deleted", nullable = false)
+    @Column(name = "deleted", nullable = false, updatable = false)
     val deleted: Boolean = true,
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid", insertable = false, updatable = false)
-    val author: UserBaseInfo = UserBaseInfo(),
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", insertable = false, updatable = false)
-    val tags: List<TagBaseInfo> = emptyList(),
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", insertable = false, updatable = false)
-    val files: List<FileInfo> = emptyList()
+    @JoinColumn(name = "uid")
+    val author: UserBaseInfo = UserBaseInfo()
 ) {
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
+    lateinit var tags: List<TagBaseInfo>
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinColumn(name = "pid", insertable = false, updatable = false)
+    lateinit var files: List<FileInfo>
+
     companion object
 }
 
@@ -68,7 +69,9 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-): Serializable
+): Serializable {
+    companion object
+}
 
 @Entity
 @Table(name = "tags")

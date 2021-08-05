@@ -5,8 +5,10 @@ import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import org.hibernate.*
 import org.hibernate.cfg.*
+import org.hibernate.dialect.function.*
 import org.hibernate.query.criteria.internal.*
 import org.hibernate.query.criteria.internal.expression.function.*
+import org.hibernate.type.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
@@ -46,6 +48,9 @@ object HelperSqlConfiguration : Configuration() {
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
+        if (properties.getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+            addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
+        }
     }
 }
 
@@ -100,9 +105,9 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
 }
 
 internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
-    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "RANDOM"), Serializable
+    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "rand"), Serializable
 
-internal fun CriteriaBuilder.random() = RandomFunction(this as CriteriaBuilderImpl)
+internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
 
 internal inline fun <reified T> Session.withCriteria(
     block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit
@@ -191,7 +196,7 @@ internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, 
                     )
                 )
             )
-            .orderBy(asc(random()))
+            .orderBy(asc(rand()))
             .distinct(true)
     }.setMaxResults(limit).resultList.orEmpty()
 }
@@ -208,7 +213,7 @@ internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, limit: In
                     gt(artwork.get<Long>("bookmarks"), bookmarks)
                 )
             )
-            .orderBy(asc(random()))
+            .orderBy(asc(rand()))
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
@@ -277,8 +282,7 @@ internal fun IllustInfo.toArtWorkInfo() = ArtWorkInfo(
     age = age.ordinal,
     ero = isEro(),
     deleted = false,
-    author = user.toUserBaseInfo(),
-    tags = toTagInfo()
+    author = user.toUserBaseInfo()
 )
 
 internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
@@ -287,7 +291,7 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
-        session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+        // session.replicate(user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
         toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
@@ -307,7 +311,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
     runCatching {
         forEach { info ->
             if (info.pid == 0L) return@forEach
-            session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
+            // session.replicate(info.user.toUserBaseInfo(), ReplicationMode.OVERWRITE)
             session.replicate(info.toArtWorkInfo(), ReplicationMode.OVERWRITE)
             info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
         }
@@ -344,6 +348,14 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
         criteria.select(user)
             .where(equal(user.get<String>("name"), name))
     }.singleResult
+}
+
+internal fun FileInfo.Companion.find(image: Image): List<FileInfo> = useSession { session ->
+    session.withCriteria<FileInfo> { criteria ->
+        val file = criteria.from(FileInfo::class.java)
+        criteria.select(file)
+            .where(equal(file.get<String>("md5"), image.md5.toByteString().hex()))
+    }.resultList
 }
 
 internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
