@@ -100,9 +100,18 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
 }
 
 internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
-    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "RANDOM"), Serializable
+    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "rand"), Serializable {
+    override fun getFunctionName(): String {
+        val dialect = criteriaBuilder().entityManagerFactory.jdbcServices.dialect
+        return if ("sqlite" in dialect::class.java.name.lowercase()) {
+            "random"
+        } else {
+            "rand"
+        }
+    }
+}
 
-internal fun CriteriaBuilder.random() = RandomFunction(this as CriteriaBuilderImpl)
+internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
 
 internal inline fun <reified T> Session.withCriteria(
     block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit
@@ -191,7 +200,7 @@ internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, 
                     )
                 )
             )
-            .orderBy(asc(random()))
+            .orderBy(asc(rand()))
             .distinct(true)
     }.setMaxResults(limit).resultList.orEmpty()
 }
@@ -208,7 +217,7 @@ internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, limit: In
                     gt(artwork.get<Long>("bookmarks"), bookmarks)
                 )
             )
-            .orderBy(asc(random()))
+            .orderBy(asc(rand()))
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
