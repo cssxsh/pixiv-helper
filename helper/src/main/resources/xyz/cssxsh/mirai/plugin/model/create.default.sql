@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS users
 (
     `uid`     INTEGER     NOT NULL,
-    `name`    VARCHAR(15) NOT NULL,
+    `name`    NVARCHAR(15) NOT NULL,
     `account` VARCHAR(32) NOT NULL,
     PRIMARY KEY (`uid`)
 );
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS artworks
 (
     `pid`             INTEGER     NOT NULL,
     `uid`             INTEGER     NOT NULL,
-    `title`           VARCHAR(32) NOT NULL,
+    `title`           NVARCHAR(32) NOT NULL,
     `caption`         TEXT        NOT NULL,
     `create_at`       INTEGER     NOT NULL,
     -- page_count max 200
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS artworks
 CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER     NOT NULL,
-    `name`            VARCHAR(30) NOT NULL,
+    `name`            NVARCHAR(30) NOT NULL,
     `translated_name` TEXT,
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
@@ -72,14 +72,14 @@ CREATE TABLE IF NOT EXISTS statistic_search
     `md5`        NCHAR(32)     NOT NULL,
     `similarity` NUMERIC(6, 4) NOT NULL,
     `pid`        INTEGER       NOT NULL,
-    `title`      VARCHAR(32)   NOT NULL,
+    `title`      NVARCHAR(32)   NOT NULL,
     `uid`        INTEGER       NOT NULL,
-    `name`       VARCHAR(15)   NOT NULL,
+    `name`       NVARCHAR(15)   NOT NULL,
     PRIMARY KEY (`md5`)
 );
 CREATE TABLE IF NOT EXISTS statistic_alias
 (
-    `name` VARCHAR(15) NOT NULL,
+    `name` NVARCHAR(15) NOT NULL,
     `uid`  INTEGER     NOT NULL,
     PRIMARY KEY (`name`)
 );

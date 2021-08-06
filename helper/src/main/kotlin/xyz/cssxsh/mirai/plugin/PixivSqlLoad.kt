@@ -56,14 +56,36 @@ object HelperSqlConfiguration : Configuration() {
 
 internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory() }
 
-private val session by lazy {
-    factory.openSession().apply {
-        transaction.begin()
-        requireNotNull(ArtWorkInfo::class.java.getResourceAsStream("create.sql")) { "读取 创建表 SQL 失败" }
+private val session by lazy { factory.openSession().init() }
+
+private fun Session.init() = apply {
+    // 创建表
+    transaction.begin()
+    kotlin.runCatching {
+        val type = doReturningWork { it.metaData.databaseProductName }
+        val sql = when {
+            type.contains("MariaDB", true) || type.contains("""MySql|""", true) -> {
+                "create.mysql.sql"
+            }
+            type.contains("SQLite", true) -> {
+                "create.sqlite.sql"
+            }
+            type.contains("Microsoft SQL Server", true) -> {
+                "create.sqlserver.sql"
+            }
+            else -> {
+                "create.default.sql"
+            }
+        }
+        requireNotNull(ArtWorkInfo::class.java.getResourceAsStream(sql)) { "读取 创建表 SQL 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
             .forEach { createNativeQuery(it).executeUpdate() }
+    }.onSuccess {
         transaction.commit()
+    }.onFailure {
+        logger.error("数据库初始化失败", it)
+        transaction.rollback()
     }
 }
 
