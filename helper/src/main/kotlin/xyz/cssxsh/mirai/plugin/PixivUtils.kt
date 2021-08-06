@@ -60,7 +60,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
         }
     }.onFailure {
         when {
-            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+            SendLimit in it.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }

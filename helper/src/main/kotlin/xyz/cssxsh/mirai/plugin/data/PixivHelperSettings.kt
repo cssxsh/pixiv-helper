@@ -6,7 +6,6 @@ import xyz.cssxsh.pixiv.*
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
-
     @ValueName("cache_path")
     @ValueDescription("缓存目录")
     private val cachePath: String by value("")
@@ -18,10 +17,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueName("temp_path")
     @ValueDescription("临时目录")
     private val tempPath: String by value("")
-
-    @ValueName("pximg")
-    @ValueDescription("i.pximg.net 反向代理 可以使用 i.pixiv.cat")
-    val pximg: String by value("")
 
     @ValueName("ero_interval")
     @ValueDescription("色图间隔")

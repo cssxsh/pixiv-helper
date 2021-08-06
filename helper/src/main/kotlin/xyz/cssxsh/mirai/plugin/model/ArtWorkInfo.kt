@@ -47,6 +47,7 @@ data class ArtWorkInfo(
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "pid", insertable = false, updatable = false)
     lateinit var tags: List<TagBaseInfo>
+
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "pid", insertable = false, updatable = false)
     lateinit var files: List<FileInfo>
@@ -69,7 +70,7 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-): Serializable {
+) : Serializable {
     companion object
 }
 
@@ -84,7 +85,7 @@ data class TagBaseInfo(
     val name: String = "",
     @Column(name = "translated_name", nullable = true)
     val translated: String? = null
-): Serializable
+) : Serializable
 
 @Entity
 @Table(name = "users")
