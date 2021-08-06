@@ -53,9 +53,17 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("涩图标准 排除的UID")
     override val userExclude: Set<Long> by value(emptySet())
 
+    @ValueName("pximg")
+    @ValueDescription("i.pximg.net 反向代理 可以使用 $PixivMirrorHost")
+    val pximg: String by value("")
+
     @ValueName("proxy")
     @ValueDescription("代理")
     val proxy: String by value("")
+
+    @ValueName("timeout")
+    @ValueDescription("API 链接超时时间, 单位ms")
+    val timeout: Long by value(10_000L)
 
     private fun getPath(path: String, default: String) =
         if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
