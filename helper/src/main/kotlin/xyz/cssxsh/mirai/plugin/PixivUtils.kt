@@ -232,7 +232,7 @@ internal fun IllustInfo.isEro(): Boolean {
 }
 
 internal fun IllustInfo.check() = apply {
-    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+    check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
 
 private val Json_ = Json {
