@@ -64,18 +64,11 @@ private fun Session.init() = apply {
     kotlin.runCatching {
         val type = doReturningWork { it.metaData.databaseProductName }
         val sql = when {
-            type.contains("MariaDB", true) || type.contains("""MySql|""", true) -> {
-                "create.mysql.sql"
-            }
-            type.contains("SQLite", true) -> {
-                "create.sqlite.sql"
-            }
-            type.contains("Microsoft SQL Server", true) -> {
-                "create.sqlserver.sql"
-            }
-            else -> {
-                "create.default.sql"
-            }
+            type.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
+            type.contains(other = "MariaDB", ignoreCase = true) ||
+                type.contains(other = """MySql""", ignoreCase = true) -> "create.mysql.sql"
+            type.contains(other = "Microsoft SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
+            else -> "create.default.sql"
         }
         requireNotNull(ArtWorkInfo::class.java.getResourceAsStream(sql)) { "读取 创建表 SQL 失败" }
             .use { it.reader().readText() }
