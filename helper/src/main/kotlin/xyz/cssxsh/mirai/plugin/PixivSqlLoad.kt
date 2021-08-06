@@ -66,7 +66,7 @@ private fun Session.init() = apply {
         val sql = when {
             type.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
             type.contains(other = "MariaDB", ignoreCase = true) ||
-                type.contains(other = """MySql""", ignoreCase = true) -> "create.mysql.sql"
+                type.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
             type.contains(other = "Microsoft SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
             else -> "create.default.sql"
         }
