@@ -30,9 +30,12 @@ object PixivEroCommand : SimpleCommand(
     }
 
     private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
-        val result = good(sanity, marks)
-        if (result.isEmpty()) {
-            ArtWorkInfo.random(sanity, marks, EroInterval).forEach { info -> caches[info.pid] = info }
+        if (good(sanity, marks).isEmpty()) {
+            ArtWorkInfo.random(sanity, marks, EroInterval).forEach { info ->
+                synchronized(caches) {
+                    caches[info.pid] = info
+                }
+            }
         }
         return good(sanity, marks)
     }
@@ -46,7 +49,7 @@ object PixivEroCommand : SimpleCommand(
         ).replicate()
     }
 
-    private val expire get() = System.currentTimeMillis() - EroUpExpire
+    private val History.expire get() = (System.currentTimeMillis() - last) > EroUpExpire
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {
@@ -56,11 +59,11 @@ object PixivEroCommand : SimpleCommand(
             } else {
                 history.minSanityLevel = 0
             }
-            if ("更好" !in fromEvent.message.content && history.last < expire) {
+            if ("更好" !in fromEvent.message.content && history.expire) {
                 history.minBookmarks = 0
             }
             randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).random().also { info ->
-                synchronized(history) {
+                synchronized(caches) {
                     caches.remove(info.pid)
                     history.minSanityLevel = info.sanity
                     history.minBookmarks = info.bookmarks

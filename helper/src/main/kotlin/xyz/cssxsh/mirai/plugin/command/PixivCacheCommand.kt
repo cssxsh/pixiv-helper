@@ -180,7 +180,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
         PixivSearchResult.noCached().also {
-            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it) }
+            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it, check = false) }
         }.let {
             "搜索结果有${it.size}个作品需要缓存"
         }

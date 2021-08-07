@@ -47,20 +47,22 @@ object PixivTagCommand : SimpleCommand(
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
-            if (list.size < EroInterval && "TAG(${tag})" !in jobs) {
-                jobs.add("TAG(${tag})")
-                addCacheJob(name = "TAG(${tag})", reply = false) {
+            val tagCache = "TAG[${tag}]"
+            if (list.size < EroInterval && tagCache !in jobs) {
+                jobs.add(tagCache)
+                addCacheJob(name = tagCache, reply = false) {
                     getSearchTag(tag = tag).eros().onCompletion {
-                        jobs.remove("TAG(${tag})")
+                        jobs.remove(tagCache)
                     }
                 }
             }
             list.randomOrNull()?.also { artwork ->
-                if (list.size < EroInterval && "RELATED(${artwork.pid})" !in jobs) {
-                    jobs.add("RELATED(${artwork.pid})")
-                    addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
+                val relatedCache = "RELATED(${artwork.pid})"
+                if (list.size < EroInterval && relatedCache !in jobs) {
+                    jobs.add(relatedCache)
+                    addCacheJob(name = relatedCache, reply = false) {
                         getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros().onCompletion {
-                            jobs.remove("RELATED(${artwork.pid})")
+                            jobs.remove(relatedCache)
                         }
                     }
                 }
@@ -68,9 +70,9 @@ object PixivTagCommand : SimpleCommand(
                 record(tag = tag, pid = artwork?.pid)
                 requireNotNull(artwork) {
                     if (fuzzy) {
-                        "$subject 读取Tag(${tag})色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
+                        "$subject 读取Tag[${tag}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
                     } else {
-                        "$subject 读取Tag(${tag})色图失败, 请尝试模糊搜索"
+                        "$subject 读取Tag[${tag}]色图失败, 请尝试模糊搜索"
                     }
                 }
             }

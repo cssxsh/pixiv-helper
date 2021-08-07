@@ -60,7 +60,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
         }
     }.onFailure {
         when {
-            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+            SendLimit in it.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
@@ -232,7 +232,7 @@ internal fun IllustInfo.isEro(): Boolean {
 }
 
 internal fun IllustInfo.check() = apply {
-    check(user.id != 0L) { "作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+    check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
 
 private val Json_ = Json {

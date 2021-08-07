@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS users
 (
     `uid`     INTEGER     NOT NULL,
-    `name`    VARCHAR(15) NOT NULL,
-    `account` VARCHAR(32) NOT NULL,
+    `name`    VARCHAR(15) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `account` VARCHAR(32) NOT NULL COLLATE 'ascii_general_ci',
     PRIMARY KEY (`uid`)
 );
 CREATE TABLE IF NOT EXISTS artworks
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS artworks
 CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER     NOT NULL,
-    `name`            VARCHAR(30) NOT NULL,
-    `translated_name` TEXT,
+    `name`            VARCHAR(30) NOT NULL COLLATE 'utf8mb4_bin',
+    `translated_name` VARCHAR(64) COLLATE 'utf8mb4_bin',
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER      NOT NULL,
     `index` TINYINT      NOT NULL,
-    `md5`   CHAR(32)     NOT NULL,
-    `url`   VARCHAR(200) NOT NULL,
+    `md5`   CHAR(32)     NOT NULL COLLATE 'ascii_general_ci',
+    `url`   VARCHAR(200) NOT NULL COLLATE 'ascii_general_ci',
     -- file size max 32MB
     `size`  INTEGER      NOT NULL,
     PRIMARY KEY (`pid`, `index`),
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS statistic_tag
 );
 CREATE TABLE IF NOT EXISTS statistic_search
 (
-    `md5`        NCHAR(32)     NOT NULL,
+    `md5`        CHAR(32)     NOT NULL COLLATE 'ascii_general_ci',
     `similarity` NUMERIC(6, 4) NOT NULL,
     `pid`        INTEGER       NOT NULL,
     `title`      VARCHAR(32)   NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS statistic_alias
 );
 CREATE TABLE IF NOT EXISTS statistic_task
 (
-    `task`      VARCHAR(32) NOT NULL,
+    `task`      VARCHAR(32) NOT NULL COLLATE 'ascii_general_ci',
     `pid`       INTEGER     NOT NULL,
     `timestamp` INTEGER     NOT NULL,
     PRIMARY KEY (`task`, `pid`)

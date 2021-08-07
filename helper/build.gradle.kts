@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.1.5"
+version = "1.2.0"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -50,6 +50,7 @@ dependencies {
     implementation(jsoup(Versions.jsoup))
     // implementation(mybatis("mybatis", Versions.mybatis))
     implementation(hibernate("hibernate-core", Versions.hibernate))
+    implementation(hibernate("hibernate-c3p0", Versions.hibernate))
     implementation("com.github.gwenn:sqlite-dialect:0.1.2")
     implementation(xerial("sqlite-jdbc", Versions.sqlite))
     implementation(project(":client"))

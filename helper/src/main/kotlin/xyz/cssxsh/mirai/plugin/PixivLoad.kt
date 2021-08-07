@@ -215,8 +215,8 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
     }
 }
 
-internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>) = flow {
-    info.filterNot { it.pid in ArtWorkInfo }.chunked(PAGE_SIZE.toInt()).forEach { list ->
+internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
+    info.filterNot { check && it.pid in ArtWorkInfo }.chunked(PAGE_SIZE.toInt()).forEach { list ->
         if (active()) list.mapNotNull { result ->
             runCatching {
                 getIllustInfo(pid = result.pid, flush = true).apply {

@@ -4,6 +4,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import org.hibernate.*
+import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*
 import org.hibernate.dialect.function.*
 import org.hibernate.query.criteria.internal.*
@@ -13,6 +14,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.*
+import java.sql.*
 import javax.persistence.*
 import javax.persistence.criteria.*
 import kotlin.streams.*
@@ -29,45 +31,71 @@ private val Entities = listOf(
     AliasSetting::class.java
 )
 
-object HelperSqlConfiguration : Configuration() {
+private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
+
+object HelperSqlConfiguration :
+    Configuration(BootstrapServiceRegistryBuilder().applyClassLoader(PluginClassLoader).build()) {
 
     private val DefaultProperties = """
                 hibernate.connection.url=jdbc:sqlite:pixiv.sqlite
                 hibernate.connection.driver_class=org.sqlite.JDBC
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
+                hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvider
+                hibernate.connection.isolation=${Connection.TRANSACTION_READ_UNCOMMITTED}
                 hibernate.hbm2ddl.auto=none
-                hibernate-connection-autocommit=true
-                hibernate.connection.show_sql=false
+                hibernate-connection-autocommit=${true}
+                hibernate.connection.show_sql=${false}
             """.trimIndent()
 
     init {
         Entities.forEach { addAnnotatedClass(it) }
+        setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+        setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
 
     fun load(dir: File = File(".")) {
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
-        if (properties.getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+        if (getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+            // SQLite 是单文件数据库，最好只有一个连接
+            setProperty("hibernate.c3p0.min_size", "${1}")
+            setProperty("hibernate.c3p0.max_size", "${1}")
             addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
         }
     }
 }
 
-internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory() }
+internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
 
-private val session by lazy {
-    factory.openSession().apply {
-        transaction.begin()
-        requireNotNull(ArtWorkInfo::class.java.getResourceAsStream("create.sql")) { "读取 创建表 SQL 失败" }
+private fun SessionFactory.init(): Unit = openSession().use { session ->
+    // 创建表
+    session.transaction.begin()
+    kotlin.runCatching {
+        val meta = session.doReturningWork { it.metaData }
+        val name = meta.databaseProductName
+        val sql = when {
+            name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
+            name.contains(other = "MariaDB", ignoreCase = true) ||
+                name.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
+            name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
+            else -> "create.default.sql"
+        }
+        requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "读取 Create Sql 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
-            .forEach { createNativeQuery(it).executeUpdate() }
-        transaction.commit()
+            .forEach { session.createNativeQuery(it).executeUpdate() }
+        meta
+    }.onSuccess {
+        session.transaction.commit()
+        logger.info("数据库 ${it.url} by ${it.driverName} 初始化完成")
+    }.onFailure {
+        logger.error("数据库初始化失败", it)
+        session.transaction.rollback()
     }
 }
 
-internal fun <R> useSession(block: (session: Session) -> R) = synchronized(factory) { session.let(block) }
+internal fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
@@ -75,6 +103,9 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
     config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
+    config.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+    config.setProperty("hibernate.c3p0.min_size", "${1}")
+    config.setProperty("hibernate.c3p0.max_size", "${1}")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
         Entities.onEach { clazz ->
@@ -168,7 +199,7 @@ internal fun ArtWorkInfo.Companion.interval(range: LongRange, bookmarks: Long, p
     }.resultList.orEmpty()
 }
 
-fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
+internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -355,7 +386,7 @@ internal fun FileInfo.Companion.find(image: Image): List<FileInfo> = useSession 
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
             .where(equal(file.get<String>("md5"), image.md5.toByteString().hex()))
-    }.resultList
+    }.resultList.orEmpty()
 }
 
 internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
@@ -502,12 +533,19 @@ internal fun PixivSearchResult.Companion.find(image: Image): PixivSearchResult? 
     session.find(PixivSearchResult::class.java, image.md5.toByteString().hex())
 }
 
+internal fun PixivSearchResult.Companion.all(): List<PixivSearchResult> = useSession { session ->
+    session.withCriteria<PixivSearchResult> { criteria ->
+        val search = criteria.from(PixivSearchResult::class.java)
+        criteria.select(search)
+    }.resultList.orEmpty()
+}
+
 internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->
     session.withCriteria<PixivSearchResult> { criteria ->
         val search = criteria.from(PixivSearchResult::class.java)
-        val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artworks", JoinType.LEFT)
+        val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)
         criteria.select(search)
-            .where(artwork.get<Long?>("pid").isNull)
+            .where(artwork.isNull)
     }.resultList.orEmpty()
 }
 

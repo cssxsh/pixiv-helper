@@ -8,6 +8,7 @@ import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
@@ -34,6 +35,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
     public override val mutex: Mutex by MutexDelegate
 
     override val ignore: Ignore get() = { PixivApiIgnore(it) }
+
+    override val timeout: Long by PixivHelperSettings::timeout
 
     internal var link: Boolean by LinkDelegate
 

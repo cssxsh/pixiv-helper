@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.1.5") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.2.0") {
         name("pixiv-helper")
         author("cssxsh")
     }
@@ -19,7 +19,7 @@ object PixivHelperPlugin : KotlinPlugin(
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
     override fun onEnable() {
-        Logger.getLogger("org.hibernate").level = Level.OFF
+        Logger.getLogger("org.hibernate").level = Level.WARNING
         HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()

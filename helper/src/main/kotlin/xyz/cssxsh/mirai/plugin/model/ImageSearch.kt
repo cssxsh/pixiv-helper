@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.model
 
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import org.hibernate.annotations.NotFound
+import org.hibernate.annotations.NotFoundAction
 import javax.persistence.*
 
 sealed interface SearchResult {
@@ -32,12 +34,11 @@ data class PixivSearchResult(
     @SerialName("member_name")
     override val name: String = ""
 ): SimpleArtworkInfo, SearchResult, java.io.Serializable {
-    @OneToMany(cascade = [], fetch = FetchType.LAZY)
+    @ManyToOne(cascade = [], fetch = FetchType.EAGER)
     @JoinColumn(name = "pid", insertable = false, updatable = false, nullable = true)
+    @NotFound(action = NotFoundAction.IGNORE)
     @kotlinx.serialization.Transient
-    private val artworks: List<ArtWorkInfo> = emptyList()
-
-    val artwork get() = artworks.singleOrNull()
+    val artwork: ArtWorkInfo? = null
 
     companion object
 }
