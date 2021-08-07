@@ -49,18 +49,18 @@ object HelperSqlConfiguration :
 
     init {
         Entities.forEach { addAnnotatedClass(it) }
-        properties.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
-        properties.setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
+        setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+        setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
 
     fun load(dir: File = File(".")) {
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
-        if (properties.getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+        if (getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
             // SQLite 是单文件数据库，最好只有一个连接
-            properties.setProperty("hibernate.c3p0.min_size", "${1}")
-            properties.setProperty("hibernate.c3p0.max_size", "${1}")
+            setProperty("hibernate.c3p0.min_size", "${1}")
+            setProperty("hibernate.c3p0.max_size", "${1}")
             addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
         }
     }
@@ -104,6 +104,8 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
     config.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+    config.setProperty("hibernate.c3p0.min_size", "${1}")
+    config.setProperty("hibernate.c3p0.max_size", "${1}")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
         Entities.onEach { clazz ->
