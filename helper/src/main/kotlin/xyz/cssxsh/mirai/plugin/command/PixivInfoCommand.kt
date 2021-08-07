@@ -32,7 +32,7 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.user(target: User = subject as User) = withHelper {
         buildMessageChain {
             appendLine("用户: ${target.nameCardOrNick}")
-            appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}}")
+            appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}")
             StatisticTagInfo.user(target.id).run {
                 appendLine("使用标签指令次数: $size")
                 groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
