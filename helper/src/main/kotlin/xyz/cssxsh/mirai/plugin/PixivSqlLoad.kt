@@ -4,6 +4,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import org.hibernate.*
+import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*
 import org.hibernate.dialect.function.*
 import org.hibernate.query.criteria.internal.*
@@ -13,6 +14,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.*
+import java.sql.*
 import javax.persistence.*
 import javax.persistence.criteria.*
 import kotlin.streams.*
@@ -29,19 +31,26 @@ private val Entities = listOf(
     AliasSetting::class.java
 )
 
-object HelperSqlConfiguration : Configuration() {
+private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
+
+object HelperSqlConfiguration :
+    Configuration(BootstrapServiceRegistryBuilder().applyClassLoader(PluginClassLoader).build()) {
 
     private val DefaultProperties = """
                 hibernate.connection.url=jdbc:sqlite:pixiv.sqlite
                 hibernate.connection.driver_class=org.sqlite.JDBC
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
+                hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvider
+                hibernate.connection.isolation=${Connection.TRANSACTION_READ_UNCOMMITTED}
                 hibernate.hbm2ddl.auto=none
-                hibernate-connection-autocommit=true
-                hibernate.connection.show_sql=false
+                hibernate-connection-autocommit=${true}
+                hibernate.connection.show_sql=${false}
             """.trimIndent()
 
     init {
         Entities.forEach { addAnnotatedClass(it) }
+        properties.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+        properties.setProperty("hibernate.connection.isolation", Connection.TRANSACTION_READ_UNCOMMITTED.toString())
     }
 
     fun load(dir: File = File(".")) {
@@ -54,35 +63,36 @@ object HelperSqlConfiguration : Configuration() {
     }
 }
 
-internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory() }
+internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
 
-private val session by lazy { factory.openSession().init() }
-
-private fun Session.init() = apply {
+private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
-    transaction.begin()
+    session.transaction.begin()
     kotlin.runCatching {
-        val type = doReturningWork { it.metaData.databaseProductName }
+        val meta = session.doReturningWork { it.metaData }
+        val name = meta.databaseProductName
         val sql = when {
-            type.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
-            type.contains(other = "MariaDB", ignoreCase = true) ||
-                type.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
-            type.contains(other = "Microsoft SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
+            name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
+            name.contains(other = "MariaDB", ignoreCase = true) ||
+                name.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
+            name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
             else -> "create.default.sql"
         }
-        requireNotNull(ArtWorkInfo::class.java.getResourceAsStream(sql)) { "读取 创建表 SQL 失败" }
+        requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "读取 Create Sql 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
-            .forEach { createNativeQuery(it).executeUpdate() }
+            .forEach { session.createNativeQuery(it).executeUpdate() }
+        meta
     }.onSuccess {
-        transaction.commit()
+        session.transaction.commit()
+        logger.info("数据库 ${it.url} by ${it.driverName} 初始化完成")
     }.onFailure {
         logger.error("数据库初始化失败", it)
-        transaction.rollback()
+        session.transaction.rollback()
     }
 }
 
-internal fun <R> useSession(block: (session: Session) -> R) = synchronized(factory) { session.let(block) }
+internal fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
@@ -90,6 +100,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
     config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
+    config.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
         Entities.onEach { clazz ->
