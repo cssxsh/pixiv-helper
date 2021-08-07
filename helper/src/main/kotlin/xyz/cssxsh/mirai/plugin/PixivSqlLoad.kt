@@ -50,7 +50,7 @@ object HelperSqlConfiguration :
     init {
         Entities.forEach { addAnnotatedClass(it) }
         properties.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
-        properties.setProperty("hibernate.connection.isolation", Connection.TRANSACTION_READ_UNCOMMITTED.toString())
+        properties.setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
 
     fun load(dir: File = File(".")) {
@@ -58,6 +58,9 @@ object HelperSqlConfiguration :
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
         if (properties.getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+            // SQLite 是单文件数据库，最好只有一个连接
+            properties.setProperty("hibernate.c3p0.min_size", "${1}")
+            properties.setProperty("hibernate.c3p0.max_size", "${1}")
             addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
         }
     }
