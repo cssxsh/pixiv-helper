@@ -34,7 +34,7 @@ data class PixivSearchResult(
     @SerialName("member_name")
     override val name: String = ""
 ): SimpleArtworkInfo, SearchResult, java.io.Serializable {
-    @ManyToOne(cascade = [], fetch = FetchType.LAZY)
+    @ManyToOne(cascade = [], fetch = FetchType.EAGER)
     @JoinColumn(name = "pid", insertable = false, updatable = false, nullable = true)
     @NotFound(action = NotFoundAction.IGNORE)
     @kotlinx.serialization.Transient
