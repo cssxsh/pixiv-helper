@@ -19,7 +19,7 @@ object PixivHelperPlugin : KotlinPlugin(
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
     override fun onEnable() {
-        Logger.getLogger("org.hibernate").level = Level.OFF
+        Logger.getLogger("org.hibernate").level = Level.WARNING
         HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()
