@@ -199,7 +199,7 @@ internal fun ArtWorkInfo.Companion.interval(range: LongRange, bookmarks: Long, p
     }.resultList.orEmpty()
 }
 
-fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
+internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
