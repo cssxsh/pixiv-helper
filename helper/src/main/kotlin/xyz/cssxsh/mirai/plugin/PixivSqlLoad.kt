@@ -140,13 +140,11 @@ internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
 
 internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
 
-internal inline fun <reified T> Session.withCriteria(
-    block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit
-) = createQuery(criteriaBuilder.run { createQuery(T::class.java).also { block(it) } })
+internal inline fun <reified T> Session.withCriteria(block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit) =
+    createQuery(criteriaBuilder.run { createQuery(T::class.java).also { block(it) } })
 
-internal inline fun <reified T> Session.withCriteriaUpdate(
-    block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit
-) = createQuery(criteriaBuilder.run { createCriteriaUpdate(T::class.java).also { block(it) } })
+internal inline fun <reified T> Session.withCriteriaUpdate(block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit) =
+    createQuery(criteriaBuilder.run { createCriteriaUpdate(T::class.java).also { block(it) } })
 
 internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
