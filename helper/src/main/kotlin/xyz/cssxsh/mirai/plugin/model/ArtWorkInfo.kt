@@ -66,7 +66,7 @@ data class FileInfo(
     val index: Int = 0,
     @Column(name = "md5", nullable = false, length = 32)
     val md5: String = "",
-    @Column(name = "url", nullable = false, length = 200)
+    @Column(name = "url", nullable = false)
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
