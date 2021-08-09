@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.tools
 
-import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
@@ -11,13 +10,11 @@ import org.jsoup.nodes.Document
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.tool.*
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 object ImageSearcher : HtmlParser(name = "Search") {
 
     init {
-        RubySSLSocketFactory.regexes.add("""saucenao\.com""".toRegex())
+        sni("""saucenao\.com""".toRegex())
     }
 
     private const val API = "https://saucenao.com/search.php"
@@ -28,21 +25,9 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     val key by ImageSearchConfig::key
 
-    private val proxy by PixivHelperSettings::proxy
-
     override val client = super.client.config {
         Json {
             serializer = KotlinxSerializer(PixivJson)
-        }
-        engine {
-            (this as OkHttpConfig).config {
-                if (ImageSearcher.proxy.isNotBlank()) {
-                    proxy(Url(ImageSearcher.proxy).toProxy())
-                } else {
-                    sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
-                    hostnameVerifier { _, _ -> true }
-                }
-            }
         }
     }
 
