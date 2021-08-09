@@ -22,7 +22,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存关注推送")
     suspend fun CommandSenderOnMessage<*>.follow() = withHelper {
-        addCacheJob(name = "FOLLOW", reply = reply) { getFollowIllusts().types(WorkContentType.ILLUST) }
+        addCacheJob(name = "FOLLOW", reply = reply) { getFollowIllusts() }
         "任务FOLLOW已添加"
     }
 
@@ -47,7 +47,7 @@ object PixivCacheCommand : CompositeCommand(
         check(start <= end) { "start 要在 end 之前" }
         (start..end).forEach { date ->
             addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = reply) {
-                getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).types(WorkContentType.ILLUST).notCached()
+                getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).notCached()
             }
         }
         "任务集RANGE{${start}~${end}}已添加"

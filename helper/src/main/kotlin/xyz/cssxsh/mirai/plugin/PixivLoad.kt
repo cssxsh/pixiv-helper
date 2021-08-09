@@ -21,9 +21,7 @@ internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
 
 internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filterNot { it.pid in ArtWorkInfo } }
 
-internal fun Flow<Collection<IllustInfo>>.types(type: WorkContentType) = map { list -> list.filter { it.type == type } }
-
-internal fun Flow<Collection<IllustInfo>>.eros() = map { list -> list.filter { it.isEro() } }
+internal fun Flow<Collection<IllustInfo>>.eros(mark: Boolean = true) = map { list -> list.filter { it.isEro(mark) } }
 
 internal fun Flow<Collection<IllustInfo>>.isToday() = map { list ->
     val now = LocalDate.now()

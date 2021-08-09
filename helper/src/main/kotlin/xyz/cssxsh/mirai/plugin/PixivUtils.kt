@@ -221,14 +221,20 @@ internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByU
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
-internal fun IllustInfo.isEro(): Boolean {
-    val ero: EroStandardConfig = PixivHelperSettings
-    if (ero.types.isNotEmpty() && type !in ero.types) return false
-    if (totalBookmarks ?: 0 <= ero.bookmarks) return false
-    if (pageCount > ero.pages) return false
-    if (tags.any { ero.tagExclude in it.name || ero.tagExclude in it.translatedName.orEmpty() }) return false
-    if (user.id in ero.userExclude) return true
-    return true
+internal fun IllustInfo.bookmarks(min: Long): Boolean = (totalBookmarks ?: 0) > min
+
+internal fun IllustInfo.pages(max: Int): Boolean = pageCount < max
+
+internal fun IllustInfo.match(tag: Regex): Boolean = tags.any { tag in it.name || tag in it.translatedName.orEmpty() }
+
+internal fun IllustInfo.user(ids: Set<Long>): Boolean = user.id in ids
+
+internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = PixivHelperSettings.let { ero: EroStandardConfig ->
+    (ero.types.isEmpty() || type in ero.types) &&
+        (mark.not() || bookmarks(ero.bookmarks)) &&
+        (pages(ero.pages)) &&
+        (match(ero.tagExclude).not()) &&
+        (user(ero.userExclude).not())
 }
 
 internal fun IllustInfo.check() = apply {
