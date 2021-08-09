@@ -40,7 +40,7 @@ data class ArtWorkInfo(
     val ero: Boolean = false,
     @Column(name = "deleted", nullable = false, updatable = false)
     val deleted: Boolean = true,
-    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinColumn(name = "uid")
     val author: UserBaseInfo = UserBaseInfo()
 ) {
