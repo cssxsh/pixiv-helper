@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS tags
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
+CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER NOT NULL,
