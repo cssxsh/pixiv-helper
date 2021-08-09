@@ -100,7 +100,7 @@ sealed class TimerTask {
 }
 
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    val flow = block().types(WorkContentType.ILLUST).notHistory(task = name)
+    val flow = block().eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.associateBy { it.pid }.values
     list.sortedBy { it.createAt }.forEachIndexed { index, illust ->

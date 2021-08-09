@@ -4,7 +4,7 @@
 
 基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
-目前没有自动缓存清理，请使用 [#删除指令] 手动清理  
+目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
@@ -32,9 +32,8 @@ R18图会按照Pixiv所给信息过滤
 | `/<pixiv> <login> [username] [password]` | APP 不再支持 账号 密码 直接登录，指令做废  |
 | `/<pixiv> <sina>`                        | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
 | `/<pixiv> <cookie>`                      | 从文件 读取 Web Cookie，登录PIXIV          |
-| `/<pixiv> <refresh< [token]`             | 登录 通过 refresh token                    |
+| `/<pixiv> <refresh> [token]`             | 登录 通过 refresh token                    |
 | `/<follow> <user> {uid}`                 | 为当前助手关注指定用户                     |
-| `/<follow> <good>`                       | 关注色图缓存中的较好画师                   |
 | `/<follow> <copy> [uid]`                 | 关注指定用户的关注                         |
 | `/<mark bookmark> <add> [uid] {words}?`  | 添加指定作品收藏                           |
 | `/<mark bookmark> <delete> [pid]`        | 删除指定作品收藏                           |

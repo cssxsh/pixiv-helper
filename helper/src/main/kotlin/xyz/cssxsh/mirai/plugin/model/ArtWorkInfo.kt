@@ -10,8 +10,6 @@ data class ArtWorkInfo(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
-    @Column(name = "uid", nullable = false, insertable = false, updatable = false)
-    val uid: Long = 0,
     @Column(name = "title", nullable = false, length = 32)
     val title: String = "",
     @Column(name = "caption", nullable = false)
@@ -41,7 +39,7 @@ data class ArtWorkInfo(
     @Column(name = "deleted", nullable = false, updatable = false)
     val deleted: Boolean = true,
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid")
+    @JoinColumn(name = "uid", nullable = false, updatable = false)
     val author: UserBaseInfo = UserBaseInfo()
 ) {
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
@@ -66,7 +64,7 @@ data class FileInfo(
     val index: Int = 0,
     @Column(name = "md5", nullable = false, length = 32)
     val md5: String = "",
-    @Column(name = "url", nullable = false, length = 200)
+    @Column(name = "url", nullable = false)
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0

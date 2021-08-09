@@ -37,22 +37,25 @@ CREATE TABLE IF NOT EXISTS tags
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
+CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER      NOT NULL,
     `index` TINYINT      NOT NULL,
     `md5`   CHAR(32)     NOT NULL COLLATE LATIN1_100_CI_AI,
-    `url`   VARCHAR(200) NOT NULL COLLATE LATIN1_100_CI_AI,
+    `url`   VARCHAR(255) NOT NULL COLLATE LATIN1_100_CI_AI,
     -- file size max 32MB
     `size`  INTEGER      NOT NULL,
     PRIMARY KEY (`pid`, `index`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
 
 -- User Data
 CREATE TABLE IF NOT EXISTS statistic_ero
 (
-    `sender`    INTEGER NOT NULL,
+    `sender`    BIGINT  NOT NULL,
     `group`     INTEGER,
     `pid`       INTEGER NOT NULL,
     `timestamp` INTEGER NOT NULL,
@@ -60,7 +63,7 @@ CREATE TABLE IF NOT EXISTS statistic_ero
 );
 CREATE TABLE IF NOT EXISTS statistic_tag
 (
-    `sender`    INTEGER      NOT NULL,
+    `sender`    BIGINT       NOT NULL,
     `group`     INTEGER,
     `pid`       INTEGER,
     `tag`       NVARCHAR(30) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
@@ -72,7 +75,7 @@ CREATE TABLE IF NOT EXISTS statistic_search
     `md5`        CHAR(32)      NOT NULL COLLATE LATIN1_100_CI_AI,
     `similarity` NUMERIC(6, 4) NOT NULL,
     `pid`        INTEGER       NOT NULL,
-    `title`      NVARCHAR(32)  NOT NULL,
+    `title`      NVARCHAR(64)  NOT NULL,
     `uid`        INTEGER       NOT NULL,
     `name`       NVARCHAR(15)  NOT NULL,
     PRIMARY KEY (`md5`)
@@ -85,7 +88,7 @@ CREATE TABLE IF NOT EXISTS statistic_alias
 );
 CREATE TABLE IF NOT EXISTS statistic_task
 (
-    `task`      VARCHAR(32) NOT NULL COLLATE LATIN1_100_CI_AI,
+    `task`      VARCHAR(64) NOT NULL COLLATE LATIN1_100_CI_AI,
     `pid`       INTEGER     NOT NULL,
     `timestamp` INTEGER     NOT NULL,
     PRIMARY KEY (`task`, `pid`)
