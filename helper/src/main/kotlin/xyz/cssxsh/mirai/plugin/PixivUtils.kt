@@ -18,7 +18,10 @@ import xyz.cssxsh.pixiv.apps.*
 import java.io.File
 import java.lang.*
 
-internal val logger by PixivHelperPlugin::logger
+internal val logger by lazy {
+    val open = System.getProperty("xyz.cssxsh.mirai.plugin.logger", "${true}").toBoolean()
+    if (open) PixivHelperPlugin.logger else SilentLogger
+}
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
