@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS files
     PRIMARY KEY (`pid`, `index`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
 
 -- User Data
 CREATE TABLE IF NOT EXISTS statistic_ero
