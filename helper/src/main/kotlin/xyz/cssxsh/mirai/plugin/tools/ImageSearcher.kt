@@ -59,18 +59,18 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private val BASE64 = """[\w-=]{15}\.[\w]{3}""".toRegex()
 
-    private val image: (String) -> String = { name ->
+    private val image = { name: String ->
         when {
             MD5 in name -> {
-                MD5.find(name)!!.value.let { md5 ->
-                    "https://img1.gelbooru.com/images/${md5.substring(0..1)}/${md5.substring(2..3)}/${md5}.jpg"
-                }
+                val md5 = MD5.find(name)!!.value
+                "https://img1.gelbooru.com/images/${md5.substring(0..1)}/${md5.substring(2..3)}/${md5}.jpg" to md5
             }
             BASE64 in name -> {
-                BASE64.find(name)!!.value.let { base64 -> "https://pbs.twimg.com/media/${base64}?name=orig" }
+                val base64 = BASE64.find(name)!!.value
+                "https://pbs.twimg.com/media/${base64}?name=orig" to ""
             }
             else -> {
-                "无"
+                "无" to ""
             }
         }
     }
@@ -78,12 +78,14 @@ object ImageSearcher : HtmlParser(name = "Search") {
     private val other: (Document) -> List<SearchResult> = {
         it.select(".resulttable").mapNotNull { content ->
             if ("Twitter" in content.text()) {
+                val (image, md5) = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
                 TwitterSearchResult(
                     similarity = content.select(".resulttablecontent .resultsimilarityinfo")
                         .text().replace("%", "").toDouble() / 100,
                     tweet = content.select(".resulttablecontent .resultcontent a")
                         .first().attr("href"),
-                    image = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
+                    image = image,
+                    md5 = md5
                 )
             } else {
                 OtherSearchResult(
@@ -111,10 +113,12 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         .copy(similarity = it.info.similarity / 100)
                 }
                 "tweet_id" in it.data -> {
+                    val (image, md5) = image(it.info.indexName)
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
                         tweet = "https://twitter.com/detail/status/${it.data.getValue("tweet_id").jsonPrimitive.content}",
-                        image = image(it.info.indexName)
+                        image = image,
+                        md5 = md5
                     )
                 }
                 "i.pximg.net" in source || "www.pixiv.net" in source -> {
@@ -127,10 +131,12 @@ object ImageSearcher : HtmlParser(name = "Search") {
                     )
                 }
                 "pbs.twimg.com" in source || "twitter.com" in source -> {
+                    val (image, md5) = image(it.info.indexName)
                     TwitterSearchResult(
                         similarity = it.info.similarity / 100,
                         tweet = source,
-                        image = image(it.info.indexName)
+                        image = image,
+                        md5 = md5
                     )
                 }
                 else -> {

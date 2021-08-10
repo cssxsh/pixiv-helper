@@ -12,6 +12,8 @@ object PixivHelperListener {
 
     internal val images = mutableMapOf<MessageSourceMetadata, Image>()
 
+    internal val current = mutableMapOf<Long, MessageSource>()
+
     private val globalEventChannel by lazy { PixivHelperPlugin.globalEventChannel() }
 
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
@@ -38,6 +40,7 @@ object PixivHelperListener {
                 message.findIsInstance<Image>()?.let { image ->
                     synchronized(images) {
                         images[source.metadata()] = image
+                        current[subject.id] = source
                     }
                 }
             }

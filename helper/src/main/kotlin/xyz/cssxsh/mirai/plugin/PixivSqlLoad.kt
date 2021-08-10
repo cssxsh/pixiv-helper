@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import okio.ByteString.Companion.toByteString
 import org.hibernate.*
 import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*

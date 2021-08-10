@@ -15,24 +15,24 @@ sealed interface SearchResult {
 @Table(name = "statistic_search")
 data class PixivSearchResult(
     @Id
-    @Column(name = "md5", nullable = false)
+    @Column(name = "md5", nullable = false, updatable = false)
     @SerialName("md5")
-    val md5: String = "",
+    var md5: String = "",
     @Column(name = "similarity", nullable = false)
     @SerialName("similarity")
-    override val similarity: Double = 0.0,
+    override var similarity: Double = 0.0,
     @Column(name = "pid", nullable = false, updatable = false)
     @SerialName("pixiv_id")
-    override val pid: Long = 0,
+    override var pid: Long = 0,
     @Column(name = "title", nullable = false)
     @SerialName("title")
-    override val title: String = "",
+    override var title: String = "",
     @Column(name = "uid", nullable = false)
     @SerialName("member_id")
-    override val uid: Long = 0,
+    override var uid: Long = 0,
     @Column(name = "name", nullable = false)
     @SerialName("member_name")
-    override val name: String = ""
+    override var name: String = ""
 ): SimpleArtworkInfo, SearchResult, java.io.Serializable {
     @ManyToOne(cascade = [], fetch = FetchType.EAGER)
     @JoinColumn(name = "pid", insertable = false, updatable = false, nullable = true)
@@ -44,6 +44,7 @@ data class PixivSearchResult(
 }
 
 data class TwitterSearchResult(
+    val md5: String,
     override val similarity: Double,
     val tweet: String,
     val image: String,
