@@ -128,6 +128,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
+            associate()
             appendLine("作者: $name ")
             appendLine("UID: $uid ")
             appendLine("标题: $title ")
@@ -369,7 +370,17 @@ internal fun Long.toBytesSize() = when (this) {
 }
 
 internal fun getBackupList(): Map<String, File> {
-    return mapOf("DATA" to PixivHelperPlugin.dataFolder, "CONFIG" to PixivHelperPlugin.configFolder)
+    return mutableMapOf<String, File>().apply {
+        if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
+            put("DATA", PixivHelperPlugin.dataFolder)
+        }
+        if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
+            put("CONFIG", PixivHelperPlugin.configFolder)
+        }
+        if (SqlMetaData.url.startsWith("jdbc:sqlite:")) {
+            put("DATABASE", File(SqlMetaData.url.removePrefix("jdbc:sqlite:")))
+        }
+    }
 }
 
 internal suspend fun PixivHelper.redirect(account: String): Long {
@@ -392,7 +403,7 @@ internal data class MessageSourceMetadata(
 )
 
 internal fun MessageSource.metadata() = MessageSourceMetadata(
-    ids = ids.toList(),
-    internalIds = internalIds.toList(),
+    ids = ids.asList(),
+    internalIds = internalIds.asList(),
     time = time
 )

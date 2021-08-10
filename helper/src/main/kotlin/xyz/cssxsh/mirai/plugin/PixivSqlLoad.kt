@@ -66,7 +66,7 @@ object HelperSqlConfiguration :
     }
 }
 
-internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
+private val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
 
 private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
@@ -95,7 +95,9 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
     }
 }
 
-internal fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
+private fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
+
+internal val SqlMetaData get() = useSession { session -> session.doReturningWork { it.metaData } }
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
@@ -369,11 +371,11 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.singleResult
 }
 
-internal fun FileInfo.Companion.find(image: Image): List<FileInfo> = useSession { session ->
+internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
-            .where(equal(file.get<String>("md5"), image.md5.toByteString().hex()))
+            .where(equal(file.get<String>("md5"), hash))
     }.resultList.orEmpty()
 }
 
@@ -504,10 +506,11 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
     }.resultList.orEmpty()
 }
 
-internal fun PixivSearchResult.save(image: Image): Unit = useSession { session ->
+internal fun PixivSearchResult.save(hash: String): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.replicate(copy(md5 = image.md5.toByteString().hex()), ReplicationMode.OVERWRITE)
+        md5 = hash
+        session.replicate(this, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -515,15 +518,25 @@ internal fun PixivSearchResult.save(image: Image): Unit = useSession { session -
     }.getOrThrow()
 }
 
-internal fun PixivSearchResult.Companion.find(image: Image): PixivSearchResult? = useSession { session ->
-    session.find(PixivSearchResult::class.java, image.md5.toByteString().hex())
+internal fun PixivSearchResult.associate(): Unit = useSession { session ->
+    session.transaction.begin()
+    kotlin.runCatching {
+        val info by lazy { session.find(ArtWorkInfo::class.java, pid) ?: ArtWorkInfo() }
+        if (uid == 0L && info.pid != 0L) {
+            title = info.title
+            uid = info.author.uid
+            name = info.author.name
+            session.replicate(this, ReplicationMode.OVERWRITE)
+        }
+    }.onSuccess {
+        session.transaction.commit()
+    }.onFailure {
+        session.transaction.rollback()
+    }.getOrThrow()
 }
 
-internal fun PixivSearchResult.Companion.all(): List<PixivSearchResult> = useSession { session ->
-    session.withCriteria<PixivSearchResult> { criteria ->
-        val search = criteria.from(PixivSearchResult::class.java)
-        criteria.select(search)
-    }.resultList.orEmpty()
+internal fun PixivSearchResult.Companion.find(hash: String): PixivSearchResult? = useSession { session ->
+    session.find(PixivSearchResult::class.java, hash)
 }
 
 internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->

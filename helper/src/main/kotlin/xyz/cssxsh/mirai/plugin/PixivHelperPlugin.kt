@@ -82,7 +82,5 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperListener.stop()
 
         PixivHelperScheduler.stop()
-
-        useSession { it.flush() }
     }
 }
