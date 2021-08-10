@@ -111,8 +111,8 @@ internal fun PixivHelperSettings.init() {
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     PixivHelperPlugin.launch(SupervisorJob()) {
         val count = ArtWorkInfo.count()
-        if (count < eroInterval) {
-            logger.warning { "缓存数 $count < ${eroInterval}，建议使用指令( /cache recommended )进行缓存" }
+        if (count < eroChunk) {
+            logger.warning { "缓存数 $count < ${eroChunk}，建议使用指令( /cache recommended )进行缓存" }
         } else {
             logger.info { "缓存数 $count " }
         }
@@ -159,7 +159,7 @@ internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
 
-internal const val ERO_INTERVAL = 16
+internal const val ERO_CHUNK = 16
 
 internal const val ERO_UP_EXPIRE = 10 * 1000L
 

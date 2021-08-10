@@ -87,7 +87,7 @@ internal val SendInterval by PixivConfigData::interval
 /**
  * 涩图防重复间隔
  */
-internal val EroInterval by PixivHelperSettings::eroInterval
+internal val EroChunk by PixivHelperSettings::eroChunk
 
 /**
  * 涩图提高收藏数时间

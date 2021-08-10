@@ -31,7 +31,7 @@ object PixivEroCommand : SimpleCommand(
 
     private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
         if (good(sanity, marks).isEmpty()) {
-            ArtWorkInfo.random(sanity, marks, EroInterval).forEach { info ->
+            ArtWorkInfo.random(sanity, marks, EroChunk).forEach { info ->
                 synchronized(caches) {
                     caches[info.pid] = info
                 }
