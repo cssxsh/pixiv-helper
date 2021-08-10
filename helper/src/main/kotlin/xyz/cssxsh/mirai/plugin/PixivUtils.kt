@@ -338,6 +338,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
+        if (pid in ArtWorkInfo) replicate()
         results.replicate()
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
