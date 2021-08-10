@@ -33,10 +33,10 @@ object PixivCacheCommand : CompositeCommand(
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
     }
 
-    private operator fun LocalDate.rangeTo(other: LocalDate): List<LocalDate> = buildList {
+    private operator fun LocalDate.rangeTo(other: LocalDate): Sequence<LocalDate> = sequence {
         var pos = this@rangeTo
         while (pos <= other) {
-            add(pos)
+            yield(pos)
             pos = pos.plusDays(1)
         }
     }
