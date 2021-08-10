@@ -287,8 +287,8 @@ internal suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-internal fun Throwable.isNotCancellationException() =
-    (this is CancellationException || message == "No more continuations to resume").not()
+internal fun Throwable.isCancellationException() =
+    (this is CancellationException || message == "No more continuations to resume")
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)

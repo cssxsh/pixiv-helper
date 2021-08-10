@@ -97,13 +97,12 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
         list.map { illust ->
             async {
                 illust.runCatching { getImages() }.onFailure {
-                    if (it.isNotCancellationException()) {
-                        logger.warning({
-                            "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
-                        }, it)
-                        if (reply) send {
-                            "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
-                        }
+                    if (it.isCancellationException()) return@onFailure
+                    logger.warning({
+                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
+                    }, it)
+                    if (reply) send {
+                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
                     }
                 }
             }

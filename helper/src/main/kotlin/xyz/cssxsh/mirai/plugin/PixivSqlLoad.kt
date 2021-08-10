@@ -278,9 +278,10 @@ internal fun ArtWorkInfo.replicate() = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(
+internal fun SimpleArtworkInfo.toArtWorkInfo(caption: String = "") = ArtWorkInfo(
     pid = pid,
     title = title,
+    caption = caption,
     author = UserBaseInfo(uid, name, "")
 )
 
