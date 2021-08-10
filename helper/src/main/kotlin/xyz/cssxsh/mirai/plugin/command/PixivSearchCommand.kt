@@ -26,17 +26,20 @@ object PixivSearchCommand : SimpleCommand(
         return requireNotNull(images[source.metadata()]) { "图片历史未找到" }
     }
 
-    private suspend fun other(image: Image) = ImageSearcher.other(url = image.queryUrl())
-
-    private suspend fun pixiv(image: Image) = ImageSearcher.pixiv(url = image.queryUrl())
+    private suspend fun html(image: Image) = ImageSearcher.html(url = image.queryUrl())
 
     private suspend fun json(image: Image) = ImageSearcher.json(url = image.queryUrl())
 
-    private fun List<PixivSearchResult>.save(image: Image) = filter { it.similarity > MIN_SIMILARITY }.apply {
-        (maxByOrNull { it.similarity } ?: return@apply).save(image.md5.toByteString().hex())
+    private fun List<SearchResult>.similarity(min: Double = MIN_SIMILARITY): SearchResult? {
+        return filterIsInstance<PixivSearchResult>()
+            .filter { it.similarity > min }
+            .ifEmpty { this }
+            .maxByOrNull { it.similarity }
     }
 
-    private fun find(hash: String): PixivSearchResult? {
+
+    private fun record(hash: String): PixivSearchResult? {
+        if (hash.isNotBlank()) return null
         val cache = PixivSearchResult.find(hash)
         if (cache != null) return cache
         val file = FileInfo.find(hash).firstOrNull()
@@ -44,11 +47,11 @@ object PixivSearchCommand : SimpleCommand(
         return null
     }
 
-    private fun SearchResult.translate(): SearchResult {
-        return if (this is TwitterSearchResult && md5.isNotBlank()) {
-            (find(md5) ?: this)
-        } else {
-            this
+    private fun SearchResult.translate(hash: String): SearchResult {
+        return when (this) {
+            is PixivSearchResult -> apply { md5 = hash }
+            is TwitterSearchResult -> record(md5)?.apply { md5 = hash } ?: this
+            is OtherSearchResult -> this
         }
     }
 
@@ -57,17 +60,11 @@ object PixivSearchCommand : SimpleCommand(
         logger.info { "搜索 ${image.queryUrl()}" }
         val hash = image.md5.toByteString().hex()
 
-        val record = find(hash)
-        if (record != null) return@withHelper record
+        val record = record(hash)
+        if (record != null) return@withHelper record.getContent()
 
-        val result = if (ImageSearcher.key.isNotBlank()) {
-            json(image).run {
-                filterIsInstance<PixivSearchResult>().save(image).ifEmpty { this }
-            }
-        } else {
-            pixiv(image).save(image).ifEmpty { other(image) }
-        }
+        val result = if (ImageSearcher.key.isNotBlank()) json(image) else html(image)
 
-        result.maxByOrNull { it.similarity }?.translate()?.getContent() ?: "没有搜索结果"
+        result.similarity()?.translate(hash)?.getContent() ?: "没有搜索结果"
     }
 }

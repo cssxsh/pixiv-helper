@@ -505,18 +505,6 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
     }.resultList.orEmpty()
 }
 
-internal fun PixivSearchResult.save(hash: String): Unit = useSession { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        md5 = hash
-        session.replicate(this, ReplicationMode.IGNORE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
@@ -526,6 +514,8 @@ internal fun PixivSearchResult.associate(): Unit = useSession { session ->
             uid = info.author.uid
             name = info.author.name
             session.replicate(this, ReplicationMode.OVERWRITE)
+        } else {
+            session.replicate(this, ReplicationMode.IGNORE)
         }
     }.onSuccess {
         session.transaction.commit()

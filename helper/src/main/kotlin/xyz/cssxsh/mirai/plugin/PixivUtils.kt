@@ -128,7 +128,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
-            associate()
+            if (similarity > MIN_SIMILARITY) associate()
             appendLine("作者: $name ")
             appendLine("UID: $uid ")
             appendLine("标题: $title ")

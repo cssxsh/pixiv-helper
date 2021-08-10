@@ -97,7 +97,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun other(url: String): List<SearchResult> = html(other) {
+    suspend fun html(url: String): List<SearchResult> = html(other) {
         url(API)
         method = HttpMethod.Get
         parameter("url", url)
