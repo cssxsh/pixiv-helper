@@ -110,10 +110,11 @@ internal fun PixivHelperSettings.init() {
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     PixivHelperPlugin.launch(SupervisorJob()) {
-        if (ArtWorkInfo.count() < eroInterval) {
-            logger.warning {
-                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
-            }
+        val count = ArtWorkInfo.count()
+        if (count < eroInterval) {
+            logger.warning { "缓存数 $count < ${eroInterval}，建议使用指令( /cache recommended )进行缓存" }
+        } else {
+            logger.info { "缓存数 $count " }
         }
     }
 }
