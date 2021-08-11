@@ -52,7 +52,7 @@ object PixivEroCommand : SimpleCommand(
     private val History.expire get() = (System.currentTimeMillis() - last) > EroUpExpire
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.ero() = withHelper {
         histories.getOrPut(fromEvent.subject) { History() }.let { history ->
             if ("更色" in fromEvent.message.content) {
                 history.minSanityLevel++

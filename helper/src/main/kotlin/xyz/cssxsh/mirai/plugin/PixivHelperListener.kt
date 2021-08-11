@@ -24,7 +24,7 @@ object PixivHelperListener {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
-                sendArtworkInfo(pid = result.value.toLong())
+                sendIllustInfo(pid = result.value.toLong())
             }
             URL_USER_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
@@ -54,7 +54,7 @@ object PixivHelperListener {
         listeners.clear()
     }
 
-    private suspend fun MessageEvent.sendArtworkInfo(pid: Long) = toCommandSender().sendIllust(flush = false) {
+    private suspend fun MessageEvent.sendIllustInfo(pid: Long) = toCommandSender().withHelper {
         getIllustInfo(pid = pid, flush = false)
     }
 

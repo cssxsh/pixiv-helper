@@ -43,7 +43,7 @@ object PixivTagCommand : SimpleCommand(
     private val jobs = mutableSetOf<String>()
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }

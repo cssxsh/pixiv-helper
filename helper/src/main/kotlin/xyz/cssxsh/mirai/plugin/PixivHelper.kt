@@ -66,8 +66,9 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
         runCatching {
             block.invoke(this@PixivHelper).collect { list ->
                 if (list.isEmpty()) return@collect
-                list.replicate()
                 list.groupBy { it.pid in ArtWorkInfo }.also { (success, failure) ->
+                    // 不能先保存，会影响上面 groupBy 的判断
+                    list.replicate()
                     success?.let { list ->
                         if (write) list.write()
                     }

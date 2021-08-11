@@ -31,6 +31,8 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             null, Unit -> Unit
             is Message -> quoteReply(message)
             is String -> quoteReply(message)
+            is IllustInfo -> sendIllust(message)
+            is ArtWorkInfo -> sendArtwork(message)
             else -> quoteReply(message.toString())
         }
     }.onFailure {
@@ -47,16 +49,9 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.isSuccess
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendIllust(
-    flush: Boolean,
-    block: suspend PixivHelper.() -> IllustInfo,
-): Boolean {
+internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
     return runCatching {
-        helper.run {
-            buildMessageByIllust(illust = block().also { info ->
-                if (flush || json(info.pid).exists().not()) info.write()
-            })
-        }
+        helper.buildMessageByIllust(illust = illust)
     }.mapCatching {
         withTimeout(3 * 60 * 1000L) {
             quoteReply(it)
@@ -75,9 +70,9 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     }.isSuccess
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendIllust(
-    block: suspend PixivHelper.() -> ArtWorkInfo,
-) = sendIllust(flush = false) { getIllustInfo(pid = block().pid, flush = false) }
+internal suspend fun CommandSenderOnMessage<*>.sendArtwork(info: ArtWorkInfo): Boolean {
+    return sendIllust(helper.getIllustInfo(pid = info.pid, flush = false))
+}
 
 /**
  * 连续发送间隔时间
@@ -196,9 +191,8 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }.onFailure {
         logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, it)
     }
-    preview.illusts.filter { it.isEro() }.forEach { illust ->
+    preview.illusts.apply { replicate() }.write().filter { it.isEro() }.forEach { illust ->
         runCatching {
-            illust.replicate()
             val files = illust.getImages()
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
@@ -338,7 +332,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
-        if (pid in ArtWorkInfo) replicate()
+        if (pid !in ArtWorkInfo) this.replicate()
         results.replicate()
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
