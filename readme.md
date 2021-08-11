@@ -64,9 +64,9 @@ EditThisCookie 安装地址
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
-tag指令检索结果过少时，会自动触发自动缓存  
+tag指令检索结果过少时，会自动触发缓存  
 回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录  
-搜图使用 <https://saucenao.com> 的 api 无KEY时，每天限额 100次， KEY参数在设置中添加
+搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加
 
 ### 缓存指令
 
@@ -81,7 +81,7 @@ tag指令检索结果过少时，会自动触发自动缓存
 | `/<cache> <tag> [tag]`           | 缓存搜索得到的tag，ERO过滤              |
 | `/<cache> <search>`              | 缓存搜索记录                            |
 | `/<cache> <stop>`                | 停止当前助手缓存任务                    |
-| `/<cache> <reply> [open]`        | 为是否回复缓存细节，默认为否            |
+| `/<cache> <reply> [open]`        | 是否回复缓存细节，默认为否              |
 
 RankMode
 
@@ -111,8 +111,7 @@ DAY_MANGA
 | `/<task> <detail>`                           | 查看任务详情        |
 | `/<task> <delete> [name]`                    | 删除任务            |
 
-备份文件优先推送到群文件，其次百度云
-
+备份文件优先推送到群文件，其次百度云  
 duration 单位分钟，默认3小时
 
 ### 设置指令
@@ -123,7 +122,7 @@ duration 单位分钟，默认3小时
 | `/<setting> <link> [open]`    | 设置是否显示Pixiv Cat 原图链接 |
 | `/<setting> <tag> [open]`     | 设置是否显示TAG INFO           |
 | `/<setting> <attr> [open]`    | 设置是否显示作品属性           |
-| `/<setting> <max> [num]`      | 设置是否显示最大图片数         |
+| `/<setting> <max> [num]`      | 设置显示最大图片数             |
 
 ### 备份指令
 
@@ -135,13 +134,13 @@ duration 单位分钟，默认3小时
 | `/<backup> <data>`                           | 备份插件数据               |
 | `/<backup> <list>`                           | 列出备份目录               |
 | `/<backup> <get> [filename]`                 | 获取备份文件，发送文件消息 |
-| `/<backup> <upload> [filename]`              | 上传插件数据到百度云       |
+| `/<backup> <upload> [filename]`              | 上传文件到百度云           |
 | `/<backup> <auth>`                           | 百度云用户认证             |
 | `/<backup> <reload> [path] [mode] [chunk]?`  | 从 sqlite 备份中导入数据   |
 
-reload 的 mode 可选 有以下几种  
-`EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
-reload 的 chunk 为分段提交数量的大小, 默认8196   
+reload 的 mode 可选 有以下几种 `EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
+reload 的 chunk 为分段提交数量的大小, 默认8196  
+使用百度云服务需要的准备详见配置
 
 ### 统计信息指令
 
@@ -152,8 +151,6 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 | `/<info> <group> [target]?` | 获取群组信息        |
 | `/<info> <top> [limit]?`    | 获取TAG指令统计信息 |
 | `/<info> <cache>`           | 获取缓存信息        |
-
-使用百度云服务需要的准备详见配置
 
 ### 播放指令
 
@@ -170,9 +167,6 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 | `(/)<rank 排行> <month 月 月榜> {words}`         | 随机播放NaviRank 月榜   |
 | `(/)<rank 排行> <tag标签> {words}`               | 随机播放NaviRank 标签榜 |
 | `(/)<play 播放> <stop 停止>`                     | 停止播放当前列表        |
-
-使用百度云服务需要的准备详见配置
-
 ### 删除指令
 
 | 指令                                    | 描述                   |
@@ -189,12 +183,13 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 ### PixivHelperSettings.yml
 
 缓存目录、涩图标准等  
-proxy 代理，针对API不针对下载, `http://127.0.0.1:8080` or `socks://127.0.0.1:1080`  
-pximg i.pximg.net反向代理域名，可以填入i.pixiv.cat，某些情况下可以解决下载缓慢的问题
+proxy 代理针对API不针对下载, 插件有免代理的功能, 如果不是特殊需要不用修改， `http://127.0.0.1:8080` or `socks://127.0.0.1:1080`  
+pximg i.pximg.net反向代理域名, 如果不是特殊需要不用修改, 可以填入i.pixiv.cat, 某些情况下可以解决下载缓慢的问题
 
 ### NetdiskOauthConfig.yml
 
-插件备份文件功能需要百度网盘API支持，请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
+插件上传文件功能需要百度网盘API支持，但这个配置(备份文件)是可选的，不影响其他功能的使用。  
+请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
 信息只在启动时读取，修改后需重启，并使用 /backup auth 认证百度账号
 
 ### ImageSearchConfig.yml
@@ -205,13 +200,14 @@ KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https:
 
 ### hibernate.properties
 
+如果不是特殊需要，使用默认的 SQLite 配置就好  
 配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推
-下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar), 
-然后放进 `plugins` 文件夹  
+下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar)
+, 然后放进 `plugins` 文件夹  
 配置 文件
 
 ```
-hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv
+hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv?serverTimezone=Aisa/Shanghai
 hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
 hibernate.connection.CharSet=utf8mb4
 hibernate.connection.characterEncoding=utf8
