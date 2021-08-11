@@ -12,7 +12,7 @@ object PixivGetCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.get(pid: Long, flush: Boolean = false) = sendIllust(flush = flush) {
+    suspend fun CommandSenderOnMessage<*>.get(pid: Long, flush: Boolean = false) = withHelper {
         getIllustInfo(pid = pid, flush = flush)
     }
 }

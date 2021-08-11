@@ -12,6 +12,8 @@ object PixivHelperListener {
 
     internal val images = mutableMapOf<MessageSourceMetadata, Image>()
 
+    internal val current = mutableMapOf<Long, MessageSource>()
+
     private val globalEventChannel by lazy { PixivHelperPlugin.globalEventChannel() }
 
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
@@ -22,7 +24,7 @@ object PixivHelperListener {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
-                sendArtworkInfo(pid = result.value.toLong())
+                sendIllustInfo(pid = result.value.toLong())
             }
             URL_USER_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
@@ -38,6 +40,7 @@ object PixivHelperListener {
                 message.findIsInstance<Image>()?.let { image ->
                     synchronized(images) {
                         images[source.metadata()] = image
+                        current[subject.id] = source
                     }
                 }
             }
@@ -51,7 +54,7 @@ object PixivHelperListener {
         listeners.clear()
     }
 
-    private suspend fun MessageEvent.sendArtworkInfo(pid: Long) = toCommandSender().sendIllust(flush = false) {
+    private suspend fun MessageEvent.sendIllustInfo(pid: Long) = toCommandSender().withHelper {
         getIllustInfo(pid = pid, flush = false)
     }
 

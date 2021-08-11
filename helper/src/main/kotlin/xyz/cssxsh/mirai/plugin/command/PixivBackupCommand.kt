@@ -14,7 +14,7 @@ import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
-import java.io.File
+import java.io.*
 
 object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,

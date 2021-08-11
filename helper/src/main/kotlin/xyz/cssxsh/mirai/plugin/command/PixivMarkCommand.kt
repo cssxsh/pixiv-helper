@@ -28,7 +28,7 @@ object PixivMarkCommand : CompositeCommand(
 
     @SubCommand
     @Description("随机发送一个收藏的作品")
-    suspend fun CommandSenderOnMessage<*>.random(tag: String? = null) = sendIllust(flush = false) {
+    suspend fun CommandSenderOnMessage<*>.random(tag: String? = null) = withHelper {
         getBookmarks(uid = info().user.uid, tag = tag).also {
             addCacheJob(name = "MARK_RANDOM", reply = false) { it }
         }.toList().flatten().random()

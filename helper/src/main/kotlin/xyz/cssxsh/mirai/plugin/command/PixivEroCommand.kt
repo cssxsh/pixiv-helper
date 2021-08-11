@@ -31,7 +31,7 @@ object PixivEroCommand : SimpleCommand(
 
     private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
         if (good(sanity, marks).isEmpty()) {
-            ArtWorkInfo.random(sanity, marks, EroInterval).forEach { info ->
+            ArtWorkInfo.random(sanity, marks, EroChunk).forEach { info ->
                 synchronized(caches) {
                     caches[info.pid] = info
                 }
@@ -52,7 +52,7 @@ object PixivEroCommand : SimpleCommand(
     private val History.expire get() = (System.currentTimeMillis() - last) > EroUpExpire
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.ero() = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.ero() = withHelper {
         histories.getOrPut(fromEvent.subject) { History() }.let { history ->
             if ("更色" in fromEvent.message.content) {
                 history.minSanityLevel++

@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
-import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import okio.ByteString.Companion.toByteString
 import org.hibernate.*
 import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*
@@ -66,7 +64,7 @@ object HelperSqlConfiguration :
     }
 }
 
-internal val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
+private val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
 
 private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
@@ -95,7 +93,9 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
     }
 }
 
-internal fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
+private fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
+
+internal val SqlMetaData get() = useSession { session -> session.doReturningWork { it.metaData } }
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
@@ -200,7 +200,7 @@ internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSessi
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
-                equal(artwork.get<Long>("uid"), uid)
+                equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
             )
     }.resultList.orEmpty()
 }
@@ -258,7 +258,10 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment)
-                .where(gt(artwork.get<Long>("uid"), uid))
+                .where(
+                    isFalse(artwork.get("deleted")),
+                    equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
+                )
         }.executeUpdate()
     }.onSuccess {
         session.transaction.commit()
@@ -278,9 +281,10 @@ internal fun ArtWorkInfo.replicate() = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun SimpleArtworkInfo.toArtWorkInfo() = ArtWorkInfo(
+internal fun SimpleArtworkInfo.toArtWorkInfo(caption: String = "") = ArtWorkInfo(
     pid = pid,
     title = title,
+    caption = caption,
     author = UserBaseInfo(uid, name, "")
 )
 
@@ -349,7 +353,10 @@ internal fun UserInfo.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-            .where(equal(artwork.get<Long>("uid"), id))
+            .where(
+                isFalse(artwork.get("deleted")),
+                equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
+            )
     }.singleResult ?: 0
 }
 
@@ -369,11 +376,11 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.singleResult
 }
 
-internal fun FileInfo.Companion.find(image: Image): List<FileInfo> = useSession { session ->
+internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
-            .where(equal(file.get<String>("md5"), image.md5.toByteString().hex()))
+            .where(equal(file.get<String>("md5"), hash))
     }.resultList.orEmpty()
 }
 
@@ -504,10 +511,18 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
     }.resultList.orEmpty()
 }
 
-internal fun PixivSearchResult.save(image: Image): Unit = useSession { session ->
+internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.replicate(copy(md5 = image.md5.toByteString().hex()), ReplicationMode.OVERWRITE)
+        val info by lazy { session.find(ArtWorkInfo::class.java, pid) ?: ArtWorkInfo() }
+        if (uid == 0L && info.pid != 0L) {
+            title = info.title
+            uid = info.author.uid
+            name = info.author.name
+            session.replicate(this, ReplicationMode.OVERWRITE)
+        } else {
+            session.replicate(this, ReplicationMode.IGNORE)
+        }
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -515,15 +530,8 @@ internal fun PixivSearchResult.save(image: Image): Unit = useSession { session -
     }.getOrThrow()
 }
 
-internal fun PixivSearchResult.Companion.find(image: Image): PixivSearchResult? = useSession { session ->
-    session.find(PixivSearchResult::class.java, image.md5.toByteString().hex())
-}
-
-internal fun PixivSearchResult.Companion.all(): List<PixivSearchResult> = useSession { session ->
-    session.withCriteria<PixivSearchResult> { criteria ->
-        val search = criteria.from(PixivSearchResult::class.java)
-        criteria.select(search)
-    }.resultList.orEmpty()
+internal fun PixivSearchResult.Companion.find(hash: String): PixivSearchResult? = useSession { session ->
+    session.find(PixivSearchResult::class.java, hash)
 }
 
 internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->

@@ -18,9 +18,9 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("临时目录")
     private val tempPath: String by value("")
 
-    @ValueName("ero_interval")
-    @ValueDescription("色图间隔")
-    val eroInterval: Int by value(ERO_INTERVAL)
+    @ValueName("ero_chunk")
+    @ValueDescription("色图分块大小")
+    val eroChunk: Int by value(ERO_CHUNK)
 
     @ValueName("ero_up_expire")
     @ValueDescription("色图自动触发更高收藏数的最大时间，单位毫秒")

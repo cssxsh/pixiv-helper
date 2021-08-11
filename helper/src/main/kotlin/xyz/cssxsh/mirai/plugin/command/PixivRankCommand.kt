@@ -28,19 +28,19 @@ object PixivRankCommand : CompositeCommand(
 
     @SubCommand("year", "年", "年榜")
     @Description("获取NaviRank年榜并随机")
-    suspend fun CommandSenderOnMessage<*>.year(year: Year, vararg words: String) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.year(year: Year, vararg words: String) = withHelper {
         NaviRank.rank(year = year, words = words).cached(helper = this)
     }
 
     @SubCommand("month", "月", "月榜")
     @Description("获取NaviRank月榜并随机")
-    suspend fun CommandSenderOnMessage<*>.month(month: YearMonth, vararg words: String) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.month(month: YearMonth, vararg words: String) = withHelper {
         NaviRank.rank(month = month, words = words).cached(helper = this)
     }
 
     @SubCommand("tag", "标签")
     @Description("获取NaviRank标签榜并随机")
-    suspend fun CommandSenderOnMessage<*>.tag(vararg words: String) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.tag(vararg words: String) = withHelper {
         NaviRank.getTagRank(words = words).cached(helper = this)
     }
 }

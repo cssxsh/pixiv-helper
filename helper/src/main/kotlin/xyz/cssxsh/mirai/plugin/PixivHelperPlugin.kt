@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.2.1") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.2.2") {
         name("pixiv-helper")
         author("cssxsh")
     }
@@ -18,9 +18,13 @@ object PixivHelperPlugin : KotlinPlugin(
 
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
 
-    override fun onEnable() {
+    init {
         System.setProperty("org.jboss.logging.provider", "slf4j")
         Logger.getLogger("org.hibernate").level = Level.INFO
+        org.slf4j.MDC.getMDCAdapter()
+    }
+
+    override fun onEnable() {
         HelperSqlConfiguration.load(configFolder)
         // Settings
         PixivHelperSettings.reload()
@@ -82,7 +86,5 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperListener.stop()
 
         PixivHelperScheduler.stop()
-
-        useSession { it.flush() }
     }
 }

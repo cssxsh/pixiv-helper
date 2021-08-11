@@ -33,10 +33,10 @@ object PixivCacheCommand : CompositeCommand(
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
     }
 
-    private operator fun LocalDate.rangeTo(other: LocalDate): List<LocalDate> = buildList {
+    private operator fun LocalDate.rangeTo(other: LocalDate): Sequence<LocalDate> = sequence {
         var pos = this@rangeTo
         while (pos <= other) {
-            add(pos)
+            yield(pos)
             pos = pos.plusDays(1)
         }
     }
@@ -107,26 +107,6 @@ object PixivCacheCommand : CompositeCommand(
             "@${it.user.name}关注列表中共${it.profile.totalFollowUsers}个画师的收藏需要缓存"
         }
     }
-
-//    @SubCommand("nocache")
-//    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-//    suspend fun CommandSenderOnMessage<*>.noCache() = withHelper {
-//        useMappers { it.artwork.noCache() }.also { set ->
-//            addCacheJob(name = "NO_CACHE", write = false, reply = reply) { getListIllusts(set = set, flush = false) }
-//        }.let {
-//            "无文件信息有${it.size}个作品需要缓存"
-//        }
-//    }
-//
-//    @SubCommand("notag")
-//    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-//    suspend fun CommandSenderOnMessage<*>.noTag() = withHelper {
-//        useMappers { it.artwork.noTag() }.also { set ->
-//            addCacheJob(name = "NO_TAG", write = false, reply = reply) { getListIllusts(set = set, flush = true) }
-//        }.let {
-//            "无标签信息有${it.size}个作品需要缓存"
-//        }
-//    }
 
     @SubCommand
     @Description("缓存指定画师作品")

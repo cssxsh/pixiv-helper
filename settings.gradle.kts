@@ -22,4 +22,3 @@ rootProject.name = "pixiv-helper"
 
 include("client")
 include("helper")
-include("tools")

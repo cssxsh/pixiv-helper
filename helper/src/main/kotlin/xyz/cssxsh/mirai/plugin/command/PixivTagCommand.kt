@@ -29,10 +29,10 @@ object PixivTagCommand : SimpleCommand(
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
     private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
-        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy, EroInterval)
+        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy, EroChunk)
         val persona = PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-            ArtWorkInfo.tag(character, bookmark, fuzzy, EroInterval) intersect
-                ArtWorkInfo.tag(works, bookmark, fuzzy, EroInterval)
+            ArtWorkInfo.tag(character, bookmark, fuzzy, EroChunk) intersect
+                ArtWorkInfo.tag(works, bookmark, fuzzy, EroChunk)
         }.orEmpty()
 
         return direct + persona
@@ -43,12 +43,12 @@ object PixivTagCommand : SimpleCommand(
     private val jobs = mutableSetOf<String>()
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
         check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
         tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
             val tagCache = "TAG[${tag}]"
-            if (list.size < EroInterval && tagCache !in jobs) {
+            if (list.size < EroChunk && tagCache !in jobs) {
                 jobs.add(tagCache)
                 addCacheJob(name = tagCache, reply = false) {
                     getSearchTag(tag = tag).eros().onCompletion {
@@ -58,7 +58,7 @@ object PixivTagCommand : SimpleCommand(
             }
             list.randomOrNull()?.also { artwork ->
                 val relatedCache = "RELATED(${artwork.pid})"
-                if (list.size < EroInterval && relatedCache !in jobs) {
+                if (list.size < EroChunk && relatedCache !in jobs) {
                     jobs.add(relatedCache)
                     addCacheJob(name = relatedCache, reply = false) {
                         getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros().onCompletion {

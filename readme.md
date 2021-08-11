@@ -222,5 +222,5 @@ hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
 hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvider
 hibernate.hbm2ddl.auto=none
 hibernate-connection-autocommit=true
-hibernate.connection.show_sql=false=true
+hibernate.connection.show_sql=false
 ```

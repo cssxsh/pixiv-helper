@@ -5,9 +5,11 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
@@ -15,13 +17,39 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.io.File
+import java.io.*
 import java.lang.*
 
 internal val logger by lazy {
     val open = System.getProperty("xyz.cssxsh.mirai.plugin.logger", "${true}").toBoolean()
     if (open) PixivHelperPlugin.logger else SilentLogger
 }
+
+val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
+
+const val SendDelay = 60 * 1000L
+
+suspend fun <T : CommandSenderOnMessage<*>> T.sendMessage(block: suspend T.(Contact) -> Message): Boolean {
+    return runCatching {
+        block(fromEvent.subject)
+    }.onSuccess { message ->
+        quoteReply(message)
+    }.onFailure {
+        when {
+            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+                delay(SendDelay)
+                quoteReply(SendLimit.find(it.message!!)!!.value)
+            }
+            else -> {
+                quoteReply("发送消息失败， ${it.message}")
+            }
+        }
+    }.isSuccess
+}
+
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(fromEvent.message.quote() + message)
+
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -31,6 +59,8 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             null, Unit -> Unit
             is Message -> quoteReply(message)
             is String -> quoteReply(message)
+            is IllustInfo -> sendIllust(message)
+            is ArtWorkInfo -> sendArtwork(message)
             else -> quoteReply(message.toString())
         }
     }.onFailure {
@@ -47,16 +77,9 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.isSuccess
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendIllust(
-    flush: Boolean,
-    block: suspend PixivHelper.() -> IllustInfo,
-): Boolean {
+internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
     return runCatching {
-        helper.run {
-            buildMessageByIllust(illust = block().also { info ->
-                if (flush || json(info.pid).exists().not()) info.write()
-            })
-        }
+        helper.buildMessageByIllust(illust = illust)
     }.mapCatching {
         withTimeout(3 * 60 * 1000L) {
             quoteReply(it)
@@ -75,9 +98,32 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(
     }.isSuccess
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendIllust(
-    block: suspend PixivHelper.() -> ArtWorkInfo,
-) = sendIllust(flush = false) { getIllustInfo(pid = block().pid, flush = false) }
+internal suspend fun CommandSenderOnMessage<*>.sendArtwork(info: ArtWorkInfo): Boolean {
+    return sendIllust(helper.getIllustInfo(pid = info.pid, flush = false))
+}
+
+/**
+ * 通过正负号区分群和用户
+ */
+val Contact.delegate get() = if (this is Group) id * -1 else id
+
+/**
+ * 查找Contact
+ */
+fun findContact(delegate: Long): Contact? {
+    Bot.instances.forEach { bot ->
+        if (delegate < 0) {
+            bot.getGroup(delegate * -1)?.let { return@findContact it }
+        } else {
+            bot.getFriend(delegate)?.let { return@findContact it }
+            bot.getStranger(delegate)?.let { return@findContact it }
+            bot.groups.forEach { group ->
+                group.getMember(delegate)?.let { return@findContact it }
+            }
+        }
+    }
+    return null
+}
 
 /**
  * 连续发送间隔时间
@@ -87,7 +133,7 @@ internal val SendInterval by PixivConfigData::interval
 /**
  * 涩图防重复间隔
  */
-internal val EroInterval by PixivHelperSettings::eroInterval
+internal val EroChunk by PixivHelperSettings::eroChunk
 
 /**
  * 涩图提高收藏数时间
@@ -128,6 +174,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
+            if (similarity > MIN_SIMILARITY) associate()
             appendLine("作者: $name ")
             appendLine("UID: $uid ")
             appendLine("标题: $title ")
@@ -195,9 +242,8 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }.onFailure {
         logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, it)
     }
-    preview.illusts.filter { it.isEro() }.forEach { illust ->
+    preview.illusts.apply { replicate() }.write().filter { it.isEro() }.forEach { illust ->
         runCatching {
-            illust.replicate()
             val files = illust.getImages()
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
@@ -286,8 +332,8 @@ internal suspend fun PixivHelper.getIllustInfo(
     }
 }
 
-internal fun Throwable.isNotCancellationException() =
-    (this is CancellationException || message == "No more continuations to resume").not()
+internal fun Throwable.isCancellationException() =
+    (this is CancellationException || message == "No more continuations to resume")
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
@@ -337,6 +383,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
+        if (pid !in ArtWorkInfo) this.replicate()
         results.replicate()
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
@@ -369,7 +416,17 @@ internal fun Long.toBytesSize() = when (this) {
 }
 
 internal fun getBackupList(): Map<String, File> {
-    return mapOf("DATA" to PixivHelperPlugin.dataFolder, "CONFIG" to PixivHelperPlugin.configFolder)
+    return mutableMapOf<String, File>().apply {
+        if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
+            put("DATA", PixivHelperPlugin.dataFolder)
+        }
+        if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
+            put("CONFIG", PixivHelperPlugin.configFolder)
+        }
+        if (SqlMetaData.url.startsWith("jdbc:sqlite:")) {
+            put("DATABASE", File(SqlMetaData.url.removePrefix("jdbc:sqlite:")))
+        }
+    }
 }
 
 internal suspend fun PixivHelper.redirect(account: String): Long {
@@ -392,7 +449,7 @@ internal data class MessageSourceMetadata(
 )
 
 internal fun MessageSource.metadata() = MessageSourceMetadata(
-    ids = ids.toList(),
-    internalIds = internalIds.toList(),
+    ids = ids.asList(),
+    internalIds = internalIds.asList(),
     time = time
 )

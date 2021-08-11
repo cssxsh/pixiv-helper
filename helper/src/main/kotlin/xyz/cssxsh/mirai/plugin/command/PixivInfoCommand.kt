@@ -76,7 +76,7 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("# TAG指令关键词排行")
             appendLine("| index | name | count |")
             appendLine("| --- | --- | --- |")
-            StatisticTagInfo.top(limit = limit).forEachIndexed { index, (name, count) ->
+            StatisticTagInfo.top(limit).forEachIndexed { index, (name, count) ->
                 appendLine("| ${index + 1} | $name | $count |")
             }
         }

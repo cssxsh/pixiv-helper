@@ -18,7 +18,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("uid", "id", "user", "用户")
     @Description("根据画师UID随机发送画师作品")
-    suspend fun CommandSenderOnMessage<*>.uid(uid: Long) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.uid(uid: Long) = withHelper {
         ArtWorkInfo.user(uid).also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.random()
@@ -26,7 +26,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("name", "名称", "名字")
     @Description("根据画师name或者alias随机发送画师作品")
-    suspend fun CommandSenderOnMessage<*>.name(name: String) = sendIllust {
+    suspend fun CommandSenderOnMessage<*>.name(name: String) = withHelper {
         val uid = requireNotNull(
             (AliasSetting.all().find { it.alias == name }?.uid ?: UserBaseInfo.name(name)?.uid)
         ) { "找不到别名'${name}'" }

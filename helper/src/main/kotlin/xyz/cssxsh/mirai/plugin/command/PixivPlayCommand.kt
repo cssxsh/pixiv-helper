@@ -31,11 +31,14 @@ object PixivPlayCommand : CompositeCommand(
     @Description("根据 排行榜 播放图集")
     suspend fun CommandSenderOnMessage<*>.ranking(mode: RankMode, date: LocalDate? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
-        val illusts = illustRanking(mode = mode, date = date).illusts.filter { it.age == AgeLimit.ALL }
+        val illusts = illustRanking(mode = mode, date = date).illusts
+            .apply { replicate() }
+            .filter { it.age == AgeLimit.ALL }
         play = launch {
-            illusts.forEach {
+            illusts.forEach { illust ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust(flush = true) { it }
+                sendIllust(illust)
             }
         }
         "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 ${duration / 1000}s"
@@ -47,9 +50,10 @@ object PixivPlayCommand : CompositeCommand(
         check(!play.isActive) { "其他列表播放中" }
         val rank = NaviRank.getTagRank(words = words)
         play = launch {
-            rank.records.cached().forEach {
+            rank.records.cached().forEach { info ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust { it }
+                sendArtwork(info)
             }
         }
         "开始播放NaviRank[${rank.title}]，共${rank.records.size}个作品，间隔 $duration"
@@ -60,11 +64,14 @@ object PixivPlayCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
-        val illusts = illustRecommended().illusts.filter { it.age == AgeLimit.ALL }
+        val illusts = illustRecommended().illusts
+            .apply { replicate() }
+            .filter { it.age == AgeLimit.ALL }
         play = launch {
-            illusts.forEach {
+            illusts.forEach { illust ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust(flush = true) { it }
+                sendIllust(illust)
             }
         }
         "开始播放用户[${user.name}]系统推荐，共${illusts.size}个作品，间隔 $duration"
@@ -77,9 +84,10 @@ object PixivPlayCommand : CompositeCommand(
         val user = info().user
         val illusts = bookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
         play = launch {
-            illusts.forEach {
+            illusts.forEach { illust ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust(flush = true) { it }
+                sendIllust(illust)
             }
         }
         "开始播放用户[${user.name}](${tag})收藏，共${illusts.size}个作品，间隔 $duration"
@@ -91,11 +99,10 @@ object PixivPlayCommand : CompositeCommand(
         check(!play.isActive) { "其他列表播放中" }
         val article = Pixivision.getArticle(aid = aid)
         play = launch {
-            article.illusts.forEach {
+            article.illusts.forEach { info ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust(flush = false) {
-                    getIllustInfo(pid = it.pid, flush = false)
-                }
+                sendIllust(getIllustInfo(pid = info.pid, flush = true))
             }
         }
         "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
@@ -105,24 +112,27 @@ object PixivPlayCommand : CompositeCommand(
     @Description("根据 AID 播放特辑")
     suspend fun CommandSenderOnMessage<*>.walkthrough() = withHelper {
         check(!play.isActive) { "其他列表播放中" }
-        val illusts = illustWalkThrough().illusts.filter { it.age == AgeLimit.ALL && it.isEro() }
+        val illusts = illustWalkThrough().illusts
+            .apply { replicate() }
+            .filter { it.age == AgeLimit.ALL && it.isEro() }
         play = launch {
-            illusts.forEach {
+            illusts.forEach { info ->
+                if (isActive.not()) return@forEach
                 delay(duration)
-                if (isActive) sendIllust(flush = true) { it }
+                sendIllust(info)
             }
         }
         "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
     }
 
     @SubCommand("complete", "补全", "自动补全")
-    @Description("根据 works 自动补全")
-    suspend fun CommandSenderOnMessage<*>.complete(vararg works: String) = withHelper {
-        check(works.isNotEmpty())
+    @Description("根据 words 自动补全")
+    suspend fun CommandSenderOnMessage<*>.complete(vararg words: String) = withHelper {
+        check(words.isNotEmpty())
         buildString {
-            appendLine("自动补全，共${works.size}个")
-            works.forEach { work ->
-                appendLine("[$work] => ${searchAutoComplete(word = work).tags.map { it.getContent() }}")
+            appendLine("自动补全，共${words.size}个")
+            words.forEach { word ->
+                appendLine("[$word] => ${searchAutoComplete(word).tags.map { it.getContent() }}")
             }
         }
     }

@@ -110,10 +110,11 @@ internal fun PixivHelperSettings.init() {
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
     PixivHelperPlugin.launch(SupervisorJob()) {
-        if (ArtWorkInfo.count() < eroInterval) {
-            logger.warning {
-                "缓存数量过少，建议使用指令( /cache recommended )进行缓存"
-            }
+        val count = ArtWorkInfo.count()
+        if (count < eroChunk) {
+            logger.warning { "缓存数 $count < ${eroChunk}，建议使用指令( /cache recommended )进行缓存" }
+        } else {
+            logger.info { "缓存数 $count " }
         }
     }
 }
@@ -121,10 +122,11 @@ internal fun PixivHelperSettings.init() {
 internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {
     loadToken()
     runCatching {
+        check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
         getUserInfo()
     }.onSuccess {
         logger.info {
-            "百度网盘: ${it.baiduName} 已登录, 过期时间 $expires"
+            "百度网盘: ${it.baiduName} 已登录"
         }
     }.onFailure {
         if ("Invalid Bduss" in it.message.orEmpty()) {
@@ -158,7 +160,7 @@ internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
 
-internal const val ERO_INTERVAL = 16
+internal const val ERO_CHUNK = 16
 
 internal const val ERO_UP_EXPIRE = 10 * 1000L
 
