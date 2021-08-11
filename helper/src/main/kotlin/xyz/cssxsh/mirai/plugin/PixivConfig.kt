@@ -122,6 +122,7 @@ internal fun PixivHelperSettings.init() {
 internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {
     loadToken()
     runCatching {
+        check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
         getUserInfo()
     }.onSuccess {
         logger.info {
