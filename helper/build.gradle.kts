@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.2.1"
+version = "1.2.2"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -54,7 +54,6 @@ dependencies {
     implementation("com.github.gwenn:sqlite-dialect:0.1.2")
     implementation(xerial("sqlite-jdbc", Versions.sqlite))
     implementation(project(":client"))
-    implementation(project(":tools"))
     implementation(okhttp3("okhttp", Versions.okhttp))
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     implementation(cssxsh("baidu-oauth", Versions.baidu))

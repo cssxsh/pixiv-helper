@@ -5,9 +5,11 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
@@ -15,13 +17,39 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.io.File
+import java.io.*
 import java.lang.*
 
 internal val logger by lazy {
     val open = System.getProperty("xyz.cssxsh.mirai.plugin.logger", "${true}").toBoolean()
     if (open) PixivHelperPlugin.logger else SilentLogger
 }
+
+val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
+
+const val SendDelay = 60 * 1000L
+
+suspend fun <T : CommandSenderOnMessage<*>> T.sendMessage(block: suspend T.(Contact) -> Message): Boolean {
+    return runCatching {
+        block(fromEvent.subject)
+    }.onSuccess { message ->
+        quoteReply(message)
+    }.onFailure {
+        when {
+            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+                delay(SendDelay)
+                quoteReply(SendLimit.find(it.message!!)!!.value)
+            }
+            else -> {
+                quoteReply("发送消息失败， ${it.message}")
+            }
+        }
+    }.isSuccess
+}
+
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(fromEvent.message.quote() + message)
+
+suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return runCatching {
@@ -72,6 +100,29 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
 
 internal suspend fun CommandSenderOnMessage<*>.sendArtwork(info: ArtWorkInfo): Boolean {
     return sendIllust(helper.getIllustInfo(pid = info.pid, flush = false))
+}
+
+/**
+ * 通过正负号区分群和用户
+ */
+val Contact.delegate get() = if (this is Group) id * -1 else id
+
+/**
+ * 查找Contact
+ */
+fun findContact(delegate: Long): Contact? {
+    Bot.instances.forEach { bot ->
+        if (delegate < 0) {
+            bot.getGroup(delegate * -1)?.let { return@findContact it }
+        } else {
+            bot.getFriend(delegate)?.let { return@findContact it }
+            bot.getStranger(delegate)?.let { return@findContact it }
+            bot.groups.forEach { group ->
+                group.getMember(delegate)?.let { return@findContact it }
+            }
+        }
+    }
+    return null
 }
 
 /**
