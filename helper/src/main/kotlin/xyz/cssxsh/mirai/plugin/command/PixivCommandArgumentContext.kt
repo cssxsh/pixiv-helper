@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import java.time.temporal.*
 import java.util.*
