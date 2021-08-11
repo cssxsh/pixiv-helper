@@ -200,7 +200,7 @@ internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSessi
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
-                equal(artwork.get<Long>("uid"), uid)
+                equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
             )
     }.resultList.orEmpty()
 }
@@ -258,7 +258,10 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment)
-                .where(gt(artwork.get<Long>("uid"), uid))
+                .where(
+                    isFalse(artwork.get("deleted")),
+                    equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
+                )
         }.executeUpdate()
     }.onSuccess {
         session.transaction.commit()
@@ -350,7 +353,10 @@ internal fun UserInfo.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-            .where(equal(artwork.get<Long>("uid"), id))
+            .where(
+                isFalse(artwork.get("deleted")),
+                equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
+            )
     }.singleResult ?: 0
 }
 
