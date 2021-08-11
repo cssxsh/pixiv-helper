@@ -126,7 +126,7 @@ internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob
         getUserInfo()
     }.onSuccess {
         logger.info {
-            "百度网盘: ${it.baiduName} 已登录, 过期时间 $expires"
+            "百度网盘: ${it.baiduName} 已登录"
         }
     }.onFailure {
         if ("Invalid Bduss" in it.message.orEmpty()) {
