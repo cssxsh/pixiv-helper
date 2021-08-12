@@ -55,7 +55,7 @@ object HelperSqlConfiguration :
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
-        if (getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+        if (getProperty("hibernate.connection.url").orEmpty().startsWith("jdbc:sqlite")) {
             // SQLite 是单文件数据库，最好只有一个连接
             setProperty("hibernate.c3p0.min_size", "${1}")
             setProperty("hibernate.c3p0.max_size", "${1}")
