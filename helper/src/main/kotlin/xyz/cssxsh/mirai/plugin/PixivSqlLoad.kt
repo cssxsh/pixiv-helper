@@ -514,8 +514,8 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        val info by lazy { session.find(ArtWorkInfo::class.java, pid) ?: ArtWorkInfo() }
-        if (uid == 0L && info.pid != 0L) {
+        val info by lazy { session.find(ArtWorkInfo::class.java, pid) }
+        if (uid == 0L && info?.pid != null) {
             title = info.title
             uid = info.author.uid
             name = info.author.name
