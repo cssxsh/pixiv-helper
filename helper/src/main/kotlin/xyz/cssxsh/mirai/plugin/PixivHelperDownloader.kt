@@ -8,7 +8,7 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
     override val ignore: suspend (Throwable) -> Boolean get() = PixivDownloadIgnore
 
-    override val timeout: Long by PixivHelperSettings::timeout
+    override val timeout: Long by PixivHelperSettings::download
 
     override suspend fun <R> downloadImageUrls(
         urls: List<Url>,

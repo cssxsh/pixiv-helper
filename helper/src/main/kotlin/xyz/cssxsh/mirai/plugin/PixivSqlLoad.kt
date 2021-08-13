@@ -55,7 +55,7 @@ object HelperSqlConfiguration :
         dir.resolve("hibernate.properties")
             .apply { if (exists().not()) writeText(DefaultProperties) }
             .reader().use(properties::load)
-        if (getProperty("hibernate.connection.url").startsWith("jdbc:sqlite")) {
+        if (getProperty("hibernate.connection.url").orEmpty().startsWith("jdbc:sqlite")) {
             // SQLite 是单文件数据库，最好只有一个连接
             setProperty("hibernate.c3p0.min_size", "${1}")
             setProperty("hibernate.c3p0.max_size", "${1}")
@@ -514,8 +514,8 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        val info by lazy { session.find(ArtWorkInfo::class.java, pid) ?: ArtWorkInfo() }
-        if (uid == 0L && info.pid != 0L) {
+        val info by lazy { session.find(ArtWorkInfo::class.java, pid) }
+        if (uid == 0L && info?.pid != null) {
             title = info.title
             uid = info.author.uid
             name = info.author.name

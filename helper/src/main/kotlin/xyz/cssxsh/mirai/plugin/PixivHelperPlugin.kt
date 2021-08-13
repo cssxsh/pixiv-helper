@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.plugin.jvm.*
+import okhttp3.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -21,6 +22,7 @@ object PixivHelperPlugin : KotlinPlugin(
     init {
         System.setProperty("org.jboss.logging.provider", "slf4j")
         Logger.getLogger("org.hibernate").level = Level.INFO
+        Logger.getLogger(OkHttpClient::class.java.name).level = Level.WARNING
         org.slf4j.MDC.getMDCAdapter()
     }
 

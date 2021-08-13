@@ -56,9 +56,13 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("代理")
     val proxy: String by value("")
 
-    @ValueName("timeout")
+    @ValueName("timeout_api")
     @ValueDescription("API 链接超时时间, 单位ms")
     val timeout: Long by value(10_000L)
+
+    @ValueName("timeout_download")
+    @ValueDescription("API 链接超时时间, 单位ms")
+    val download: Long by value(30_000L)
 
     private fun getPath(path: String, default: String) =
         if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)

@@ -36,7 +36,7 @@ suspend fun <T : CommandSenderOnMessage<*>> T.sendMessage(block: suspend T.(Cont
         quoteReply(message)
     }.onFailure {
         when {
-            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+            SendLimit in it.message.orEmpty() -> {
                 delay(SendDelay)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
@@ -350,13 +350,9 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     val dir = folder(pid).apply { mkdirs() }
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
-    val urls = getOriginImageUrls()
+    val urls = getOriginImageUrls().distinctBy { it.encodedPath }.filter { "$pid" in it.encodedPath }
     val files = urls.map { url ->
         dir.resolve(url.filename).apply {
-            if (exists().not() && temp.resolve(name).exists()) {
-                logger.info { "从[${temp.resolve(name)}]移动文件" }
-                temp.resolve(name).renameTo(this)
-            }
             if (exists().not()) {
                 downloads.add(url)
             }
@@ -372,10 +368,21 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     )
     if (downloads.isNotEmpty()) {
         val results = mutableListOf<FileInfo>()
+
+        downloads.removeIf { url ->
+            val file = temp.resolve(url.filename)
+            val exists = file.exists()
+            if (exists) {
+                logger.info { "从[${file}]移动文件" }
+                results.add(FileInfo(url = url, bytes = file.readBytes()))
+            }
+            exists
+        }
+
         PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
             runCatching {
                 val bytes = result.getOrThrow()
-                dir.resolve(url.filename).writeBytes(bytes)
+                temp.resolve(url.filename).writeBytes(bytes)
                 FileInfo(url = url, bytes = bytes)
             }.onFailure {
                 logger.warning({ "[$url]下载失败" }, it)
@@ -388,6 +395,12 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         val size = files.sumOf { it.length() }.toBytesSize()
         logger.info {
             "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size}]{${totalBookmarks}}下载完成"
+        }
+
+        downloads.forEach { url ->
+            temp.resolve(url.filename).apply {
+                if (exists()) renameTo(dir.resolve(url.filename))
+            }
         }
     }
     return files
