@@ -102,7 +102,7 @@ sealed class TimerTask {
 internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block().eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
-    val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.associateBy { it.pid }.values
+    val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     list.sortedBy { it.createAt }.forEachIndexed { index, illust ->
         delay(SendInterval * 1000L)
         send {

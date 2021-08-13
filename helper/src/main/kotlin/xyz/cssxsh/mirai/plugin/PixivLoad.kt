@@ -65,7 +65,7 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = 
 internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active()) runCatching {
-            illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }.associateBy { it.pid }.values
+            illustRecommended(offset = offset).let { it.illusts + it.rankingIllusts }.distinctBy { it.pid }
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)
@@ -237,7 +237,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
 }
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    AliasSetting.all().associateBy { it.uid }.keys.let { set ->
+    AliasSetting.all().map { it.uid }.distinct().let { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
             if (active()) runCatching {

@@ -350,7 +350,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     val dir = folder(pid).apply { mkdirs() }
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
-    val urls = getOriginImageUrls().toSet()
+    val urls = getOriginImageUrls()
     val files = urls.map { url ->
         dir.resolve(url.filename).apply {
             if (exists().not()) {
