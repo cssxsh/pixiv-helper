@@ -30,6 +30,8 @@ mirai {
 }
 
 repositories {
+    filterIsInstance<MavenArtifactRepository>().forEach { println(it.url) }
+    removeIf { it is MavenArtifactRepository && it.url.host == "dl.bintray.com" }
     mavenLocal()
     maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
@@ -60,22 +62,24 @@ dependencies {
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
     testImplementation(kotlin("test-junit5"))
     testImplementation(junit("api", Versions.junit))
+    testImplementation("net.mamoe.yamlkt:yamlkt:0.10.0")
     testRuntimeOnly(junit("engine", Versions.junit))
+    testRuntimeOnly("mysql:mysql-connector-java:8.0.26")
 }
 
 kotlin {
     sourceSets {
         all {
-            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-            languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
-            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
-            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
+//            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+//            languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
+//            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+//            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
             languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors")
-            languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
-            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
-            languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
-            languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
+//            languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
+//            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+//            languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
+//            languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
         }
     }
 }

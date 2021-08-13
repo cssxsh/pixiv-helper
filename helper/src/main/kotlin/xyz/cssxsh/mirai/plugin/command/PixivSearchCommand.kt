@@ -56,6 +56,7 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     @Handler
+    @OptIn(MiraiInternalApi::class)
     suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
         logger.info { "搜索 ${image.queryUrl()}" }
         val hash = image.md5.toByteString().hex()
