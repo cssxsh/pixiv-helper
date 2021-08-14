@@ -170,6 +170,7 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 | `(/)<rank 排行> <month 月 月榜> {words}`         | 随机播放NaviRank 月榜   |
 | `(/)<rank 排行> <tag标签> {words}`               | 随机播放NaviRank 标签榜 |
 | `(/)<play 播放> <stop 停止>`                     | 停止播放当前列表        |
+
 ### 删除指令
 
 | 指令                                    | 描述                   |
@@ -209,13 +210,14 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 ### ImageSearchConfig.yml
 
 KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
-KEY 参数请到 <https://saucenao.com/> 注册账号， 在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
+KEY 参数请到 <https://saucenao.com/> 注册账号，  
+在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
 信息只在启动时读取，修改后需重启
 
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
-配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推
+配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
 下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar)
 , 然后放进 `plugins` 文件夹  
 配置 文件
