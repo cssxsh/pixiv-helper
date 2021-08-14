@@ -223,13 +223,14 @@ internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, 
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, limit: Int) = useSession { session ->
+internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, age: AgeLimit, limit: Int) = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 isTrue(artwork.get("ero")),
+                equal(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Int>("sanity"), level),
                 gt(artwork.get<Long>("bookmarks"), bookmarks)
             )

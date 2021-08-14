@@ -6,6 +6,7 @@ import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.*
 
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
@@ -31,7 +32,7 @@ object PixivEroCommand : SimpleCommand(
 
     private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
         if (good(sanity, marks).isEmpty()) {
-            ArtWorkInfo.random(sanity, marks, EroChunk).forEach { info ->
+            ArtWorkInfo.random(sanity, marks, AgeLimit.ALL, EroChunk).forEach { info ->
                 synchronized(caches) {
                     caches[info.pid] = info
                 }
