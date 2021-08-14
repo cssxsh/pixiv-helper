@@ -308,14 +308,15 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
     author = author
 )
 
-internal fun IllustInfo.toTagInfo() = tags.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
+internal fun IllustInfo.toTagBaseInfos() =
+    tags.distinctBy { it.name }.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
 
 internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     runCatching {
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
-        toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+        toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
@@ -337,7 +338,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
             if (info.pid == 0L) return@forEach
             val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
             session.replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
-            info.toTagInfo().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+            info.toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
         }
     }.onSuccess {
         session.transaction.commit()
