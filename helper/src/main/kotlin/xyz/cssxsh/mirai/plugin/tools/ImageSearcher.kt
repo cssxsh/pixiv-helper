@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.tools
 
+import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
@@ -19,8 +20,6 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private const val API = "https://saucenao.com/search.php"
 
-    private const val PIXIV_INDEX = 5 // Index #5: pixiv Images
-
     private const val ALL_INDEX = 999
 
     val key by ImageSearchConfig::key
@@ -29,35 +28,16 @@ object ImageSearcher : HtmlParser(name = "Search") {
         Json {
             serializer = KotlinxSerializer(PixivJson)
         }
-    }
-
-    private val pixiv: (Document) -> List<PixivSearchResult> = {
-        it.select(".resulttablecontent").map { content ->
-            PixivSearchResult(
-                similarity = content.select(".resultsimilarityinfo")
-                    .text().replace("%", "").toDouble() / 100,
-                pid = content.select(".resultcontent a.linkify")
-                    .first().text().toLong(),
-                title = content.select(".resultcontent")
-                    .text().substringBeforeLast("Pixiv").trim(),
-                uid = content.select(".resultcontent a.linkify")
-                    .last().attr("href").toHttpUrl().queryParameter("id")!!.toLong(),
-                name = content.select(".resultcontent")
-                    .text().substringAfterLast(":").trim()
-            )
+        defaultRequest {
+            header(HttpHeaders.Accept, ContentType.Text.Html)
         }
-    }
-
-    suspend fun pixiv(url: String): List<PixivSearchResult> = html(pixiv) {
-        url(API)
-        method = HttpMethod.Get
-        parameter("db", PIXIV_INDEX)
-        parameter("url", url)
     }
 
     private val MD5 = """[0-9a-f]{32}""".toRegex()
 
     private val BASE64 = """[\w-=]{15}\.[\w]{3}""".toRegex()
+
+    private val ID = """\d{3,9}""".toRegex()
 
     private val image = { name: String ->
         when {
@@ -75,24 +55,40 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    private val other: (Document) -> List<SearchResult> = {
-        it.select(".resulttable").mapNotNull { content ->
-            if ("Twitter" in content.text()) {
-                val (image, md5) = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
-                TwitterSearchResult(
-                    similarity = content.select(".resulttablecontent .resultsimilarityinfo")
-                        .text().replace("%", "").toDouble() / 100,
-                    tweet = content.select(".resulttablecontent .resultcontent a")
-                        .first().attr("href"),
-                    image = image,
-                    md5 = md5
-                )
-            } else {
-                OtherSearchResult(
-                    similarity = content.select(".resulttablecontent .resultsimilarityinfo")
-                        .text().replace("%", "").toDouble() / 100,
-                    text = content.wholeText()
-                )
+    private val other: (Document) -> List<SearchResult> = { document ->
+        document.select(".resulttable").map { content ->
+            when {
+                "Pixiv" in content.text() -> {
+                    PixivSearchResult(
+                        similarity = content.select(".resultsimilarityinfo")
+                            .text().replace("%", "").toDouble() / 100,
+                        pid = ID.find(content.select(".resultcontent").text())!!.value.toLong(),
+                        title = content.select(".resultcontent")
+                            .text().substringBeforeLast("Pixiv").trim(),
+                        uid = content.select(".resultcontent a")
+                            .last().attr("href").toHttpUrl().queryParameter("id")?.toLong() ?: 0,
+                        name = content.select(".resultcontent")
+                            .text().substringAfterLast(":").trim()
+                    )
+                }
+                "Twitter" in content.text() -> {
+                    val (image, md5) = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
+                    TwitterSearchResult(
+                        similarity = content.select(".resulttablecontent .resultsimilarityinfo")
+                            .text().replace("%", "").toDouble() / 100,
+                        tweet = content.select(".resulttablecontent .resultcontent a")
+                            .first().attr("href"),
+                        image = image,
+                        md5 = md5
+                    )
+                }
+                else -> {
+                    OtherSearchResult(
+                        similarity = content.select(".resulttablecontent .resultsimilarityinfo")
+                            .text().replace("%", "").toDouble() / 100,
+                        text = content.wholeText()
+                    )
+                }
             }
         }
     }
@@ -149,8 +145,8 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun json(url: String): List<SearchResult> = http {
-        it.get<JsonSearchResults>(API) {
+    suspend fun json(url: String): List<SearchResult> = http { client ->
+        client.get<JsonSearchResults>(API) {
             parameter("url", url)
             parameter("output_type", 2)
             parameter("api_key", key)
@@ -161,5 +157,38 @@ object ImageSearcher : HtmlParser(name = "Search") {
             // parameter("numres", )
             // parameter("dedupe", )
         }.decode()
+    }
+
+    private val ascii2d: (Document) -> List<SearchResult> = { document ->
+        document.select(".item-box").mapNotNull { content ->
+            val small = content.select(".detail-box small").text()
+            val link = content.select(".detail-box a").map { it.text() to it.attr("href") }
+            when (small) {
+                "pixiv" -> {
+                    PixivSearchResult(
+                        similarity = Double.NaN,
+                        pid = ID.find(link[0].second)!!.value.toLong(),
+                        title = link[0].first,
+                        uid = ID.find(link[1].second)!!.value.toLong(),
+                        name = link[1].first
+                    )
+                }
+                "twitter" -> {
+                    TwitterSearchResult(
+                        similarity = Double.NaN,
+                        md5 = content.select(".hash").text(),
+                        tweet = link[0].second,
+                        image = content.select(".image-box .img").attr("href")
+                    )
+                }
+                else -> null
+            }
+        }
+    }
+
+    suspend fun ascii2d(url: String, bovw: Boolean) = html(ascii2d) {
+        url("https://ascii2d.net/search/url/${url}")
+        method = HttpMethod.Get
+        parameter("type", if (bovw) "bovw" else "color")
     }
 }

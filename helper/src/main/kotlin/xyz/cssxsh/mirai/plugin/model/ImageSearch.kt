@@ -7,6 +7,7 @@ import org.hibernate.annotations.NotFoundAction
 import javax.persistence.*
 
 sealed interface SearchResult {
+    val md5: String
     val similarity: Double
 }
 
@@ -17,7 +18,7 @@ data class PixivSearchResult(
     @Id
     @Column(name = "md5", nullable = false, updatable = false)
     @SerialName("md5")
-    var md5: String = "",
+    override var md5: String = "",
     @Column(name = "similarity", nullable = false)
     @SerialName("similarity")
     override var similarity: Double = 0.0,
@@ -44,15 +45,16 @@ data class PixivSearchResult(
 }
 
 data class TwitterSearchResult(
-    val md5: String,
-    override val similarity: Double,
-    val tweet: String,
-    val image: String,
+    override val md5: String = "",
+    override val similarity: Double = 0.0,
+    val tweet: String = "",
+    val image: String = "",
 ): SearchResult
 
 data class OtherSearchResult(
-    override val similarity: Double,
-    val text: String,
+    override val md5: String = "",
+    override val similarity: Double = 0.0,
+    val text: String = "",
 ): SearchResult
 
 @Serializable

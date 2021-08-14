@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
+import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.*
@@ -11,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "search", "搜索", "搜图",
+    "search", "搜索", "搜图", "ascii2d",
     description = "PIXIV搜索指令，通过https://saucenao.com/"
 ) {
 
@@ -21,22 +22,39 @@ object PixivSearchCommand : SimpleCommand(
 
     private val images by PixivHelperListener::images
 
-    private fun MessageChain.getQuoteImage(): Image {
-        val source = requireNotNull(findIsInstance<QuoteReply>()?.source ?: current[source.targetId]) { "没有回复消息" }
+    private fun CommandSenderOnMessage<*>.getQuoteImage(): Image? {
+        val quote = fromEvent.message.findIsInstance<QuoteReply>() ?: return null
+        return requireNotNull(images[quote.source.metadata()]) { "图片历史未找到" }
+    }
+
+    private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
+        val source = current[fromEvent.sender.id] ?: return null
         return requireNotNull(images[source.metadata()]) { "图片历史未找到" }
     }
 
-    private suspend fun html(image: Image) = ImageSearcher.html(url = image.queryUrl())
+    private suspend fun CommandSenderOnMessage<*>.getNextImage(timeoutMillis: Long = 300_000): Image? {
+        sendMessage("${timeoutMillis / 1000}s内，请发送图片")
+        return fromEvent.nextMessageOrNull(timeoutMillis) { Image in it.message }?.firstIsInstance()
+    }
 
-    private suspend fun json(image: Image) = ImageSearcher.json(url = image.queryUrl())
+    private val CommandSenderOnMessage<*>.isAscii2d get() = "ascii2d" in fromEvent.message.content
 
-    private fun List<SearchResult>.similarity(min: Double = MIN_SIMILARITY): SearchResult? {
+    private suspend fun saucenao(image: Image) = ImageSearcher.run {
+        if (key.isNotBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
+    }
+
+    private suspend fun ascii2d(image: Image) = ImageSearcher.run {
+        (ascii2d(url = image.queryUrl(), false) + ascii2d(url = image.queryUrl(), true)).distinctBy {
+            it.md5
+        }
+    }
+
+    private fun List<SearchResult>.similarity(min: Double): SearchResult? {
         return filterIsInstance<PixivSearchResult>()
             .filter { it.similarity > min }
             .ifEmpty { this }
             .maxByOrNull { it.similarity }
     }
-
 
     private fun record(hash: String): PixivSearchResult? {
         if (hash.isNotBlank()) return null
@@ -56,16 +74,17 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     @Handler
-    @OptIn(MiraiInternalApi::class)
-    suspend fun CommandSenderOnMessage<*>.search(image: Image = fromEvent.message.getQuoteImage()) = withHelper {
-        logger.info { "搜索 ${image.queryUrl()}" }
-        val hash = image.md5.toByteString().hex()
+    suspend fun CommandSenderOnMessage<*>.search(image: Image? = null) = withHelper {
+        val origin = image ?: getQuoteImage() ?: getCurrentImage() ?: getNextImage() ?: return@withHelper "等待超时"
+        logger.info { "搜索 ${origin.queryUrl()}" }
+        @OptIn(MiraiInternalApi::class)
+        val hash = origin.md5.toByteString().hex()
 
         val record = record(hash)
         if (record != null) return@withHelper record.getContent()
 
-        val result = if (ImageSearcher.key.isNotBlank()) json(image) else html(image)
+        val result = if (isAscii2d) ascii2d(origin) else saucenao(origin)
 
-        result.similarity()?.translate(hash)?.getContent() ?: "没有搜索结果"
+        result.similarity(MIN_SIMILARITY)?.translate(hash)?.getContent() ?: "没有搜索结果"
     }
 }
