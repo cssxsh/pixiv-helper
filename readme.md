@@ -185,9 +185,20 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 
 ### PixivHelperSettings.yml
 
-缓存目录、涩图标准等  
-proxy 代理针对API不针对下载, 插件有免代理的功能, 如果不是特殊需要不用修改， `http://127.0.0.1:8080` or `socks://127.0.0.1:1080`  
-pximg i.pximg.net反向代理域名, 如果不是特殊需要不用修改, 可以填入i.pixiv.cat, 某些情况下可以解决下载缓慢的问题
+* cache_path 缓存目录
+* backup_path 备份目录
+* temp_path 临时目录
+* ero_chunk 色图分块大小 和自动触发TAG缓存有关
+* ero_up_expire 色图自动触发更高收藏数的最大时间，单位毫秒
+* ero_work_types 涩图标准 内容类型 `ILLUST, UGOIRA, MANGA`, 为空则全部符合
+* ero_bookmarks 涩图标准 收藏
+* ero_page_count 涩图标准 页数
+* ero_tag_exclude 涩图标准 排除的正则表达式
+* ero_user_exclude 涩图标准 排除的UID
+* pximg i.pximg.net 反向代理
+* proxy 代理
+* timeout_api API超时时间, 单位ms
+* timeout_download DOWNLOAD超时时间, 单位ms
 
 ### NetdiskOauthConfig.yml
 

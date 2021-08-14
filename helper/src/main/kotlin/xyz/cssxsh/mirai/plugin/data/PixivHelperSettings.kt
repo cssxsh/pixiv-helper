@@ -53,15 +53,15 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val pximg: String by value("")
 
     @ValueName("proxy")
-    @ValueDescription("代理")
+    @ValueDescription("代理 格式 http://127.0.0.1:8080` or `socks://127.0.0.1:1080")
     val proxy: String by value("")
 
     @ValueName("timeout_api")
-    @ValueDescription("API 链接超时时间, 单位ms")
+    @ValueDescription("API超时时间, 单位ms")
     val timeout: Long by value(10_000L)
 
     @ValueName("timeout_download")
-    @ValueDescription("API 链接超时时间, 单位ms")
+    @ValueDescription("DOWNLOAD超时时间, 单位ms")
     val download: Long by value(30_000L)
 
     private fun getPath(path: String, default: String) =
