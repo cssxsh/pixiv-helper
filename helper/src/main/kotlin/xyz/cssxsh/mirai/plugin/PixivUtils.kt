@@ -368,6 +368,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     )
     if (downloads.isNotEmpty()) {
         val results = mutableListOf<FileInfo>()
+        var size = 0L
 
         downloads.removeIf { url ->
             val file = temp.resolve(url.filename)
@@ -383,6 +384,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             runCatching {
                 val bytes = result.getOrThrow()
                 temp.resolve(url.filename).writeBytes(bytes)
+                size += bytes.size
                 FileInfo(url = url, bytes = bytes)
             }.onFailure {
                 logger.warning({ "[$url]下载失败" }, it)
@@ -390,11 +392,12 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(it)
             }
         }
+
         if (pid !in ArtWorkInfo) this.replicate()
         results.replicate()
-        val size = files.sumOf { it.length() }.toBytesSize()
+
         logger.info {
-            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size}]{${totalBookmarks}}下载完成"
+            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size.toBytesSize()}]{${totalBookmarks}}下载完成"
         }
 
         downloads.forEach { url ->
