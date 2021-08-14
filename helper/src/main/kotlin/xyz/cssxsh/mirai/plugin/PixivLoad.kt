@@ -161,7 +161,6 @@ internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: 
                 runCatching {
                     getBookmarks(preview.user.id).onEach {
                         emit(it)
-                        delay(1000)
                     }.fold(0) { acc, it ->
                         acc + it.size
                     }

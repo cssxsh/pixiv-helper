@@ -70,18 +70,21 @@ tag指令检索结果过少时，会自动触发缓存
 
 ### 缓存指令
 
-| 指令                             | 描述                                    |
-|:---------------------------------|:----------------------------------------|
-| `/<cache> <follow>`              | 缓存关注推送                            |
-| `/<cache> <rank> [mode] [date]?` | 缓存指定排行榜信息                      |
-| `/<cache> <recommended>`         | 从推荐画师的预览中缓存色图作品，ERO过滤 |
-| `/<cache> <bookmarks> [uid]?`    | 从用户的收藏中缓存色图作品              |
-| `/<cache> <following> [fluhsh]?` | 将关注画师列表检查，缓存所有作品        |
-| `/<cache> <user> [uid]`          | 缓存指定画师作品                        |
-| `/<cache> <tag> [tag]`           | 缓存搜索得到的tag，ERO过滤              |
-| `/<cache> <search>`              | 缓存搜索记录                            |
-| `/<cache> <stop>`                | 停止当前助手缓存任务                    |
-| `/<cache> <reply> [open]`        | 是否回复缓存细节，默认为否              |
+| 指令                                    | 描述                           |
+|:----------------------------------------|:-------------------------------|
+| `/<cache> <follow>`                     | 缓存关注推送                   |
+| `/<cache> <rank> [mode] [date]?`        | 缓存指定排行榜信息             |
+| `/<cache> <recommended>`                | 缓存推荐作品，ERO过滤          |
+| `/<cache> <bookmarks> [uid]?`           | 缓存用户的收藏中缓存色图作品   |
+| `/<cache> <following> [fluhsh]? [uid]?` | 缓存关注画师作品               |
+| `/<cache> <fms> [jump]? [uid]?`         | 缓存关注画师收藏的作品         |
+| `/<cache> <user> [uid]`                 | 缓存指定画师作品               |
+| `/<cache> <tag> [tag]`                  | 缓存搜索tag得到的作品，ERO过滤 |
+| `/<cache> <search>`                     | 缓存搜索记录                   |
+| `/<cache> <stop>`                       | 停止当前助手缓存任务           |
+| `/<cache> <reply> [open]`               | 是否回复缓存细节，默认为否     |
+
+`[uid]?` 会自动填充当前用户
 
 RankMode
 
