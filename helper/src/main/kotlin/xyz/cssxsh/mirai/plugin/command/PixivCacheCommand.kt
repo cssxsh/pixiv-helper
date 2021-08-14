@@ -96,12 +96,12 @@ object PixivCacheCommand : CompositeCommand(
         }
     }
 
-    @SubCommand("fmarks")
+    @SubCommand("fms")
     @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.followingWithMarks(uid: Long? = null, jump: Int = 0) = withHelper {
         userDetail(uid = uid ?: info().user.uid).also {
             addCacheJob(name = "FOLLOW_MARKS(${it.user.id})", write = false, reply = reply) {
-                getUserFollowingMark(detail = it, jump = jump).eros()
+                getUserFollowingMark(detail = it).eros()
             }
         }.let {
             "@${it.user.name}关注列表中共${it.profile.totalFollowUsers}个画师的收藏需要缓存"
@@ -174,7 +174,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("停止当前助手缓存任务")
+    @Description("回复缓存细节")
     suspend fun CommandSenderOnMessage<*>.reply(open: Boolean) = withHelper {
         reply = open
         "已设置回复状态为${reply}"

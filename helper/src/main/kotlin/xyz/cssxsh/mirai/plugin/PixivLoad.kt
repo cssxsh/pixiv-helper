@@ -23,8 +23,7 @@ internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filte
 
 internal fun Flow<Collection<IllustInfo>>.eros(mark: Boolean = true) = map { list -> list.filter { it.isEro(mark) } }
 
-internal fun Flow<Collection<IllustInfo>>.isToday() = map { list ->
-    val now = LocalDate.now()
+internal fun Flow<Collection<IllustInfo>>.isToday(now: LocalDate = LocalDate.now()) = map { list ->
     list.filter { it.createAt.toLocalDate() == now }
 }
 
@@ -155,14 +154,17 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
 internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: Int = 0): Flow<List<IllustInfo>> {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师收藏需要缓存" }
     var index = 0
-    return getUserFollowingPreview(detail = detail).transform { list ->
-        list.forEach { preview ->
+    return getUserFollowingPreview(detail = detail).transform { previews ->
+        previews.forEach { preview ->
             index++
             if (active() && index > jump) {
                 runCatching {
-                    var count = 0
-                    emitAll(getBookmarks(preview.user.id).onEach { count += it.size })
-                    count
+                    getBookmarks(preview.user.id).onEach {
+                        emit(it)
+                        delay(1000)
+                    }.fold(0) { acc, it ->
+                        acc + it.size
+                    }
                 }.onSuccess {
                     logger.info { "${index}.USER(${preview.user.id})[${it}]加载成功" }
                 }.onFailure {
