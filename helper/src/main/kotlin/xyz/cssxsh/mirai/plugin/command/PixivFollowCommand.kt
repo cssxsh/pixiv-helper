@@ -35,8 +35,11 @@ object PixivFollowCommand : CompositeCommand(
         null
     }
 
-    private suspend fun PixivHelper.getFollowed(uid: Long): Set<Long> {
-        return getUserFollowingPreview(detail = userDetail(uid = uid)).toList().flatten().map { it.user.id }.toSet()
+    @OptIn(ExperimentalStdlibApi::class)
+    private suspend fun PixivHelper.getFollowed(uid: Long) = buildSet {
+        getUserFollowingPreview(detail = userDetail(uid = uid)).collect { preview ->
+            addAll(preview.map { it.user.id })
+        }
     }
 
     @SubCommand

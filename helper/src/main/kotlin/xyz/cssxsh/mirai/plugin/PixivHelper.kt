@@ -66,17 +66,18 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
         runCatching {
             block.invoke(this@PixivHelper).collect { list ->
                 if (list.isEmpty()) return@collect
-                list.groupBy { it.pid in ArtWorkInfo }.also { (success, failure) ->
-                    // 不能先保存，会影响上面 groupBy 的判断
+                runCatching {
+                    val (success, failure) = list.groupBy { it.pid in ArtWorkInfo }
                     list.replicate()
-                    success?.let { list ->
-                        if (write) list.write()
+                    if (success != null && write) {
+                        success.write()
                     }
-                    failure?.let { list ->
-                        list.write()
-                        val downloads = list.filter { it.isEro() }.sortedBy { it.pid }
+                    if (failure != null) {
+                        val downloads = failure.write().filter { it.isEro() }.sortedBy { it.pid }
                         this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
                     }
+                }.onFailure {
+                    logger.warning({ "预加载任务<${name}>失败" }, it)
                 }
             }
         }.onFailure {
