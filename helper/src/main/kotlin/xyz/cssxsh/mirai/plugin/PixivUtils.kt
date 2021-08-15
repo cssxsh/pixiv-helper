@@ -4,7 +4,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.*
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
@@ -66,7 +65,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.onFailure {
         logger.warning({ "消息回复失败" }, it)
         when {
-            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+            SendLimit in it.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
@@ -80,9 +79,19 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
     return runCatching {
         helper.buildMessageByIllust(illust = illust)
-    }.mapCatching {
+    }.mapCatching { message ->
         withTimeout(3 * 60 * 1000L) {
-            quoteReply(it)
+            when (val model = helper.model) {
+                is SendModel.Normal -> quoteReply(message)
+                is SendModel.Flash -> {
+                    val images = message.filterIsInstance<Image>()
+                    quoteReply((message - images).toMessageChain())
+                    images.forEach { quoteReply(it.flash()) }
+                }
+                is SendModel.Recall -> {
+                    quoteReply(message)?.recallIn(model.ms)
+                }
+            }
         }
     }.onFailure {
         when {
@@ -290,22 +299,15 @@ internal fun IllustInfo.check() = apply {
     check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
 
-private val Json_ = Json {
-    prettyPrint = true
-    ignoreUnknownKeys = true
-    isLenient = true
-    allowStructuredMapKeys = true
-}
-
 private fun folder(pid: Long) = PixivHelperSettings.imagesFolder(pid)
 
 private fun json(pid: Long) = folder(pid).resolve("${pid}.json")
 
-internal fun File.readIllustInfo(): IllustInfo = Json_.decodeFromString(IllustInfo.serializer(), readText())
+internal fun File.readIllustInfo(): IllustInfo = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 
 internal fun IllustInfo.write(file: File = json(pid)) {
     file.parentFile.mkdirs()
-    file.writeText(Json_.encodeToString(IllustInfo.serializer(), this))
+    file.writeText(PixivJson.encodeToString(IllustInfo.serializer(), this))
 }
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
