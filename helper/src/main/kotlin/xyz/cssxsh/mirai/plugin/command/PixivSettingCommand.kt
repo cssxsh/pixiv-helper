@@ -41,7 +41,7 @@ object PixivSettingCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("设置发送模式")
+    @Description("设置发送模式, type: NORMAL, FLASH, RECALL")
     suspend fun CommandSenderOnMessage<*>.model(type: String, ms: Long = 60_000L) = withHelper {
         val new = SendModel(type, ms)
         "$model -> $new".also { model = new }

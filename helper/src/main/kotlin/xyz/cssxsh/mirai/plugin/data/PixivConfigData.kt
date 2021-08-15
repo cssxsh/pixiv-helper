@@ -28,7 +28,7 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     val max: MutableMap<String, Int> by value(mutableMapOf())
 
     @ValueName("model")
-    @ValueDescription("发送模式")
+    @ValueDescription("发送模式 NORMAL, FLASH, RECALL")
     val model: MutableMap<String, SendModel> by value(mutableMapOf())
 
     @ValueName("interval")
