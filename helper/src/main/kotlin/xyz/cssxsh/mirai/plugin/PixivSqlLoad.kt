@@ -43,6 +43,7 @@ object HelperSqlConfiguration :
                 hibernate.hbm2ddl.auto=none
                 hibernate-connection-autocommit=${true}
                 hibernate.connection.show_sql=${false}
+                hibernate.autoReconnect=${true}
             """.trimIndent()
 
     init {
@@ -243,8 +244,11 @@ internal fun ArtWorkInfo.Companion.delete(pid: Long, comment: String): Int = use
     kotlin.runCatching {
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
-            criteria.set("caption", comment)
-                .where(gt(artwork.get<Long>("pid"), pid))
+            criteria.set("caption", comment).set("deleted", true)
+                .where(
+                    isFalse(artwork.get("deleted")),
+                    equal(artwork.get<Long>("pid"), pid)
+                )
         }.executeUpdate()
     }.onSuccess {
         session.transaction.commit()
@@ -258,7 +262,7 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
     kotlin.runCatching {
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
-            criteria.set("caption", comment)
+            criteria.set("caption", comment).set("deleted", true)
                 .where(
                     isFalse(artwork.get("deleted")),
                     equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
@@ -366,7 +370,7 @@ internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = us
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
-            .where(equal(user.get<String>("account"), account))
+            .where(like(user.get("account"), account))
     }.singleResult
 }
 
@@ -374,7 +378,7 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
-            .where(equal(user.get<String>("name"), name))
+            .where(like(user.get("name"), name))
     }.singleResult
 }
 
@@ -382,7 +386,7 @@ internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession 
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
-            .where(equal(file.get<String>("md5"), hash))
+            .where(like(file.get("md5"), hash))
     }.resultList.orEmpty()
 }
 
@@ -415,7 +419,7 @@ internal operator fun StatisticTaskInfo.Companion.contains(pair: Pair<String, Lo
         criteria.select(count(task))
             .where(
                 equal(task.get<Long>("pid"), pid),
-                equal(task.get<String>("task"), name)
+                like(task.get("task"), name)
             )
     }.singleResult > 0
 }
@@ -424,7 +428,7 @@ internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? 
     session.withCriteria<StatisticTaskInfo> { criteria ->
         val task = criteria.from(StatisticTaskInfo::class.java)
         criteria.select(task)
-            .where(equal(task.get<String>("task"), name))
+            .where(like(task.get("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
     }.singleResult
 }
@@ -461,7 +465,7 @@ internal fun StatisticTagInfo.Companion.top(limit: Int): List<Pair<String, Int>>
     session.withCriteria<Pair<*, *>> { criteria ->
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(construct(Pair::class.java, tag.get<String>("tag"), count(tag)))
-            .groupBy(tag.get<Boolean>("tag"))
+            .groupBy(tag.get<String>("tag"))
             .orderBy(desc(count(tag)))
     }.setMaxResults(limit).resultList.orEmpty() as List<Pair<String, Int>>
 }
