@@ -235,4 +235,5 @@ hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvi
 hibernate.hbm2ddl.auto=none
 hibernate-connection-autocommit=true
 hibernate.connection.show_sql=false
+hibernate.autoReconnect=true
 ```

@@ -22,7 +22,7 @@ object PixivHelperPlugin : KotlinPlugin(
     init {
         System.setProperty("org.jboss.logging.provider", "slf4j")
         Logger.getLogger("org.hibernate").level = Level.INFO
-        Logger.getLogger(OkHttpClient::class.java.name).level = Level.WARNING
+        Logger.getLogger(OkHttpClient::class.java.name).level = Level.OFF
         org.slf4j.MDC.getMDCAdapter()
     }
 

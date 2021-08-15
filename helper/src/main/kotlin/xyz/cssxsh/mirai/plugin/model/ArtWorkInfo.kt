@@ -60,7 +60,7 @@ data class FileInfo(
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
     @Id
-    @Column(name = "`index`", nullable = false)
+    @Column(name = "`index`", nullable = false, updatable = false)
     val index: Int = 0,
     @Column(name = "md5", nullable = false, length = 32)
     val md5: String = "",
@@ -79,7 +79,7 @@ data class TagBaseInfo(
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
     @Id
-    @Column(name = "name", nullable = false, length = 30)
+    @Column(name = "name", nullable = false, length = 30, updatable = false)
     val name: String = "",
     @Column(name = "translated_name", nullable = true)
     val translated: String? = null
