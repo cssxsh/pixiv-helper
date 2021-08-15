@@ -37,7 +37,7 @@ object PixivHelperListener {
         }
         "SearchImage" with subscribeMessages {
             always {
-                message.findIsInstance<Image>()?.let { image ->
+                (message.findIsInstance<Image>() ?: message.findIsInstance<FlashImage>()?.image)?.let { image ->
                     synchronized(images) {
                         images[source.metadata()] = image
                         current[subject.id] = source

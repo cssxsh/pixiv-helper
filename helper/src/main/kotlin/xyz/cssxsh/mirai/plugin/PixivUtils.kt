@@ -65,7 +65,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.onFailure {
         logger.warning({ "消息回复失败" }, it)
         when {
-            SendLimit.containsMatchIn(it.message.orEmpty()) -> {
+            SendLimit in it.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
             }
@@ -79,9 +79,19 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
     return runCatching {
         helper.buildMessageByIllust(illust = illust)
-    }.mapCatching {
+    }.mapCatching { message ->
         withTimeout(3 * 60 * 1000L) {
-            quoteReply(it)
+            when (val model = helper.model) {
+                is SendModel.Normal -> quoteReply(message)
+                is SendModel.Flash -> {
+                    val images = message.filterIsInstance<Image>()
+                    quoteReply((message - images).toMessageChain())
+                    images.forEach { quoteReply(it.flash()) }
+                }
+                is SendModel.Recall -> {
+                    quoteReply(message)?.recallIn(model.ms)
+                }
+            }
         }
     }.onFailure {
         when {

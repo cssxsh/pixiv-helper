@@ -46,6 +46,8 @@ class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIX
 
     internal var max: Int by MaxDelegate
 
+    internal var model: SendModel by ModelDelegate
+
     private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
 
     private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {

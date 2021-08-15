@@ -39,4 +39,11 @@ object PixivSettingCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.max(num: Int) = withHelper {
         "$max -> $num".also { max = num }
     }
+
+    @SubCommand
+    @Description("设置发送模式")
+    suspend fun CommandSenderOnMessage<*>.model(type: String, ms: Long = 60_000L) = withHelper {
+        val new = SendModel(type, ms)
+        "$model -> $new".also { model = new }
+    }
 }

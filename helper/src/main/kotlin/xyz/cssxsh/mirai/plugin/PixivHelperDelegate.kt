@@ -139,6 +139,16 @@ object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
 
 }
 
+object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
+
+    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: SendModel) {
+        PixivConfigData.model[thisRef.contact.toString()] = value
+    }
+
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): SendModel =
+        PixivConfigData.model.getOrPut(thisRef.contact.toString()) { SendModel.Normal }
+}
+
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
 internal fun Contact.getHelper(): PixivHelper {

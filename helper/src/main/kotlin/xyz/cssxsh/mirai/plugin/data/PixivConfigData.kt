@@ -27,6 +27,10 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     @ValueDescription("发送图片页数")
     val max: MutableMap<String, Int> by value(mutableMapOf())
 
+    @ValueName("model")
+    @ValueDescription("发送图片页数")
+    val model: MutableMap<String, SendModel> by value(mutableMapOf())
+
     @ValueName("interval")
     @ValueDescription("连续发送间隔时间，单位秒")
     var interval: Int by value(10)
