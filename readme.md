@@ -7,8 +7,15 @@
 目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/login` 指令登陆账号  
-然后使用 `/cache recommended` 缓存系统推荐作品 然后再使用色图相关指令  
-群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
+然后使用 `/cache recommended` 缓存系统推荐作品，然后再使用色图相关指令  
+群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
+发送模式可以使用 `/setting` 指令修改为闪照或撤销
+注意, 闪照或撤销这两种模式 并不会降低 `机器人被封禁` 的风险。  
+机器人被封禁的主要风险来自于
+* QQ号是新注册的
+* Bot挂在服务器上，但是服务器IP被腾讯列为风险IP(腾讯通过IP确定 登录地区)
+* Bot被高频使用，(另外，`高频发图再高频撤销`属于不打自招，正常用户有这个手速吗？)
+* 发送大量违规链接，或者触发关键词
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
 [![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)](https://shields.io/category/downloads)
