@@ -12,7 +12,7 @@ object PixivHelperListener {
 
     internal val images = mutableMapOf<MessageSourceMetadata, Image>()
 
-    internal val current = mutableMapOf<Long, MessageSource>()
+    internal val current = mutableMapOf<Long, MessageSourceMetadata>()
 
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
         listeners.put(this, listener)?.cancel()
@@ -37,8 +37,9 @@ object PixivHelperListener {
             always {
                 (message.findIsInstance<Image>() ?: message.findIsInstance<FlashImage>()?.image)?.let { image ->
                     synchronized(images) {
-                        images[source.metadata()] = image
-                        current[subject.id] = source
+                        val metadata = source.metadata()
+                        images[metadata] = image
+                        current[subject.id] = metadata
                     }
                 }
             }

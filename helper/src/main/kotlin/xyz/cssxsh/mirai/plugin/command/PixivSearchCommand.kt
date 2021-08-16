@@ -28,8 +28,9 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
-        val source = current[fromEvent.sender.id] ?: return null
-        return requireNotNull(images[source.metadata()]) { "图片历史未找到" }
+        val metadata = current[fromEvent.sender.id] ?: return null
+        current.remove(fromEvent.sender.id)
+        return requireNotNull(images[metadata]) { "图片历史未找到" }
     }
 
     private suspend fun CommandSenderOnMessage<*>.getNextImage(timeoutMillis: Long = 300_000): Image? {
