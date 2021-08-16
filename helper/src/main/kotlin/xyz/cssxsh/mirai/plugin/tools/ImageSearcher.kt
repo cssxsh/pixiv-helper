@@ -6,8 +6,7 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.jsoup.nodes.Document
+import org.jsoup.nodes.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
@@ -62,22 +61,22 @@ object ImageSearcher : HtmlParser(name = "Search") {
                     PixivSearchResult(
                         similarity = content.select(".resultsimilarityinfo")
                             .text().replace("%", "").toDouble() / 100,
-                        pid = ID.find(content.select(".resultcontent").text())!!.value.toLong(),
+                        pid = content.select(".resultcontent").findAll(ID).first().value.toLong(),
                         title = content.select(".resultcontent")
-                            .text().substringBeforeLast("Pixiv").trim(),
+                            .text().substringBeforeLast("Pixiv ID:", "").trim(),
                         uid = content.select(".resultcontent a")
-                            .last().attr("href").toHttpUrl().queryParameter("id")?.toLong() ?: 0,
+                            .last().href().let(::Url).parameters["id"]?.toLongOrNull() ?: 0,
                         name = content.select(".resultcontent")
-                            .text().substringAfterLast(":").trim()
+                            .text().substringAfterLast("Member:", "").trim()
                     )
                 }
                 "Twitter" in content.text() -> {
-                    val (image, md5) = content.select(".resulttableimage").findAll(MD5).first().value.let(image)
+                    val (image, md5) = content.select(".resulttableimage").html().let(image)
                     TwitterSearchResult(
                         similarity = content.select(".resulttablecontent .resultsimilarityinfo")
                             .text().replace("%", "").toDouble() / 100,
                         tweet = content.select(".resulttablecontent .resultcontent a")
-                            .first().attr("href"),
+                            .first().href(),
                         image = image,
                         md5 = md5
                     )
@@ -159,10 +158,15 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }.decode()
     }
 
+    private val thumbnail = { hash: String ->
+        "https://ascii2d.net/thumbnail/${hash[0]}/${hash[1]}/${hash[2]}/${hash[3]}/${hash}.jpg"
+    }
+
     private val ascii2d: (Document) -> List<SearchResult> = { document ->
         document.select(".item-box").mapNotNull { content ->
             val small = content.select(".detail-box small").text()
-            val link = content.select(".detail-box a").map { it.text() to it.attr("href") }
+            val link = content.select(".detail-box a").map { it.text() to it.href() }
+            val hash = content.select(".hash").text()
             when (small) {
                 "pixiv" -> {
                     PixivSearchResult(
@@ -176,9 +180,9 @@ object ImageSearcher : HtmlParser(name = "Search") {
                 "twitter" -> {
                     TwitterSearchResult(
                         similarity = Double.NaN,
-                        md5 = content.select(".hash").text(),
+                        md5 = hash,
                         tweet = link[0].second,
-                        image = content.select(".image-box .img").attr("href")
+                        image = thumbnail(hash)
                     )
                 }
                 else -> null

@@ -40,7 +40,7 @@ object PixivSearchCommand : SimpleCommand(
     private val CommandSenderOnMessage<*>.isAscii2d get() = "ascii2d" in fromEvent.message.content
 
     private suspend fun saucenao(image: Image) = ImageSearcher.run {
-        if (key.isNotBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
+        if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
     }
 
     private suspend fun ascii2d(image: Image) = ImageSearcher.run {

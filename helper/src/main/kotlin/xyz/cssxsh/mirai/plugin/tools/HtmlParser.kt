@@ -39,6 +39,8 @@ abstract class HtmlParser(var ignore: Ignore) {
 
     protected fun Elements.findAll(regex: Regex) = regex.findAll(html())
 
+    protected fun Element.href(): String = attr("href")
+
     protected suspend fun <R> http(block: suspend (HttpClient) -> R): R = supervisorScope {
         while(isActive) {
             runCatching {

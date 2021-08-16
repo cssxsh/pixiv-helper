@@ -16,13 +16,13 @@ object Pixivision : HtmlParser(name = "Pixivision") {
             description = document.select(".am__description").text(),
             illusts = document.select(".am__work").map { element ->
                 PixivArticle.Illust(
-                    pid = element.select(".am__work__title a")
-                        .attr("href").substringAfterLast("/").toLong(),
-                    title = element.select(".am__work__title a")
+                    pid = element.select(".am__work__title a").first()
+                        .href().substringAfterLast("/").toLong(),
+                    title = element.select(".am__work__title a").first()
                         .text(),
-                    uid = element.select(".am__work__user-name a")
-                        .attr("href").substringAfterLast("/").toLong(),
-                    name = element.select(".am__work__user-name a")
+                    uid = element.select(".am__work__user-name a").first()
+                        .href().substringAfterLast("/").toLong(),
+                    name = element.select(".am__work__user-name a").first()
                         .text()
                 )
             }
