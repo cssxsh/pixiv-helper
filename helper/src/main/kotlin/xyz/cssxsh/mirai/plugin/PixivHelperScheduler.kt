@@ -1,11 +1,14 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.*
-import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScope
+import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
+import kotlin.coroutines.CoroutineContext
 
-object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("")  {
+object PixivHelperScheduler : CoroutineScope {
+    override lateinit var coroutineContext: CoroutineContext
+
     private val tasks by PixivTaskData::tasks
 
     private val jobs: MutableMap<String, Job> = mutableMapOf()
@@ -35,7 +38,8 @@ object PixivHelperScheduler: CoroutineScope by PixivHelperPlugin.childScope("") 
         jobs[name]?.cancel("命令任务终止")
     }
 
-    fun start() {
+    fun start(parent: CoroutineScope) {
+        coroutineContext = parent.childScopeContext("PixivHelperScheduler")
         launch {
             while (isActive) {
                 tasks.forEach { (name, info) ->

@@ -14,13 +14,11 @@ object PixivHelperListener {
 
     internal val current = mutableMapOf<Long, MessageSource>()
 
-    private val globalEventChannel by lazy { PixivHelperPlugin.globalEventChannel() }
-
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
         listeners.put(this, listener)?.cancel()
     }
 
-    internal fun subscribe(): Unit = globalEventChannel.run {
+    internal fun subscribe(channel:  EventChannel<*>): Unit = with(channel) {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
