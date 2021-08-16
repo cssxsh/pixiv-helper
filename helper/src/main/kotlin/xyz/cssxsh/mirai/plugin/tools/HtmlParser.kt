@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
@@ -19,6 +20,7 @@ abstract class HtmlParser(var ignore: Ignore) {
     constructor(name: String) : this(ignore = Ignore(name))
 
     protected open val client = HttpClient(OkHttp) {
+        BrowserUserAgent()
         engine {
             config {
                 if (PixivHelperSettings.proxy.isNotBlank()) {
