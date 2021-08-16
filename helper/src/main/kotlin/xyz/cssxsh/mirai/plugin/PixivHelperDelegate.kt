@@ -36,7 +36,7 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): PixivConfig {
         val token = when (thisRef.contact) {
-            is User -> PixivConfigData.tokens[thisRef.contact.id].orEmpty()
+            is User -> PixivConfigData.tokens[thisRef.contact.id] ?: PixivConfigData.default
             is Group -> PixivConfigData.default
             else -> throw IllegalAccessException("未知类型联系人!")
         }
