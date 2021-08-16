@@ -21,7 +21,7 @@ private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
 
 private val UserMutex: MutableMap<Long, Mutex> = mutableMapOf()
 
-private var DefaultMutex: Mutex = Mutex()
+private val DefaultMutex: Mutex = Mutex()
 
 object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
@@ -78,15 +78,7 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
     }
 }
 
-object MutexDelegate : ReadWriteProperty<PixivHelper, Mutex> {
-
-    override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: Mutex) {
-        when (thisRef.contact) {
-            is User -> UserMutex[thisRef.contact.id] = value
-            is Group -> DefaultMutex = value
-            else -> throw IllegalAccessException("未知类型联系人!")
-        }
-    }
+object MutexDelegate : ReadOnlyProperty<PixivHelper, Mutex> {
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Mutex = when (thisRef.contact) {
         is User -> UserMutex.getOrPut(thisRef.contact.id, ::Mutex)
