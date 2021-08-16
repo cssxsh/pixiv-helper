@@ -67,12 +67,13 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <list 列表>`                   | 显示别名列表                          |
 | `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                          |
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
-| `(/)<search 搜索 搜图> [image]`                       | 搜索图片                              |
+| `(/)<search 搜索 搜图> [image]?`                      | saucenao 搜索图片                     |
+| `(/)<ascii2d> [image]?`                               | ascii2d 搜索图片                      |
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
 tag指令检索结果过少时，会自动触发缓存  
-回复带有图片的消息，也可以搜图，但是图片的消息必须已经被机器人记录  
+`[image]?`为空时会从回复的消息，最近的图片获取  
 搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加
 
 ### 缓存指令
@@ -220,10 +221,17 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 
 ### ImageSearchConfig.yml
 
-KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
-KEY 参数请到 <https://saucenao.com/> 注册账号，  
-在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
-信息只在启动时读取，修改后需重启
+* key
+  KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
+  KEY 参数请到 <https://saucenao.com/> 注册账号，  
+  在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
+  信息只在启动时读取，修改后需重启  
+
+* limit
+  显示的搜索结果数
+
+* bovw
+  ascii2d 检索类型，false色合検索 true特徴検索
 
 ### hibernate.properties
 
