@@ -28,8 +28,8 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
-        val metadata = current[fromEvent.sender.id] ?: return null
-        current.remove(fromEvent.sender.id)
+        val metadata = current[fromEvent.subject.id] ?: return null
+        current.remove(fromEvent.subject.id)
         return requireNotNull(images[metadata]) { "图片历史未找到" }
     }
 
