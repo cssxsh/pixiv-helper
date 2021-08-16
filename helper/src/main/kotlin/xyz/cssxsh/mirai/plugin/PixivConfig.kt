@@ -137,6 +137,10 @@ internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob
     }
 }
 
+internal fun ImageSearchConfig.init() {
+    ImageSearcher.key = key
+}
+
 /**
  * https://www.pixiv.net/i/79695391
  * https://www.pixiv.net/artworks/79695391

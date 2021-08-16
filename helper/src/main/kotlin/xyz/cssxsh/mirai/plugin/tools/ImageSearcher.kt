@@ -7,7 +7,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
 import org.jsoup.nodes.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 
@@ -21,7 +20,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private const val ALL_INDEX = 999
 
-    val key by ImageSearchConfig::key
+    var key: String = ""
 
     override val client = super.client.config {
         Json {

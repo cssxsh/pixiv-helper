@@ -65,6 +65,8 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivHelperScheduler.start(this)
 
         BaiduNetDiskUpdater.init()
+
+        ImageSearchConfig.init()
     }
 
     override fun onDisable() {

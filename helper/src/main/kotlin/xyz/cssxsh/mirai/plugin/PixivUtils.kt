@@ -199,6 +199,14 @@ internal fun SearchResult.getContent() = buildMessageChain {
     }
 }
 
+internal fun List<SearchResult>.getContent() = buildMessageChain {
+    if (isEmpty()) appendLine("搜索结果为空")
+    this@getContent.forEach {  result ->
+        appendLine("<=============>")
+        add(result.getContent())
+    }
+}
+
 internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
     appendLine("AID: $aid")
     appendLine("标题: $title")

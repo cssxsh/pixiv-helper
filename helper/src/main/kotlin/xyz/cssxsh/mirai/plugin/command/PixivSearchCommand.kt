@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
 import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.*
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 
@@ -40,21 +41,18 @@ object PixivSearchCommand : SimpleCommand(
 
     private val CommandSenderOnMessage<*>.isAscii2d get() = "ascii2d" in fromEvent.message.content
 
-    private suspend fun saucenao(image: Image) = ImageSearcher.run {
+    private suspend fun saucenao(image: Image) = with(ImageSearcher) {
         if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
     }
 
-    private suspend fun ascii2d(image: Image) = ImageSearcher.run {
-        (ascii2d(url = image.queryUrl(), false) + ascii2d(url = image.queryUrl(), true)).distinctBy {
-            it.md5
-        }
+    private suspend fun ascii2d(image: Image) = with(ImageSearcher) {
+        ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
     }
 
-    private fun List<SearchResult>.similarity(min: Double): SearchResult? {
+    private fun List<SearchResult>.similarity(min: Double): List<SearchResult> {
         return filterIsInstance<PixivSearchResult>()
             .filter { it.similarity > min }
             .ifEmpty { this }
-            .maxByOrNull { it.similarity }
     }
 
     private fun record(hash: String): PixivSearchResult? {
@@ -66,11 +64,12 @@ object PixivSearchCommand : SimpleCommand(
         return null
     }
 
-    private fun SearchResult.translate(hash: String): SearchResult {
-        return when (this) {
-            is PixivSearchResult -> apply { md5 = hash }
-            is TwitterSearchResult -> record(md5)?.apply { md5 = hash } ?: this
-            is OtherSearchResult -> this
+    private fun List<SearchResult>.translate(hash: String) = mapIndexedNotNull { index, result ->
+        if (index >= ImageSearchConfig.limit) return@mapIndexedNotNull null
+        when (result) {
+            is PixivSearchResult -> result.apply { result.md5 = hash }
+            is TwitterSearchResult -> record(result.md5)?.apply { md5 = hash } ?: result
+            is OtherSearchResult -> result
         }
     }
 
@@ -86,6 +85,6 @@ object PixivSearchCommand : SimpleCommand(
 
         val result = if (isAscii2d) ascii2d(origin) else saucenao(origin)
 
-        result.similarity(MIN_SIMILARITY)?.translate(hash)?.getContent() ?: "没有搜索结果"
+        result.similarity(MIN_SIMILARITY).translate(hash).getContent()
     }
 }
