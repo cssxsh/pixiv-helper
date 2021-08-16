@@ -12,7 +12,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.3.0") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.4.0") {
         name("pixiv-helper")
         author("cssxsh")
     }

@@ -10,6 +10,9 @@
 /plugins/
 /logs/
 /test/
+/run/
 
 # temp
 /temp/
+
+*.sqlite
