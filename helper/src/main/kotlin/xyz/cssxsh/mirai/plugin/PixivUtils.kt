@@ -180,6 +180,7 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
 }
 
 internal fun SearchResult.getContent() = buildMessageChain {
+    appendLine("<=============>")
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
@@ -199,13 +200,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
     }
 }
 
-internal fun List<SearchResult>.getContent() = buildMessageChain {
-    if (isEmpty()) appendLine("搜索结果为空")
-    this@getContent.forEach {  result ->
-        appendLine("<=============>")
-        add(result.getContent())
-    }
-}
+internal fun List<SearchResult>.getContent() = map { it.getContent() }.toMessageChain().ifEmpty { "结果为空".toPlainText() }
 
 internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
     appendLine("AID: $aid")
