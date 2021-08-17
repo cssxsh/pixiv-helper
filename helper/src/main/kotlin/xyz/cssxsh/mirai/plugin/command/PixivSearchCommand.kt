@@ -52,7 +52,9 @@ object PixivSearchCommand : SimpleCommand(
     private fun List<SearchResult>.similarity(min: Double): List<SearchResult> {
         return filterIsInstance<PixivSearchResult>()
             .filter { it.similarity > min }
+            .distinctBy { it.pid }
             .ifEmpty { this }
+            .sortedByDescending { it.similarity }
     }
 
     private fun record(hash: String): PixivSearchResult? {
