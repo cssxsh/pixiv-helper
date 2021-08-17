@@ -11,18 +11,6 @@ import java.time.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
-
-private var DefaultAuthInfos: AuthResult? = null
-
-private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
-
-private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
-
-private val UserMutex: MutableMap<Long, Mutex> = mutableMapOf()
-
-private val DefaultMutex: Mutex = Mutex()
-
 object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: PixivConfig) {
@@ -46,22 +34,30 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
 object AuthResultDelegate : ReadWriteProperty<PixivHelper, AuthResult?> {
 
+    private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
+
+    private var DefaultAuthInfo: AuthResult? = null
+
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: AuthResult?) {
         when (thisRef.contact) {
             is User -> UserAuthInfos[thisRef.contact.id] = value
-            is Group -> DefaultAuthInfos = value
+            is Group -> DefaultAuthInfo = value
             else -> throw IllegalAccessException("未知类型联系人!")
         }
     }
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult? = when (thisRef.contact) {
-        is User -> UserAuthInfos[thisRef.contact.id]
-        is Group -> DefaultAuthInfos
+        is User -> UserAuthInfos[thisRef.contact.id] ?: DefaultAuthInfo
+        is Group -> DefaultAuthInfo
         else -> throw IllegalAccessException("未知类型联系人!")
     }
 }
 
 object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
+
+    private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
+
+    private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: OffsetDateTime) {
         when (thisRef.contact) {
@@ -80,8 +76,12 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
 
 object MutexDelegate : ReadOnlyProperty<PixivHelper, Mutex> {
 
+    private val UserMutexes: MutableMap<Long, Mutex> = mutableMapOf()
+
+    private val DefaultMutex: Mutex = Mutex()
+
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Mutex = when (thisRef.contact) {
-        is User -> UserMutex.getOrPut(thisRef.contact.id, ::Mutex)
+        is User -> UserMutexes.getOrPut(thisRef.contact.id, ::Mutex)
         is Group -> DefaultMutex
         else -> throw IllegalAccessException("未知类型联系人!")
     }
