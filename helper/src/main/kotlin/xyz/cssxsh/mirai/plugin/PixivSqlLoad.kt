@@ -430,7 +430,7 @@ internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? 
         criteria.select(task)
             .where(like(task.get("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
-    }.singleResult
+    }.setMaxResults(1).singleResult
 }
 
 internal fun StatisticTagInfo.replicate(): Unit = useSession { session ->
