@@ -18,7 +18,7 @@ import kotlin.coroutines.*
 /**
  * 助手实例
  */
-class PixivHelper(val contact: Contact) : SimplePixivClient(config = DEFAULT_PIXIV_CONFIG) {
+class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     override val coroutineContext: CoroutineContext by lazy {
         PixivHelperPlugin.childScopeContext("PixivHelper:${contact}")
