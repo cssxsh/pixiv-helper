@@ -94,7 +94,15 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
     }
 }
 
-private fun <R> useSession(block: (session: Session) -> R) = factory.openSession().use(block)
+private fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R {
+    return if (lock == null) {
+        factory.openSession().use(block)
+    } else {
+        synchronized(lock) {
+            factory.openSession().use(block)
+        }
+    }
+}
 
 internal val SqlMetaData get() = useSession { session -> session.doReturningWork { it.metaData } }
 
@@ -224,7 +232,7 @@ internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, 
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, age: AgeLimit, limit: Int) = useSession { session ->
+internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit, limit: Int) =useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -233,7 +241,7 @@ internal fun ArtWorkInfo.Companion.random(level: Int, bookmarks: Long, age: AgeL
                 isTrue(artwork.get("ero")),
                 equal(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Int>("sanity"), level),
-                gt(artwork.get<Long>("bookmarks"), bookmarks)
+                gt(artwork.get<Long>("bookmarks"), marks)
             )
             .orderBy(asc(rand()))
     }.setMaxResults(limit).resultList.orEmpty()
@@ -275,7 +283,7 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
     }.getOrThrow()
 }
 
-internal fun ArtWorkInfo.replicate() = useSession { session ->
+internal fun ArtWorkInfo.replicate() = useSession(ArtWorkInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.IGNORE)
@@ -315,7 +323,7 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
 internal fun IllustInfo.toTagBaseInfos() =
     tags.distinctBy { it.name }.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
 
-internal fun IllustInfo.replicate(): Unit = useSession { session ->
+internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
     kotlin.runCatching {
@@ -330,7 +338,7 @@ internal fun IllustInfo.replicate(): Unit = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
+internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (isEmpty()) return@useSession
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
@@ -390,7 +398,7 @@ internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession 
     }.resultList.orEmpty()
 }
 
-internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
+internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         forEach { session.replicate(it, ReplicationMode.OVERWRITE) }
@@ -401,7 +409,7 @@ internal fun List<FileInfo>.replicate(): Unit = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun StatisticTaskInfo.replicate(): Unit = useSession { session ->
+internal fun StatisticTaskInfo.replicate(): Unit = useSession(StatisticTaskInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.OVERWRITE)
@@ -433,7 +441,7 @@ internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? 
     }.setMaxResults(1).resultList.singleOrNull()
 }
 
-internal fun StatisticTagInfo.replicate(): Unit = useSession { session ->
+internal fun StatisticTagInfo.replicate(): Unit = useSession(StatisticTagInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.OVERWRITE)
@@ -470,7 +478,7 @@ internal fun StatisticTagInfo.Companion.top(limit: Int): List<Pair<String, Int>>
     }.setMaxResults(limit).resultList.orEmpty() as List<Pair<String, Int>>
 }
 
-internal fun StatisticEroInfo.replicate(): Unit = useSession { session ->
+internal fun StatisticEroInfo.replicate(): Unit = useSession(StatisticEroInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.OVERWRITE)
@@ -499,7 +507,7 @@ internal fun StatisticEroInfo.Companion.group(id: Long): List<StatisticEroInfo> 
 
 internal fun UserPreview.isLoaded() = illusts.all { it.pid in ArtWorkInfo }
 
-internal fun AliasSetting.replicate(): Unit = useSession { session ->
+internal fun AliasSetting.replicate(): Unit = useSession(AliasSetting) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.OVERWRITE)
