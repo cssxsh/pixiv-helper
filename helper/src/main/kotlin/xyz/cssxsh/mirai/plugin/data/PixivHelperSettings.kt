@@ -49,7 +49,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     override val userExclude: Set<Long> by value(emptySet())
 
     @ValueName("pximg")
-    @ValueDescription("i.pximg.net 反向代理 可以使用 $PixivMirrorHost")
+    @ValueDescription("i.pximg.net 反向代理，若非特殊情况不要修改这个配置，保持留空，可以使用 $PixivMirrorHost")
     val pximg: String by value("")
 
     @ValueName("proxy")
