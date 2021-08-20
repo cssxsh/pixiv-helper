@@ -318,7 +318,7 @@ internal fun IllustInfo.toTagBaseInfos() =
 internal fun IllustInfo.replicate(): Unit = useSession { session ->
     if (pid == 0L) return@useSession
     session.transaction.begin()
-    runCatching {
+    kotlin.runCatching {
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
         toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
     }.onSuccess {
@@ -335,7 +335,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession { session ->
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
 
-    runCatching {
+    kotlin.runCatching {
         val users = mutableMapOf<Long, UserBaseInfo>()
 
         forEach { info ->
