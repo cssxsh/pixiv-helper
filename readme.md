@@ -73,8 +73,13 @@ EditThisCookie 安装地址
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
 tag指令检索结果过少时，会自动触发缓存  
-`[image]?`为空时会从回复的消息，最近的图片获取  
-搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加
+`[image]?`为空时会从`回复消息`，`最近图片`获取  
+搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加  
+举例:
+![从指令参数中获取](image/search_1.png)
+![从回复消息中获取](image/search_2.png)
+![从最近图片中获取](image/search_3.png)
+![从输入等待中获取](image/search_4.png)
 
 ### 缓存指令
 
