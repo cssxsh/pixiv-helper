@@ -109,6 +109,12 @@ internal fun PixivHelperSettings.init() {
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
+    if (pximg.isNotBlank()) {
+        logger.warning { "镜像代理已开启 i.pximg.net -> $pximg 不推荐修改这个配置，建议保持留空" }
+    }
+    if (proxy.isNotBlank()) {
+        logger.warning { "已加载代理 $proxy 图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
+    }
     PixivHelperPlugin.launch(SupervisorJob()) {
         val count = ArtWorkInfo.count()
         if (count < eroChunk) {
