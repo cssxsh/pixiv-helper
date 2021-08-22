@@ -16,6 +16,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 import java.lang.*
 
@@ -65,6 +66,9 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.onFailure {
         logger.warning({ "消息回复失败" }, it)
         when {
+            it is AppApiException -> {
+                quoteReply("ApiException, ${it.message}")
+            }
             SendLimit in it.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(it.message!!)!!.value)
@@ -101,7 +105,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
             }
             else -> {
                 logger.warning({ "读取色图失败" }, it)
-                quoteReply("读取色图失败， ${it.message}")
+                quoteReply("读取色图失败, ${it.message}")
             }
         }
     }.isSuccess
@@ -241,8 +245,6 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
         add("R18禁止！".toPlainText())
     }
 }
-
-internal const val NO_PROFILE_IMAGE = "https://s.pximg.net/common/images/no_profile.png"
 
 internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buildMessageChain {
     appendLine("NAME: ${preview.user.name}")
