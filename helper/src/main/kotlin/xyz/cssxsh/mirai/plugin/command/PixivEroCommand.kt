@@ -44,7 +44,7 @@ object PixivEroCommand : SimpleCommand(
     private fun CommandSenderOnMessage<*>.record(pid: Long) = launch(SupervisorJob()) {
         StatisticEroInfo(
             sender = fromEvent.sender.id,
-            group = fromEvent.subject.takeIf { it is Group }?.id,
+            group = (fromEvent.subject as? Group)?.id,
             pid = pid,
             timestamp = fromEvent.time.toLong()
         ).replicate()
@@ -63,7 +63,8 @@ object PixivEroCommand : SimpleCommand(
             if ("更好" !in fromEvent.message.content && history.expire) {
                 history.minBookmarks = 0
             }
-            randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).random().also { info ->
+            randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).randomOrNull().also { info ->
+                requireNotNull(info) { "sanity >= ${history.minSanityLevel}, bookmarks >= ${history.minBookmarks}, 随机失败，请刷慢一点哦" }
                 synchronized(caches) {
                     caches.remove(info.pid)
                     history.minSanityLevel = info.sanity
