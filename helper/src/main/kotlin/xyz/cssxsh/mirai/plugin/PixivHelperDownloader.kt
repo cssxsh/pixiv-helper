@@ -10,9 +10,9 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
     override val ignore: suspend (Throwable) -> Boolean get() = PixivDownloadIgnore
 
-    override val timeout: Long by lazy { PixivHelperSettings.download }
+    override val timeout: Long by PixivHelperSettings::download
 
-    override val blockSize: Int by lazy { PixivHelperSettings.blockSize }
+    override val blockSize: Int by PixivHelperSettings::blockSize
 
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     override val proxy: Proxy? by lazy {
