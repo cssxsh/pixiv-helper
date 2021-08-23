@@ -118,7 +118,7 @@ internal fun PixivHelperSettings.init() {
     if (blockSize <= 0) {
         logger.warning { "分块下载关闭，通常来说分块下载可以加快下载速度，建议开启，但分块不宜太小" }
     } else if (blockSize < HTTP_KILO) {
-        logger.warning { "但下载分块过小" }
+        logger.warning { "下载分块过小" }
     }
     PixivHelperPlugin.launch(SupervisorJob()) {
         val count = ArtWorkInfo.count()
