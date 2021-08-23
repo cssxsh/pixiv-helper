@@ -115,6 +115,11 @@ internal fun PixivHelperSettings.init() {
     if (proxy.isNotBlank()) {
         logger.warning { "已加载代理 $proxy 图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
     }
+    if (blockSize <= 0) {
+        logger.warning { "分块下载关闭，通常来说分块下载可以加快下载速度，建议开启，但分块不宜太小" }
+    } else if (blockSize < HTTP_KILO) {
+        logger.warning { "但下载分块过小" }
+    }
     PixivHelperPlugin.launch(SupervisorJob()) {
         val count = ArtWorkInfo.count()
         if (count < eroChunk) {
