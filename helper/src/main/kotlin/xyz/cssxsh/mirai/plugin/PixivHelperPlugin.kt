@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.plugin.jvm.*
+import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.event.*
 import okhttp3.*
 import xyz.cssxsh.mirai.plugin.command.*
@@ -62,7 +63,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         PixivHelperListener.subscribe(globalEventChannel())
 
-        PixivHelperScheduler.start(this)
+        PixivHelperScheduler.start(childScopeContext("PixivHelperScheduler"))
 
         BaiduNetDiskUpdater.init()
 

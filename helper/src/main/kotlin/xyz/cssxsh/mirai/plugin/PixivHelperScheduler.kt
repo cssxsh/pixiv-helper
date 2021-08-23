@@ -1,10 +1,9 @@
 package xyz.cssxsh.mirai.plugin
 
 import kotlinx.coroutines.*
-import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.data.*
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.*
 
 object PixivHelperScheduler : CoroutineScope {
     override lateinit var coroutineContext: CoroutineContext
@@ -38,8 +37,8 @@ object PixivHelperScheduler : CoroutineScope {
         jobs[name]?.cancel("命令任务终止")
     }
 
-    fun start(parent: CoroutineScope) {
-        coroutineContext = parent.childScopeContext("PixivHelperScheduler")
+    fun start(context: CoroutineContext = EmptyCoroutineContext) {
+        coroutineContext = context
         launch {
             while (isActive) {
                 tasks.forEach { (name, info) ->
