@@ -27,6 +27,8 @@ internal val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" }
 
 internal val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
 
+internal val SAUCENAO_HOST: List<String> = listOf("45.32.0.237", "chr1.saucenao.com")
+
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
 internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { throwable ->
@@ -97,6 +99,8 @@ internal val PIXIV_HOST = mapOf(
     "*.pixiv.net" to PIXIV_API_IP,
     "sketch.pixiv.net" to PIXIV_SKETCH_IP
 )
+
+internal val OTHER_HOST = mapOf("*.saucenao.com" to SAUCENAO_HOST)
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 

@@ -13,7 +13,9 @@ import xyz.cssxsh.pixiv.*
 object ImageSearcher : HtmlParser(name = "Search") {
 
     init {
-        sni("""saucenao\.com""".toRegex())
+        if (System.getProperty("xyz.cssxsh.mirai.plugin.tools.searcher", "${false}").toBoolean()) {
+            sni("""saucenao\.com""".toRegex())
+        }
     }
 
     private const val API = "https://saucenao.com/search.php"

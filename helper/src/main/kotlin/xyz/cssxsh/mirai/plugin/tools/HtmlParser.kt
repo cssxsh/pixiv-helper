@@ -28,6 +28,7 @@ abstract class HtmlParser(var ignore: Ignore) {
                 } else {
                     sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
                     hostnameVerifier { _, _ -> true }
+                    dns(RubyDns(JAPAN_DNS, OTHER_HOST))
                 }
             }
         }
