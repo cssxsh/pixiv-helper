@@ -53,6 +53,7 @@ object PixivSearchCommand : SimpleCommand(
         return filterIsInstance<PixivSearchResult>()
             .filter { it.similarity > min }
             .distinctBy { it.pid }
+            .ifEmpty { filter { it.similarity > min } }
             .ifEmpty { this }
             .sortedByDescending { it.similarity }
     }
