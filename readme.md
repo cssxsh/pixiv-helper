@@ -126,6 +126,7 @@ DAY_MANGA
 | `/<task> <recommended> [duration]?`          | 推送推荐作品        |
 | `/<task> <backup> [duration]?`               | 数据自动备份        |
 | `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
+| `/<task> <trending> [duration]? [times]?`    | 推送热门标签        |
 | `/<task> <detail>`                           | 查看任务详情        |
 | `/<task> <delete> [name]`                    | 删除任务            |
 
@@ -143,7 +144,8 @@ duration 单位分钟，默认3小时
 | `/<setting> <max> [num]`          | 设置显示最大图片数             |
 | `/<setting> <model> [type] [ms]?` | 设置发送模式                   |
 
-发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒 注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险
+发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒  
+注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险
 
 ### 备份指令
 

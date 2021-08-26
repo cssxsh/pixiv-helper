@@ -97,9 +97,19 @@ sealed class TimerTask {
         @SerialName("pattern")
         val pattern: String,
     ) : TimerTask()
+
+    @Serializable
+    data class Trending(
+        @SerialName("interval")
+        override val interval: Long,
+        @SerialName("delegate")
+        override val delegate: Long,
+        @SerialName("times")
+        val times: Int,
+    ) : TimerTask()
 }
 
-internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
+private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block().eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
@@ -111,6 +121,26 @@ internal suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         StatisticTaskInfo(
             task = name,
             pid = illust.pid,
+            timestamp = OffsetDateTime.now().toEpochSecond()
+        ).replicate()
+    }
+}
+
+private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
+    val flow = getTrending(times)
+    addCacheJob(name = "TimerTask(${name})", reply = false) {
+        flow.map { it.map(TrendIllust::illust) }.eros(mark = false).notHistory(task = name)
+    }
+    val list = flow.toList().flatten().filter { it.illust.isEro() && (name to it.illust.pid) !in StatisticTaskInfo }
+    list.forEachIndexed { index, trending ->
+        delay(SendInterval * 1000L)
+        send {
+            "Task: $name (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() +
+                buildMessageByIllust(illust = trending.illust)
+        }
+        StatisticTaskInfo(
+            task = name,
+            pid = trending.illust.pid,
             timestamp = OffsetDateTime.now().toEpochSecond()
         ).replicate()
     }
@@ -143,6 +173,9 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
     }
     is TimerTask.Web -> {
         delay(random)
+    }
+    is TimerTask.Trending -> {
+        delay(interval)
     }
 }
 
@@ -196,6 +229,9 @@ internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
         info.helper.subscribe(name) {
             getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex()))
         }
+    }
+    is TimerTask.Trending -> {
+        info.helper.trending(name = name, times = info.times)
     }
 }
 

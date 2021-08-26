@@ -35,7 +35,8 @@ object PixivTaskCommand : CompositeCommand(
     @SubCommand
     @Description("推送排行榜新作品")
     suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode) = setTask {
-        "Rank($mode)[${contact}]" to TimerTask.Rank(mode = mode, delegate = contact.delegate)
+        "Rank($mode)[${contact}]" to
+            TimerTask.Rank(mode = mode, delegate = contact.delegate)
     }
 
     @SubCommand
@@ -55,7 +56,8 @@ object PixivTaskCommand : CompositeCommand(
     @SubCommand
     @Description("定时备份任务")
     suspend fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = setTask {
-        "Backup" to TimerTask.Backup(interval = duration * MINUTE, delegate = contact.delegate)
+        "Backup" to
+            TimerTask.Backup(interval = duration * MINUTE, delegate = contact.delegate)
     }
 
     @SubCommand
@@ -72,6 +74,13 @@ object PixivTaskCommand : CompositeCommand(
             url = link,
             pattern = pattern
         )
+    }
+
+    @SubCommand
+    @Description("推送热门标签")
+    suspend fun CommandSenderOnMessage<*>.trending(duration: Int = TASK_DURATION, times: Int = 1) = setTask {
+        "Trending[${contact}]" to
+            TimerTask.Trending(interval = duration * MINUTE, delegate = contact.delegate, times = times)
     }
 
     @SubCommand

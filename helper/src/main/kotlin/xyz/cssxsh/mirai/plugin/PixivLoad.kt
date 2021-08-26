@@ -326,9 +326,7 @@ internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
         if (active()) runCatching {
             illustWalkThrough().illusts
         }.onSuccess { list ->
-            list.chunked(PAGE_SIZE.toInt()).forEach {
-                emit(it)
-            }
+            emit(list)
             logger.verbose { "加载第${page}次WalkThrough成功" }
         }.onFailure {
             logger.warning({ "加载第${page}次WalkThrough失败" }, it)
@@ -378,6 +376,19 @@ internal fun localCache(range: LongRange) = flow {
                     emit(it)
                 }
             }
+        }
+    }
+}
+
+internal suspend fun PixivHelper.getTrending(times: Int = 1)= flow {
+    (0 until times).forEach { page ->
+        if (active()) runCatching {
+            trendingTagsIllust().trends
+        }.onSuccess { list ->
+            emit(list)
+            logger.verbose { "加载第${page}次WalkThrough成功" }
+        }.onFailure {
+            logger.warning({ "加载第${page}次WalkThrough失败" }, it)
         }
     }
 }
