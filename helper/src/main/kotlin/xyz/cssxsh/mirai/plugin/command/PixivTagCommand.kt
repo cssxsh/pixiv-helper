@@ -29,13 +29,11 @@ object PixivTagCommand : SimpleCommand(
     private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
 
     private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
-        val direct = ArtWorkInfo.tag(tag, bookmark, fuzzy, EroChunk)
-        val persona = PERSONA_REGEX.matchEntire(tag)?.destructured?.let { (character, works) ->
-            ArtWorkInfo.tag(character, bookmark, fuzzy, EroChunk) intersect
-                ArtWorkInfo.tag(works, bookmark, fuzzy, EroChunk)
-        }.orEmpty()
+        val direct = ArtWorkInfo.tag(tag, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
+        val (character, work) = PERSONA_REGEX.matchEntire(tag)?.destructured ?: return direct
+        val persona = ArtWorkInfo.tag(character, work, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
 
-        return direct + persona
+        return (direct + persona).distinctBy { it.pid }
     }
 
     private const val TAG_NAME_MAX = 30

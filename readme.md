@@ -9,9 +9,10 @@ R18图会按照Pixiv所给信息过滤
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/pixiv` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品，然后再使用色图相关指令  
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
-发送模式可以使用 `/setting` 指令修改为闪照或撤销
+发送模式可以使用 `/setting` 指令修改为闪照或撤销  
 注意, 闪照或撤销这两种模式 并不会降低 `机器人被封禁` 的风险。  
 机器人被封禁的主要风险来自于
+
 * QQ号是新注册的
 * Bot挂在服务器上，但是服务器IP被腾讯列为风险IP(腾讯通过IP确定 登录地区)
 * Bot被高频使用，(另外，`高频发图再高频撤销`属于不打自招，正常用户有这个手速吗？)
@@ -73,6 +74,7 @@ EditThisCookie 安装地址
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
 tag指令检索结果过少时，会自动触发缓存  
+tag指令可以尝试按照格式`角色名(作品名)`检索角色, 举例 `红(明日方舟)`  
 `[image]?`为空时会从`回复消息`，`最近图片`获取  
 搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加  
 举例:
@@ -141,8 +143,7 @@ duration 单位分钟，默认3小时
 | `/<setting> <max> [num]`          | 设置显示最大图片数             |
 | `/<setting> <model> [type] [ms]?` | 设置发送模式                   |
 
-发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒
-注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险  
+发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒 注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险
 
 ### 备份指令
 
@@ -227,17 +228,14 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 
 ### ImageSearchConfig.yml
 
-* key
-  KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
+* key KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
   KEY 参数请到 <https://saucenao.com/> 注册账号，  
   在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
-  信息只在启动时读取，修改后需重启  
+  信息只在启动时读取，修改后需重启
 
-* limit
-  显示的搜索结果数
+* limit 显示的搜索结果数
 
-* bovw
-  ascii2d 检索类型，false色合検索 true特徴検索
+* bovw ascii2d 检索类型，false色合検索 true特徴検索
 
 ### hibernate.properties
 

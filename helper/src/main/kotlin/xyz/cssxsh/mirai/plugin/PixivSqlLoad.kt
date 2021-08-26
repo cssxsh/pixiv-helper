@@ -150,10 +150,10 @@ internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
 internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
 
 internal inline fun <reified T> Session.withCriteria(block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit) =
-    createQuery(criteriaBuilder.run { createQuery(T::class.java).also { block(it) } })
+    createQuery(with(criteriaBuilder) { createQuery(T::class.java).also { block(it) } })
 
 internal inline fun <reified T> Session.withCriteriaUpdate(block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit) =
-    createQuery(criteriaBuilder.run { createCriteriaUpdate(T::class.java).also { block(it) } })
+    createQuery(with(criteriaBuilder) { createCriteriaUpdate(T::class.java).also { block(it) } })
 
 internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
@@ -214,25 +214,39 @@ internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSessi
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.tag(name: String, min: Long, fuzzy: Boolean, limit: Int) = useSession { session ->
+internal fun ArtWorkInfo.Companion.tag(
+    vararg names: String,
+    marks: Long,
+    fuzzy: Boolean,
+    limit: Int
+) = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
-        val tag = artwork.join<ArtWorkInfo, TagBaseInfo>("tags")
+        val tag = { name: String, pid: Path<Long> ->
+            criteria.subquery(TagBaseInfo::class.java).also { sub ->
+                val info = sub.from(TagBaseInfo::class.java)
+                sub.select(info)
+                    .where(
+                        equal(info.get<Long>("pid"), pid),
+                        or(
+                            like(info.get("name"), if (fuzzy) "%$name%" else name),
+                            like(info.get("translated"), if (fuzzy) "%$name%" else name)
+                        )
+                    )
+            }
+        }
         criteria.select(artwork)
             .where(
+                *names.map { name -> exists(tag(name, artwork.get("pid"))) }.toTypedArray(),
                 isFalse(artwork.get("deleted")),
-                gt(artwork.get<Long>("bookmarks"), min),
-                or(
-                    like(tag.get("name"), if (fuzzy) "%$name%" else name),
-                    like(tag.get("translated"), if (fuzzy) "%$name%" else name)
-                )
+                gt(artwork.get<Long>("bookmarks"), marks),
             )
             .orderBy(asc(rand()))
             .distinct(true)
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit, limit: Int) =useSession { session ->
+internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit, limit: Int) = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
