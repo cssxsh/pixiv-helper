@@ -85,6 +85,9 @@ kotlin {
 }
 
 tasks {
+    compileKotlin {
+        kotlinOptions.freeCompilerArgs += "-Xunrestricted-builder-inference"
+    }
     test {
         useJUnitPlatform()
     }

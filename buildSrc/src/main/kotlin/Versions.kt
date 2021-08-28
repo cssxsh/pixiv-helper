@@ -5,7 +5,7 @@ object Versions {
     // kotlin
     // const val kotlin = "1.5.10"
     const val coroutines = "1.5.0"
-    const val ktor = "1.5.1"
+    const val ktor = "1.5.4"
     // web
     const val okhttp = "4.9.1"
     const val jsoup = "1.13.1"
