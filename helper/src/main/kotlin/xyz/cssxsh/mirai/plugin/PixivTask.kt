@@ -128,9 +128,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 
 private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     val flow = getTrending(times)
-    addCacheJob(name = "TimerTask(${name})", reply = false) {
-        flow.map { it.map(TrendIllust::illust) }.eros(mark = false).notHistory(task = name)
-    }
+    addCacheJob(name = "TimerTask(${name})", reply = false) { flow.map { it.map(TrendIllust::illust) } }
     val list = flow.toList().flatten().filter { it.illust.isEro() && (name to it.illust.pid) !in StatisticTaskInfo }
     list.forEachIndexed { index, trending ->
         delay(SendInterval * 1000L)
@@ -179,59 +177,59 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
     }
 }
 
-internal suspend fun runTask(name: String, info: TimerTask) = when (info) {
+internal suspend fun TimerTask.run(name: String) = when (this) {
     is TimerTask.User -> {
-        info.helper.subscribe(name) {
-            getUserIllusts(detail = userDetail(uid = info.uid), limit = PAGE_SIZE).isToday()
+        helper.subscribe(name) {
+            getUserIllusts(detail = userDetail(uid = uid), limit = PAGE_SIZE).isToday()
         }
     }
     is TimerTask.Rank -> {
-        info.helper.subscribe(name) {
-            getRank(mode = info.mode).eros()
+        helper.subscribe(name) {
+            getRank(mode = mode).eros()
         }
     }
     is TimerTask.Follow -> {
-        info.helper.subscribe(name) {
+        helper.subscribe(name) {
             getFollowIllusts(limit = TASK_LOAD).isToday()
         }
     }
     is TimerTask.Recommended -> {
-        info.helper.subscribe(name) {
+        helper.subscribe(name) {
             getRecommended(limit = PAGE_SIZE).eros()
         }
     }
     is TimerTask.Backup -> {
-        val helper = info.helper
+        val contact = helper.contact
         PixivZipper.compressData(list = getBackupList()).forEach { file ->
-            if (helper.contact is FileSupported) {
-                helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+            if (contact is FileSupported) {
+                contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    helper.contact.sendFile(path = file.name, file = file)
+                    contact.sendFile(path = file.name, file = file)
                 }.onFailure {
-                    helper.contact.sendMessage("上传失败: ${it.message}")
+                    contact.sendMessage("上传失败: ${it.message}")
                 }
             } else {
-                helper.contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
                 runCatching {
                     BaiduNetDiskUpdater.uploadFile(file)
                 }.onSuccess {
                     val code = file.getRapidUploadInfo().format()
                     logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                    helper.contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
+                    contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
                 }.onFailure {
                     logger.warning({ "[${file.name}]上传失败" }, it)
-                    helper.contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+                    contact.sendMessage("[${file.name}]上传失败, ${it.message}")
                 }
             }
         }
     }
     is TimerTask.Web -> {
-        info.helper.subscribe(name) {
-            getListIllusts(set = loadWeb(url = Url(info.url), regex = info.pattern.toRegex()))
+        helper.subscribe(name) {
+            getListIllusts(set = loadWeb(url = Url(url), regex = pattern.toRegex()))
         }
     }
     is TimerTask.Trending -> {
-        info.helper.trending(name = name, times = info.times)
+        helper.trending(name = name, times = times)
     }
 }
 

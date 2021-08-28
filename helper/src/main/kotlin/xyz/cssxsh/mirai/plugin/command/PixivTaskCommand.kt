@@ -64,7 +64,7 @@ object PixivTaskCommand : CompositeCommand(
     @Description("推送，从url链接获取")
     suspend fun CommandSenderOnMessage<*>.web(pattern: String, link: String, duration: Int = TASK_DURATION) = setTask {
         val url = Url(link)
-        loadWeb(url = Url(link), regex = pattern.toRegex()).let {
+        loadWeb(url = url, regex = pattern.toRegex()).let {
             check(it.isNotEmpty()) { "来自${url}加载的作品ID应该不为空" }
             sendMessage("来自${url}加载得到${it}，定时任务将添加")
         }

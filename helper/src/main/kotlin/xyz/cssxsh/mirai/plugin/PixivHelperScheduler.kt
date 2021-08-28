@@ -20,7 +20,7 @@ object PixivHelperScheduler : CoroutineScope {
         }
         info.pre()
         while (isActive) {
-            runTask(name, info)
+            info.run(name)
             delay(info.interval)
         }
     }

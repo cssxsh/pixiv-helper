@@ -55,7 +55,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
             runCatching {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 supervisorScope {
-                    cacheChannel.consumeAsFlow().save().download().buffer(3).await()
+                    cacheChannel.consumeAsFlow().save().download().await(3)
                 }
             }.onFailure {
                 logger.warning { "PixivHelper:${contact}#CacheTask $it" }
@@ -115,7 +115,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         }
     }
 
-    private suspend fun Flow<List<Deferred<*>>>.await() = collect { it.awaitAll() }
+    private suspend fun Flow<List<Deferred<*>>>.await(capacity: Int) = buffer(capacity).collect { it.awaitAll() }
 
     suspend fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
         cacheChannel.send(CacheTask(name = name, write = write, reply = reply, block = block))
