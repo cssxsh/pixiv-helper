@@ -129,7 +129,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     val flow = getTrending(times)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow.map { it.map(TrendIllust::illust) } }
-    val list = flow.toList().flatten().filter { it.illust.isEro() && (name to it.illust.pid) !in StatisticTaskInfo }
+    val list = flow.toList().flatten().filter { it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo }
     list.forEachIndexed { index, trending ->
         delay(SendInterval * 1000L)
         send {
