@@ -220,7 +220,7 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 * proxy 代理，`图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能。
 * timeout_api API超时时间, 单位ms
 * timeout_download DOWNLOAD超时时间, 单位ms
-* block_size DOWNLOAD分块大小, 单位B, 默认 253264, 为零时, 不会分块下载
+* block_size DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
 
 ### NetdiskOauthConfig.yml
 

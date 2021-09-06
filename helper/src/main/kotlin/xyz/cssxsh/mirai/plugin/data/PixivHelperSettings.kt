@@ -65,7 +65,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val download: Long by value(30_000L)
 
     @ValueName("block_size")
-    @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 253264, 为零时, 不会分块下载")
+    @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载")
     val blockSize: Int by value(512 * HTTP_KILO)
 
     private fun getPath(path: String, default: String) =
