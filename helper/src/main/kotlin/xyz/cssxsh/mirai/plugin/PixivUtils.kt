@@ -383,6 +383,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             if (exists) {
                 logger.info { "从[${file}]移动文件" }
                 results.add(FileInfo(url = url, bytes = file.readBytes()))
+                file.renameTo(dir.resolve(url.filename))
             }
             exists
         }
