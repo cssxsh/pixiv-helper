@@ -466,14 +466,4 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     }.value.toLong()
 }
 
-internal data class MessageSourceMetadata(
-    val ids: List<Int>,
-    val internalIds: List<Int>,
-    val time: Int,
-)
-
-internal fun MessageSource.metadata() = MessageSourceMetadata(
-    ids = ids.asList(),
-    internalIds = internalIds.asList(),
-    time = time
-)
+internal fun MessageSource.key() = ids.asList() + time
