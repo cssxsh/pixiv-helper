@@ -13,7 +13,7 @@ import xyz.cssxsh.pixiv.*
 object ImageSearcher : HtmlParser(name = "Search") {
 
     init {
-        if (System.getProperty("xyz.cssxsh.mirai.plugin.tools.searcher", "${false}").toBoolean()) {
+        if (System.getProperty("xyz.cssxsh.mirai.plugin.tools.saucenao", "${true}").toBoolean()) {
             sni("""saucenao\.com""".toRegex())
         }
     }
