@@ -53,7 +53,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val pximg: String by value("")
 
     @ValueName("proxy")
-    @ValueDescription("代理 格式 http://127.0.0.1:8080` or `socks://127.0.0.1:1080")
+    @ValueDescription("代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
     val proxy: String by value("")
 
     @ValueName("timeout_api")

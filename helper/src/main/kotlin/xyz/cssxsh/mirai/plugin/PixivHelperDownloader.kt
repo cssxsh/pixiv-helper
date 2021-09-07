@@ -1,10 +1,11 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.http.*
+import kotlinx.coroutines.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
-import java.net.Proxy
+import java.net.*
 
 object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
@@ -25,7 +26,7 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
     override suspend fun <R> downloadImageUrls(
         urls: List<Url>,
-        block: (url: Url, result: Result<ByteArray>) -> R
+        block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
     ): List<R> {
         val proxy = PixivHelperSettings.pximg
         return if (proxy.isNotBlank()) {

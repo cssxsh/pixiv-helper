@@ -388,9 +388,9 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             exists
         }
 
-        PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, result ->
+        PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, deferred ->
             runCatching {
-                val bytes = result.getOrThrow()
+                val bytes = deferred.await()
                 temp.resolve(url.filename).writeBytes(bytes)
                 size += bytes.size
                 FileInfo(url = url, bytes = bytes)
