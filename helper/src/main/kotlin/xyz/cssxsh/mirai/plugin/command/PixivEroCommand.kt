@@ -10,7 +10,7 @@ import xyz.cssxsh.pixiv.*
 
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "ero", "色图", "涩图",
+    "ero", "色图", "涩图", "瑟图",
     description = "PIXIV色图指令"
 ) {
 
