@@ -26,7 +26,7 @@ object PixivTagCommand : SimpleCommand(
         ).replicate()
     }
 
-    private val delimiters = "_|,()（）".toCharArray()
+    private val delimiters = """_-&+|/\,()，、—（）""".toCharArray()
 
     private fun tags(word: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
         val direct = ArtWorkInfo.tag(word, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
@@ -44,7 +44,7 @@ object PixivTagCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.tag(word: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
-        if ((cooling[contact.id] ?: 0) > System.currentTimeMillis()) return@withHelper "冷却中"
+        if ((cooling[contact.id] ?: 0) > System.currentTimeMillis()) return@withHelper "TAG指令冷却中"
         check(word.length <= TAG_NAME_MAX) { "标签'$word'过长" }
         tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
@@ -52,7 +52,7 @@ object PixivTagCommand : SimpleCommand(
             if (list.size < EroChunk && tagCache !in jobs) {
                 jobs.add(tagCache)
                 addCacheJob(name = tagCache, reply = false) {
-                    getSearchTag(tag = word).eros().onCompletion {
+                    getSearchTag(tag = word.split(delimiters = delimiters).joinToString(" ")).eros().onCompletion {
                         jobs.remove(tagCache)
                     }
                 }
