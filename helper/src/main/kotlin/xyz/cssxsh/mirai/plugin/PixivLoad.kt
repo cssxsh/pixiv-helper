@@ -256,9 +256,10 @@ internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetti
 }
 
 internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
+    val word = tag.split(delimiters = TAG_DELIMITERS).joinToString(" ")
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active()) runCatching {
-            searchIllust(word = tag, offset = offset).illusts
+            searchIllust(word = word, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)

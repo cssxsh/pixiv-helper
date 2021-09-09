@@ -26,11 +26,9 @@ object PixivTagCommand : SimpleCommand(
         ).replicate()
     }
 
-    private val delimiters = """_-&+|/\,()，、—（）""".toCharArray()
-
     private fun tags(word: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
         val direct = ArtWorkInfo.tag(word, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
-        val names = word.split(delimiters = delimiters).filter { it.isNotBlank() }.toTypedArray()
+        val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
         val split = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
 
         return (direct + split).distinctBy { it.pid }
@@ -52,7 +50,7 @@ object PixivTagCommand : SimpleCommand(
             if (list.size < EroChunk && tagCache !in jobs) {
                 jobs.add(tagCache)
                 addCacheJob(name = tagCache, reply = false) {
-                    getSearchTag(tag = word.split(delimiters = delimiters).joinToString(" ")).eros().onCompletion {
+                    getSearchTag(tag = word).eros().onCompletion {
                         jobs.remove(tagCache)
                     }
                 }
