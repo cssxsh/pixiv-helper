@@ -52,6 +52,10 @@ object PixivEroCommand : SimpleCommand(
 
     private val History.expire get() = (System.currentTimeMillis() - last) > EroUpExpire
 
+    operator fun plusAssign(list: List<ArtWorkInfo>) = synchronized(caches) {
+        caches += list.filter { it.ero }.associateBy { it.pid }
+    }
+
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = withHelper {
         histories.getOrPut(fromEvent.subject) { History() }.let { history ->

@@ -46,6 +46,7 @@ object PixivTagCommand : SimpleCommand(
         check(word.length <= TAG_NAME_MAX) { "标签'$word'过长" }
         tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
+            PixivEroCommand += list
             val tagCache = "TAG[${word}]"
             if (list.size < EroChunk && tagCache !in jobs) {
                 jobs.add(tagCache)
