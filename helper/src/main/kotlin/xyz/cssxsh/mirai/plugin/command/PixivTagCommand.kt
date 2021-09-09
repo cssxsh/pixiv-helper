@@ -26,30 +26,33 @@ object PixivTagCommand : SimpleCommand(
         ).replicate()
     }
 
-    private val PERSONA_REGEX = """(.+)[(（](.+)[）)]""".toRegex()
+    private val delimiters = "_|,()（）".toCharArray()
 
-    private fun tags(tag: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
-        val direct = ArtWorkInfo.tag(tag, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
-        val (character, work) = PERSONA_REGEX.matchEntire(tag)?.destructured ?: return direct
-        val persona = ArtWorkInfo.tag(character, work, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
+    private fun tags(word: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
+        val direct = ArtWorkInfo.tag(word, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
+        val names = word.split(delimiters = delimiters).filter { it.isNotBlank() }.toTypedArray()
+        val split = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
 
-        return (direct + persona).distinctBy { it.pid }
+        return (direct + split).distinctBy { it.pid }
     }
 
     private const val TAG_NAME_MAX = 30
 
     private val jobs = mutableSetOf<String>()
 
+    private val cooling = mutableMapOf<Long, Long>()
+
     @Handler
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
-        check(tag.length <= TAG_NAME_MAX) { "标签'$tag'过长" }
-        tags(tag = tag, bookmark = bookmark, fuzzy = fuzzy).let { list ->
-            logger.verbose { "根据TAG: $tag 在缓存中找到${list.size}个作品" }
-            val tagCache = "TAG[${tag}]"
+    suspend fun CommandSenderOnMessage<*>.tag(word: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
+        if ((cooling[contact.id] ?: 0) > System.currentTimeMillis()) return@withHelper "冷却中"
+        check(word.length <= TAG_NAME_MAX) { "标签'$word'过长" }
+        tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
+            logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
+            val tagCache = "TAG[${word}]"
             if (list.size < EroChunk && tagCache !in jobs) {
                 jobs.add(tagCache)
                 addCacheJob(name = tagCache, reply = false) {
-                    getSearchTag(tag = tag).eros().onCompletion {
+                    getSearchTag(tag = word).eros().onCompletion {
                         jobs.remove(tagCache)
                     }
                 }
@@ -65,12 +68,13 @@ object PixivTagCommand : SimpleCommand(
                     }
                 }
             }.let { artwork ->
-                record(tag = tag, pid = artwork?.pid)
+                record(tag = word, pid = artwork?.pid)
                 requireNotNull(artwork) {
+                    cooling[contact.id] = System.currentTimeMillis() + TagCooling
                     if (fuzzy) {
-                        "$subject 读取Tag[${tag}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
+                        "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
                     } else {
-                        "$subject 读取Tag[${tag}]色图失败, 请尝试模糊搜索"
+                        "$subject 读取Tag[${word}]色图失败, 请尝试模糊搜索或日文和英文"
                     }
                 }
             }

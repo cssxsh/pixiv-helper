@@ -153,6 +153,11 @@ internal val EroChunk by PixivHelperSettings::eroChunk
  */
 internal val EroUpExpire by PixivHelperSettings::eroUpExpire
 
+/**
+ * Tag指令冷却时间
+ */
+internal val TagCooling by PixivHelperSettings::tagCooling
+
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)

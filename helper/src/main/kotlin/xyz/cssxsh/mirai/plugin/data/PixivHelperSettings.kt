@@ -68,6 +68,10 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载")
     val blockSize: Int by value(512 * HTTP_KILO)
 
+    @ValueName("tag_cooling")
+    @ValueDescription("tag 指令冷却时间，检索失败时触发，单位毫秒")
+    val tagCooling: Int by value(600_000)
+
     private fun getPath(path: String, default: String) =
         if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
 
