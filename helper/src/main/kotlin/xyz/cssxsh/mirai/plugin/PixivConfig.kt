@@ -166,7 +166,7 @@ internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i/|artworks/|illust_id=))\d+
 /**
  * https://www.pixiv.net/u/902077
  * https://www.pixiv.net/users/902077
- * http://www.pixiv.net/member.php?id=902077
+ * https://www.pixiv.net/member.php?id=902077
  */
 internal val URL_USER_REGEX = """(?<=pixiv\.net/(u/|users/|member\.php\?id=))\d+""".toRegex()
 
