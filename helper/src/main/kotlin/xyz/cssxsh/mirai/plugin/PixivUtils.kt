@@ -231,7 +231,7 @@ internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleDat
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
     add(illust.getContent(link, tag, attr))
-    val files = illust.getImages()
+    val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
     if (illust.age == AgeLimit.ALL) {
         if (files.size <= max) {
             files
@@ -420,6 +420,10 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         }
     }
     return files
+}
+
+internal suspend fun PixivHelper.getUgoira(illust: IllustInfo): File {
+    return PixivHelperGifEncoder.build(illust, ugoiraMetadata(illust.pid).ugoira, false)
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {

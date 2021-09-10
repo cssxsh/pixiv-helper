@@ -10,6 +10,8 @@ fun DependencyHandler.mirai(module: String, version: String) = "net.mamoe:mirai-
 
 fun DependencyHandler.okhttp3(module: String, version: String) = "com.squareup.okhttp3:$module:$version"
 
+fun DependencyHandler.square(module: String, version: String) = "com.squareup:$module:$version"
+
 fun DependencyHandler.jsoup(version: String) = "org.jsoup:jsoup:$version"
 
 fun DependencyHandler.hibernate(module: String, version: String) = "org.hibernate:${module}:${version}"

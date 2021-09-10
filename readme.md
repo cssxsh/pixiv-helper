@@ -240,6 +240,20 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 
 * bovw ascii2d 检索类型，false色合検索 true特徴検索
 
+### PixivGifConfig.yml
+
+* quantizer 编码器, `com.squareup.gifencoder.ColorQuantizer` 的实现  
+  目前可选值  
+  `com.squareup.gifencoder.UniformQuantizer`
+  `com.squareup.gifencoder.MedianCutQuantizer`, 
+  `com.squareup.gifencoder.KMeansQuantizer`
+* ditherer 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
+  目前可选值  
+  `com.squareup.gifencoder.FloydSteinbergDitherer`
+  `com.squareup.gifencoder.NearestColorDitherer`
+* disposal 切换方法  
+  可选值 `UNSPECIFIED, DO_NOT_DISPOSE, RESTORE_TO_BACKGROUND, RESTORE_TO_PREVIOUS`
+
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
