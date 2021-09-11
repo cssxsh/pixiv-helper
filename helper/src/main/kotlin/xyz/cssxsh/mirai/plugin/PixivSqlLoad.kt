@@ -218,6 +218,7 @@ internal fun ArtWorkInfo.Companion.tag(
     vararg names: String,
     marks: Long,
     fuzzy: Boolean,
+    age: AgeLimit,
     limit: Int
 ) = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
@@ -239,6 +240,7 @@ internal fun ArtWorkInfo.Companion.tag(
             .where(
                 *names.map { name -> exists(tag(name, artwork.get("pid"))) }.toTypedArray(),
                 isFalse(artwork.get("deleted")),
+                le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
             )
             .orderBy(asc(rand()))
@@ -253,7 +255,7 @@ internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit
             .where(
                 isFalse(artwork.get("deleted")),
                 isTrue(artwork.get("ero")),
-                equal(artwork.get<Int>("age"), age.ordinal),
+                le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Int>("sanity"), level),
                 gt(artwork.get<Long>("bookmarks"), marks)
             )
