@@ -27,9 +27,9 @@ object PixivTagCommand : SimpleCommand(
     }
 
     private fun tags(word: String, bookmark: Long, fuzzy: Boolean): List<ArtWorkInfo> {
-        val direct = ArtWorkInfo.tag(word, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
+        val direct = ArtWorkInfo.tag(word, marks = bookmark, fuzzy = fuzzy, age = TagAgeLimit, limit = EroChunk)
         val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
-        val split = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, limit = EroChunk)
+        val split = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, age = TagAgeLimit, limit = EroChunk)
 
         return (direct + split).distinctBy { it.pid }
     }
@@ -47,12 +47,11 @@ object PixivTagCommand : SimpleCommand(
         tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
             PixivEroCommand += list
-            val tagCache = "TAG[${word}]"
-            if (list.size < EroChunk && tagCache !in jobs) {
-                jobs.add(tagCache)
-                addCacheJob(name = tagCache, reply = false) {
+            val job = "TAG[${word}]"
+            if (list.size < EroChunk && jobs.add(job)) {
+                addCacheJob(name = job, reply = false) {
                     getSearchTag(tag = word).eros().onCompletion {
-                        jobs.remove(tagCache)
+                        jobs.remove(job)
                     }
                 }
             }
