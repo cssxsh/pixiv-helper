@@ -14,6 +14,7 @@ import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
+import xyz.cssxsh.pixiv.*
 import java.io.*
 
 object PixivBackupCommand : CompositeCommand(
@@ -78,8 +79,9 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
+        val names = tag.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
         compressArtWorks(
-            list = ArtWorkInfo.tag(tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE),
+            list = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G),
             basename = "TAG[${tag}]"
         ).let {
             listOf(it)
@@ -151,7 +153,7 @@ object PixivBackupCommand : CompositeCommand(
             result.onSuccess { (table, count) ->
                 logger.info { "${table.name}已导入${count}条数据" }
             }.onFailure {
-                logger.warning { "导入失败 ${it}" }
+                logger.warning { "导入失败 $it" }
             }
         }
         sendMessage("导入完成")
