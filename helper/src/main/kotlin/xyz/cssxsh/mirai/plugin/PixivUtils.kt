@@ -158,6 +158,10 @@ internal val EroUpExpire by PixivHelperSettings::eroUpExpire
  */
 internal val TagCooling by PixivHelperSettings::tagCooling
 
+internal val TagAgeLimit get() = if (PixivHelperSettings.tagSFW) AgeLimit.ALL else AgeLimit.R18G
+
+internal val EroAgeLimit get() = if (PixivHelperSettings.eroSFW) AgeLimit.ALL else AgeLimit.R18G
+
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)

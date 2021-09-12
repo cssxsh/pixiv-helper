@@ -72,6 +72,14 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("tag 指令冷却时间，检索失败时触发，单位毫秒")
     val tagCooling: Int by value(600_000)
 
+    @ValueName("tag_sfw")
+    @ValueDescription("tag 是否过滤r18（依旧不会放出图片的")
+    val tagSFW: Boolean by value(false)
+
+    @ValueName("ero_sfw")
+    @ValueDescription("ero 是否过滤r18（依旧不会放出图片的")
+    val eroSFW: Boolean by value(true)
+
     private fun getPath(path: String, default: String) =
         if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
 
