@@ -222,6 +222,8 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 * timeout_api API超时时间, 单位ms
 * timeout_download DOWNLOAD超时时间, 单位ms
 * block_size DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
+* tag_sfw tag 是否过滤r18 依旧不会放出图片
+* ero_sfw ero 是否过滤r18 依旧不会放出图片
 
 ### NetdiskOauthConfig.yml
 

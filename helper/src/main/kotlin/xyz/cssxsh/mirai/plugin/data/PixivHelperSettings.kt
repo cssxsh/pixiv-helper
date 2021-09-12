@@ -73,11 +73,11 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val tagCooling: Int by value(600_000)
 
     @ValueName("tag_sfw")
-    @ValueDescription("tag 是否过滤r18（依旧不会放出图片的")
+    @ValueDescription("tag 是否过滤r18 依旧不会放出图片")
     val tagSFW: Boolean by value(false)
 
     @ValueName("ero_sfw")
-    @ValueDescription("ero 是否过滤r18（依旧不会放出图片的")
+    @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
     val eroSFW: Boolean by value(true)
 
     private fun getPath(path: String, default: String) =
