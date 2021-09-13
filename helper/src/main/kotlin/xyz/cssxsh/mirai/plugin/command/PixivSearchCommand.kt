@@ -25,12 +25,12 @@ object PixivSearchCommand : SimpleCommand(
 
     private fun CommandSenderOnMessage<*>.getQuoteImage(): Image? {
         val quote = fromEvent.message.findIsInstance<QuoteReply>() ?: return null
-        return requireNotNull(images[quote.source.key()]) { "图片历史未找到" }
+        return requireNotNull(images[quote.source.key()]) { "$subject 图片历史未找到" }
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
         val metadata = current.remove(fromEvent.subject.id) ?: return null
-        return requireNotNull(images[metadata]) { "图片历史未找到" }
+        return requireNotNull(images[metadata]) { "$subject 图片历史未找到" }
     }
 
     private suspend fun CommandSenderOnMessage<*>.getNextImage(timeoutMillis: Long = 300_000): Image? {
