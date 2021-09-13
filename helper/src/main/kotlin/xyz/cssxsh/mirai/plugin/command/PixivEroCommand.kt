@@ -9,7 +9,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 
 object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "ero", "色图", "涩图", "瑟图",
+    "ero", "色图", "涩图", "瑟图", "[色]",
     description = "PIXIV色图指令"
 ) {
 

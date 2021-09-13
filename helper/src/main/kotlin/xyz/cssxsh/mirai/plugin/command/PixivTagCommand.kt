@@ -10,7 +10,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 
 object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "tag", "标签",
+    "tag", "标签", "[饥饿]",
     description = "PIXIV标签"
 ) {
 

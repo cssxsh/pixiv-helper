@@ -5,7 +5,7 @@ import xyz.cssxsh.mirai.plugin.*
 
 object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "get", "搞快点", "GKD",
+    "get", "搞快点", "GKD", "[勾引]",
     description = "PIXIV获取指令"
 ) {
 
