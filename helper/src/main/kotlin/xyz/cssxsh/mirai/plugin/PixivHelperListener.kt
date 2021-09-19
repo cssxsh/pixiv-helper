@@ -1,8 +1,10 @@
 package xyz.cssxsh.mirai.plugin
 
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.permission.*
+import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.event.*
-import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 
@@ -18,19 +20,19 @@ object PixivHelperListener {
         listeners.put(this, listener)?.cancel()
     }
 
-    internal fun subscribe(channel:  EventChannel<*>): Unit = with(channel) {
+    internal fun subscribe(channel: EventChannel<*>, url: Permission): Unit = with(channel) {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
-                sendIllustInfo(pid = result.value.toLong())
+                toCommandSender().takeIf { url.testPermission(it) }?.sendIllustInfo(pid = result.value.toLong())
             }
             URL_USER_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
-                sendUserInfo(uid = result.value.toLong())
+                toCommandSender().takeIf { url.testPermission(it) }?.sendUserInfo(uid = result.value.toLong())
             }
             URL_PIXIV_ME_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
-                sendUserInfo(account = result.value)
+                toCommandSender().takeIf { url.testPermission(it) }?.sendUserInfo(account = result.value)
             }
         }
         "SearchImage" with subscribeMessages {
@@ -53,15 +55,15 @@ object PixivHelperListener {
         listeners.clear()
     }
 
-    private suspend fun MessageEvent.sendIllustInfo(pid: Long) = toCommandSender().withHelper {
+    private suspend fun CommandSenderOnMessage<*>.sendIllustInfo(pid: Long) = withHelper {
         getIllustInfo(pid = pid, flush = false)
     }
 
-    private suspend fun MessageEvent.sendUserInfo(uid: Long) = toCommandSender().withHelper {
+    private suspend fun CommandSenderOnMessage<*>.sendUserInfo(uid: Long) = withHelper {
         buildMessageByUser(uid = uid)
     }
 
-    private suspend fun MessageEvent.sendUserInfo(account: String) = toCommandSender().withHelper {
+    private suspend fun CommandSenderOnMessage<*>.sendUserInfo(account: String) = withHelper {
         buildMessageByUser(uid = redirect(account = account))
     }
 }

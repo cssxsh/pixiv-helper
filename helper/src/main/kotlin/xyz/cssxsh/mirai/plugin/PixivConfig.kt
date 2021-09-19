@@ -158,7 +158,7 @@ internal fun ImageSearchConfig.init() {
  * https://www.pixiv.net/artworks/79695391
  * https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433
  */
-internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i/|artworks/|illust_id=))\d+""".toRegex()
+internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i|artworks)/|illust_id=)\d+""".toRegex()
 
 /**
  * https://www.pixiv.net/u/902077

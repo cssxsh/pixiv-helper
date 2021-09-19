@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.data.*
+import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.plugin.jvm.*
 import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.event.*
@@ -20,6 +21,10 @@ object PixivHelperPlugin : KotlinPlugin(
 ) {
 
     private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
+
+    private fun AbstractJvmPlugin.registerPermission(name: String, description: String): Permission {
+        return PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
+    }
 
     init {
         System.setProperty("org.jboss.logging.provider", "slf4j")
@@ -63,7 +68,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
         PixivHelperSettings.init()
 
-        PixivHelperListener.subscribe(globalEventChannel())
+        PixivHelperListener.subscribe(globalEventChannel(), registerPermission("url", "PIXIV URL 解析"))
 
         PixivHelperScheduler.start(childScopeContext("PixivHelperScheduler"))
 
