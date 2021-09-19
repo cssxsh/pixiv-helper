@@ -19,15 +19,13 @@ import kotlin.math.*
 
 typealias Ignore = suspend (Throwable) -> Boolean
 
-private val BAD_IP = listOf("210.140.131.224", "210.140.131.225")
+internal val PIXIV_IMAGE_SOFTBANK = (134..147).map { "210.140.92.${it}" }
 
-internal val PIXIV_IMAGE_IP: List<String> = (134..147).map { "210.140.92.${it}" }
+internal val PIXIV_API_SOFTBANK = ((199..223) + (224..229)).map { "210.140.131.${it}" }
 
-internal val PIXIV_API_IP: List<String> = (199..229).map { "210.140.131.${it}" } - BAD_IP
+internal val PIXIV_SKETCH_SOFTBANK = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
 
-internal val PIXIV_SKETCH_IP: List<String> = listOf("210.140.175.130", "210.140.174.37", "210.140.170.179")
-
-internal val SAUCENAO_HOST: List<String> = listOf("45.32.0.237", "chr1.saucenao.com")
+internal val SAUCENAO_ORIGIN = listOf("45.32.0.237", "chr1.saucenao.com")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
@@ -95,12 +93,11 @@ internal fun Ignore(name: String): Ignore = { throwable ->
 }
 
 internal val PIXIV_HOST = mapOf(
-    "*.pximg.net" to PIXIV_IMAGE_IP,
-    "*.pixiv.net" to PIXIV_API_IP,
-    "sketch.pixiv.net" to PIXIV_SKETCH_IP
+    "*.pximg.net" to PIXIV_IMAGE_SOFTBANK,
+    "*.pixiv.net" to PIXIV_API_SOFTBANK,
+    "sketch.pixiv.net" to PIXIV_SKETCH_SOFTBANK,
+    "*.saucenao.com" to SAUCENAO_ORIGIN
 )
-
-internal val OTHER_HOST = mapOf("*.saucenao.com" to SAUCENAO_HOST)
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
@@ -175,7 +172,7 @@ internal val URL_USER_REGEX = """(?<=pixiv\.net/(u/|users/|member\.php\?id=))\d+
  *
  * https://pixiv.me/milkpanda-yellow
  */
-internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[0-9a-z_-]{3,32}""".toRegex()
+internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
