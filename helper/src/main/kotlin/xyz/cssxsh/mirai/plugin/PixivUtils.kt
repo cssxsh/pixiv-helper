@@ -267,7 +267,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }
     preview.illusts.apply { replicate() }.write().filter { it.isEro() }.forEach { illust ->
         runCatching {
-            val files = illust.getImages()
+            val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
             }
@@ -426,8 +426,8 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     return files
 }
 
-internal suspend fun PixivHelper.getUgoira(illust: IllustInfo): File {
-    return PixivHelperGifEncoder.build(illust, ugoiraMetadata(illust.pid).ugoira, false)
+internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = false): File {
+    return PixivHelperGifEncoder.build(illust, ugoiraMetadata(illust.pid).ugoira, flush)
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {

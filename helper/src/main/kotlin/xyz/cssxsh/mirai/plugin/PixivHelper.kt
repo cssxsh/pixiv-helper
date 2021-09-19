@@ -100,7 +100,13 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         }
         list.map { illust ->
             async {
-                illust.runCatching { getImages() }.onFailure {
+                illust.runCatching {
+                    when (type) {
+                        WorkContentType.ILLUST -> getImages()
+                        WorkContentType.UGOIRA -> getUgoira(illust)
+                        WorkContentType.MANGA -> Unit
+                    }
+                }.onFailure {
                     if (it.isCancellationException()) return@onFailure
                     logger.warning({
                         "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
