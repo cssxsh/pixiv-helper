@@ -257,15 +257,15 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 * quantizer 编码器, `com.squareup.gifencoder.ColorQuantizer` 的实现  
   目前可选值  
-  `com.squareup.gifencoder.UniformQuantizer`
-  `com.squareup.gifencoder.MedianCutQuantizer`, 
-  `com.squareup.gifencoder.KMeansQuantizer`
+  `com.squareup.gifencoder.UniformQuantizer`  
+  `com.squareup.gifencoder.MedianCutQuantizer`  
+  `com.squareup.gifencoder.KMeansQuantizer`  
 * ditherer 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
   目前可选值  
-  `com.squareup.gifencoder.FloydSteinbergDitherer`
-  `com.squareup.gifencoder.NearestColorDitherer`
+  `com.squareup.gifencoder.FloydSteinbergDitherer`  
+  `com.squareup.gifencoder.NearestColorDitherer`  
 * disposal 切换方法  
-  可选值 `UNSPECIFIED, DO_NOT_DISPOSE, RESTORE_TO_BACKGROUND, RESTORE_TO_PREVIOUS`
+  可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
 
 ### hibernate.properties
 
