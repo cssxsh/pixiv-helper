@@ -43,8 +43,8 @@ repositories {
         if (repo.url.host == "maven.pkg.github.com") {
             println(repo.url)
             repo.credentials {
-                username = System.getenv("GITHUB_ID")
-                password = System.getenv("GITHUB_TOKEN")
+                username = requireNotNull(System.getenv("GITHUB_ID")) { "GITHUB_ID is null" }
+                password = requireNotNull(System.getenv("GITHUB_TOKEN")) { "GITHUB_TOKEN is null" }
             }
         }
     }
