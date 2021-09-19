@@ -11,7 +11,7 @@ R18图会按照Pixiv所给信息过滤
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
 发送模式可以使用 `/setting` 指令修改为闪照或撤销  
 注意, 闪照或撤销这两种模式 并不会降低 `机器人被封禁` 的风险。  
-机器人被封禁的主要风险来自于
+机器人被封禁的主要风险来自
 
 * QQ号是新注册的
 * Bot挂在服务器上，但是服务器IP被腾讯列为风险IP(腾讯通过IP确定 登录地区)
@@ -202,6 +202,17 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 | `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品   |
 
 第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
+
+## URL 自动解析
+
+权限 id: `xyz.cssxsh.mirai.plugin.pixiv-helper:url`  
+匹配一下正则表达式的URL将会被解析  
+
+```
+val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i|artworks)/|illust_id=)\d+""".toRegex()
+val URL_USER_REGEX = """(?<=pixiv\.net/(u/|users/|member\.php\?id=))\d+""".toRegex()
+val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
+```
 
 ## 设置
 

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.5.1"
+version = "1.5.2"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -35,11 +35,17 @@ repositories {
     mavenLocal()
     maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
-    jcenter()
-    maven(url = "https://maven.pkg.github.com/cssxsh/baidu-client") {
-        credentials {
-            username = System.getenv("GITHUB_ID")
-            password = System.getenv("GITHUB_TOKEN")
+    maven(url = "https://maven.pkg.github.com/Moon70/APNG-builder")
+    maven(url = "https://maven.pkg.github.com/Moon70/GPAC")
+    maven(url = "https://maven.pkg.github.com/Moon70/LunarTools")
+    maven(url = "https://maven.pkg.github.com/cssxsh/baidu-client")
+    filterIsInstance<MavenArtifactRepository>().forEach { repo ->
+        if (repo.url.host == "maven.pkg.github.com") {
+            println(repo.url)
+            repo.credentials {
+                username = System.getenv("GITHUB_ID")
+                password = System.getenv("GITHUB_TOKEN")
+            }
         }
     }
     maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
