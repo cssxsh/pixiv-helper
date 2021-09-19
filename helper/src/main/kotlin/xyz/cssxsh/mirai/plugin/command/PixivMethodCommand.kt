@@ -41,9 +41,8 @@ object PixivMethodCommand : CompositeCommand(
         val json = File("cookie.json")
         sendMessage("加载 cookie 从 ${json.absolutePath}")
         cookie {
-            PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).mapNotNull {
-                it.runCatching { toCookie() }.getOrNull()
-            }
+            @OptIn(ExperimentalSerializationApi::class)
+            PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).map { it.toCookie() }
         }.let {
             "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
         }
