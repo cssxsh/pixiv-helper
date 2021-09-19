@@ -17,8 +17,8 @@ internal class ImageSearcherTest {
     }
 
     @Test
-    fun pixiv(): Unit = runBlocking {
-        ImageSearcher.pixiv(url = picUrl).also {
+    fun json(): Unit = runBlocking {
+        ImageSearcher.json(url = picUrl).also {
             assert(it.isEmpty().not()) { "搜索结果为空" }
         }.forEach {
             println(it.toString())
