@@ -58,7 +58,7 @@ data class StatisticTaskInfo(
 @Table(name = "statistic_alias")
 data class AliasSetting(
     @Id
-    @Column(name = "alias", nullable = false)
+    @Column(name = "name", nullable = false)
     val alias: String = "",
     @Id
     @Column(name = "uid", nullable = false)
