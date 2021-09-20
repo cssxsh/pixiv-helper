@@ -203,6 +203,18 @@ internal fun ArtWorkInfo.Companion.interval(range: LongRange, bookmarks: Long, p
     }.resultList.orEmpty()
 }
 
+internal fun ArtWorkInfo.Companion.type(range: LongRange, vararg types: WorkContentType) = useSession { session ->
+    session.withCriteria<ArtWorkInfo> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        criteria.select(artwork)
+            .where(
+                isFalse(artwork.get("deleted")),
+                between(artwork.get("pid"), range.first, range.last),
+                artwork.get<Int>("type").`in`(types.map { it.ordinal })
+            )
+    }.resultList.orEmpty()
+}
+
 internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)

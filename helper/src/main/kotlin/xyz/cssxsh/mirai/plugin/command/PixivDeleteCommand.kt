@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.*
 import java.time.*
 
 object PixivDeleteCommand : CompositeCommand(
@@ -79,6 +80,26 @@ object PixivDeleteCommand : CompositeCommand(
                 if (record) ArtWorkInfo.delete(
                     pid = it.pid,
                     comment = "command delete page_count $max in ${OffsetDateTime.now()}"
+                )
+                delete(it.pid)
+            }
+            sendMessage("删除完毕")
+        }
+    }
+
+    @SubCommand
+    @Description("删除 漫画，动图")
+    suspend fun CommandSender.manga(record: Boolean = false) {
+        ranges.forEach { range ->
+            logger.verbose { "开始检查[$range]" }
+            val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA, WorkContentType.UGOIRA)
+            if (artworks.isEmpty()) return@forEach
+            sendMessage("[manga](${range})共${artworks.size}个作品需要删除")
+            artworks.forEach {
+                logger.info { "作品(${it.pid})信息将从缓存移除" }
+                if (record) ArtWorkInfo.delete(
+                    pid = it.pid,
+                    comment = "command delete manga in ${OffsetDateTime.now()}"
                 )
                 delete(it.pid)
             }

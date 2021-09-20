@@ -21,7 +21,7 @@ data class ArtWorkInfo(
     @Column(name = "sanity_level", nullable = false)
     val sanity: Int = SanityLevel.NONE.ordinal,
     @Column(name = "type", nullable = false)
-    val type: Int = 0,
+    val type: Int = WorkContentType.ILLUST.ordinal,
     @Column(name = "width", nullable = false)
     val width: Int = 0,
     @Column(name = "height", nullable = false)
