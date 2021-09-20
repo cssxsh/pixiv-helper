@@ -46,7 +46,7 @@ object PixivZipper {
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
             list.forEach { info ->
-                PixivHelperSettings.imagesFolder(info.pid).listFiles()?.forEach { file ->
+                imagesFolder(info.pid).listFiles()?.forEach { file ->
                     stream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
                         creationTime = FileTime.from(Instant.ofEpochSecond(info.created))
                         lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.created))

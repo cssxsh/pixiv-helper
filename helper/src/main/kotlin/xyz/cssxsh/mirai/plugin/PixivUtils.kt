@@ -313,9 +313,28 @@ internal fun IllustInfo.check() = apply {
     check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
 
-private fun folder(pid: Long) = PixivHelperSettings.imagesFolder(pid)
+/**
+ * 用户文件保存目录
+ */
+internal val profilesFolder: File get() = PixivHelperSettings.cacheFolder.resolve("profile")
 
-private fun json(pid: Long) = folder(pid).resolve("${pid}.json")
+
+/**
+ * 特辑文件保存目录
+ */
+internal val articlesFolder: File get() = PixivHelperSettings.cacheFolder.resolve("article")
+
+/**
+ * 图片目录
+ */
+internal fun imagesFolder(pid: Long): File {
+    return PixivHelperSettings.cacheFolder
+        .resolve("%03d______".format(pid / 1_000_000))
+        .resolve("%06d___".format(pid / 1_000))
+        .resolve("$pid")
+}
+
+private fun json(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
 
 internal fun File.readIllustInfo(): IllustInfo = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 
@@ -353,8 +372,7 @@ internal fun Throwable.isCancellationException() =
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
-    val dir = PixivHelperSettings.profilesFolder
-    return dir.resolve(image.filename).apply {
+    return profilesFolder.resolve(image.filename).apply {
         if (exists().not()) {
             writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "用户 $image 下载完成" }
@@ -363,7 +381,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = folder(pid).apply { mkdirs() }
+    val dir = imagesFolder(pid).apply { mkdirs() }
     val temp = PixivHelperSettings.tempFolder
     val downloads = mutableListOf<Url>()
     val urls = getOriginImageUrls().filter { "$pid" in it.encodedPath }
@@ -432,8 +450,7 @@ internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = 
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     val image = Url(thumbnail)
-    val temp = PixivHelperSettings.articlesFolder
-    return temp.resolve(image.filename).apply {
+    return articlesFolder.resolve(image.filename).apply {
         if (exists().not()) {
             writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "特辑封面 $image 下载完成" }

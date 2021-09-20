@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.plugin.command
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import java.time.*
 
@@ -15,7 +14,7 @@ object PixivDeleteCommand : CompositeCommand(
 ) {
 
     private fun delete(pid: Long): Boolean {
-        return PixivHelperSettings.imagesFolder(pid).listFiles { file ->
+        return imagesFolder(pid).listFiles { file ->
             file.isFile && file.extension != "json"
         }?.all { it.delete() } ?: true
     }
