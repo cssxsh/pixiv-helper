@@ -60,7 +60,6 @@ data class AliasSetting(
     @Id
     @Column(name = "name", nullable = false)
     val alias: String = "",
-    @Id
     @Column(name = "uid", nullable = false)
     val uid: Long = 0
 ): Serializable {

@@ -541,6 +541,10 @@ internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { ses
     }.resultList.orEmpty()
 }
 
+internal fun AliasSetting.Companion.find(name: String): AliasSetting? = useSession { session ->
+    session.find(AliasSetting::class.java, name)
+}
+
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
