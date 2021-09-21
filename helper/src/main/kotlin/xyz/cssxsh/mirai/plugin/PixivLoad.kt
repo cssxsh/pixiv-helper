@@ -238,7 +238,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
 }
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    AliasSetting.all().map { it.uid }.distinct().let { set ->
+    AliasSetting.all().mapTo(mutableSetOf()) { it.uid }.let { set ->
         logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
         set.forEachIndexed { index, uid ->
             if (active()) runCatching {
@@ -299,7 +299,7 @@ internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
         if (active()) NaviRank.runCatching {
             (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten()).filter {
                 it.type == WorkContentType.ILLUST
-            }.toSet()
+            }.distinctBy { it.pid }
         }.onSuccess {
             logger.verbose { "加载 NaviRank[$month]{${it.size}}成功" }
             emitAll(getListIllusts(info = it))

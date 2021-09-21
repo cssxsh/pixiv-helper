@@ -71,7 +71,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
-        AliasSetting.all().map { it.uid }.toSet().map { uid ->
+        AliasSetting.all().mapTo(mutableSetOf()) { it.uid }.map { uid ->
             compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
         }
     }
