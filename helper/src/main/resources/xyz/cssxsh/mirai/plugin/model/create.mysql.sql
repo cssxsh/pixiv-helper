@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS files
 CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
 CREATE TABLE IF NOT EXISTS twitter
 (
-    `screen` VARCHAR(50) NOT NULL COLLATE 'ascii_general_ci',
+    `screen` VARCHAR(15) NOT NULL COLLATE 'ascii_general_ci',
     `uid`    INTEGER     NOT NULL,
     PRIMARY KEY (`screen`)
 );

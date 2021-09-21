@@ -128,12 +128,12 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
     return getUserFollowingPreview(detail = detail).transform { list ->
         list.forEach { preview ->
             index++
-            val count = preview.user.count()
             val loaded = preview.isLoaded()
-            if (active() && (Twitter.find(preview.user.id).isEmpty() || loaded.not() || count < PAGE_SIZE || flush)) {
+            if (active() && (Twitter.find(preview.user.id).isEmpty() || loaded.not() || flush)) {
                 runCatching {
                     val author = userDetail(uid = preview.user.id).save()
                     val total = author.total()
+                    val count = preview.user.count()
                     if (total - count > preview.illusts.size || flush) {
                         logger.info { "${index}.USER(${author.user.id})[${total}]尝试缓存" }
                         emitAll(getUserIllusts(author))

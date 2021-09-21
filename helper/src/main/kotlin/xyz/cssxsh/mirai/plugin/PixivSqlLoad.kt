@@ -419,11 +419,16 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.singleResult
 }
 
+private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
+
+private val ScreenError = listOf("", "https", "http")
+
 internal fun UserDetail.save(): UserDetail = useSession { session ->
     val screen: String? = with(profile) {
-        twitterAccount
-            ?: twitterUrl?.substringAfter("/")?.substringBefore('&')
-            ?: webpage?.substringAfter("twitter.com/", "")?.substringBefore('&')
+        twitterAccount?.takeUnless { it in ScreenError }
+            ?: twitterUrl?.let { ScreenRegex.find(it) }?.value?.takeUnless { it in ScreenError }
+            ?: webpage?.let { ScreenRegex.find(it) }?.value
+            ?: user.comment?.let { ScreenRegex.find(it) }?.value
     }
     if (screen.isNullOrEmpty()) return@useSession this
     val uid = user.id
