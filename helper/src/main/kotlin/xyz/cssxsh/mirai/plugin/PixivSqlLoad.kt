@@ -26,7 +26,8 @@ private val Entities = listOf(
     StatisticEroInfo::class.java,
     StatisticTagInfo::class.java,
     StatisticTaskInfo::class.java,
-    AliasSetting::class.java
+    AliasSetting::class.java,
+    Twitter::class.java
 )
 
 private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
@@ -416,6 +417,40 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
         criteria.select(user)
             .where(like(user.get("name"), name))
     }.singleResult
+}
+
+internal fun UserDetail.save(): UserDetail = useSession { session ->
+    val screen: String? = with(profile) {
+        twitterAccount
+            ?: twitterUrl?.substringAfter("/")?.substringBefore('&')
+            ?: webpage?.substringAfter("twitter.com/", "")?.substringBefore('&')
+    }
+    if (screen.isNullOrEmpty()) return@useSession this
+    val uid = user.id
+    session.transaction.begin()
+    kotlin.runCatching {
+        session.replicate(Twitter(screen, uid), ReplicationMode.OVERWRITE)
+    }.onSuccess {
+        session.transaction.commit()
+        logger.info { "uid: $uid -> screen: $screen 信息已记录" }
+    }.onFailure {
+        session.transaction.rollback()
+        logger.warning({ "uid: $uid -> screen: $screen 信息记录失败" }, it)
+    }.getOrThrow()
+
+    return@useSession this
+}
+
+internal fun Twitter.Companion.find(screen: String): Twitter? = useSession { session ->
+    session.find(Twitter::class.java, screen)
+}
+
+internal fun Twitter.Companion.find(uid: Long): List<Twitter> = useSession { session ->
+    session.withCriteria<Twitter> { criteria ->
+        val twitter = criteria.from(Twitter::class.java)
+        criteria.select(twitter)
+            .where(equal(twitter.get<Long>("uid"), uid))
+    }.resultList.orEmpty()
 }
 
 internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession { session ->

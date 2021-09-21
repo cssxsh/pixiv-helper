@@ -204,6 +204,10 @@ internal fun SearchResult.getContent() = buildMessageChain {
             appendLine("PID: $pid ")
         }
         is TwitterSearchResult -> {
+            val screen = tweet.substringAfter("twitter.com/", "").substringBefore('&')
+            Twitter.find(screen)?.let { (_, uid) ->
+                appendLine("UID: $uid")
+            }
             appendLine("Tweet: $tweet")
             appendLine("原图: $image")
         }
@@ -289,7 +293,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid = uid))
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid).save())
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 

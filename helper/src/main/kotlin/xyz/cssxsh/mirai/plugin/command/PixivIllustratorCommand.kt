@@ -28,8 +28,10 @@ object PixivIllustratorCommand : CompositeCommand(
     @Description("根据画师name或者alias随机发送画师作品")
     suspend fun CommandSenderOnMessage<*>.name(name: String) = withHelper {
         val uid = requireNotNull(
-            (AliasSetting.all().find { it.alias == name }?.uid ?: UserBaseInfo.name(name)?.uid)
-        ) { "找不到别名'${name}'" }
+            AliasSetting.find(name)?.uid
+                ?: UserBaseInfo.name(name)?.uid
+                ?: Twitter.find(name)?.uid
+        ) { "找不到名称'${name}'" }
 
         ArtWorkInfo.user(uid).also { list ->
             logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }

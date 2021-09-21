@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS files
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
+CREATE TABLE IF NOT EXISTS twitter
+(
+    `screen` VARCHAR(50) NOT NULL,
+    `uid`    INTEGER     NOT NULL,
+    PRIMARY KEY (`screen`)
+);
 
 -- User Data
 CREATE TABLE IF NOT EXISTS statistic_ero
