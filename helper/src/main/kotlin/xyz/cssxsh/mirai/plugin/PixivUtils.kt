@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin
 
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.Bot
@@ -492,9 +491,12 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     UserBaseInfo.account(account)?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
     return useHttpClient { client ->
-        client.head<HttpResponse>(url).request.url
+        client.config {
+            expectSuccess = false
+            followRedirects = false
+        }.head<HttpMessage>(url).headers[HttpHeaders.Location].orEmpty()
     }.let { location ->
-        requireNotNull(URL_USER_REGEX.find(location.encodedPath)) {
+        requireNotNull(URL_USER_REGEX.find(location)) {
             "跳转失败, $url -> $location"
         }
     }.value.toLong()
