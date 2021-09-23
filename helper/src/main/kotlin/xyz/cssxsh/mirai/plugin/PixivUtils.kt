@@ -337,13 +337,15 @@ internal fun imagesFolder(pid: Long): File {
         .resolve("$pid")
 }
 
-private fun json(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
+private fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
+
+private fun ugoira(pid: Long) = imagesFolder(pid).resolve("${pid}.ugoira.json")
 
 internal fun File.readIllustInfo() = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 
 internal fun File.readUgoiraMetadata() = PixivJson.decodeFromString(UgoiraMetadata.serializer(), readText())
 
-internal fun IllustInfo.write(file: File = json(pid)) {
+internal fun IllustInfo.write(file: File = illust(pid)) {
     file.parentFile.mkdirs()
     file.writeText(PixivJson.encodeToString(IllustInfo.serializer(), this))
 }
@@ -363,7 +365,7 @@ internal suspend fun PixivHelper.getIllustInfo(
     pid: Long,
     flush: Boolean,
     block: suspend PixivHelper.(Long) -> IllustInfo = FlushIllustInfo,
-): IllustInfo = json(pid).let { file ->
+): IllustInfo = illust(pid).let { file ->
     if (!flush && file.exists()) {
         runCatching {
             file.readIllustInfo()
@@ -455,7 +457,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 }
 
 internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = false) = with(PixivHelperGifEncoder) {
-    val json = dir.resolve("${illust}.ugoira.json")
+    val json = ugoira(illust.pid)
     val meta = json.takeIf { it.exists() }?.readUgoiraMetadata()
         ?: ugoiraMetadata(illust.pid).ugoira.also { it.write(json) }
     build(illust, meta, flush)
