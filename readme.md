@@ -8,6 +8,7 @@
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/pixiv` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品，然后再使用色图相关指令  
+Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数  
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
 发送模式可以使用 `/setting` 指令修改为闪照或撤销  
 注意, 闪照或撤销这两种模式 并不会降低 `机器人被封禁` 的风险。  
@@ -257,7 +258,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 ### PixivGifConfig.yml
 
 * quantizer 编码器, `com.squareup.gifencoder.ColorQuantizer` 的实现  
-  目前可选值  
+  目前可选值，图片质量和所需性能按顺序递增  
   `com.squareup.gifencoder.UniformQuantizer`  
   `com.squareup.gifencoder.MedianCutQuantizer`  
   `com.squareup.gifencoder.KMeansQuantizer`  

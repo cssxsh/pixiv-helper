@@ -339,11 +339,18 @@ internal fun imagesFolder(pid: Long): File {
 
 private fun json(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
 
-internal fun File.readIllustInfo(): IllustInfo = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
+internal fun File.readIllustInfo() = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
+
+internal fun File.readUgoiraMetadata() = PixivJson.decodeFromString(UgoiraMetadata.serializer(), readText())
 
 internal fun IllustInfo.write(file: File = json(pid)) {
     file.parentFile.mkdirs()
     file.writeText(PixivJson.encodeToString(IllustInfo.serializer(), this))
+}
+
+internal fun UgoiraMetadata.write(file: File) {
+    file.parentFile.mkdirs()
+    file.writeText(PixivJson.encodeToString(UgoiraMetadata.serializer(), this))
 }
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
@@ -447,8 +454,11 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     return files
 }
 
-internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = false): File {
-    return PixivHelperGifEncoder.build(illust, ugoiraMetadata(illust.pid).ugoira, flush)
+internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = false) = with(PixivHelperGifEncoder) {
+    val json = dir.resolve("${illust}.ugoira.json")
+    val meta = json.takeIf { it.exists() }?.readUgoiraMetadata()
+        ?: ugoiraMetadata(illust.pid).ugoira.also { it.write(json) }
+    build(illust, meta, flush)
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {
