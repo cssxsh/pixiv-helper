@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.5.3"
+version = "1.5.4"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -30,8 +30,6 @@ mirai {
 }
 
 repositories {
-    filterIsInstance<MavenArtifactRepository>().forEach { println(it.url) }
-    removeIf { it is MavenArtifactRepository && it.url.host == "dl.bintray.com" }
     mavenLocal()
     maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
