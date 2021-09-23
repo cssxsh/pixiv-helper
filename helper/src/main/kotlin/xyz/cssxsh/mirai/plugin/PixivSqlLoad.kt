@@ -160,7 +160,7 @@ internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-    }.singleResult ?: 0
+    }.singleResult
 }
 
 internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { session ->
@@ -172,7 +172,7 @@ internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { sess
                 isTrue(artwork.get("ero")),
                 equal(artwork.get<Int>("age"), age.ordinal)
             )
-    }.singleResult ?: 0
+    }.singleResult
 }
 
 internal operator fun ArtWorkInfo.Companion.contains(pid: Long): Boolean = useSession { session ->
@@ -400,7 +400,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
                 isFalse(artwork.get("deleted")),
                 equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
             )
-    }.singleResult ?: 0
+    }.singleResult
 }
 
 internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = useSession { session ->
@@ -408,7 +408,7 @@ internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = us
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
             .where(like(user.get("account"), account))
-    }.singleResult
+    }.list().singleOrNull()
 }
 
 internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSession { session ->
@@ -416,7 +416,7 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
             .where(like(user.get("name"), name))
-    }.singleResult
+    }.list().singleOrNull()
 }
 
 private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
