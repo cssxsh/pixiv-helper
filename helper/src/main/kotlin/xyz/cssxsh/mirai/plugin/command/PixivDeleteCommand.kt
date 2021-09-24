@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -34,7 +35,7 @@ object PixivDeleteCommand : CompositeCommand(
         val artworks = ArtWorkInfo.user(uid)
         if (record) ArtWorkInfo.deleteUser(uid = uid, comment = "command delete artwork in ${OffsetDateTime.now()}")
         sendMessage("USER(${uid})共${artworks.size}个作品需要删除")
-        artworks.forEach {
+        for (it in artworks) {
             logger.info { "作品(${it.pid})信息将从缓存移除" }
             delete(it.pid)
         }
@@ -49,13 +50,14 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除小于指定收藏数作品")
-    suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) {
-        ranges.forEach { range ->
+    suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) = supervisorScope {
+        for (range in ranges) {
+            if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, min, 0)
-            if (artworks.isEmpty()) return@forEach
+            if (artworks.isEmpty()) continue
             sendMessage("{$min}(${range})共${artworks.size}个作品需要删除")
-            artworks.forEach {
+            for (it in artworks) {
                 logger.info { "作品(${it.pid})信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = it.pid,
@@ -69,13 +71,14 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除大于指定页数作品（用于处理漫画作品）")
-    suspend fun CommandSender.page(max: Int, record: Boolean = false) {
-        ranges.forEach { range ->
+    suspend fun CommandSender.page(max: Int, record: Boolean = false) = supervisorScope {
+        for (range in ranges) {
+            if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, Long.MAX_VALUE, max)
-            if (artworks.isEmpty()) return@forEach
+            if (artworks.isEmpty()) continue
             sendMessage("[$max](${range})共${artworks.size}个作品需要删除")
-            artworks.forEach {
+            for (it in artworks) {
                 logger.info { "作品(${it.pid})信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = it.pid,
@@ -89,13 +92,14 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除 漫画，动图")
-    suspend fun CommandSender.manga(record: Boolean = false) {
-        ranges.forEach { range ->
+    suspend fun CommandSender.manga(record: Boolean = false) = supervisorScope {
+        for (range in ranges) {
+            if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA, WorkContentType.UGOIRA)
-            if (artworks.isEmpty()) return@forEach
+            if (artworks.isEmpty()) continue
             sendMessage("[manga](${range})共${artworks.size}个作品需要删除")
-            artworks.forEach {
+            for (it in artworks) {
                 logger.info { "作品(${it.pid})信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = it.pid,

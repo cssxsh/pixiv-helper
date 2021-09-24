@@ -35,8 +35,8 @@ object PixivPlayCommand : CompositeCommand(
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL }
         play = launch {
-            illusts.forEach { illust ->
-                if (isActive.not()) return@forEach
+            for (illust in illusts) {
+                if (isActive.not()) break
                 delay(duration)
                 sendIllust(illust)
             }
@@ -50,8 +50,8 @@ object PixivPlayCommand : CompositeCommand(
         check(!play.isActive) { "其他列表播放中" }
         val rank = NaviRank.getTagRank(words = words)
         play = launch {
-            rank.records.cached().forEach { info ->
-                if (isActive.not()) return@forEach
+            for (info in rank.records.cached()) {
+                if (isActive.not()) break
                 delay(duration)
                 sendArtwork(info)
             }
@@ -68,8 +68,8 @@ object PixivPlayCommand : CompositeCommand(
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL }
         play = launch {
-            illusts.forEach { illust ->
-                if (isActive.not()) return@forEach
+            for (illust in illusts) {
+                if (isActive.not()) break
                 delay(duration)
                 sendIllust(illust)
             }
@@ -84,8 +84,8 @@ object PixivPlayCommand : CompositeCommand(
         val user = info().user
         val illusts = bookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
         play = launch {
-            illusts.forEach { illust ->
-                if (isActive.not()) return@forEach
+            for (illust in illusts) {
+                if (isActive.not()) break
                 delay(duration)
                 sendIllust(illust)
             }
@@ -99,8 +99,8 @@ object PixivPlayCommand : CompositeCommand(
         check(!play.isActive) { "其他列表播放中" }
         val article = Pixivision.getArticle(aid = aid)
         play = launch {
-            article.illusts.forEach { info ->
-                if (isActive.not()) return@forEach
+            for (info in article.illusts) {
+                if (isActive.not()) break
                 delay(duration)
                 sendIllust(getIllustInfo(pid = info.pid, flush = true))
             }
@@ -116,10 +116,10 @@ object PixivPlayCommand : CompositeCommand(
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL && it.isEro() }
         play = launch {
-            illusts.forEach { info ->
-                if (isActive.not()) return@forEach
+            for (illust in illusts) {
+                if (isActive.not()) break
                 delay(duration)
-                sendIllust(info)
+                sendIllust(illust)
             }
         }
         "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
