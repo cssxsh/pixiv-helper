@@ -34,9 +34,7 @@ abstract class HtmlParser(var ignore: Ignore) {
         }
     }
 
-    protected fun sni(host: Regex) {
-        RubySSLSocketFactory.regexes.add(host)
-    }
+    protected fun sni(host: Regex) = RubySSLSocketFactory.regexes.add(host)
 
     protected fun Elements.findAll(regex: Regex) = regex.findAll(html())
 
