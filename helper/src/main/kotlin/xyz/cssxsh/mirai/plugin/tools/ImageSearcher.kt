@@ -55,37 +55,34 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
+    private fun Element.similarity() = select(".resultsimilarityinfo").text().replace("%", "").toDouble() / 100
+
     private val other: (Document) -> List<SearchResult> = { document ->
         document.select(".resulttable").map { content ->
+            val result = content.select(".resultcontent")
+            val links = result.select("a")
             when {
-                "Pixiv" in content.text() -> {
+                "Pixiv" in content.text() && result.select("a").isNotEmpty() -> {
                     PixivSearchResult(
-                        similarity = content.select(".resultsimilarityinfo")
-                            .text().replace("%", "").toDouble() / 100,
-                        pid = content.select(".resultcontent").findAll(ID).first().value.toLong(),
-                        title = content.select(".resultcontent")
-                            .text().substringBeforeLast("Pixiv ID:", "").trim(),
-                        uid = content.select(".resultcontent a")
-                            .last().href().let(::Url).parameters["id"]?.toLongOrNull() ?: 0,
-                        name = content.select(".resultcontent")
-                            .text().substringAfterLast("Member:", "").trim()
+                        similarity = content.similarity(),
+                        pid = result.findAll(ID).first().value.toLong(),
+                        title = result.text().substringBeforeLast("Pixiv ID:", "").trim(),
+                        uid = links.last().href().let(::Url).parameters["id"]?.toLongOrNull() ?: 0,
+                        name = result.text().substringAfterLast("Member:", "").trim()
                     )
                 }
-                "Twitter" in content.text() -> {
+                "Twitter" in content.text() && links.isNotEmpty() -> {
                     val (image, md5) = content.select(".resulttableimage").html().let(image)
                     TwitterSearchResult(
-                        similarity = content.select(".resulttablecontent .resultsimilarityinfo")
-                            .text().replace("%", "").toDouble() / 100,
-                        tweet = content.select(".resulttablecontent .resultcontent a")
-                            .first().href(),
+                        similarity = content.similarity(),
+                        tweet = links.first().href(),
                         image = image,
                         md5 = md5
                     )
                 }
                 else -> {
                     OtherSearchResult(
-                        similarity = content.select(".resulttablecontent .resultsimilarityinfo")
-                            .text().replace("%", "").toDouble() / 100,
+                        similarity = content.similarity(),
                         text = content.wholeText()
                     )
                 }
