@@ -337,6 +337,11 @@ internal fun imagesFolder(pid: Long): File {
         .resolve("$pid")
 }
 
+/**
+ * GIF目录
+ */
+internal val ugoiraImagesFolder: File get() = PixivHelperSettings.tempFolder.resolve("gif")
+
 internal fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
 
 internal fun ugoira(pid: Long) = imagesFolder(pid).resolve("${pid}.ugoira.json")

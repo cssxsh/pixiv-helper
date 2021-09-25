@@ -11,9 +11,7 @@ import java.io.*
 
 object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
 
-    public override val dir: File by lazy {
-        PixivHelperSettings.tempFolder.resolve("gif").apply { mkdirs() }
-    }
+    public override val dir: File get() = ugoiraImagesFolder
 
     override suspend fun download(url: Url, filename: String) = dir.resolve(filename).apply {
         if (exists().not()) {
@@ -22,18 +20,11 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
         }
     }
 
-    override val quantizer: ColorQuantizer by lazy {
-        System.getProperty(OpenCVQuantizer.MAX_COUNT, "${PixivGifConfig.maxCount}")
-        instance(PixivGifConfig.quantizer)
-    }
+    override val quantizer: ColorQuantizer by lazy { instance(PixivGifConfig.quantizer) }
 
-    override val ditherer: Ditherer by lazy {
-        instance(PixivGifConfig.ditherer)
-    }
+    override val ditherer: Ditherer by lazy { instance(PixivGifConfig.ditherer) }
 
-    override val disposalMethod: DisposalMethod by lazy {
-        PixivGifConfig.disposal
-    }
+    override val disposalMethod: DisposalMethod by lazy { PixivGifConfig.disposal }
 
     private val single = Mutex()
 

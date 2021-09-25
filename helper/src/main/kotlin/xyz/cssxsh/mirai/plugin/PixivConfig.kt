@@ -13,6 +13,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
+import xyz.cssxsh.pixiv.tool.*
 import java.io.*
 import java.time.*
 import kotlin.math.*
@@ -107,6 +108,7 @@ internal fun PixivHelperSettings.init() {
     tempFolder.mkdirs()
     profilesFolder.mkdirs()
     articlesFolder.mkdirs()
+    ugoiraImagesFolder.mkdirs()
     logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
     logger.info { "TempFolder: ${tempFolder.absolutePath}" }
@@ -151,6 +153,18 @@ internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob
 
 internal fun ImageSearchConfig.init() {
     ImageSearcher.key = key
+}
+
+internal fun PixivGifConfig.init() {
+    System.getProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
+    if (quantizer !in QUANTIZER_LIST) {
+        logger.warning { "PixivGifConfig.quantizer 不合法" }
+    } else if ("OctTreeQuantizer" !in quantizer) {
+        logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
+    }
+    if (ditherer !in DITHERER_LIST) {
+        logger.warning { "PixivGifConfig.ditherer 不合法" }
+    }
 }
 
 /**

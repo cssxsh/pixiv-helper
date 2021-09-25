@@ -80,21 +80,18 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
     val eroSFW: Boolean by value(true)
 
-    private fun path(path: String, default: String) =
-        if (path.isEmpty()) PixivHelperPlugin.dataFolder.resolve(default) else File(".").resolve(path)
-
     /**
      * 压缩文件保存目录
      */
-    val backupFolder: File get() = path(path = backupPath, default = "backup")
+    val backupFolder: File get() = PixivHelperPlugin.dataFolder.resolve(backupPath.ifBlank { "backup" })
 
     /**
      * 图片缓存保存目录
      */
-    val cacheFolder: File get() = path(path = cachePath, default = "cache")
+    val cacheFolder: File get() = PixivHelperPlugin.dataFolder.resolve(backupPath.ifBlank { "cache" })
 
     /**
      * 临时文件保存目录
      */
-    val tempFolder: File get() = path(path = tempPath, default = "temp")
+    val tempFolder: File get() = PixivHelperPlugin.dataFolder.resolve(backupPath.ifBlank { "temp" })
 }
