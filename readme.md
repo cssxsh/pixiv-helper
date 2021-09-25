@@ -261,17 +261,17 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   目前可选值，图片质量和所需性能按顺序递增, 推荐使用 `OctTreeQuantizer`  
   `com.squareup.gifencoder.UniformQuantizer`  
   `com.squareup.gifencoder.MedianCutQuantizer`  
-  `com.squareup.gifencoder.OctTreeQuantizer`
+  `com.squareup.gifencoder.OctTreeQuantizer`  
   `com.squareup.gifencoder.KMeansQuantizer`  
   `xyz.cssxsh.pixiv.tool.OpenCVQuantizer` (需要 安装 OpenCV, 对应 `jar` 放进 `plugins` 文件夹)
 * ditherer 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
   目前可选值, 推荐使用 `AtkinsonDitherer`  
   `com.squareup.gifencoder.FloydSteinbergDitherer`  
   `com.squareup.gifencoder.NearestColorDitherer`  
-  `xyz.cssxsh.pixiv.tool.AtkinsonDitherer`
-  `xyz.cssxsh.pixiv.tool.JJNDitherer`
-  `xyz.cssxsh.pixiv.tool.SierraLiteDitherer`
-  `xyz.cssxsh.pixiv.tool.StuckiDitherer`
+  `xyz.cssxsh.pixiv.tool.AtkinsonDitherer`  
+  `xyz.cssxsh.pixiv.tool.JJNDitherer`  
+  `xyz.cssxsh.pixiv.tool.SierraLiteDitherer`  
+  `xyz.cssxsh.pixiv.tool.StuckiDitherer`  
 * disposal 切换方法  
   可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
 * max_count OpenCVQuantizer 最大迭代数
