@@ -69,6 +69,7 @@ dependencies {
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.0")
     testRuntimeOnly(junit("engine", Versions.junit))
     testRuntimeOnly("mysql:mysql-connector-java:8.0.26")
+    testRuntimeOnly(fileTree(File(System.getenv("OPENCV_HOME")).resolve("build/java")))
 }
 
 kotlin {

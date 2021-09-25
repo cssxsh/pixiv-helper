@@ -261,19 +261,20 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   目前可选值，图片质量和所需性能按顺序递增  
   `com.squareup.gifencoder.UniformQuantizer`  
   `com.squareup.gifencoder.MedianCutQuantizer`  
+  `com.squareup.gifencoder.OctTreeQuantizer`
   `com.squareup.gifencoder.KMeansQuantizer`  
+  `xyz.cssxsh.pixiv.tool.OpenCVQuantizer` (需要 安装 OpenCV, 对应 `jar` 放进 `plugins` 文件夹)
 * ditherer 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
   目前可选值  
   `com.squareup.gifencoder.FloydSteinbergDitherer`  
   `com.squareup.gifencoder.NearestColorDitherer`  
+  `xyz.cssxsh.pixiv.tool.AtkinsonDitherer`
+  `xyz.cssxsh.pixiv.tool.JJNDitherer`
+  `xyz.cssxsh.pixiv.tool.SierraLiteDitherer`
+  `xyz.cssxsh.pixiv.tool.StuckiDitherer`
 * disposal 切换方法  
   可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
-
-* quantizer 编码器 拓展, `com.squareup.gifencoder.ColorQuantizer` 的实现  
-  `xyz.cssxsh.pixiv.tool.OpenCVQuantizer`  
-  通过 OpenCV 加速编码  
-  需要将 安装 OpenCV, 并设置 `$PATH=$PATH;opencv\build\java\x64`, 对应 `jar` 放进 `plugins` 文件夹
-
+* max_count OpenCVQuantizer 最大迭代数
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
