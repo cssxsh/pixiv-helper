@@ -156,14 +156,17 @@ internal fun ImageSearchConfig.init() {
 }
 
 internal fun PixivGifConfig.init() {
-    System.getProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
     if (quantizer !in QUANTIZER_LIST) {
-        logger.warning { "PixivGifConfig.quantizer 不合法" }
-    } else if ("OctTreeQuantizer" !in quantizer) {
-        logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
+        logger.warning { "PixivGifConfig.quantizer 非原生" }
+    } else {
+        if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
+            logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
+        } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
+            System.getProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
+        }
     }
     if (ditherer !in DITHERER_LIST) {
-        logger.warning { "PixivGifConfig.ditherer 不合法" }
+        logger.warning { "PixivGifConfig.ditherer 非原生" }
     }
 }
 
