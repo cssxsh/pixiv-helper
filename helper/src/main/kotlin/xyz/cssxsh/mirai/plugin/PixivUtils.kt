@@ -337,9 +337,9 @@ internal fun imagesFolder(pid: Long): File {
         .resolve("$pid")
 }
 
-private fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
+internal fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
 
-private fun ugoira(pid: Long) = imagesFolder(pid).resolve("${pid}.ugoira.json")
+internal fun ugoira(pid: Long) = imagesFolder(pid).resolve("${pid}.ugoira.json")
 
 internal fun File.readIllustInfo() = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 

@@ -8,15 +8,15 @@ import java.io.File
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
     @ValueName("cache_path")
     @ValueDescription("缓存目录")
-    private val cachePath: String by value("")
+    private val cachePath: String by value(System.getenv("PIXIV_CACHE").orEmpty())
 
     @ValueName("backup_path")
     @ValueDescription("备份目录")
-    private val backupPath: String by value("")
+    private val backupPath: String by value(System.getenv("PIXIV_BACKUP").orEmpty())
 
     @ValueName("temp_path")
     @ValueDescription("临时目录")
-    private val tempPath: String by value("")
+    private val tempPath: String by value(System.getenv("PIXIV_TEMP").orEmpty())
 
     @ValueName("ero_chunk")
     @ValueDescription("色图分块大小")
