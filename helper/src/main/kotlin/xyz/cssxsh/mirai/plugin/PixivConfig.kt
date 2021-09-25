@@ -170,16 +170,18 @@ internal fun PixivGifConfig.init() {
 /**
  * https://www.pixiv.net/i/79695391
  * https://www.pixiv.net/artworks/79695391
+ * https://www.pixiv.net/en/artworks/79695391
  * https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433
  */
-internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i|artworks)/|illust_id=)\d+""".toRegex()
+internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(en/)?(i|artworks)/|illust_id=)\d+""".toRegex()
 
 /**
  * https://www.pixiv.net/u/902077
  * https://www.pixiv.net/users/902077
+ * https://www.pixiv.net/en/users/902077
  * https://www.pixiv.net/member.php?id=902077
  */
-internal val URL_USER_REGEX = """(?<=pixiv\.net/(u/|users/|member\.php\?id=))\d+""".toRegex()
+internal val URL_USER_REGEX = """(?<=pixiv\.net/(en/)?(u/|users/|member\.php\?id=))\d+""".toRegex()
 
 /**
  * [リダイレクトURLサービス](https://www.pixiv.net/info.php?id=1554)
