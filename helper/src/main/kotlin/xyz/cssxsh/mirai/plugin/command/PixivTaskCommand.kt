@@ -101,9 +101,8 @@ object PixivTaskCommand : CompositeCommand(
                     appendLine("最后播放作品ID ${record.pid} 时间 $time")
                 }
             }
-            if (isEmpty()) {
-                appendLine("任务为空")
-            }
+        }.ifEmpty {
+            "任务为空"
         }
     }
 }
