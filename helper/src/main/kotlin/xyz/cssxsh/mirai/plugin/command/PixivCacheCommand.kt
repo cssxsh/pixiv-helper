@@ -7,7 +7,7 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.io.File
+import java.io.*
 import java.time.*
 
 object PixivCacheCommand : CompositeCommand(
@@ -131,6 +131,31 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载缓存文件夹中未保存的作品")
     suspend fun CommandSenderOnMessage<*>.local(range: LongRange = MAX_RANGE) = withHelper {
         addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { localCache(range = range) }
+    }
+
+    private val all = (MAX_RANGE step 1_000_000L).map { offset -> offset until (offset + 1_000_000L) }
+
+    @SubCommand
+    @Description("加载动图作品")
+    suspend fun CommandSenderOnMessage<*>.ugoira() = withHelper {
+        for (range in all) {
+            val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
+            val eros = artworks.filter { it.bookmarks >= PixivHelperSettings.bookmarks }
+            if (eros.isEmpty()) continue
+            logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
+            for (artwork in eros) {
+                try {
+                    getUgoira(getIllustInfo(pid = artwork.pid, flush = false))
+                } catch (e: Throwable) {
+                    if (DELETE_REGEX in e.message.orEmpty()) {
+                        artwork.copy(caption = e.message.orEmpty(), deleted = true).replicate()
+                    }
+                    logger.warning { "ugoira build ${artwork.pid} ${e.message}" }
+                }
+            }
+            logger.info { "$range Build 完毕" }
+            System.gc()
+        }
     }
 
     private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
