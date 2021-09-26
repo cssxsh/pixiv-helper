@@ -68,7 +68,6 @@ private var PixivDownloadDelayCount = 0
 
 internal val PixivDownloadIgnore: Ignore = { throwable ->
     when (throwable) {
-        is MatchContentLengthException -> false
         is HttpRequestTimeoutException -> true
         is IOException
         -> {
