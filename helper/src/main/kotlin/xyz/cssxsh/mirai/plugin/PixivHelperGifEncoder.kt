@@ -26,11 +26,23 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
 
     override val disposalMethod: DisposalMethod by lazy { PixivGifConfig.disposal }
 
+    // 考虑到GIF编码需要较高性能
     private val single = Mutex()
 
-    suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File = single.withLock {
+    suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
         download(metadata.original, metadata.original.filename)
-        dir.resolve("${illust.pid}.gif")
-            .takeUnless { flush || it.exists().not() } ?: encode(illust, metadata)
+        val gif = dir.resolve("${illust.pid}.gif")
+        return if (flush || gif.exists().not()) {
+            single.withLock {
+                with(illust) {
+                    logger.info {
+                        "动图(${pid})<${createAt}>[${user.id}][${title}][${metadata.frames.size}]{${totalBookmarks}}开始编码"
+                    }
+                }
+                encode(illust, metadata)
+            }
+        } else {
+            gif
+        }
     }
 }
