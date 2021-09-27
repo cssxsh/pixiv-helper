@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -139,11 +140,13 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载动图作品")
     suspend fun CommandSenderOnMessage<*>.ugoira() = withHelper {
         for (range in all) {
+            if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
             val eros = artworks.filter { it.bookmarks >= PixivHelperSettings.bookmarks }
             if (eros.isEmpty()) continue
             logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
             for (artwork in eros) {
+                if (isActive.not()) break
                 try {
                     getUgoira(getIllustInfo(pid = artwork.pid, flush = false))
                 } catch (e: Throwable) {
@@ -156,6 +159,7 @@ object PixivCacheCommand : CompositeCommand(
             logger.info { "$range Build 完毕" }
             System.gc()
         }
+        "UGOIRA Build 完毕"
     }
 
     private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
