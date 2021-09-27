@@ -148,7 +148,7 @@ object PixivCacheCommand : CompositeCommand(
                     getUgoira(getIllustInfo(pid = artwork.pid, flush = false))
                 } catch (e: Throwable) {
                     if (DELETE_REGEX in e.message.orEmpty()) {
-                        artwork.copy(caption = e.message.orEmpty(), deleted = true).replicate()
+                        ArtWorkInfo.delete(pid = artwork.pid, comment = e.message.orEmpty())
                     }
                     logger.warning { "ugoira build ${artwork.pid} ${e.message}" }
                 }
