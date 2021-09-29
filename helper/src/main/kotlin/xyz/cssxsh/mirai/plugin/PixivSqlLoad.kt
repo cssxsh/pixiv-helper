@@ -350,10 +350,14 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
 )
 
 internal fun IllustInfo.toTagBaseInfos() =
-    tags.distinctBy { it.name }.map { TagBaseInfo(pid, it.name, it.translatedName.orEmpty()) }
+    tags.distinctBy { it.name }.map { TagBaseInfo(pid, it.name, it.translatedName) }
 
 internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (pid == 0L) return@useSession
+    kotlin.runCatching {
+        // XXX Save twitter
+        user.twitter()
+    }
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
@@ -369,14 +373,19 @@ internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
 
 internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (isEmpty()) return@useSession
+    kotlin.runCatching {
+        // XXX Save twitter
+        for (info in this) {
+            info.user.twitter()
+        }
+    }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
-
     kotlin.runCatching {
         val users = mutableMapOf<Long, UserBaseInfo>()
 
-        forEach { info ->
-            if (info.pid == 0L) return@forEach
+        for (info in this) {
+            if (info.pid == 0L) continue
             val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
             session.replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
             info.toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
@@ -419,22 +428,34 @@ internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSessi
     }.list().singleOrNull()
 }
 
-private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
+internal val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 
-private val ScreenError = listOf("", "https", "http")
+internal val ScreenError = listOf("", "https", "http")
 
-internal fun UserDetail.save(): UserDetail = useSession { session ->
-    val screen: String? = with(profile) {
+internal fun UserDetail.twitter(): String? {
+    val screen = with(profile) {
         twitterAccount?.takeUnless { it in ScreenError }
             ?: twitterUrl?.let { ScreenRegex.find(it) }?.value?.takeUnless { it in ScreenError }
             ?: webpage?.let { ScreenRegex.find(it) }?.value
-            ?: user.comment?.let { ScreenRegex.find(it) }?.value
-    }
-    if (screen.isNullOrEmpty()) return@useSession this
-    val uid = user.id
+    } ?: user.comment?.let { ScreenRegex.find(it) }?.value ?: return null
+
+    Twitter(screen, user.id).replicate()
+
+    return screen
+}
+
+internal fun UserInfo.twitter(): String? {
+    val screen = comment?.let { ScreenRegex.find(it) }?.value ?: return null
+
+    Twitter(screen, id).replicate()
+
+    return null
+}
+
+internal fun Twitter.replicate(): Unit = useSession(Twitter) { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        session.replicate(Twitter(screen, uid), ReplicationMode.OVERWRITE)
+        session.replicate(this@replicate, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
         logger.info { "uid: $uid -> screen: $screen 信息已记录" }
@@ -442,8 +463,6 @@ internal fun UserDetail.save(): UserDetail = useSession { session ->
         session.transaction.rollback()
         logger.warning({ "uid: $uid -> screen: $screen 信息记录失败" }, it)
     }.getOrThrow()
-
-    return@useSession this
 }
 
 internal fun Twitter.Companion.find(screen: String): Twitter? = useSession { session ->

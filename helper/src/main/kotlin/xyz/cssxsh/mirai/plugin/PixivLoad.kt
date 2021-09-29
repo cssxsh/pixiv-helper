@@ -136,7 +136,8 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
             if (active().not()) break
             if (Twitter.find(preview.user.id).isEmpty() || preview.isLoaded().not() || flush) {
                 runCatching {
-                    val author = userDetail(uid = preview.user.id).save()
+                    val author = userDetail(uid = preview.user.id)
+                    author.twitter() // XXX Save twitter
                     val total = author.total()
                     val count = author.user.count()
                     if (total - count > preview.illusts.size || flush) {
@@ -251,7 +252,8 @@ internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetti
         set.forEachIndexed { index, uid ->
             if (active().not()) return@flow
             runCatching {
-                userDetail(uid = uid).save().let { detail ->
+                userDetail(uid = uid).let { detail ->
+                    detail.twitter() // XXX Save Twitter
                     if (detail.total() > detail.user.count()) {
                         logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
                         emitAll(getUserIllusts(detail))

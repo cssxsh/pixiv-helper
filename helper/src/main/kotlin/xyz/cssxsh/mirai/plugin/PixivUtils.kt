@@ -263,6 +263,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     appendLine("UID: ${preview.user.id}")
     appendLine("ACCOUNT: ${preview.user.account}")
     appendLine("FOLLOWED: ${preview.user.isFollowed}")
+    appendLine("TWITTER: ${preview.user.twitter()}")
     runCatching {
         append(preview.user.getProfileImage().uploadAsImage(contact))
     }.onFailure {
@@ -284,7 +285,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
     appendLine("ACCOUNT: ${detail.user.account}")
     appendLine("FOLLOWED: ${detail.user.isFollowed}")
     appendLine("TOTAL: ${detail.total()}")
-    appendLine("TWITTER: ${detail.profile.twitterAccount}")
+    appendLine("TWITTER: ${detail.twitter()}")
     runCatching {
         append(detail.user.getProfileImage().uploadAsImage(contact))
     }.onFailure {
@@ -292,7 +293,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid).save())
+internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
 
 internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 

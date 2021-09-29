@@ -113,6 +113,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存指定画师作品")
     suspend fun CommandSenderOnMessage<*>.user(uid: Long) = withHelper {
         userDetail(uid = uid).also {
+            it.twitter() // XXX Save Twitter
             addCacheJob(name = "USER(${uid})", reply = reply) { getUserIllusts(detail = it) }
         }.let {
             "画师[${it.user.name}]有${it.total()}个作品需要缓存"
