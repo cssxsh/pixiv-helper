@@ -53,16 +53,20 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     val pximg: String by value("")
 
     @ValueName("proxy")
-    @ValueDescription("代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
-    val proxy: String by value("")
+    @ValueDescription("API代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
+    val proxyApi: String by value("")
+
+    @ValueName("proxy_download")
+    @ValueDescription("DOWNLOAD代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
+    val proxyDownload: String by value("")
 
     @ValueName("timeout_api")
     @ValueDescription("API超时时间, 单位ms")
-    val timeout: Long by value(10_000L)
+    val timeoutApi: Long by value(10_000L)
 
     @ValueName("timeout_download")
     @ValueDescription("DOWNLOAD超时时间, 单位ms")
-    val download: Long by value(30_000L)
+    val timeoutDownload: Long by value(30_000L)
 
     @ValueName("block_size")
     @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载")

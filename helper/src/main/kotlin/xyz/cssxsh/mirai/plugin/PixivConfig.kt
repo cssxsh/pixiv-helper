@@ -114,8 +114,11 @@ internal fun PixivHelperSettings.init() {
     if (pximg.isNotBlank()) {
         logger.warning { "镜像代理已开启 i.pximg.net -> $pximg 不推荐修改这个配置，建议保持留空" }
     }
-    if (proxy.isNotBlank()) {
-        logger.warning { "已加载代理 $proxy 图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
+    if (proxyApi.isNotBlank()) {
+        logger.warning { "已加载 API 代理 $proxyApi API代理可能会导致SSL连接异常，请十分谨慎的开启这个功能" }
+    }
+    if (proxyDownload.isNotBlank()) {
+        logger.warning { "已加载 DOWNLOAD 代理 $proxyDownload  图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
     }
     if (blockSize <= 0) {
         logger.warning { "分块下载关闭，通常来说分块下载可以加快下载速度，建议开启，但分块不宜太小" }

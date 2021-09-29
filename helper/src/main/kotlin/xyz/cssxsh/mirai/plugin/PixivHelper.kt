@@ -36,7 +36,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     override val ignore: Ignore get() = { PixivApiIgnore(it) }
 
-    override val timeout: Long by PixivHelperSettings::timeout
+    override val timeout: Long by PixivHelperSettings::timeoutApi
 
     internal var link: Boolean by LinkDelegate
 

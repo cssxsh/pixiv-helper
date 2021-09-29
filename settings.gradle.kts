@@ -2,9 +2,9 @@
 
 pluginManagement {
     plugins {
-        kotlin("jvm") version "1.5.21"
-        kotlin("plugin.serialization") version "1.5.21"
-        kotlin("plugin.jpa") version "1.5.21"
+        kotlin("jvm") version "1.5.30"
+        kotlin("plugin.serialization") version "1.5.30"
+        kotlin("plugin.jpa") version "1.5.30"
 
         id("net.mamoe.mirai-console") version "2.7.0"
     }

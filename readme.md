@@ -275,6 +275,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * disposal 切换方法  
   可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
 * max_count OpenCVQuantizer 最大迭代数
+
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  

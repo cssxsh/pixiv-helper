@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.5.8"
+version = "1.5.9"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -79,8 +79,8 @@ kotlin {
 //            languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
 //            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
 //            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
-            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
-            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors")
+            languageSettings.optIn("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
+            languageSettings.optIn("net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors")
 //            languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
 //            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
 //            languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")

@@ -11,14 +11,14 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
     override val ignore: suspend (Throwable) -> Boolean get() = PixivDownloadIgnore
 
-    override val timeout: Long by PixivHelperSettings::download
+    override val timeout: Long by PixivHelperSettings::timeoutDownload
 
     override val blockSize: Int by PixivHelperSettings::blockSize
 
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     override val proxy: Proxy? by lazy {
-        if (PixivHelperSettings.proxy.isNotBlank()) {
-            Url(PixivHelperSettings.proxy).toProxy()
+        if (PixivHelperSettings.proxyDownload.isNotBlank()) {
+            Url(PixivHelperSettings.proxyDownload).toProxy()
         } else {
             null
         }
