@@ -304,12 +304,12 @@ private fun IllustInfo.match(tag: Regex): Boolean = tags.any { tag in it.name ||
 
 private fun IllustInfo.user(ids: Set<Long>): Boolean = user.id in ids
 
-internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = PixivHelperSettings.let { ero: EroStandardConfig ->
-    (ero.types.isEmpty() || type in ero.types) &&
-        (mark.not() || bookmarks(ero.bookmarks)) &&
-        (pages(ero.pages)) &&
-        (match(ero.tagExclude).not()) &&
-        (user(ero.userExclude).not())
+internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(PixivHelperSettings as EroStandardConfig) {
+    (types.isEmpty() || type in types) &&
+        (mark.not() || bookmarks(bookmarks)) &&
+        (pages(pages)) &&
+        (match(tagExclude).not()) &&
+        (user(userExclude).not())
 }
 
 internal fun IllustInfo.check() = apply {
