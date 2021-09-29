@@ -231,7 +231,8 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * ero_tag_exclude 涩图标准 排除的正则表达式
 * ero_user_exclude 涩图标准 排除的UID
 * pximg i.pximg.net 反向代理, 若非特殊情况不要修改这个配置，保持留空
-* proxy 代理，`图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能。
+* proxy API代理
+* proxy_download DOWNLOAD代理 `图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能
 * timeout_api API超时时间, 单位ms
 * timeout_download DOWNLOAD超时时间, 单位ms
 * block_size DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
