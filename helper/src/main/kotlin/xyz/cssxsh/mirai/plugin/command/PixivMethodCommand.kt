@@ -30,6 +30,7 @@ object PixivMethodCommand : CompositeCommand(
                     url.toString().toPlainText()
                 } + " 请扫码登录关联了Pixiv的微博".toPlainText()
             )
+            logger.info { "微博 登录二维码  $url" }
         }.let {
             "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
         }
