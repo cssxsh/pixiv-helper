@@ -23,8 +23,8 @@ abstract class HtmlParser(var ignore: Ignore) {
         BrowserUserAgent()
         engine {
             config {
-                if (PixivHelperSettings.proxy.isNotBlank()) {
-                    proxy(Url(PixivHelperSettings.proxy).toProxy())
+                if (PixivHelperSettings.proxyApi.isNotBlank()) {
+                    proxy(Url(PixivHelperSettings.proxyApi).toProxy())
                 } else {
                     sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
                     hostnameVerifier { _, _ -> true }
