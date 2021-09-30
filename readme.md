@@ -64,7 +64,7 @@ EditThisCookie 安装地址
 | `(/)<get 搞快点 gkd> [pid] [flush]?`                  | 获取指定ID图片                        |
 | `(/)<tag 标签> [word] [bookmark]? [fuzzy]?`           | 随机指定TAG图片                       |
 | `(/)<illustrator 画师> <uid id user 用户> [uid]`      | 根据画师UID随机发送画师作品           |
-| `(/)<illustrator 画师> <name 名称 名字> [name]`       | 根据画师name或者alias随机发送画师作品 |
+| `(/)<illustrator 画师> <name 名称 名字 推特> [name]`  | 根据画师name或者alias随机发送画师作品 |
 | `(/)<illustrator 画师> <alias 别名> [name] [uid]`     | 设置画师alias                         |
 | `(/)<illustrator 画师> <list 列表>`                   | 显示别名列表                          |
 | `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                          |
