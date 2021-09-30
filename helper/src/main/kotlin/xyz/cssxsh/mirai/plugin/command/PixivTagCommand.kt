@@ -38,11 +38,15 @@ object PixivTagCommand : SimpleCommand(
 
     private val jobs = mutableSetOf<String>()
 
-    private val cooling = mutableMapOf<Long, Long>()
+    private val cooling = mutableMapOf<Long, Long>().withDefault { 0 }
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.tag(word: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
-        if ((cooling[contact.id] ?: 0) > System.currentTimeMillis()) return@withHelper "TAG指令冷却中"
+        if (cooling.getValue(contact.id) > System.currentTimeMillis()) {
+            val wait = (cooling.getValue(contact.id) - System.currentTimeMillis()) / 1_000
+            return@withHelper "TAG指令冷却中, ${wait}s"
+        }
+
         check(word.length <= TAG_NAME_MAX) { "标签'$word'过长" }
         tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
