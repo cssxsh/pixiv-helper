@@ -26,26 +26,6 @@ internal val logger by lazy {
 
 val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
-const val SendDelay = 60 * 1000L
-
-suspend fun <T : CommandSenderOnMessage<*>> T.sendMessage(block: suspend T.(Contact) -> Message): Boolean {
-    return runCatching {
-        block(fromEvent.subject)
-    }.onSuccess { message ->
-        quoteReply(message)
-    }.onFailure {
-        when {
-            SendLimit in it.message.orEmpty() -> {
-                delay(SendDelay)
-                quoteReply(SendLimit.find(it.message!!)!!.value)
-            }
-            else -> {
-                quoteReply("发送消息失败， ${it.message}")
-            }
-        }
-    }.isSuccess
-}
-
 suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(fromEvent.message.quote() + message)
 
 suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
@@ -56,6 +36,10 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.onSuccess { message ->
         when (message) {
             null, Unit -> Unit
+            is ForwardMessage -> {
+                sendMessage(message)
+                logger.info { "转发消息已发送 $message" }
+            }
             is Message -> quoteReply(message)
             is String -> quoteReply(message)
             is IllustInfo -> sendIllust(message)
@@ -95,12 +79,11 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                     quoteReply(message)?.recallIn(model.ms)
                 }
                 is SendModel.Forward -> {
-                    message.toForwardMessage(
-                        sender = this@sendIllust.user!!,
-                        displayStrategy = object : ForwardMessage.DisplayStrategy {
-                            override fun generateTitle(forward: RawForwardMessage): String = illust.title
-                            override fun generateSummary(forward: RawForwardMessage): String = "查看${illust.user.name}的作品"
-                        }
+                    sendMessage(
+                        message.toForwardMessage(
+                            sender = user!!,
+                            displayStrategy = illust.toDisplayStrategy()
+                        )
                     )
                 }
             }
@@ -205,8 +188,15 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
     }
 }
 
+internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStrategy {
+    override fun generateTitle(forward: RawForwardMessage): String = title
+
+    override fun generatePreview(forward: RawForwardMessage): List<String> = tags.map { it.getContent() }
+
+    override fun generateSummary(forward: RawForwardMessage): String = "查看${user.name}的作品"
+}
+
 internal fun SearchResult.getContent() = buildMessageChain {
-    appendLine("<=============>")
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
@@ -232,21 +222,23 @@ internal fun SearchResult.getContent() = buildMessageChain {
 
 private object SearchResultStrategy : ForwardMessage.DisplayStrategy {
     override fun generateTitle(forward: RawForwardMessage): String = "搜图结果"
-    override fun generateBrief(forward: RawForwardMessage): String = "[搜图结果]"
     override fun generateSummary(forward: RawForwardMessage): String = "查看${forward.nodeList.size}条搜图结果"
 }
 
-internal fun List<SearchResult>.getContent(contact: Contact): Message {
+internal fun List<SearchResult>.getContent(sender: User): Message {
     if (isEmpty()) return "结果为空".toPlainText()
 
-   return if (ImageSearchConfig.forward) {
-       buildForwardMessage(contact, SearchResultStrategy) {
-           for (result in this@getContent) {
-               contact.bot says result.getContent()
-           }
-       }
+    return if (ImageSearchConfig.forward) {
+        RawForwardMessage(map { result ->
+            ForwardMessage.Node(
+                senderId = sender.id,
+                time = (System.currentTimeMillis() / 1000).toInt(),
+                senderName = sender.nameCardOrNick,
+                result.getContent()
+            )
+        }).render(SearchResultStrategy)
     } else {
-       map { it.getContent() }.toMessageChain()
+        map { "<=============>\n".toPlainText() + it.getContent() }.toMessageChain()
     }
 }
 

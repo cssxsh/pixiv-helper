@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -53,17 +54,26 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 ${duration / 1000}s"
         } else {
             if (illusts.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (illust in illusts) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(illust)
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (illust in illusts) {
+                if (isActive.not()) break
+
+                runCatching {
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "[${mode}]排行榜"
+            })
         }
     }
 
@@ -89,17 +99,28 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放NaviRank[${rank.title}]，共${rank.records.size}个作品，间隔 $duration"
         } else {
             if (rank.records.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (info in rank.records) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(getIllustInfo(pid = info.pid, flush = false))
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (info in rank.records) {
+                if (isActive.not()) break
+
+                runCatching {
+                    val illust = getIllustInfo(pid = info.pid, flush = false)
+
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "NaviRank[${rank.title}]"
+            })
         }
     }
 
@@ -128,17 +149,26 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放用户[${user.name}]系统推荐，共${illusts.size}个作品，间隔 $duration"
         } else {
             if (illusts.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (illust in illusts) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(illust)
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (illust in illusts) {
+                if (isActive.not()) break
+
+                runCatching {
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "用户[${user.name}]系统推荐"
+            })
         }
     }
 
@@ -160,17 +190,26 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放用户[${user.name}](${tag})收藏，共${illusts.size}个作品，间隔 $duration"
         } else {
             if (illusts.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (illust in illusts) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(illust)
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (illust in illusts) {
+                if (isActive.not()) break
+
+                runCatching {
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "用户[${user.name}](${tag})收藏"
+            })
         }
     }
 
@@ -192,17 +231,28 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
         } else {
             if (article.illusts.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (artwork in article.illusts) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(getIllustInfo(pid = artwork.pid, flush = false))
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (info in article.illusts) {
+                if (isActive.not()) break
+
+                runCatching {
+                    val illust = getIllustInfo(pid = info.pid, flush = false)
+
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "特辑《${article.title}》"
+            })
         }
     }
 
@@ -225,17 +275,26 @@ object PixivPlayCommand : CompositeCommand(
             "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
         } else {
             if (illusts.isEmpty()) return@withHelper "列表为空"
-            buildForwardMessage(contact) {
-                for (illust in illusts) {
-                    if (isActive.not()) break
+            val list = mutableListOf<ForwardMessage.Node>()
 
-                    runCatching {
-                        contact.bot says buildMessageByIllust(illust)
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
-                    }
+            for (illust in illusts) {
+                if (isActive.not()) break
+
+                runCatching {
+                    list.add(ForwardMessage.Node(
+                        senderId = fromEvent.sender.id,
+                        senderName = fromEvent.sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust)
+                    ))
+                }.onFailure {
+                    logger.warning { "播放错误 $it" }
                 }
             }
+
+            RawForwardMessage(list).render(object : ForwardMessage.DisplayStrategy {
+                override fun generateTitle(forward: RawForwardMessage): String = "漫游"
+            })
         }
     }
 

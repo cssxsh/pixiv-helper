@@ -118,18 +118,21 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block().eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
-    val forward = ForwardMessageBuilder(contact).apply {
-        displayStrategy = TaskDisplayStrategy(task = name.substringBefore('['), size = list.size)
-    }
+    val nodes = mutableListOf<ForwardMessage.Node>()
 
     for ((index, illust) in list.sortedBy { it.createAt }.withIndex()) {
         if (isActive.not()) break
 
         val message = "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
         if (TaskForward) {
-            with(forward) {
-                contact.bot says message
-            }
+            nodes.add(
+                ForwardMessage.Node(
+                    senderId = contact.bot.id,
+                    senderName = contact.bot.nameCardOrNick,
+                    time = illust.createAt.toEpochSecond().toInt(),
+                    message = message
+                )
+            )
         } else {
             delay(TaskSendInterval * 1000L)
             send {
@@ -146,7 +149,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 
     if (TaskForward) {
         send {
-            forward.build()
+            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = name.substringBefore('['), size = list.size))
         }
     }
 }
@@ -157,19 +160,23 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     val list = flow.toList().flatten().filter {
         it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo
     }
-    val forward = ForwardMessageBuilder(contact).apply {
-        displayStrategy = TaskDisplayStrategy(task = name.substringBefore('['), size = list.size)
-    }
+    val nodes = mutableListOf<ForwardMessage.Node>()
 
     for ((index, trending) in list.withIndex()) {
         if (isActive.not()) break
 
         val message = "Task: $name (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() +
             buildMessageByIllust(illust = trending.illust)
+
         if (TaskForward) {
-            with(forward) {
-                contact.bot says message
-            }
+            nodes.add(
+                ForwardMessage.Node(
+                    senderId = contact.bot.id,
+                    senderName = contact.bot.nameCardOrNick,
+                    time = trending.illust.createAt.toEpochSecond().toInt(),
+                    message = message
+                )
+            )
         } else {
             delay(TaskSendInterval * 1000L)
             send {
@@ -185,7 +192,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
 
     if (TaskForward) {
         send {
-            forward.build()
+            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = name.substringBefore('['), size = list.size))
         }
     }
 }
