@@ -10,8 +10,8 @@ R18图会按照Pixiv所给信息过滤
 然后使用 `/cache recommended` 缓存系统推荐作品，然后再使用色图相关指令  
 Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数  
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
-发送模式可以使用 `/setting` 指令修改为闪照或撤销  
-注意, 闪照或撤销这两种模式 并不会降低 `机器人被封禁` 的风险。  
+发送模式可以使用 `/setting` 指令修改为闪照或撤销或转发  
+注意, 闪照等模式 并不会降低 `机器人被封禁` 的风险。  
 机器人被封禁的主要风险来自
 
 * QQ号是新注册的
@@ -140,6 +140,7 @@ duration 单位分钟，默认3小时
 | 指令                              | 描述                           |
 |:----------------------------------|:-------------------------------|
 | `/<setting> <interval> [sec]`     | 设置连续发送间隔时间, 单位秒   |
+| `/<setting> <forward> [open]`     | 设置Task发送模式               |
 | `/<setting> <link> [open]`        | 设置是否显示Pixiv Cat 原图链接 |
 | `/<setting> <tag> [open]`         | 设置是否显示TAG INFO           |
 | `/<setting> <attr> [open]`        | 设置是否显示作品属性           |
@@ -251,10 +252,9 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   KEY 参数请到 <https://saucenao.com/> 注册账号，  
   在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
   信息只在启动时读取，修改后需重启
-
 * limit 显示的搜索结果数
-
 * bovw ascii2d 检索类型，false色合検索 true特徴検索
+* forward 转发方式发送搜索结果
 
 ### PixivGifConfig.yml
 

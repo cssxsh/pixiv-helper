@@ -87,6 +87,6 @@ object PixivSearchCommand : SimpleCommand(
 
         val result = if (isAscii2d) ascii2d(origin) else saucenao(origin)
 
-        result.similarity(MIN_SIMILARITY).translate(hash).getContent()
+        result.similarity(MIN_SIMILARITY).translate(hash).getContent(contact)
     }
 }

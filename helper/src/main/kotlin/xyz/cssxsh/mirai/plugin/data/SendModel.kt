@@ -11,6 +11,7 @@ sealed class SendModel {
     object Normal : SendModel()
     object Flash : SendModel()
     data class Recall(val ms: Long) : SendModel()
+    object Forward: SendModel()
 
     @Serializable
     data class Info(
@@ -28,6 +29,7 @@ sealed class SendModel {
                 "NORMAL" -> Normal
                 "FLASH" -> Flash
                 "RECALL" -> Recall(ms)
+                "FORWARD" -> Forward
                 else -> throw IllegalArgumentException("不支持的发送类型 $type")
             }
         }
@@ -43,6 +45,7 @@ sealed class SendModel {
                     is Normal -> Info("NORMAL")
                     is Flash -> Info("FLASH")
                     is Recall -> Info("RECALL", value.ms)
+                    is Forward -> Info("FORWARD")
                 }
             )
         }

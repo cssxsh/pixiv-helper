@@ -94,6 +94,15 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                 is SendModel.Recall -> {
                     quoteReply(message)?.recallIn(model.ms)
                 }
+                is SendModel.Forward -> {
+                    message.toForwardMessage(
+                        sender = this@sendIllust.user!!,
+                        displayStrategy = object : ForwardMessage.DisplayStrategy {
+                            override fun generateTitle(forward: RawForwardMessage): String = illust.title
+                            override fun generateSummary(forward: RawForwardMessage): String = "查看${illust.user.name}的作品"
+                        }
+                    )
+                }
             }
         }
     }.onFailure {
@@ -138,9 +147,14 @@ fun findContact(delegate: Long): Contact? {
 }
 
 /**
- * 连续发送间隔时间
+ * Task连续发送间隔时间
  */
-internal val SendInterval by PixivConfigData::interval
+internal val TaskSendInterval by PixivConfigData::interval
+
+/**
+ * Task通过转发发送
+ */
+internal val TaskForward by PixivConfigData::forward
 
 /**
  * 涩图防重复间隔
@@ -203,7 +217,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
             appendLine("PID: $pid ")
         }
         is TwitterSearchResult -> {
-            val screen = tweet.substringAfter("twitter.com/", "").substringBefore('&')
+            val screen = tweet.substringAfter("twitter.com/", "").substringBefore('/')
             Twitter.find(screen)?.let { (_, uid) ->
                 appendLine("UID: $uid")
             }
@@ -216,7 +230,25 @@ internal fun SearchResult.getContent() = buildMessageChain {
     }
 }
 
-internal fun List<SearchResult>.getContent() = map { it.getContent() }.toMessageChain().ifEmpty { "结果为空".toPlainText() }
+private object SearchResultStrategy : ForwardMessage.DisplayStrategy {
+    override fun generateTitle(forward: RawForwardMessage): String = "搜图结果"
+    override fun generateBrief(forward: RawForwardMessage): String = "[搜图结果]"
+    override fun generateSummary(forward: RawForwardMessage): String = "查看${forward.nodeList.size}条搜图结果"
+}
+
+internal fun List<SearchResult>.getContent(contact: Contact): Message {
+    if (isNotEmpty()) return "结果为空".toPlainText()
+
+   return if (ImageSearchConfig.forward) {
+       buildForwardMessage(contact, SearchResultStrategy) {
+           for (result in this@getContent) {
+               contact.bot.says(result.getContent())
+           }
+       }
+    } else {
+       map { it.getContent() }.toMessageChain()
+    }
+}
 
 internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
     appendLine("AID: $aid")

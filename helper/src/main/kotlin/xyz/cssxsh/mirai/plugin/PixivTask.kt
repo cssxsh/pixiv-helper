@@ -9,6 +9,8 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.*
+import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
+import xyz.cssxsh.mirai.plugin.data.SendModel
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
@@ -109,38 +111,84 @@ sealed class TimerTask {
     ) : TimerTask()
 }
 
+private class TaskDisplayStrategy(val task: String, val size: Int) : ForwardMessage.DisplayStrategy {
+    override fun generateTitle(forward: RawForwardMessage): String = task
+    override fun generateSummary(forward: RawForwardMessage): String = "查看${task}推送消息"
+}
+
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block().eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
-    list.sortedBy { it.createAt }.forEachIndexed { index, illust ->
-        delay(SendInterval * 1000L)
-        send {
-            "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
+    val forward = ForwardMessageBuilder(contact).apply {
+        displayStrategy = TaskDisplayStrategy(task = name, size = list.size)
+    }
+
+    for ((index, illust) in list.sortedBy { it.createAt }.withIndex()) {
+        if (isActive.not()) break
+
+        val message = "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
+        if (TaskForward) {
+            with(forward) {
+                contact.bot.says(message)
+            }
+        } else {
+            delay(TaskSendInterval * 1000L)
+            send {
+                message
+            }
         }
+
         StatisticTaskInfo(
             task = name,
             pid = illust.pid,
             timestamp = OffsetDateTime.now().toEpochSecond()
         ).replicate()
     }
+
+    if (TaskForward) {
+        send {
+            forward.build()
+        }
+    }
 }
 
 private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     val flow = getTrending(times)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow.map { it.map(TrendIllust::illust) } }
-    val list = flow.toList().flatten().filter { it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo }
-    list.forEachIndexed { index, trending ->
-        delay(SendInterval * 1000L)
-        send {
-            "Task: $name (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() +
-                buildMessageByIllust(illust = trending.illust)
+    val list = flow.toList().flatten().filter {
+        it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo
+    }
+    val forward = ForwardMessageBuilder(contact).apply {
+        displayStrategy = TaskDisplayStrategy(task = name, size = list.size)
+    }
+
+    for ((index, trending) in list.withIndex()) {
+        if (isActive.not()) break
+
+        val message = "Task: $name (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() +
+            buildMessageByIllust(illust = trending.illust)
+        if (TaskForward) {
+            with(forward) {
+                contact.bot.says(message)
+            }
+        } else {
+            delay(TaskSendInterval * 1000L)
+            send {
+                message
+            }
         }
         StatisticTaskInfo(
             task = name,
             pid = trending.illust.pid,
             timestamp = OffsetDateTime.now().toEpochSecond()
         ).replicate()
+    }
+
+    if (TaskForward) {
+        send {
+            forward.build()
+        }
     }
 }
 

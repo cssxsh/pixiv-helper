@@ -28,12 +28,16 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     val max: MutableMap<String, Int> by value(mutableMapOf())
 
     @ValueName("model")
-    @ValueDescription("发送模式 NORMAL, FLASH, RECALL")
+    @ValueDescription("发送模式 NORMAL, FLASH, RECALL, FORWARD")
     val model: MutableMap<String, SendModel> by value(mutableMapOf())
 
     @ValueName("interval")
-    @ValueDescription("连续发送间隔时间，单位秒")
+    @ValueDescription("task连续发送间隔时间，单位秒")
     var interval: Int by value(10)
+
+    @ValueName("forward")
+    @ValueDescription("task通过转发发送")
+    var forward: Boolean by value(true)
 
     @ValueName("netdisk_access")
     @ValueDescription("百度网盘 访问TOKEN")
