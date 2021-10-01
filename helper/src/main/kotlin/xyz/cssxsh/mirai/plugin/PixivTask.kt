@@ -128,7 +128,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         val message = "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
         if (TaskForward) {
             with(forward) {
-                contact.bot.says(message)
+                contact.bot says message
             }
         } else {
             delay(TaskSendInterval * 1000L)
@@ -168,7 +168,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
             buildMessageByIllust(illust = trending.illust)
         if (TaskForward) {
             with(forward) {
-                contact.bot.says(message)
+                contact.bot says message
             }
         } else {
             delay(TaskSendInterval * 1000L)

@@ -237,12 +237,12 @@ private object SearchResultStrategy : ForwardMessage.DisplayStrategy {
 }
 
 internal fun List<SearchResult>.getContent(contact: Contact): Message {
-    if (isNotEmpty()) return "结果为空".toPlainText()
+    if (isEmpty()) return "结果为空".toPlainText()
 
    return if (ImageSearchConfig.forward) {
        buildForwardMessage(contact, SearchResultStrategy) {
            for (result in this@getContent) {
-               contact.bot.says(result.getContent())
+               contact.bot says result.getContent()
            }
        }
     } else {

@@ -33,9 +33,9 @@ object PixivSearchCommand : SimpleCommand(
         return requireNotNull(images[metadata]) { "$subject 图片历史未找到" }
     }
 
-    private suspend fun CommandSenderOnMessage<*>.getNextImage(timeoutMillis: Long = 300_000): Image? {
-        sendMessage("${timeoutMillis / 1000}s内，请发送图片")
-        return fromEvent.nextMessageOrNull(timeoutMillis) { Image in it.message }?.firstIsInstance()
+    private suspend fun CommandSenderOnMessage<*>.getNextImage(): Image? {
+        sendMessage("${ImageSearchConfig.wait}s内，请发送图片")
+        return fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) { Image in it.message }?.firstIsInstance()
     }
 
     private val CommandSenderOnMessage<*>.isAscii2d get() = "ascii2d" in fromEvent.message.content
