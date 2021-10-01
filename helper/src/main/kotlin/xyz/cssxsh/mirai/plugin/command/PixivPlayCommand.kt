@@ -2,11 +2,13 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import java.time.LocalDate
+import java.time.*
 
 object PixivPlayCommand : CompositeCommand(
     owner = PixivHelperPlugin,
@@ -34,14 +36,35 @@ object PixivPlayCommand : CompositeCommand(
         val illusts = illustRanking(mode = mode, date = date).illusts
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL }
-        play = launch {
-            for (illust in illusts) {
-                if (isActive.not()) break
-                delay(duration)
-                sendIllust(illust)
+
+        if (duration > 0) {
+            play = launch {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+                    delay(duration)
+
+                    runCatching {
+                        sendIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
+            }
+            "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 ${duration / 1000}s"
+        } else {
+            if (illusts.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
-        "开始播放[${mode}]排行榜，共${illusts.size}个作品，间隔 ${duration / 1000}s"
     }
 
     @SubCommand("rank", "排行")
@@ -49,14 +72,35 @@ object PixivPlayCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.rank(vararg words: String) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val rank = NaviRank.getTagRank(words = words)
-        play = launch {
-            for (info in rank.records.cached()) {
-                if (isActive.not()) break
-                delay(duration)
-                sendArtwork(info)
+
+        if (duration > 0) {
+            play = launch {
+                for (info in rank.records) {
+                    if (isActive.not()) break
+                    delay(duration)
+
+                    runCatching {
+                        sendIllust(getIllustInfo(pid = info.pid, flush = false))
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
+            }
+            "开始播放NaviRank[${rank.title}]，共${rank.records.size}个作品，间隔 $duration"
+        } else {
+            if (rank.records.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (info in rank.records) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(getIllustInfo(pid = info.pid, flush = false))
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
-        "开始播放NaviRank[${rank.title}]，共${rank.records.size}个作品，间隔 $duration"
     }
 
     @SubCommand("recommended", "推荐")
@@ -67,14 +111,35 @@ object PixivPlayCommand : CompositeCommand(
         val illusts = illustRecommended().illusts
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL }
-        play = launch {
-            for (illust in illusts) {
-                if (isActive.not()) break
-                delay(duration)
-                sendIllust(illust)
+
+        if (duration > 0) {
+            play = launch {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+                    delay(duration)
+
+                    runCatching {
+                        sendIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
+            }
+            "开始播放用户[${user.name}]系统推荐，共${illusts.size}个作品，间隔 $duration"
+        } else {
+            if (illusts.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
-        "开始播放用户[${user.name}]系统推荐，共${illusts.size}个作品，间隔 $duration"
     }
 
     @SubCommand("mark", "收藏")
@@ -83,14 +148,30 @@ object PixivPlayCommand : CompositeCommand(
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
         val illusts = bookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
-        play = launch {
-            for (illust in illusts) {
-                if (isActive.not()) break
-                delay(duration)
-                sendIllust(illust)
+
+        if (duration > 0) {
+            play = launch {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+                    delay(duration)
+                    sendIllust(illust)
+                }
+            }
+            "开始播放用户[${user.name}](${tag})收藏，共${illusts.size}个作品，间隔 $duration"
+        } else {
+            if (illusts.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
-        "开始播放用户[${user.name}](${tag})收藏，共${illusts.size}个作品，间隔 $duration"
     }
 
     @SubCommand("article", "特辑")
@@ -98,14 +179,31 @@ object PixivPlayCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.article(aid: Long) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val article = Pixivision.getArticle(aid = aid)
-        play = launch {
-            for (info in article.illusts) {
-                if (isActive.not()) break
-                delay(duration)
-                sendIllust(getIllustInfo(pid = info.pid, flush = true))
+
+
+        if (duration > 0) {
+            play = launch {
+                for (info in article.illusts) {
+                    if (isActive.not()) break
+                    delay(duration)
+                    sendIllust(getIllustInfo(pid = info.pid, flush = true))
+                }
+            }
+            "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
+        } else {
+            if (article.illusts.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (artwork in article.illusts) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(getIllustInfo(pid = artwork.pid, flush = false))
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
-        "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
     }
 
     @SubCommand("walkthrough", "random", "漫游", "随机")
@@ -115,24 +213,28 @@ object PixivPlayCommand : CompositeCommand(
         val illusts = illustWalkThrough().illusts
             .apply { replicate() }
             .filter { it.age == AgeLimit.ALL && it.isEro() }
-        play = launch {
-            for (illust in illusts) {
-                if (isActive.not()) break
-                delay(duration)
-                sendIllust(illust)
-            }
-        }
-        "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
-    }
 
-    @SubCommand("complete", "补全", "自动补全")
-    @Description("根据 words 自动补全")
-    suspend fun CommandSenderOnMessage<*>.complete(vararg words: String) = withHelper {
-        check(words.isNotEmpty())
-        buildString {
-            appendLine("自动补全，共${words.size}个")
-            words.forEach { word ->
-                appendLine("[$word] => ${searchAutoComplete(word).tags.map { it.getContent() }}")
+        if (duration > 0) {
+            play = launch {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+                    delay(duration)
+                    sendIllust(illust)
+                }
+            }
+            "开始播放漫游，共${illusts.size}个作品，间隔 $duration"
+        } else {
+            if (illusts.isEmpty()) return@withHelper "列表为空"
+            buildForwardMessage(contact) {
+                for (illust in illusts) {
+                    if (isActive.not()) break
+
+                    runCatching {
+                        contact.bot says buildMessageByIllust(illust)
+                    }.onFailure {
+                        logger.warning { "播放错误 $it" }
+                    }
+                }
             }
         }
     }
