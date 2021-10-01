@@ -9,8 +9,6 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
 import xyz.cssxsh.baidu.*
-import xyz.cssxsh.mirai.plugin.data.PixivHelperSettings
-import xyz.cssxsh.mirai.plugin.data.SendModel
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
@@ -113,7 +111,7 @@ sealed class TimerTask {
 
 private class TaskDisplayStrategy(val task: String, val size: Int) : ForwardMessage.DisplayStrategy {
     override fun generateTitle(forward: RawForwardMessage): String = task
-    override fun generateSummary(forward: RawForwardMessage): String = "查看${task}推送消息"
+    override fun generateSummary(forward: RawForwardMessage): String = "查看${task}推送的${size}个作品"
 }
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
@@ -121,7 +119,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     val forward = ForwardMessageBuilder(contact).apply {
-        displayStrategy = TaskDisplayStrategy(task = name, size = list.size)
+        displayStrategy = TaskDisplayStrategy(task = name.substringBefore('['), size = list.size)
     }
 
     for ((index, illust) in list.sortedBy { it.createAt }.withIndex()) {
@@ -160,7 +158,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
         it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo
     }
     val forward = ForwardMessageBuilder(contact).apply {
-        displayStrategy = TaskDisplayStrategy(task = name, size = list.size)
+        displayStrategy = TaskDisplayStrategy(task = name.substringBefore('['), size = list.size)
     }
 
     for ((index, trending) in list.withIndex()) {
