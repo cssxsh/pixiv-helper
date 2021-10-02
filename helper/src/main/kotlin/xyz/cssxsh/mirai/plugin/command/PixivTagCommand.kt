@@ -34,8 +34,6 @@ object PixivTagCommand : SimpleCommand(
         return (direct + split).distinctBy { it.pid }
     }
 
-    private const val TAG_NAME_MAX = 30
-
     private val jobs = mutableSetOf<String>()
 
     private val cooling = mutableMapOf<Long, Long>().withDefault { 0 }
@@ -47,7 +45,6 @@ object PixivTagCommand : SimpleCommand(
             return@withHelper "TAG指令冷却中, ${wait}s"
         }
 
-        check(word.length <= TAG_NAME_MAX) { "标签'$word'过长" }
         tags(word = word, bookmark = bookmark, fuzzy = fuzzy).let { list ->
             logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
             PixivEroCommand += list
