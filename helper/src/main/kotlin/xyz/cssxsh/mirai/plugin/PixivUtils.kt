@@ -36,10 +36,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }.onSuccess { message ->
         when (message) {
             null, Unit -> Unit
-            is ForwardMessage -> {
-                sendMessage(message)
-                logger.info { "转发消息已发送 $message" }
-            }
+            is ForwardMessage -> sendMessage(message)
             is Message -> quoteReply(message)
             is String -> quoteReply(message)
             is IllustInfo -> sendIllust(message)
@@ -189,7 +186,7 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
 }
 
 internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStrategy {
-    override fun generateTitle(forward: RawForwardMessage): String = title
+    override fun generateTitle(forward: RawForwardMessage): String = "${user.name} - $title"
 
     override fun generatePreview(forward: RawForwardMessage): List<String> = tags.map { it.getContent() }
 
@@ -268,13 +265,13 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
             files
         } else {
             logger.warning { "[${illust.pid}](${files.size})图片过多" }
-            add("部分图片省略".toPlainText())
+            add("部分图片省略\n".toPlainText())
             files.subList(0, max)
         }.map { file ->
             add(runCatching {
                 file.uploadAsImage(contact)
             }.getOrElse {
-                "上传失败, $it".toPlainText()
+                "上传失败, $it\n".toPlainText()
             })
         }
     } else {
