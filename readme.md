@@ -254,6 +254,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   信息只在启动时读取，修改后需重启
 * limit 显示的搜索结果数
 * bovw ascii2d 检索类型，false色合検索 true特徴検索
+* wait 图片等待时间，单位秒
 * forward 转发方式发送搜索结果
 
 ### PixivGifConfig.yml

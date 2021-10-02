@@ -12,6 +12,9 @@ object ImageSearchConfig : ReadOnlyPluginConfig("ImageSearchConfig") {
     @ValueDescription("ascii2d 检索类型，false 色合検索 true 特徴検索")
     val bovw by value(true)
 
+    @ValueDescription("图片等待时间，单位秒")
+    val wait by value(300L)
+
     @ValueDescription("转发方式发送搜索结果")
     val forward by value(false)
 }
