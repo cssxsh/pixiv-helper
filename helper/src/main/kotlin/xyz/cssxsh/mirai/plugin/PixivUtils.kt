@@ -155,6 +155,10 @@ internal val TagAgeLimit get() = if (PixivHelperSettings.tagSFW) AgeLimit.ALL el
 
 internal val EroAgeLimit get() = if (PixivHelperSettings.eroSFW) AgeLimit.ALL else AgeLimit.R18G
 
+internal class TitleDisplayStrategy(val title: String) : ForwardMessage.DisplayStrategy {
+    override fun generateTitle(forward: RawForwardMessage): String = title
+}
+
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
 
 internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
