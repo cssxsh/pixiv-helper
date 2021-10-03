@@ -120,11 +120,13 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     if (isActive.not() || list.isEmpty()) return
     val nodes = mutableListOf<ForwardMessage.Node>()
+    val type = name.substringBefore('(')
 
-    for ((index, illust) in list.sortedBy { it.createAt }.withIndex()) {
+    for ((index, illust) in list.sortedBy { it.pid }.withIndex()) {
         if (isActive.not()) break
 
-        val message = "Task: $name (${index + 1}/${list.size})\n".toPlainText() + buildMessageByIllust(illust = illust)
+        val message = buildMessageByIllust(illust = illust)
+
         if (TaskForward) {
             val sender = (contact as? User) ?: (contact as Group).members.random()
             nodes.add(
@@ -138,7 +140,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
         } else {
             delay(TaskSendInterval * 1000L)
             send {
-                message
+                "Task: $type (${index + 1}/${list.size})\n".toPlainText() + message
             }
         }
 
@@ -151,7 +153,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 
     if (TaskForward) {
         send {
-            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = name.substringBefore('['), size = nodes.size))
+            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = type, size = nodes.size))
         }
     }
 }
@@ -164,12 +166,12 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     }
     if (isActive.not() || list.isEmpty()) return
     val nodes = mutableListOf<ForwardMessage.Node>()
+    val type = name.substringBefore('(').substringBefore('[')
 
     for ((index, trending) in list.withIndex()) {
         if (isActive.not()) break
 
-        val message = "Task: $name (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() +
-            buildMessageByIllust(illust = trending.illust)
+        val message = buildMessageByIllust(illust = trending.illust)
 
         if (TaskForward) {
             val sender = (contact as? User) ?: (contact as Group).members.random()
@@ -184,7 +186,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
         } else {
             delay(TaskSendInterval * 1000L)
             send {
-                message
+                "Task: $type (${index + 1}/${list.size}) [${trending.tag}]\n".toPlainText() + message
             }
         }
         StatisticTaskInfo(
@@ -196,7 +198,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
 
     if (TaskForward) {
         send {
-            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = name.substringBefore('['), size = nodes.size))
+            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = type, size = nodes.size))
         }
     }
 }
