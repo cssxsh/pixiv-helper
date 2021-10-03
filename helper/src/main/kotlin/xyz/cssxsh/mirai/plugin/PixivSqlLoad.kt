@@ -251,10 +251,10 @@ internal fun ArtWorkInfo.Companion.tag(
         }
         criteria.select(artwork)
             .where(
-                *names.map { name -> exists(tag(name, artwork.get("pid"))) }.toTypedArray(),
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
+                *names.map { name -> exists(tag(name, artwork.get("pid"))) }.toTypedArray()
             )
             .orderBy(asc(rand()))
             .distinct(true)
