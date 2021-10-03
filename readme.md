@@ -63,6 +63,7 @@ EditThisCookie 安装地址
 | `(/)<ero 色图 涩图>`                                  | 缓存中随机一张色图                    |
 | `(/)<get 搞快点 gkd> [pid] [flush]?`                  | 获取指定ID图片                        |
 | `(/)<tag 标签> [word] [bookmark]? [fuzzy]?`           | 随机指定TAG图片                       |
+| `(/)<boom 射爆 社保> [limit]? [word]?`                | 随机一组色号图，默认30张              |
 | `(/)<illustrator 画师> <uid id user 用户> [uid]`      | 根据画师UID随机发送画师作品           |
 | `(/)<illustrator 画师> <name 名称 名字 推特> [name]`  | 根据画师name或者alias随机发送画师作品 |
 | `(/)<illustrator 画师> <alias 别名> [name] [uid]`     | 设置画师alias                         |

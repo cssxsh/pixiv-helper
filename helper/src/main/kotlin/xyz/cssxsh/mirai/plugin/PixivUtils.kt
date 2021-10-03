@@ -146,6 +146,8 @@ internal val EroChunk by PixivHelperSettings::eroChunk
  */
 internal val EroUpExpire by PixivHelperSettings::eroUpExpire
 
+internal val EroBookMarks by PixivHelperSettings::bookmarks
+
 /**
  * Tag指令冷却时间
  */

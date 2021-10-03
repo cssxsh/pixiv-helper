@@ -143,7 +143,7 @@ object PixivCacheCommand : CompositeCommand(
         for (range in all) {
             if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
-            val eros = artworks.filter { it.bookmarks >= PixivHelperSettings.bookmarks }
+            val eros = artworks.filter { it.bookmarks >= EroBookMarks }
             if (eros.isEmpty()) continue
             logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
             for (artwork in eros) {
@@ -167,9 +167,9 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载临时文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<*>.temp(path: String? = null) = withHelper {
+    suspend fun CommandSenderOnMessage<*>.temp(path: String = "") = withHelper {
         val list = mutableSetOf<Long>()
-        val dir = if (path.isNullOrEmpty()) PixivHelperSettings.tempFolder else File(path)
+        val dir = if (path.isEmpty()) PixivHelperSettings.tempFolder else File(path)
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         val exists = dir.resolve("exists").apply { mkdirs() }
         val other = dir.resolve("other").apply { mkdirs() }

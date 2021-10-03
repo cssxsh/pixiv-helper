@@ -44,30 +44,32 @@ object PixivPlayCommand : CompositeCommand(
         }
     }
 
-    private suspend fun CommandSenderOnMessage<*>.forward(illusts: List<IllustInfo>, title: String): Message {
+    private suspend fun PixivHelper.forward(illusts: List<IllustInfo>, title: String): Message {
         if (illusts.isEmpty()) return "列表为空".toPlainText()
 
-        sendMessage("开始将${illusts.size}个作品合成转发消息，请稍后...")
+        contact.sendMessage("开始将${illusts.size}个作品合成转发消息，请稍后...")
 
         val list = mutableListOf<ForwardMessage.Node>()
 
         for (illust in illusts) {
             if (isActive.not()) break
 
+            val sender = (contact as? User) ?: (contact as Group).members.random()
+
             runCatching {
                 list.add(
                     ForwardMessage.Node(
-                        senderId = fromEvent.sender.id,
-                        senderName = illust.user.name,
+                        senderId = sender.id,
+                        senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
-                        message = helper.buildMessageByIllust(illust)
+                        message = buildMessageByIllust(illust = illust)
                     )
                 )
             }.onFailure {
                 list.add(
                     ForwardMessage.Node(
-                        senderId = fromEvent.sender.id,
-                        senderName = illust.user.name,
+                        senderId = sender.id,
+                        senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
                         message = "[${illust.pid}]构建失败".toPlainText()
                     )
@@ -125,11 +127,12 @@ object PixivPlayCommand : CompositeCommand(
 
                 runCatching {
                     val illust = getIllustInfo(pid = info.pid, flush = false)
+                    val sender = (subject as? User) ?: (subject as Group).members.random()
 
                     list.add(
                         ForwardMessage.Node(
-                            senderId = fromEvent.sender.id,
-                            senderName = fromEvent.sender.nameCardOrNick,
+                            senderId = sender.id,
+                            senderName = sender.nameCardOrNick,
                             time = illust.createAt.toEpochSecond().toInt(),
                             message = buildMessageByIllust(illust)
                         )
@@ -199,11 +202,12 @@ object PixivPlayCommand : CompositeCommand(
 
                 runCatching {
                     val illust = getIllustInfo(pid = info.pid, flush = false)
+                    val sender = (subject as? User) ?: (subject as Group).members.random()
 
                     list.add(
                         ForwardMessage.Node(
-                            senderId = fromEvent.sender.id,
-                            senderName = fromEvent.sender.nameCardOrNick,
+                            senderId = sender.id,
+                            senderName = sender.nameCardOrNick,
                             time = illust.createAt.toEpochSecond().toInt(),
                             message = buildMessageByIllust(illust)
                         )
