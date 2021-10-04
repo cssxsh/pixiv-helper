@@ -1,11 +1,14 @@
 package xyz.cssxsh.mirai.plugin.tools
 
+import io.ktor.client.call.*
 import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
+import org.jsoup.Jsoup
 import org.jsoup.nodes.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
@@ -188,9 +191,20 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun ascii2d(url: String, bovw: Boolean) = html(ascii2d) {
-        url("https://ascii2d.net/search/url/${url}")
-        method = HttpMethod.Get
-        parameter("type", if (bovw) "bovw" else "color")
+    suspend fun ascii2d(url: String, bovw: Boolean): List<SearchResult> {
+        val response: HttpResponse = http { client ->
+            client.get("https://ascii2d.net/search/url/${url}")
+        }
+
+        val html: String = if (bovw) {
+            http { client ->
+                // https://ascii2d.net/search/color -> https://ascii2d.net/search/bovw
+                client.get(response.request.url.toString().replace("color", "bovw"))
+            }
+        } else {
+            response.receive()
+        }
+
+        return ascii2d(Jsoup.parse(html))
     }
 }
