@@ -50,7 +50,7 @@ data class ArtWorkInfo(
     @JoinColumn(name = "pid", insertable = false, updatable = false)
     lateinit var files: List<FileInfo>
 
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -69,7 +69,7 @@ data class FileInfo(
     @Column(name = "size", nullable = false)
     val size: Int = 0
 ) : Serializable {
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -96,7 +96,7 @@ data class UserBaseInfo(
     @Column(name = "account", nullable = false, length = 32)
     val account: String = ""
 ) {
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -108,5 +108,5 @@ data class Twitter(
     @Column(name = "uid", nullable = false, updatable = false)
     val uid: Long,
 ) {
-    companion object
+    companion object SQL
 }

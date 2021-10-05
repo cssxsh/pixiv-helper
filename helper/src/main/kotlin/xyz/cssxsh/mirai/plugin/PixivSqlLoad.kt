@@ -156,14 +156,14 @@ internal inline fun <reified T> Session.withCriteria(block: CriteriaBuilder.(cri
 internal inline fun <reified T> Session.withCriteriaUpdate(block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit) =
     createQuery(with(criteriaBuilder) { createCriteriaUpdate(T::class.java).also { block(it) } })
 
-internal fun ArtWorkInfo.Companion.count(): Long = useSession { session ->
+internal fun ArtWorkInfo.SQL.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
     }.singleResult
 }
 
-internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { session ->
+internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
@@ -175,7 +175,7 @@ internal fun ArtWorkInfo.Companion.eros(age: AgeLimit): Long = useSession { sess
     }.singleResult
 }
 
-internal operator fun ArtWorkInfo.Companion.contains(pid: Long): Boolean = useSession { session ->
+internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
@@ -183,7 +183,7 @@ internal operator fun ArtWorkInfo.Companion.contains(pid: Long): Boolean = useSe
     }.singleResult > 0
 }
 
-internal fun ArtWorkInfo.Companion.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
+internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -191,20 +191,27 @@ internal fun ArtWorkInfo.Companion.list(ids: List<Long>): List<ArtWorkInfo> = us
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.interval(range: LongRange, bookmarks: Long, pages: Int) = useSession { session ->
+internal fun ArtWorkInfo.SQL.interval(
+    range: LongRange,
+    marks: Long,
+    pages: Int
+): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 between(artwork.get("pid"), range.first, range.last),
-                lt(artwork.get("bookmarks"), bookmarks),
+                lt(artwork.get("bookmarks"), marks),
                 gt(artwork.get("pages"), pages)
             )
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.type(range: LongRange, vararg types: WorkContentType) = useSession { session ->
+internal fun ArtWorkInfo.SQL.type(
+    range: LongRange,
+    vararg types: WorkContentType
+): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -216,7 +223,7 @@ internal fun ArtWorkInfo.Companion.type(range: LongRange, vararg types: WorkCont
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
+internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -227,13 +234,13 @@ internal fun ArtWorkInfo.Companion.user(uid: Long): List<ArtWorkInfo> = useSessi
     }.resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.tag(
+internal fun ArtWorkInfo.SQL.tag(
     vararg names: String,
     marks: Long,
     fuzzy: Boolean,
     age: AgeLimit,
     limit: Int
-) = useSession { session ->
+): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         val tag = { name: String, pid: Path<Long> ->
@@ -261,7 +268,12 @@ internal fun ArtWorkInfo.Companion.tag(
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit, limit: Int) = useSession { session ->
+internal fun ArtWorkInfo.SQL.random(
+    level: Int,
+    marks: Long,
+    age: AgeLimit,
+    limit: Int
+): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
@@ -276,7 +288,7 @@ internal fun ArtWorkInfo.Companion.random(level: Int, marks: Long, age: AgeLimit
     }.setMaxResults(limit).resultList.orEmpty()
 }
 
-internal fun ArtWorkInfo.Companion.delete(pid: Long, comment: String): Int = useSession { session ->
+internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
@@ -294,7 +306,7 @@ internal fun ArtWorkInfo.Companion.delete(pid: Long, comment: String): Int = use
     }.getOrThrow()
 }
 
-internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int = useSession { session ->
+internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
@@ -312,7 +324,7 @@ internal fun ArtWorkInfo.Companion.deleteUser(uid: Long, comment: String): Int =
     }.getOrThrow()
 }
 
-internal fun ArtWorkInfo.replicate() = useSession(ArtWorkInfo) { session ->
+internal fun ArtWorkInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(this, ReplicationMode.IGNORE)
@@ -349,8 +361,9 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
     author = author
 )
 
-internal fun IllustInfo.toTagBaseInfos() =
-    tags.distinctBy { it.name }.map { TagBaseInfo(pid, it.name, it.translatedName) }
+internal fun IllustInfo.toTagBaseInfos(): List<TagBaseInfo> = tags.distinctBy { it.name }.map {
+    TagBaseInfo(pid, it.name, it.translatedName)
+}
 
 internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (pid == 0L) return@useSession
@@ -412,7 +425,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
     }.singleResult
 }
 
-internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = useSession { session ->
+internal fun UserBaseInfo.SQL.account(account: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
@@ -420,7 +433,7 @@ internal fun UserBaseInfo.Companion.account(account: String): UserBaseInfo? = us
     }.list().singleOrNull()
 }
 
-internal fun UserBaseInfo.Companion.name(name: String): UserBaseInfo? = useSession { session ->
+internal fun UserBaseInfo.SQL.name(name: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
@@ -465,11 +478,11 @@ internal fun Twitter.replicate(): Unit = useSession(Twitter) { session ->
     }.getOrThrow()
 }
 
-internal fun Twitter.Companion.find(screen: String): Twitter? = useSession { session ->
+internal fun Twitter.SQL.find(screen: String): Twitter? = useSession { session ->
     session.find(Twitter::class.java, screen)
 }
 
-internal fun Twitter.Companion.find(uid: Long): List<Twitter> = useSession { session ->
+internal fun Twitter.SQL.find(uid: Long): List<Twitter> = useSession { session ->
     session.withCriteria<Twitter> { criteria ->
         val twitter = criteria.from(Twitter::class.java)
         criteria.select(twitter)
@@ -477,7 +490,7 @@ internal fun Twitter.Companion.find(uid: Long): List<Twitter> = useSession { ses
     }.resultList.orEmpty()
 }
 
-internal fun FileInfo.Companion.find(hash: String): List<FileInfo> = useSession { session ->
+internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
@@ -507,7 +520,7 @@ internal fun StatisticTaskInfo.replicate(): Unit = useSession(StatisticTaskInfo)
     }.getOrThrow()
 }
 
-internal operator fun StatisticTaskInfo.Companion.contains(pair: Pair<String, Long>): Boolean = useSession { session ->
+internal operator fun StatisticTaskInfo.SQL.contains(pair: Pair<String, Long>): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val (name, pid) = pair
         val task = criteria.from(StatisticTaskInfo::class.java)
@@ -519,7 +532,7 @@ internal operator fun StatisticTaskInfo.Companion.contains(pair: Pair<String, Lo
     }.singleResult > 0
 }
 
-internal fun StatisticTaskInfo.Companion.last(name: String): StatisticTaskInfo? = useSession { session ->
+internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useSession { session ->
     session.withCriteria<StatisticTaskInfo> { criteria ->
         val task = criteria.from(StatisticTaskInfo::class.java)
         criteria.select(task)
@@ -539,7 +552,7 @@ internal fun StatisticTagInfo.replicate(): Unit = useSession(StatisticTagInfo) {
     }.getOrThrow()
 }
 
-internal fun StatisticTagInfo.Companion.user(id: Long): List<StatisticTagInfo> = useSession { session ->
+internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSession { session ->
     session.withCriteria<StatisticTagInfo> { criteria ->
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
@@ -547,7 +560,7 @@ internal fun StatisticTagInfo.Companion.user(id: Long): List<StatisticTagInfo> =
     }.resultList.orEmpty()
 }
 
-internal fun StatisticTagInfo.Companion.group(id: Long): List<StatisticTagInfo> = useSession { session ->
+internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useSession { session ->
     session.withCriteria<StatisticTagInfo> { criteria ->
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
@@ -556,7 +569,7 @@ internal fun StatisticTagInfo.Companion.group(id: Long): List<StatisticTagInfo> 
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun StatisticTagInfo.Companion.top(limit: Int): List<Pair<String, Int>> = useSession { session ->
+internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = useSession { session ->
     session.withCriteria<Pair<*, *>> { criteria ->
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(construct(Pair::class.java, tag.get<String>("tag"), count(tag)))
@@ -576,7 +589,7 @@ internal fun StatisticEroInfo.replicate(): Unit = useSession(StatisticEroInfo) {
     }.getOrThrow()
 }
 
-internal fun StatisticEroInfo.Companion.user(id: Long): List<StatisticEroInfo> = useSession { session ->
+internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSession { session ->
     session.withCriteria<StatisticEroInfo> { criteria ->
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
@@ -584,7 +597,7 @@ internal fun StatisticEroInfo.Companion.user(id: Long): List<StatisticEroInfo> =
     }.resultList.orEmpty()
 }
 
-internal fun StatisticEroInfo.Companion.group(id: Long): List<StatisticEroInfo> = useSession { session ->
+internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useSession { session ->
     session.withCriteria<StatisticEroInfo> { criteria ->
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
@@ -592,7 +605,7 @@ internal fun StatisticEroInfo.Companion.group(id: Long): List<StatisticEroInfo> 
     }.resultList.orEmpty()
 }
 
-internal fun UserPreview.isLoaded() = illusts.all { it.pid in ArtWorkInfo }
+internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
 
 internal fun AliasSetting.replicate(): Unit = useSession(AliasSetting) { session ->
     session.transaction.begin()
@@ -605,14 +618,14 @@ internal fun AliasSetting.replicate(): Unit = useSession(AliasSetting) { session
     }.getOrThrow()
 }
 
-internal fun AliasSetting.Companion.all(): List<AliasSetting> = useSession { session ->
+internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session ->
     session.withCriteria<AliasSetting> { criteria ->
         val alias = criteria.from(AliasSetting::class.java)
         criteria.select(alias)
     }.resultList.orEmpty()
 }
 
-internal fun AliasSetting.Companion.find(name: String): AliasSetting? = useSession { session ->
+internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { session ->
     session.find(AliasSetting::class.java, name)
 }
 
@@ -635,11 +648,11 @@ internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     }.getOrThrow()
 }
 
-internal fun PixivSearchResult.Companion.find(hash: String): PixivSearchResult? = useSession { session ->
+internal fun PixivSearchResult.SQL.find(hash: String): PixivSearchResult? = useSession { session ->
     session.find(PixivSearchResult::class.java, hash)
 }
 
-internal fun PixivSearchResult.Companion.noCached(): List<PixivSearchResult> = useSession { session ->
+internal fun PixivSearchResult.SQL.noCached(): List<PixivSearchResult> = useSession { session ->
     session.withCriteria<PixivSearchResult> { criteria ->
         val search = criteria.from(PixivSearchResult::class.java)
         val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)

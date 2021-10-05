@@ -39,7 +39,7 @@ data class PixivSearchResult(
     @kotlinx.serialization.Transient
     val artwork: ArtWorkInfo? = null
 
-    companion object
+    companion object SQL
 }
 
 data class TwitterSearchResult(

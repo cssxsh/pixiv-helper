@@ -17,7 +17,7 @@ data class StatisticEroInfo(
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
 ): Serializable {
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -36,7 +36,7 @@ data class StatisticTagInfo(
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
 ): Serializable {
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -51,7 +51,7 @@ data class StatisticTaskInfo(
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
 ): Serializable {
-    companion object
+    companion object SQL
 }
 
 @Entity
@@ -63,5 +63,5 @@ data class AliasSetting(
     @Column(name = "uid", nullable = false)
     val uid: Long = 0
 ): Serializable {
-    companion object
+    companion object SQL
 }
