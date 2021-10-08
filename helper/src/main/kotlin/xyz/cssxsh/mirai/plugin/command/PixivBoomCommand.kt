@@ -16,12 +16,12 @@ object PixivBoomCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.handle(limit: Int = 30, word: String = "") = withHelper {
+    suspend fun CommandSenderOnMessage<*>.handle(limit: Int = EroChunk, word: String = "") = withHelper {
         val artworks = if (word.isEmpty()) {
             ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)
         } else {
             val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
-            ArtWorkInfo.tag(names = names, marks = EroBookMarks, fuzzy = false, age = TagAgeLimit, limit = limit)
+            ArtWorkInfo.tag(names = names, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
         }
 
         if (artworks.isEmpty()) return@withHelper "列表为空".toPlainText()

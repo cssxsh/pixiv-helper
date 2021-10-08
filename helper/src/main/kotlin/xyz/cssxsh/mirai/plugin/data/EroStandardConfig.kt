@@ -6,7 +6,7 @@ interface EroStandardConfig {
 
     val types: Set<WorkContentType>
 
-    val bookmarks: Long
+    val marks: Long
 
     val pages: Int
 

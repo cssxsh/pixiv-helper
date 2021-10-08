@@ -143,7 +143,7 @@ object PixivCacheCommand : CompositeCommand(
         for (range in all) {
             if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
-            val eros = artworks.filter { it.bookmarks >= EroBookMarks }
+            val eros = artworks.filter { ugoiraImagesFolder.resolve("${it.pid}.gif").exists().not() }
             if (eros.isEmpty()) continue
             logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
             for (artwork in eros) {

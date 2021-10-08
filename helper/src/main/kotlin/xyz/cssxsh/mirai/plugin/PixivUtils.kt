@@ -146,7 +146,7 @@ internal val EroChunk by PixivHelperSettings::eroChunk
  */
 internal val EroUpExpire by PixivHelperSettings::eroUpExpire
 
-internal val EroBookMarks by PixivHelperSettings::bookmarks
+internal val EroStandard: EroStandardConfig get() = PixivHelperSettings
 
 /**
  * Tag指令冷却时间
@@ -332,9 +332,9 @@ private fun IllustInfo.match(tag: Regex): Boolean = tags.any { tag in it.name ||
 
 private fun IllustInfo.user(ids: Set<Long>): Boolean = user.id in ids
 
-internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(PixivHelperSettings as EroStandardConfig) {
+internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(EroStandard) {
     (types.isEmpty() || type in types) &&
-        (mark.not() || bookmarks(bookmarks)) &&
+        (mark.not() || bookmarks(marks)) &&
         (pages(pages)) &&
         (match(tagExclude).not()) &&
         (user(userExclude).not())
@@ -348,7 +348,6 @@ internal fun IllustInfo.check() = apply {
  * 用户文件保存目录
  */
 internal val profilesFolder: File get() = PixivHelperSettings.cacheFolder.resolve("profile")
-
 
 /**
  * 特辑文件保存目录

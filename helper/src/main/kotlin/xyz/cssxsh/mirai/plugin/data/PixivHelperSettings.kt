@@ -33,7 +33,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     @ValueName("ero_bookmarks")
     @ValueDescription("涩图标准 收藏")
-    override val bookmarks: Long by value(ERO_BOOKMARKS)
+    override val marks: Long by value(ERO_BOOKMARKS)
 
     @ValueName("ero_page_count")
     @ValueDescription("涩图标准 页数")
