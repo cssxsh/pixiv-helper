@@ -282,11 +282,11 @@ internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_
     }
 }
 
-internal suspend fun PixivHelper.getRelated(pid: Long, seeds: Set<Long>, limit: Long = RELATED_LIMIT) = flow {
+internal suspend fun PixivHelper.getRelated(pid: Long, limit: Long = RELATED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
-            illustRelated(pid = pid, seeds = seeds, offset = offset).illusts
+            illustRelated(pid = pid, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
             emit(it)

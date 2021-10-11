@@ -61,7 +61,7 @@ object PixivTagCommand : SimpleCommand(
                 if (list.size < EroChunk && relatedCache !in jobs) {
                     jobs.add(relatedCache)
                     addCacheJob(name = relatedCache, reply = false) {
-                        getRelated(pid = artwork.pid, seeds = list.map { it.pid }.toSet()).eros().onCompletion {
+                        getRelated(pid = artwork.pid).eros().onCompletion {
                             jobs.remove(relatedCache)
                         }
                     }
