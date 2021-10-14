@@ -419,7 +419,6 @@ internal fun UserInfo.count(): Long = useSession { session ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
             .where(
-                isFalse(artwork.get("deleted")),
                 equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
             )
     }.singleResult
@@ -462,7 +461,7 @@ internal fun UserInfo.twitter(): String? {
 
     Twitter(screen, id).replicate()
 
-    return null
+    return screen
 }
 
 internal fun Twitter.replicate(): Unit = useSession(Twitter) { session ->
