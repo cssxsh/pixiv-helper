@@ -219,3 +219,9 @@ internal const val TAG_TOP_LIMIT = 10
 internal val TAG_DELIMITERS = """_-&+|/\,()，、—（）""".toCharArray()
 
 internal val CompletedJob: Job = Job().apply { complete() }
+
+internal val MAX_RANGE = 0..999_999_999L
+
+private const val OFFSET_STEP = 1_000_000L
+
+internal val ALL_RANGE = (MAX_RANGE step OFFSET_STEP).map { offset -> offset until (offset + OFFSET_STEP) }

@@ -127,23 +127,21 @@ object PixivCacheCommand : CompositeCommand(
         "任务TAG(${tag})已添加"
     }
 
-    private val MAX_RANGE = 0..999_999_999L
-
     @SubCommand
     @Description("加载缓存文件夹中未保存的作品")
     suspend fun CommandSenderOnMessage<*>.local(range: LongRange = MAX_RANGE) = withHelper {
         addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { localCache(range = range) }
     }
 
-    private val all = (MAX_RANGE step 1_000_000L).map { offset -> offset until (offset + 1_000_000L) }
-
     @SubCommand
     @Description("加载动图作品")
     suspend fun CommandSenderOnMessage<*>.ugoira() = withHelper {
-        for (range in all) {
+        for (range in ALL_RANGE) {
             if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
-            val eros = artworks.filter { ugoiraImagesFolder.resolve("${it.pid}.gif").exists().not() }
+            val eros = artworks.filter {
+                it.ero && ugoiraImagesFolder.resolve("${it.pid}.gif").exists().not()
+            }
             if (eros.isEmpty()) continue
             logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
             for (artwork in eros) {

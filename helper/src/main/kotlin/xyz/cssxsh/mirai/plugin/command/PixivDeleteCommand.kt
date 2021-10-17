@@ -42,16 +42,10 @@ object PixivDeleteCommand : CompositeCommand(
         sendMessage("删除完毕")
     }
 
-    private const val OFFSET_MAX = 99_999_999L
-
-    private const val OFFSET_STEP = 1_000_000L
-
-    private val ranges = (0 until OFFSET_MAX step OFFSET_STEP).map { offset -> offset until (offset + OFFSET_STEP) }
-
     @SubCommand
     @Description("删除小于指定收藏数作品")
     suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) = supervisorScope {
-        for (range in ranges) {
+        for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, min, 0)
@@ -72,7 +66,7 @@ object PixivDeleteCommand : CompositeCommand(
     @SubCommand
     @Description("删除大于指定页数作品（用于处理漫画作品）")
     suspend fun CommandSender.page(max: Int, record: Boolean = false) = supervisorScope {
-        for (range in ranges) {
+        for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, Long.MAX_VALUE, max)
@@ -93,7 +87,7 @@ object PixivDeleteCommand : CompositeCommand(
     @SubCommand
     @Description("删除 漫画，动图")
     suspend fun CommandSender.manga(record: Boolean = false) = supervisorScope {
-        for (range in ranges) {
+        for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA, WorkContentType.UGOIRA)
