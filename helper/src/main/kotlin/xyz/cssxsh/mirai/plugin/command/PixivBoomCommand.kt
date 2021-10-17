@@ -17,11 +17,17 @@ object PixivBoomCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.handle(limit: Int = EroChunk, word: String = "") = withHelper {
-        val artworks = if (word.isEmpty()) {
-            ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)
-        } else {
-            val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
-            ArtWorkInfo.tag(names = names, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
+        val artworks = when {
+            word.isEmpty() -> {
+                ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)
+            }
+            word.toLongOrNull() != null -> {
+                ArtWorkInfo.user(uid = word.toLong()).sortedByDescending { it.pid }.take(limit)
+            }
+            else -> {
+                val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
+                ArtWorkInfo.tag(names = names, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
+            }
         }
 
         if (artworks.isEmpty()) return@withHelper "列表为空".toPlainText()
