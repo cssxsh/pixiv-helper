@@ -104,4 +104,21 @@ object PixivDeleteCommand : CompositeCommand(
             sendMessage("删除完毕")
         }
     }
+
+    @SubCommand
+    @Description("删除 已记录作品")
+    suspend fun CommandSender.record() = supervisorScope {
+        for (range in ALL_RANGE) {
+            if (isActive.not()) break
+            logger.verbose { "开始检查[$range]" }
+            val artworks = ArtWorkInfo.deleted(range)
+            if (artworks.isEmpty()) continue
+            sendMessage("[record](${range})共${artworks.size}个作品需要删除")
+            for (it in artworks) {
+                logger.info { "作品(${it.pid})信息将从缓存移除" }
+                delete(it.pid)
+            }
+            sendMessage("删除完毕")
+        }
+    }
 }

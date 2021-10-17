@@ -204,6 +204,7 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 | `/<delete> <bookmarks> [max] [record]?` | 删除小于指定收藏数作品 |
 | `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品   |
 | `/<delete> <manga> [record]?`           | 删除漫画作品           |
+| `/<delete> <record>`                    | 删除已记录作品         |
 
 第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 

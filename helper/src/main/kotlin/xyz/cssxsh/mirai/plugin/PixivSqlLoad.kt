@@ -208,6 +208,17 @@ internal fun ArtWorkInfo.SQL.interval(
     }.resultList.orEmpty()
 }
 
+internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useSession { session ->
+    session.withCriteria<ArtWorkInfo> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        criteria.select(artwork)
+            .where(
+                isTrue(artwork.get("deleted")),
+                between(artwork.get("pid"), range.first, range.last)
+            )
+    }.resultList.orEmpty()
+}
+
 internal fun ArtWorkInfo.SQL.type(
     range: LongRange,
     vararg types: WorkContentType
