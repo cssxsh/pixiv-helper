@@ -35,7 +35,7 @@ object PixivTaskCommand : CompositeCommand(
     @SubCommand
     @Description("推送排行榜新作品")
     suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode) = setTask {
-        "Rank($mode)[${contact}]" to
+        "Rank<$mode>[${contact}]" to
             TimerTask.Rank(mode = mode, delegate = contact.delegate)
     }
 

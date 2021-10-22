@@ -153,7 +153,7 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
             }
         }
     }.onCompletion {
-        send { "共${index + 1}个画师处理完成" }
+        send { "共${index}个画师处理完成" }
     }
 }
 

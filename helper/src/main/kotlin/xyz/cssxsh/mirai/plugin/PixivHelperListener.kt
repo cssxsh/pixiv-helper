@@ -20,19 +20,19 @@ object PixivHelperListener {
         listeners.put(this, listener)?.cancel()
     }
 
-    internal fun subscribe(channel: EventChannel<*>, url: Permission): Unit = with(channel) {
+    internal fun subscribe(channel: EventChannel<*>, permission: Permission): Unit = with(channel) {
         "PixivUrl" with subscribeMessages {
             URL_ARTWORK_REGEX finding { result ->
                 logger.info { "匹配ARTWORK(${result.value})" }
-                toCommandSender().takeIf { url.testPermission(it) }?.sendIllustInfo(pid = result.value.toLong())
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendIllustInfo(pid = result.value.toLong())
             }
             URL_USER_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
-                toCommandSender().takeIf { url.testPermission(it) }?.sendUserInfo(uid = result.value.toLong())
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendUserInfo(uid = result.value.toLong())
             }
             URL_PIXIV_ME_REGEX finding { result ->
                 logger.info { "匹配USER(${result.value})" }
-                toCommandSender().takeIf { url.testPermission(it) }?.sendUserInfo(account = result.value)
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendUserInfo(account = result.value)
             }
         }
         "SearchImage" with subscribeMessages {
