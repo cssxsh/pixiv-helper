@@ -22,16 +22,24 @@ class RawValueArgumentParser<T : Any>(private val kClass: KClass<T>, val parse: 
 object TemporalCommandArgumentContext : CommandArgumentContext {
     private val cache = WeakHashMap<Class<*>, CommandValueArgumentParser<*>>()
     private val temporalKlass = Temporal::class
+
+    @Suppress("UNCHECKED_CAST")
     override fun <T : Any> get(kClass: KClass<T>): CommandValueArgumentParser<T>? {
         if (kClass.isSubclassOf(temporalKlass).not()) return null
 
+        var parser: CommandValueArgumentParser<T>? = cache[kClass.java] as CommandValueArgumentParser<T>
+
+        if (parser != null) return parser
+
         val parse = kClass.staticFunctions.find { function ->
-            function.name == "parse" && function.returnType.jvmErasure == kClass &&
-                function.parameters.singleOrNull()?.type?.jvmErasure == String::class
+            function.name == "parse" && function.returnType.jvmErasure == kClass && function.parameters.size == 1
         } ?: return null
-        val jclass = kClass.java.asSubclass(temporalKlass.java)
-        @Suppress("UNCHECKED_CAST")
-        return cache.getOrPut(jclass) { RawValueArgumentParser(kClass) { raw -> parse.call(raw) as T } } as CommandValueArgumentParser<T>
+
+        parser = RawValueArgumentParser(kClass) { raw -> parse.call(raw) as T }
+
+        cache[kClass.java] = parser
+
+        return parser
     }
 
     override fun toList(): List<CommandArgumentContext.ParserPair<*>> = emptyList()
