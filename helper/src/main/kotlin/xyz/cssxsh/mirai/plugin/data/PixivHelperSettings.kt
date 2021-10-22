@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
 import net.mamoe.mirai.console.internal.data.*
+import net.mamoe.mirai.console.plugin.jvm.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
@@ -87,21 +88,26 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
     val eroSFW: Boolean by value(true)
 
-    private fun path(path: String, default: String) =
-        if (path.isEmpty()) PixivHelperPlugin.resolveDataFile(default) else File(path)
+    private lateinit var plugin: AbstractJvmPlugin
+
+    override fun onInit(owner: PluginDataHolder, storage: PluginDataStorage) {
+        plugin = owner as AbstractJvmPlugin
+    }
+
+    private fun dir(path: String, default: String) = if (path.isEmpty()) plugin.resolveDataFile(default) else File(path)
 
     /**
      * 压缩文件保存目录
      */
-    val backupFolder: File get() = path(path = backupPath, default = "backup")
+    val backupFolder: File get() = dir(path = backupPath, default = "backup")
 
     /**
      * 图片缓存保存目录
      */
-    val cacheFolder: File get() = path(path = cachePath, default = "cache")
+    val cacheFolder: File get() = dir(path = cachePath, default = "cache")
 
     /**
      * 临时文件保存目录
      */
-    val tempFolder: File get() = path(path = tempPath, default = "temp")
+    val tempFolder: File get() = dir(path = tempPath, default = "temp")
 }
