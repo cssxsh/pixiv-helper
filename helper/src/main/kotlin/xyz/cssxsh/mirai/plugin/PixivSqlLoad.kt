@@ -628,6 +628,19 @@ internal fun AliasSetting.replicate(): Unit = useSession(AliasSetting) { session
     }.getOrThrow()
 }
 
+internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSetting) { session ->
+    val record = session.get(AliasSetting::class.java, alias) ?: return@useSession
+    session.transaction.begin()
+    kotlin.runCatching {
+        session.delete(record)
+        session.replicate(this, ReplicationMode.OVERWRITE)
+    }.onSuccess {
+        session.transaction.commit()
+    }.onFailure {
+        session.transaction.rollback()
+    }.getOrThrow()
+}
+
 internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session ->
     session.withCriteria<AliasSetting> { criteria ->
         val alias = criteria.from(AliasSetting::class.java)

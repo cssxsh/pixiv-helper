@@ -77,14 +77,17 @@ EditThisCookie 安装地址
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
 tag指令检索结果过少时，会自动触发缓存  
 tag指令可以尝试按照格式`角色名(作品名)`检索角色, 举例 `红(明日方舟)`  
-tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连接起来，不要使用空格  
+tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连接起来，不要使用空格，举例 `明日方舟+巨乳`  
 `[image]?`为空时会从`回复消息`，`最近图片`获取  
+
+画师别名的`uid`为0时表示删除指定别名  
+
 搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加  
-举例:
-![从指令参数中获取](image/search_1.png)
-![从回复消息中获取](image/search_2.png)
-![从最近图片中获取](image/search_3.png)
-![从输入等待中获取](image/search_4.png)
+举例:  
+![从指令参数中获取](image/search_1.png)  
+![从回复消息中获取](image/search_2.png)  
+![从最近图片中获取](image/search_3.png)  
+![从输入等待中获取](image/search_4.png)  
 
 ### 缓存指令
 
