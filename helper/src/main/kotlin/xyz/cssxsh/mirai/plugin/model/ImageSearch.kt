@@ -60,7 +60,7 @@ data class JsonSearchResults(
     @SerialName("header")
     val info: Info,
     @SerialName("results")
-    val results: List<JsonSearchResult> = emptyList()
+    val results: List<JsonSearchResult>? = null
 ) {
     @Serializable
     data class Info(

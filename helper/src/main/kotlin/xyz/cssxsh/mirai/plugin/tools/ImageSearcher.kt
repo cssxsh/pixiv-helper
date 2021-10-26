@@ -101,7 +101,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
     }
 
     private fun JsonSearchResults.decode(): List<SearchResult> {
-        return results.map {
+        return results.orEmpty().map {
             val source = it.data["source"]?.jsonPrimitive?.content.orEmpty()
             when {
                 "pixiv_id" in it.data -> {
