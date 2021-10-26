@@ -13,11 +13,10 @@ object PixivArticleCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.load() = withHelper {
-        randomArticles().let { data ->
-            data.articles.forEach {
-                addCacheJob(name = "ARTICLE[${it.aid}]", reply = false) { getArticle(article = it).eros() }
+        buildMessageByArticle(data = randomArticles().apply {
+            for (article in articles) {
+                addCacheJob(name = "ARTICLE[${article.aid}]", reply = false) { getArticle(article = article).eros() }
             }
-            buildMessageByArticle(data = data)
-        }
+        })
     }
 }

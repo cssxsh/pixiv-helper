@@ -70,7 +70,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                 is SendModel.Flash -> {
                     val images = message.filterIsInstance<Image>()
                     quoteReply((message - images).toMessageChain())
-                    images.forEach { quoteReply(it.flash()) }
+                    for (image in images) quoteReply(image.flash())
                 }
                 is SendModel.Recall -> {
                     quoteReply(message)?.recallIn(model.ms)
@@ -197,8 +197,8 @@ internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?:
 
 internal fun IllustInfo.getPixivCat() = buildMessageChain {
     appendLine("原图连接: ")
-    getPixivCatUrls().forEach {
-        appendLine(it.toString())
+    for (url in getPixivCatUrls()) {
+        appendLine(url.toString())
     }
 }
 
@@ -268,9 +268,9 @@ internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessag
 
 internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleData) = buildMessageChain {
     appendLine("共 ${data.articles.size} 个特辑")
-    data.articles.forEach {
+    for (article in data.articles) {
         appendLine("================")
-        append(it.getContent(contact))
+        append(article.getContent(contact))
     }
 }
 
@@ -307,7 +307,8 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     }.onFailure {
         logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, it)
     }
-    preview.illusts.apply { replicate() }.write().filter { it.isEro() }.forEach { illust ->
+    for (illust in preview.illusts.apply { replicate() }.write()) {
+        if (illust.isEro().not()) continue
         runCatching {
             val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
             if (illust.age == AgeLimit.ALL) {
@@ -471,15 +472,13 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         }
 
         PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, deferred ->
-            runCatching {
+            try {
                 val bytes = deferred.await()
                 temp.resolve(url.filename).writeBytes(bytes)
                 size += bytes.size
-                FileInfo(url = url, bytes = bytes)
-            }.onFailure {
-                logger.warning({ "[$url]下载失败" }, it)
-            }.onSuccess {
-                results.add(it)
+                results.add(FileInfo(url = url, bytes = bytes))
+            } catch (e: Throwable) {
+                logger.warning({ "[$url]下载失败" }, e)
             }
         }
 
@@ -490,7 +489,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size.toBytesSize()}]{${totalBookmarks}}下载完成"
         }
 
-        downloads.forEach { url ->
+        for (url in downloads) {
             temp.resolve(url.filename).apply {
                 if (exists()) renameTo(dir.resolve(url.filename))
             }

@@ -10,6 +10,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 import java.time.*
 
@@ -201,67 +202,65 @@ internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_
 internal val DELETE_REGEX = """該当作品は削除されたか|作品已删除或者被限制|该作品已被删除，或作品ID不存在。""".toRegex()
 
 internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
-    for (list in set.chunked(PAGE_SIZE.toInt())) {
+    val list = mutableListOf<IllustInfo>()
+    for (pid in set) {
         if (active().not()) break
-        list.mapNotNull { pid ->
-            runCatching {
-                getIllustInfo(pid = pid, flush = flush).check()
-            }.onFailure {
-                if (it.isCancellationException()) return@onFailure
-                if (DELETE_REGEX in it.message.orEmpty()) {
-                    ArtWorkInfo(pid = pid, caption = it.message.orEmpty()).replicate()
-                } else {
-                    logger.warning({ "加载作品($pid)失败" }, it)
-                }
-            }.getOrNull()
-        }.let {
-            if (it.isNotEmpty()) {
-                emit(it)
+        try {
+            with(getIllustInfo(pid = pid, flush = true)) {
+                check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+                list.add(this)
+            }
+        } catch (app: AppApiException) {
+            if (DELETE_REGEX in app.message) {
+                ArtWorkInfo(pid = pid, caption = app.message).replicate()
+            } else {
+                logger.warning({ "加载作品($pid)失败" }, app)
             }
         }
+
+        if (list.size > PAGE_SIZE) emit(list)
     }
+    if (list.isNotEmpty()) emit(list)
 }
 
 internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
-    info.filterNot { check && it.pid in ArtWorkInfo }.chunked(PAGE_SIZE.toInt()).forEach { list ->
-        if (active().not()) return@flow
-        list.mapNotNull { result ->
-            runCatching {
-                getIllustInfo(pid = result.pid, flush = true).apply {
-                    check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-                }
-            }.onFailure {
-                if (it.isCancellationException()) return@onFailure
-                if (DELETE_REGEX in it.message.orEmpty()) {
-                    result.toArtWorkInfo(caption = it.message.orEmpty()).replicate()
-                } else {
-                    logger.warning({ "加载作品信息($result)失败 $it" }, it)
-                }
-            }.getOrNull()
-        }.let {
-            if (it.isNotEmpty()) {
-                emit(it)
+    val list = mutableListOf<IllustInfo>()
+    for (item in info) {
+        if (active().not()) break
+        if (check && item.pid in ArtWorkInfo) continue
+        try {
+            with(getIllustInfo(pid = item.pid, flush = true)) {
+                check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
+                list.add(this)
+            }
+        } catch (app: AppApiException) {
+            if (DELETE_REGEX in app.message) {
+                item.toArtWorkInfo(caption = app.message).replicate()
+            } else {
+                logger.warning({ "加载作品信息($item)失败 $app" }, app)
             }
         }
+
+        if (list.size > PAGE_SIZE) emit(list)
     }
+    if (list.isNotEmpty()) emit(list)
 }
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    AliasSetting.all().mapTo(mutableSetOf()) { it.uid }.let { set ->
-        logger.verbose { "别名中{${set.first()..set.last()}}共${list.size}个画师需要缓存" }
-        set.forEachIndexed { index, uid ->
-            if (active().not()) return@flow
-            runCatching {
-                userDetail(uid = uid).let { detail ->
-                    detail.twitter() // XXX Save Twitter
-                    if (detail.total() > detail.user.count()) {
-                        logger.verbose { "${index}.USER(${uid})有${detail.total()}个作品尝试缓存" }
-                        emitAll(getUserIllusts(detail))
-                    }
-                }
-            }.onFailure {
-                logger.warning({ "别名缓存${uid}失败" }, it)
+    val records = mutableSetOf<Long>()
+    for ((alias, uid) in AliasSetting.all()) {
+        if (active().not()) break
+        if (uid in records) continue
+
+        try {
+            val detail = userDetail(uid = uid)
+            detail.twitter() // XXX Save Twitter
+            if (detail.total() > detail.user.count()) {
+                logger.verbose { "ALIAS<${alias}>(${uid})有${detail.total()}个作品尝试缓存" }
+                emitAll(getUserIllusts(detail))
             }
+        } catch (e: Throwable) {
+            logger.warning({ "别名缓存${uid}失败" }, e)
         }
     }
 }

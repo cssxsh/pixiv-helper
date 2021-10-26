@@ -28,8 +28,8 @@ object PixivBackupCommand : CompositeCommand(
     private val upload = Mutex()
 
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
-        compress.withLock { PixivZipper.block() }.forEach { file ->
-            if (this@compress is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
+        for (file in compress.withLock { PixivZipper.block() }) {
+            if (this is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
                 sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到群文件")
                 runCatching {
                     group.sendFile(path = file.name, file = file)

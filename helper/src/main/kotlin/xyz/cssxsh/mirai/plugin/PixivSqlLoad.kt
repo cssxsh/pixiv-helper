@@ -48,7 +48,7 @@ object HelperSqlConfiguration :
             """.trimIndent()
 
     init {
-        Entities.forEach { addAnnotatedClass(it) }
+        Entities.forEach(::addAnnotatedClass)
         setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
         setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
@@ -109,7 +109,7 @@ internal val SqlMetaData get() = useSession { session -> session.doReturningWork
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
-    val config = Configuration().apply { Entities.forEach { addAnnotatedClass(it) } }
+    val config = Configuration().apply { Entities.forEach(::addAnnotatedClass) }
     config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
     config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
@@ -130,7 +130,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
                 .forEach { list ->
                     session.transaction.begin()
                     runCatching {
-                        list.forEach { session.replicate(it, mode) }
+                        for (item in list) session.replicate(item, mode)
                         count += list.size
                         annotation to count
                     }.onSuccess {
@@ -385,7 +385,7 @@ internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
         session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
-        toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+        for (tag in toTagBaseInfos()) session.replicate(tag, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
@@ -412,7 +412,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) 
             if (info.pid == 0L) continue
             val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
             session.replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
-            info.toTagBaseInfos().forEach { session.replicate(it, ReplicationMode.IGNORE) }
+            for (tag in info.toTagBaseInfos()) session.replicate(tag, ReplicationMode.IGNORE)
         }
     }.onSuccess {
         session.transaction.commit()
@@ -511,7 +511,7 @@ internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { sess
 internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     kotlin.runCatching {
-        forEach { session.replicate(it, ReplicationMode.OVERWRITE) }
+        for (item in this) session.replicate(item, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {

@@ -45,8 +45,8 @@ object PixivZipper {
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
-            list.forEach { info ->
-                imagesFolder(info.pid).listFiles()?.forEach { file ->
+            for (info in list) {
+                for (file in imagesFolder(info.pid).listFiles().orEmpty()) {
                     stream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
                         creationTime = FileTime.from(Instant.ofEpochSecond(info.created))
                         lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.created))
