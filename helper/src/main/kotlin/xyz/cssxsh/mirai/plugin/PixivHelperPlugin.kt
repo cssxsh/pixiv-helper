@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.plugin.jvm.*
+import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScope
 import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.event.*
 import okhttp3.*
@@ -14,7 +15,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.6.0") {
+    JvmPluginDescription("xyz.cssxsh.mirai.plugin.pixiv-helper", "1.6.1") {
         name("pixiv-helper")
         author("cssxsh")
     }
@@ -67,13 +68,13 @@ object PixivHelperPlugin : KotlinPlugin(
         PixivMarkCommand.register()
         PixivBoomCommand.register()
 
-        PixivHelperSettings.init()
+        PixivHelperSettings.init(childScope())
 
         PixivHelperListener.subscribe(globalEventChannel(), registerPermission("url", "PIXIV URL 解析"))
 
         PixivHelperScheduler.start(childScopeContext("PixivHelperScheduler"))
 
-        BaiduNetDiskUpdater.init()
+        BaiduNetDiskUpdater.init(childScope())
 
         ImageSearchConfig.init()
 

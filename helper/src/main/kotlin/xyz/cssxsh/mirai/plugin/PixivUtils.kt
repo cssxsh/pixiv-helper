@@ -157,6 +157,9 @@ internal val EroChunk by PixivHelperSettings::eroChunk
  */
 internal val EroUpExpire by PixivHelperSettings::eroUpExpire
 
+/**
+ * 涩图标准
+ */
 internal val EroStandard: EroStandardConfig get() = PixivHelperSettings
 
 /**
@@ -164,9 +167,20 @@ internal val EroStandard: EroStandardConfig get() = PixivHelperSettings
  */
 internal val TagCooling by PixivHelperSettings::tagCooling
 
+/**
+ * TAG 年龄限制
+ */
 internal val TagAgeLimit get() = if (PixivHelperSettings.tagSFW) AgeLimit.ALL else AgeLimit.R18G
 
+/**
+ * ERO 年龄限制
+ */
 internal val EroAgeLimit get() = if (PixivHelperSettings.eroSFW) AgeLimit.ALL else AgeLimit.R18G
+
+/**
+ * CACHE CAPACITY
+ */
+internal val CacheCapacity by PixivHelperSettings::cacheCapacity
 
 internal class TitleDisplayStrategy(val title: String) : ForwardMessage.DisplayStrategy {
     override fun generateTitle(forward: RawForwardMessage): String = title

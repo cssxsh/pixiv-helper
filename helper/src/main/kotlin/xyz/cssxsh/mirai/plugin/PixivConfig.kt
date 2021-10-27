@@ -101,7 +101,8 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-internal fun PixivHelperSettings.init() {
+@OptIn(DelicateCoroutinesApi::class)
+internal fun PixivHelperSettings.init(scope:  CoroutineScope = GlobalScope) {
     cacheFolder.mkdirs()
     backupFolder.mkdirs()
     tempFolder.mkdirs()
@@ -125,7 +126,7 @@ internal fun PixivHelperSettings.init() {
     } else if (blockSize < HTTP_KILO) {
         logger.warning { "下载分块过小" }
     }
-    PixivHelperPlugin.launch(SupervisorJob()) {
+    scope.launch {
         val count = ArtWorkInfo.count()
         if (count < eroChunk) {
             logger.warning { "缓存数 $count < ${eroChunk}，建议使用指令( /cache recommended )进行缓存" }
@@ -135,7 +136,8 @@ internal fun PixivHelperSettings.init() {
     }
 }
 
-internal fun BaiduNetDiskUpdater.init() = PixivHelperPlugin.launch(SupervisorJob()) {
+@OptIn(DelicateCoroutinesApi::class)
+internal fun BaiduNetDiskUpdater.init(scope:  CoroutineScope = GlobalScope) = scope.launch {
     loadToken()
     runCatching {
         check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
@@ -164,7 +166,7 @@ internal fun PixivGifConfig.init() {
         if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
             logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
         } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
-            System.getProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
+            System.setProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
         }
     }
     if (ditherer !in DITHERER_LIST) {
