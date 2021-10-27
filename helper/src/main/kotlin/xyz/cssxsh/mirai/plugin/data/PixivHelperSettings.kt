@@ -88,6 +88,10 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
     @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
     val eroSFW: Boolean by value(true)
 
+    @ValueName("cache_capacity")
+    @ValueDescription("下载缓存容量，同时下载的图片上限")
+    val cacheCapacity: Int by value(3)
+
     private lateinit var plugin: AbstractJvmPlugin
 
     override fun onInit(owner: PluginDataHolder, storage: PluginDataStorage) {

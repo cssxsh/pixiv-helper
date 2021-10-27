@@ -244,6 +244,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * block_size DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
 * tag_sfw tag 是否过滤r18 依旧不会放出图片
 * ero_sfw ero 是否过滤r18 依旧不会放出图片
+* cache_capacity 下载缓存容量，同时下载的图片上限
 
 ### NetdiskOauthConfig.yml
 

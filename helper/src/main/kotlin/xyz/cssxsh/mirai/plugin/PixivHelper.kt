@@ -55,7 +55,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
             runCatching {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 supervisorScope {
-                    cacheChannel.consumeAsFlow().save().download().await(3)
+                    cacheChannel.consumeAsFlow().save().download().await(CacheCapacity)
                 }
             }.onFailure {
                 logger.warning { "PixivHelper:${contact}#CacheTask $it" }
