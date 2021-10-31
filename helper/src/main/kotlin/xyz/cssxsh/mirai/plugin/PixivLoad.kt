@@ -206,7 +206,7 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
     for (pid in set) {
         if (active().not()) break
         try {
-            with(getIllustInfo(pid = pid, flush = true)) {
+            with(getIllustInfo(pid = pid, flush = flush)) {
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
@@ -248,7 +248,7 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
 
 internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
     val records = mutableSetOf<Long>()
-    for ((alias, uid) in AliasSetting.all()) {
+    for ((alias, uid) in list) {
         if (active().not()) break
         if (uid in records) continue
 
@@ -366,7 +366,7 @@ internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARC
 internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
     val text: String = useHttpClient { it.get(url) }
     val result = regex.findAll(text)
-    return result.map { it.value.toLong() }.toSet()
+    return result.mapTo(mutableSetOf()) { it.value.toLong() }
 }
 
 private fun File.listDirs(range: LongRange) = listFiles { file ->
