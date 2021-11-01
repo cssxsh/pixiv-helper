@@ -259,7 +259,7 @@ internal suspend fun TimerTask.run(name: String) = when (this) {
     }
     is TimerTask.Backup -> {
         val contact = helper.contact
-        for (file in PixivZipper.compressData(list = getBackupList())) {
+        for (file in PixivZipper.compressData(list = backups())) {
             if (contact is FileSupported) {
                 contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {

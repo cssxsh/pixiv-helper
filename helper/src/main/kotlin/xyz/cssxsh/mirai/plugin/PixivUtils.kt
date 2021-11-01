@@ -540,7 +540,7 @@ internal fun Long.toBytesSize() = when (this) {
     else -> throw IllegalStateException("Too Big")
 }
 
-internal fun getBackupList(): Map<String, File> {
+internal fun backups(): Map<String, File> {
     return mutableMapOf<String, File>().apply {
         if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
             put("DATA", PixivHelperPlugin.dataFolder)

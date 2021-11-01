@@ -91,7 +91,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份插件数据")
     fun CommandSender.data() = compress {
-        compressData(list = getBackupList())
+        compressData(list = backups())
     }
 
     @SubCommand
