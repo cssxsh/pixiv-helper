@@ -137,6 +137,16 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         isActive && runCatching {
             when (val message = block()) {
                 null, Unit -> Unit
+                is ForwardMessage -> {
+                    check(message.nodeList.size <= 200) {
+                        throw MessageTooLargeException(
+                            contact, message, message,
+                            "ForwardMessage allows up to 200 nodes, but found ${message.nodeList.size}"
+                        )
+                    }
+                    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+                    contact.sendMessage(message + net.mamoe.mirai.internal.message.IgnoreLengthCheck)
+                }
                 is Message -> contact.sendMessage(message)
                 is String -> contact.sendMessage(message)
                 else -> contact.sendMessage(message.toString())

@@ -34,7 +34,6 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     return runCatching {
         helper.block()
     }.onSuccess { message ->
-        @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
         when (message) {
             null, Unit -> Unit
             is ForwardMessage -> {
@@ -44,6 +43,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
                         "ForwardMessage allows up to 200 nodes, but found ${message.nodeList.size}"
                     )
                 }
+                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
                 sendMessage(message + net.mamoe.mirai.internal.message.IgnoreLengthCheck)
             }
             is Message -> quoteReply(message)
