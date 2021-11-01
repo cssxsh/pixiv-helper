@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.6.1"
+version = "1.6.2"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -64,6 +64,8 @@ dependencies {
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     implementation(cssxsh("baidu-oauth", Versions.baidu))
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
+    compileOnly("net.mamoe:mirai-core-jvm:2.8.0-RC")
+
     testImplementation(kotlin("test-junit5"))
     testImplementation(junit("api", Versions.junit))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.0")

@@ -6,7 +6,7 @@ pluginManagement {
         kotlin("plugin.serialization") version "1.5.30"
         kotlin("plugin.jpa") version "1.5.30"
 
-        id("net.mamoe.mirai-console") version "2.7.0"
+        id("net.mamoe.mirai-console") version "2.8.0-RC"
     }
     repositories {
         mavenLocal()
