@@ -6,7 +6,7 @@ import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import org.hibernate.*
 import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.baidu.*
@@ -32,7 +32,7 @@ object PixivBackupCommand : CompositeCommand(
             if (this is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
                 sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    group.sendFile(path = file.name, file = file)
+                    file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
                 }.onFailure {
                     sendMessage("[${file.name}]上传失败: ${it.message}")
                 }
@@ -63,9 +63,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定用户的作品")
     fun CommandSender.user(uid: Long) = compress {
-        compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]").let {
-            listOf(it)
-        }
+        listOf(compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]"))
     }
 
     @SubCommand
@@ -107,7 +105,7 @@ object PixivBackupCommand : CompositeCommand(
     suspend fun MemberCommandSenderOnMessage.get(filename: String) {
         runCatching {
             requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }.let { file ->
-                group.sendFile(path = file.name, file = file)
+                file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
             }
         }.onFailure {
             sendMessage("上传失败: ${it.message}")
