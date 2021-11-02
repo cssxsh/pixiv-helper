@@ -381,8 +381,9 @@ internal fun localCache(range: LongRange) = flow {
     PixivHelperSettings.cacheFolder.also {
         logger.verbose { "从 ${it.absolutePath} 加载作品信息" }
     }.listDirs(range).orEmpty().asFlow().map { first ->
-        first.listDirs(range).orEmpty().forEach { second ->
-            if (active()) second.listDirs(range).orEmpty().mapNotNull { dir ->
+        for (second in first.listDirs(range).orEmpty()) {
+            if (active().not()) break
+            second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
                     dir.name.toLong() in ArtWorkInfo && file.canRead()
