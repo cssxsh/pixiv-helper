@@ -79,9 +79,9 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
-        val names = tag.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
+        val list = ArtWorkInfo.tag(word = tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
         compressArtWorks(
-            list = ArtWorkInfo.tag(*names, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G),
+            list = list,
             basename = "TAG[${tag}]"
         ).let {
             listOf(it)

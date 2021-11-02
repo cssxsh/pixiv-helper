@@ -25,8 +25,7 @@ object PixivBoomCommand : SimpleCommand(
                 ArtWorkInfo.user(uid = word.toLong()).sortedByDescending { it.pid }.take(limit)
             }
             else -> {
-                val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }.toTypedArray()
-                ArtWorkInfo.tag(names = names, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
+                ArtWorkInfo.tag(word = word, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
             }
         }
 

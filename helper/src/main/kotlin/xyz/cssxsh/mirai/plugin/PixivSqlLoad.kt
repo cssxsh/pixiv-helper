@@ -246,7 +246,7 @@ internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { s
 }
 
 internal fun ArtWorkInfo.SQL.tag(
-    vararg names: String,
+    word: String,
     marks: Long,
     fuzzy: Boolean,
     age: AgeLimit,
@@ -254,6 +254,7 @@ internal fun ArtWorkInfo.SQL.tag(
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
+        val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }
         val tag = { name: String, pid: Path<Long> ->
             criteria.subquery(TagBaseInfo::class.java).also { sub ->
                 val info = sub.from(TagBaseInfo::class.java)
