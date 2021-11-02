@@ -42,11 +42,9 @@ abstract class HtmlParser(var ignore: Ignore) {
 
     protected suspend fun <R> http(block: suspend (HttpClient) -> R): R = supervisorScope {
         while(isActive) {
-            runCatching {
-                block(client)
-            }.onSuccess {
-                return@supervisorScope it
-            }.onFailure { throwable ->
+            try {
+                return@supervisorScope block(client)
+            } catch (throwable: Throwable) {
                 if (ignore(throwable)) {
                     // html(transform = transform, block = block)
                 } else {

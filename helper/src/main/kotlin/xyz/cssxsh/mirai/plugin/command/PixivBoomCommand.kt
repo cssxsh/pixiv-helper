@@ -40,7 +40,7 @@ object PixivBoomCommand : SimpleCommand(
         for (artwork in artworks.sortedBy { it.pid }) {
             val sender = (subject as? User) ?: (subject as Group).members.random()
 
-            runCatching {
+            try {
                 val illust = getIllustInfo(pid = artwork.pid, flush = false)
                 list.add(
                     ForwardMessage.Node(
@@ -50,16 +50,16 @@ object PixivBoomCommand : SimpleCommand(
                         message = buildMessageByIllust(illust)
                     )
                 )
-            }.onFailure {
+            } catch (e: Throwable) {
                 list.add(
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = artwork.created.toInt(),
-                        message = "[${artwork.pid}]构建失败 ${it.message}".toPlainText()
+                        message = "[${artwork.pid}]构建失败 ${e.message}".toPlainText()
                     )
                 )
-                logger.warning { "BOOM BUILD 错误 $it" }
+                logger.warning { "BOOM BUILD 错误 $e" }
             }
         }
 

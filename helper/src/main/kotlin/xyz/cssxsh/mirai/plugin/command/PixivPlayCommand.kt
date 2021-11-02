@@ -36,10 +36,10 @@ object PixivPlayCommand : CompositeCommand(
             if (isActive.not()) break
             delay(helper.duration)
 
-            runCatching {
+            try {
                 sendIllust(illust)
-            }.onFailure {
-                logger.warning { "播放错误 $it" }
+            } catch (e: Throwable) {
+                logger.warning { "播放错误 $e" }
             }
         }
     }
@@ -56,7 +56,7 @@ object PixivPlayCommand : CompositeCommand(
 
             val sender = (contact as? User) ?: (contact as Group).members.random()
 
-            runCatching {
+            try {
                 list.add(
                     ForwardMessage.Node(
                         senderId = sender.id,
@@ -65,7 +65,7 @@ object PixivPlayCommand : CompositeCommand(
                         message = buildMessageByIllust(illust = illust)
                     )
                 )
-            }.onFailure {
+            } catch (e: Throwable) {
                 list.add(
                     ForwardMessage.Node(
                         senderId = sender.id,
@@ -74,7 +74,7 @@ object PixivPlayCommand : CompositeCommand(
                         message = "[${illust.pid}]构建失败".toPlainText()
                     )
                 )
-                logger.warning { "播放错误 $it" }
+                logger.warning { "播放错误 $e" }
             }
         }
 
@@ -110,10 +110,10 @@ object PixivPlayCommand : CompositeCommand(
                     if (isActive.not()) break
                     delay(duration)
 
-                    runCatching {
+                    try {
                         sendIllust(getIllustInfo(pid = info.pid, flush = false))
-                    }.onFailure {
-                        logger.warning { "播放错误 $it" }
+                    } catch (e: Throwable) {
+                        logger.warning { "播放错误 $e" }
                     }
                 }
             }
@@ -125,7 +125,7 @@ object PixivPlayCommand : CompositeCommand(
             for (info in rank.records) {
                 if (isActive.not()) break
 
-                runCatching {
+                try {
                     val illust = getIllustInfo(pid = info.pid, flush = false)
                     val sender = (subject as? User) ?: (subject as Group).members.random()
 
@@ -137,8 +137,8 @@ object PixivPlayCommand : CompositeCommand(
                             message = buildMessageByIllust(illust)
                         )
                     )
-                }.onFailure {
-                    logger.warning { "播放错误 $it" }
+                } catch (e: Throwable) {
+                    logger.warning { "播放错误 $e" }
                 }
             }
 
@@ -200,7 +200,7 @@ object PixivPlayCommand : CompositeCommand(
             for (info in article.illusts) {
                 if (isActive.not()) break
 
-                runCatching {
+                try {
                     val illust = getIllustInfo(pid = info.pid, flush = false)
                     val sender = (subject as? User) ?: (subject as Group).members.random()
 
@@ -212,8 +212,8 @@ object PixivPlayCommand : CompositeCommand(
                             message = buildMessageByIllust(illust)
                         )
                     )
-                }.onFailure {
-                    logger.warning { "播放错误 $it" }
+                } catch (e: Throwable) {
+                    logger.warning { "播放错误 $e" }
                 }
             }
 

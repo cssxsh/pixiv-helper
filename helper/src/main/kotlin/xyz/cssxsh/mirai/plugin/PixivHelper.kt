@@ -52,23 +52,23 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
         while (isActive) {
-            runCatching {
+            try {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 supervisorScope {
                     cacheChannel.consumeAsFlow().save().download().await(CacheCapacity)
                 }
-            }.onFailure {
-                logger.warning { "PixivHelper:${contact}#CacheTask $it" }
+            } catch (e: Throwable) {
+                logger.warning { "PixivHelper:${contact}#CacheTask $e" }
             }
             cacheChannel = Channel(Channel.BUFFERED)
         }
     }
 
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
-        runCatching {
+        try {
             block.invoke(this@PixivHelper).collect { list ->
                 if (list.isEmpty()) return@collect
-                runCatching {
+                try {
                     val (success, failure) = list.groupBy { it.pid in ArtWorkInfo }
                     list.replicate()
                     if (success != null && write) {
@@ -78,12 +78,12 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
                         val downloads = failure.write().filter { it.isEro() }.sortedBy { it.pid }
                         this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
                     }
-                }.onFailure {
-                    logger.warning({ "预加载任务<${name}>失败" }, it)
+                } catch (e: Throwable) {
+                    logger.warning({ "预加载任务<${name}>失败" }, e)
                 }
             }
-        }.onFailure {
-            logger.warning({ "预加载任务<${name}>失败" }, it)
+        } catch (e: Throwable) {
+            logger.warning({ "预加载任务<${name}>失败" }, e)
             if (reply) send {
                 "预加载任务<${name}>失败"
             }
@@ -100,19 +100,20 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         }
         list.map { illust ->
             async {
-                illust.runCatching {
-                    when (type) {
-                        WorkContentType.ILLUST -> getImages()
+                try {
+                    when (illust.type) {
+                        WorkContentType.ILLUST -> illust.getImages()
                         WorkContentType.UGOIRA -> getUgoira(illust)
                         WorkContentType.MANGA -> Unit
                     }
-                }.onFailure {
-                    if (it.isCancellationException()) return@onFailure
+                } catch (e: CancellationException) {
+                    return@async
+                } catch (e: Throwable) {
                     logger.warning({
                         "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
-                    }, it)
+                    }, e)
                     if (reply) send {
-                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${it.message}"
+                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${e.message}"
                     }
                 }
             }

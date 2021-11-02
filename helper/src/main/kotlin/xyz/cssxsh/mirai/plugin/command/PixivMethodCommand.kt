@@ -23,10 +23,10 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.sina() = withHelper {
         sina { url ->
             sendMessage(
-                runCatching {
+                try {
                     useHttpClient { it.get<InputStream>(url) }.use { it.uploadAsImage(contact) }
-                }.getOrElse {
-                    logger.warning { "微博二维码下载失败 $it" }
+                } catch (e: Throwable) {
+                    logger.warning { "微博二维码下载失败 $e" }
                     url.toString().toPlainText()
                 } + " 请扫码登录关联了Pixiv的微博".toPlainText()
             )
