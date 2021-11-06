@@ -328,11 +328,11 @@ internal suspend fun PixivHelper.getArticle(article: SpotlightArticle) = getList
     info = Pixivision.getArticle(aid = article.aid).illusts
 )
 
-internal suspend fun PixivHelper.randomArticles(limit: Long = ARTICLE_LIMIT): SpotlightArticleData {
+internal suspend fun PixivHelper.randomArticles(limit: Long = ARTICLE_LIMIT): List<SpotlightArticle> {
     val random = (0..limit).random()
-    return spotlightArticles(category = CategoryType.ILLUST, offset = random).takeIf {
-        it.articles.isNotEmpty()
-    } ?: randomArticles(limit = random - 1)
+    return spotlightArticles(category = CategoryType.ILLUST, offset = random).articles.ifEmpty {
+        randomArticles(limit = random - 1)
+    }
 }
 
 internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {

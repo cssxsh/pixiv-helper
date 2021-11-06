@@ -289,9 +289,9 @@ internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessag
     append(getThumbnailImage().uploadAsImage(contact))
 }
 
-internal suspend fun PixivHelper.buildMessageByArticle(data: SpotlightArticleData) = buildMessageChain {
-    appendLine("共 ${data.articles.size} 个特辑")
-    for (article in data.articles) {
+internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightArticle>) = buildMessageChain {
+    appendLine("共 ${articles.size} 个特辑")
+    for (article in articles) {
         appendLine("================")
         append(article.getContent(contact))
     }
