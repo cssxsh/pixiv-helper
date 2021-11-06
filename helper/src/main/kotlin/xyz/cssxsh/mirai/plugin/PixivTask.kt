@@ -7,7 +7,7 @@ import kotlinx.serialization.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.RemoteFile.Companion.sendFile
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import xyz.cssxsh.baidu.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -263,7 +263,7 @@ internal suspend fun TimerTask.run(name: String) = when (this) {
             if (contact is FileSupported) {
                 contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {
-                    contact.sendFile(path = file.name, file = file)
+                    file.toExternalResource().use { contact.files.uploadNewFile(filepath = file.name, content = it) }
                 }.onFailure {
                     contact.sendMessage("上传失败: ${it.message}")
                 }
