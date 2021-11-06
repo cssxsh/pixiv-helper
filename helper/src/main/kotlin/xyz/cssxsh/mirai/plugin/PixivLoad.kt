@@ -310,9 +310,9 @@ internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
     for (month in list) {
         if (active().not()) break
         NaviRank.runCatching {
-            (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten()).filter {
-                it.type == WorkContentType.ILLUST
-            }.distinctBy { it.pid }
+            (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten())
+                .filter { it.type == WorkContentType.ILLUST }
+                .distinctBy { it.pid }
         }.onSuccess {
             logger.verbose { "加载 NaviRank[$month]{${it.size}}成功" }
             emitAll(getListIllusts(info = it))
