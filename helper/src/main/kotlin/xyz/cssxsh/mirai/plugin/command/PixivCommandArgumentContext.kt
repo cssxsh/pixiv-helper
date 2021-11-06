@@ -11,10 +11,10 @@ import kotlin.reflect.jvm.*
 class RawValueArgumentParser<T : Any>(private val kClass: KClass<T>, val parse: (raw: String) -> T) :
     AbstractCommandValueArgumentParser<T>() {
     override fun parse(raw: String, sender: CommandSender): T {
-        return runCatching {
+        return try {
             parse(raw)
-        }.getOrElse {
-            illegalArgument("无法解析 $raw 为${kClass.simpleName}", it)
+        } catch (e: Throwable) {
+            illegalArgument("无法解析 $raw 为${kClass.simpleName}", e)
         }
     }
 }

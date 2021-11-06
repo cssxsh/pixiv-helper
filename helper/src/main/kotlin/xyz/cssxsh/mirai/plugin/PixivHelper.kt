@@ -135,7 +135,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
     }
 
     suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
-        isActive && runCatching {
+        isActive && try {
             when (val message = block()) {
                 null, Unit -> Unit
                 is ForwardMessage -> {
@@ -152,8 +152,10 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
                 is String -> contact.sendMessage(message)
                 else -> contact.sendMessage(message.toString())
             }
-        }.onFailure {
-            logger.warning({ "回复${contact}失败" }, it)
-        }.isSuccess
+            true
+        } catch (e: Throwable) {
+            logger.warning({ "回复${contact}失败" }, e)
+            false
+        }
     }
 }

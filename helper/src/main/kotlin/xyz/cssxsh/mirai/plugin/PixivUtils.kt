@@ -308,10 +308,10 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
             add("部分图片省略\n".toPlainText())
             files.subList(0, max)
         }.map { file ->
-            add(runCatching {
+            add(try {
                 file.uploadAsImage(contact)
-            }.getOrElse {
-                "上传失败, $it\n".toPlainText()
+            } catch (e: Throwable) {
+                "上传失败, $e\n".toPlainText()
             })
         }
     } else {

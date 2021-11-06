@@ -136,22 +136,18 @@ internal fun PixivHelperSettings.init(scope:  CoroutineScope = GlobalScope) {
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-internal fun BaiduNetDiskUpdater.init(scope:  CoroutineScope = GlobalScope) = scope.launch {
+internal fun BaiduNetDiskUpdater.init(scope:  CoroutineScope) = scope.launch {
     loadToken()
-    runCatching {
+    try {
         check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
-        getUserInfo()
-    }.onSuccess {
-        logger.info {
-            "百度网盘: ${it.baiduName} 已登录"
+        val info = getUserInfo()
+        logger.info { "百度网盘: ${info.baiduName} 已登录" }
+    } catch (e: Throwable) {
+        if ("Invalid Bduss" in e.message.orEmpty()) {
+            logger.warning { "百度网盘初始化失败, 需要重新登录, $e" }
+        } else {
+            logger.warning { "百度网盘初始化失败, $e" }
         }
-    }.onFailure {
-        if ("Invalid Bduss" in it.message.orEmpty()) {
-            logger.warning { "百度网盘初始化失败, 需要重新登录, $it" }
-            return@onFailure
-        }
-        logger.warning { "百度网盘初始化失败, $it" }
     }
 }
 
