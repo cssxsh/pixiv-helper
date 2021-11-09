@@ -236,7 +236,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * ero_page_count 涩图标准 页数
 * ero_tag_exclude 涩图标准 排除的正则表达式
 * ero_user_exclude 涩图标准 排除的UID
-* pximg i.pximg.net 反向代理, 若非特殊情况不要修改这个配置，保持留空
+* pximg 反向代理, 若非特殊情况不要修改这个配置，保持留空，可选代理 `i.pixiv.re, i.pixiv.cat`
 * proxy API代理
 * proxy_download DOWNLOAD代理 `图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能
 * timeout_api API超时时间, 单位ms
