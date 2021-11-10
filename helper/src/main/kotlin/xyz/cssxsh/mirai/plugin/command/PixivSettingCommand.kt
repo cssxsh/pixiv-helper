@@ -17,27 +17,34 @@ object PixivSettingCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("设置Task通过转发发送, yes/no")
-    suspend fun CommandSenderOnMessage<*>.forward(open: Boolean) = withHelper {
-        "$TaskForward -> ${open}s".also { PixivConfigData.forward = open }
+    @Description("设置Task通过转发发送")
+    suspend fun CommandSenderOnMessage<*>.forward() = withHelper {
+        "${!TaskForward}".also { PixivConfigData.forward = !TaskForward }
     }
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
-    suspend fun CommandSenderOnMessage<*>.link(open: Boolean) = withHelper {
-        "$link -> $open".also { link = open }
+    suspend fun CommandSenderOnMessage<*>.link() = withHelper {
+        "${!link}".also { link = !link }
     }
 
     @SubCommand
     @Description("设置是否显示TAG INFO")
-    suspend fun CommandSenderOnMessage<*>.tag(open: Boolean) = withHelper {
-        "$tag -> $open".also { tag = open }
+    suspend fun CommandSenderOnMessage<*>.tag() = withHelper {
+        "${!tag}".also { tag = !tag }
     }
 
     @SubCommand
     @Description("设置是否显示作品属性")
-    suspend fun CommandSenderOnMessage<*>.attr(open: Boolean) = withHelper {
-        "$attr -> $open".also { attr = open }
+    suspend fun CommandSenderOnMessage<*>.attr() = withHelper {
+        "${!attr}".also { attr = !attr }
+    }
+
+    @SubCommand
+    @Description("设置cooling置零")
+    suspend fun CommandSenderOnMessage<*>.cooling() = withHelper {
+        PixivTagCommand.cooling[contact.id] = 0
+        "当前用户已置零"
     }
 
     @SubCommand

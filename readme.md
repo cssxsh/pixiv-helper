@@ -144,15 +144,17 @@ duration 单位分钟，默认3小时
 | 指令                              | 描述                           |
 |:----------------------------------|:-------------------------------|
 | `/<setting> <interval> [sec]`     | 设置连续发送间隔时间, 单位秒   |
-| `/<setting> <forward> [open]`     | 设置Task发送模式               |
-| `/<setting> <link> [open]`        | 设置是否显示Pixiv Cat 原图链接 |
-| `/<setting> <tag> [open]`         | 设置是否显示TAG INFO           |
-| `/<setting> <attr> [open]`        | 设置是否显示作品属性           |
+| `/<setting> <forward>`            | 设置Task发送模式               |
+| `/<setting> <link>`               | 设置是否显示Pixiv Cat 原图链接 |
+| `/<setting> <tag>`                | 设置是否显示TAG INFO           |
+| `/<setting> <attr>`               | 设置是否显示作品属性           |
+| `/<setting> <cooling>`            | 设置cooling置零                |
 | `/<setting> <max> [num]`          | 设置显示最大图片数             |
 | `/<setting> <model> [type] [ms]?` | 设置发送模式                   |
 
 发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒  
-注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险
+注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险  
+`forward`, `link`, `tag`, `attr` 使用指令后会对当前值取反
 
 ### 备份指令
 
