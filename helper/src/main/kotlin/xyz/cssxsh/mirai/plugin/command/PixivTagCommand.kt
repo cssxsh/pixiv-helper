@@ -37,10 +37,11 @@ object PixivTagCommand : SimpleCommand(
             return@withHelper "TAG指令冷却中, ${wait}s"
         }
         val list = ArtWorkInfo.tag(word = word, marks = bookmark, fuzzy = fuzzy, age = TagAgeLimit, limit = EroChunk)
-
         logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
+        val artwork = list.randomOrNull()
+
         PixivEroCommand += list
-        val job = "TAG[${word}]"
+        var job = "TAG[${word}]"
         if (list.size < EroChunk && jobs.add(job)) {
             addCacheJob(name = job, reply = false) {
                 getSearchTag(tag = word).eros().onCompletion {
@@ -49,25 +50,24 @@ object PixivTagCommand : SimpleCommand(
             }
         }
 
-        list.randomOrNull()?.also { artwork ->
-            val relatedCache = "RELATED(${artwork.pid})"
-            if (list.size < EroChunk && relatedCache !in jobs) {
-                jobs.add(relatedCache)
-                addCacheJob(name = relatedCache, reply = false) {
+        if (artwork != null) {
+            job = "RELATED(${artwork.pid})"
+            if (list.size < EroChunk && jobs.add(job)) {
+                addCacheJob(name = job, reply = false) {
                     getRelated(pid = artwork.pid).eros().onCompletion {
-                        jobs.remove(relatedCache)
+                        jobs.remove(job)
                     }
                 }
             }
-        }.let { artwork ->
-            record(tag = word, pid = artwork?.pid)
-            requireNotNull(artwork) {
-                cooling[contact.id] = System.currentTimeMillis() + TagCooling
-                if (fuzzy) {
-                    "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
-                } else {
-                    "$subject 读取Tag[${word}]色图失败, 请尝试模糊搜索或日文和英文"
-                }
+        }
+
+        record(tag = word, pid = artwork?.pid)
+        requireNotNull(artwork) {
+            cooling[contact.id] = System.currentTimeMillis() + TagCooling
+            if (fuzzy) {
+                "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
+            } else {
+                "$subject 读取Tag[${word}]色图失败, 请尝试模糊搜索或日文和英文"
             }
         }
     }
