@@ -19,25 +19,29 @@ object PixivSettingCommand : CompositeCommand(
     @SubCommand
     @Description("设置Task通过转发发送")
     suspend fun CommandSenderOnMessage<*>.forward() = withHelper {
-        "${!TaskForward}".also { PixivConfigData.forward = !TaskForward }
+        PixivConfigData.forward = !TaskForward
+        "$TaskForward"
     }
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
     suspend fun CommandSenderOnMessage<*>.link() = withHelper {
-        "${!link}".also { link = !link }
+        link = !link
+        "$link"
     }
 
     @SubCommand
     @Description("设置是否显示TAG INFO")
     suspend fun CommandSenderOnMessage<*>.tag() = withHelper {
-        "${!tag}".also { tag = !tag }
+        tag = !tag
+        "$tag"
     }
 
     @SubCommand
     @Description("设置是否显示作品属性")
     suspend fun CommandSenderOnMessage<*>.attr() = withHelper {
-        "${!attr}".also { attr = !attr }
+        attr = !attr
+        "$attr"
     }
 
     @SubCommand
@@ -50,13 +54,17 @@ object PixivSettingCommand : CompositeCommand(
     @SubCommand
     @Description("设置是否显示最大图片数")
     suspend fun CommandSenderOnMessage<*>.max(num: Int) = withHelper {
-        "$max -> $num".also { max = num }
+        val old = max
+        max = num
+        "$old -> $num"
     }
 
     @SubCommand
     @Description("设置发送模式, type: NORMAL, FLASH, RECALL, FORWARD")
     suspend fun CommandSenderOnMessage<*>.model(type: String, ms: Long = 60_000L) = withHelper {
         val new = SendModel(type, ms)
-        "$model -> $new".also { model = new }
+        val old = model
+        model = new
+        "$old -> $new"
     }
 }
