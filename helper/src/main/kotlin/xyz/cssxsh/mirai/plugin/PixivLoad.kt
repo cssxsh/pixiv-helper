@@ -311,7 +311,6 @@ internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
         if (active().not()) break
         NaviRank.runCatching {
             (getAllRank(month = month).records + getOverRank(month = month).records.values.flatten())
-                .filter { it.type == WorkContentType.ILLUST }
                 .distinctBy { it.pid }
         }.onSuccess {
             logger.verbose { "加载 NaviRank[$month]{${it.size}}成功" }
@@ -384,7 +383,6 @@ internal fun localCache(range: LongRange) = flow {
         for (second in first.listDirs(range).orEmpty()) {
             if (active().not()) break
             second.listDirs(range).orEmpty().mapNotNull { dir ->
-                dir.listFiles().orEmpty().size
                 dir.resolve("${dir.name}.json").takeIf { file ->
                     dir.name.toLong() in ArtWorkInfo && file.canRead()
                 }?.readIllustInfo()
