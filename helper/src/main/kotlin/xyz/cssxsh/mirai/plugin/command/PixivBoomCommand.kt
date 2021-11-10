@@ -1,15 +1,17 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.pixiv.*
 
 object PixivBoomCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "boom", "射爆","社保",
+    "boom", "射爆", "社保",
     description = "PIXIV色图爆炸指令"
 ) {
 
@@ -20,6 +22,14 @@ object PixivBoomCommand : SimpleCommand(
         val artworks = when {
             word.isEmpty() -> {
                 ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)
+
+            }
+            RankMode.values().any { it.name == word.uppercase() } -> {
+                val mode = RankMode.valueOf(word.uppercase())
+                val flow = getRank(mode = mode)
+                addCacheJob(name = "RANK[${mode.name}](new)", reply = false) { flow }
+
+                flow.eros().map { list -> list.map { illust -> illust.toArtWorkInfo() } }.toList().flatten().take(limit)
             }
             word.toLongOrNull() != null -> {
                 ArtWorkInfo.user(uid = word.toLong()).sortedByDescending { it.pid }.take(limit)
