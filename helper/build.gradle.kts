@@ -33,19 +33,6 @@ repositories {
     mavenLocal()
     maven(url = "https://maven.aliyun.com/repository/public")
     mavenCentral()
-    maven(url = "https://maven.pkg.github.com/Moon70/APNG-builder")
-    maven(url = "https://maven.pkg.github.com/Moon70/GPAC")
-    maven(url = "https://maven.pkg.github.com/Moon70/LunarTools")
-    maven(url = "https://maven.pkg.github.com/cssxsh/baidu-client")
-    filterIsInstance<MavenArtifactRepository>().forEach { repo ->
-        if (repo.url.host == "maven.pkg.github.com") {
-            println(repo.url)
-            repo.credentials {
-                username = requireNotNull(System.getenv("GITHUB_ID")) { "GITHUB_ID is null" }
-                password = requireNotNull(System.getenv("GITHUB_TOKEN")) { "GITHUB_TOKEN is null" }
-            }
-        }
-    }
     maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
 }
