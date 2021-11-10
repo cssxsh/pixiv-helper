@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.6.4"
+version = "1.6.5"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -31,7 +31,7 @@ mirai {
 
 repositories {
     mavenLocal()
-    maven(url = "https://maven.aliyun.com/repository/public")
+    maven(url = "https://maven.aliyun.com/repository/central")
     mavenCentral()
     maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
