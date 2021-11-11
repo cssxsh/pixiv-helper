@@ -30,7 +30,7 @@ object PixivBackupCommand : CompositeCommand(
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
         for (file in compress.withLock { PixivZipper.block() }) {
             if (this is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
-                sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到群文件")
+                sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到群文件")
                 runCatching {
                     file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
                 }.onFailure {
@@ -38,7 +38,7 @@ object PixivBackupCommand : CompositeCommand(
                 }
             } else {
                 upload {
-                    sendMessage("${file.name} ${file.length().toBytesSize()} 压缩完毕，开始上传到百度云")
+                    sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到百度云")
                     val code = file.getRapidUploadInfo()
                     runCatching {
                         uploadFile(file)
@@ -94,7 +94,7 @@ object PixivBackupCommand : CompositeCommand(
     @Description("列出备份目录")
     suspend fun CommandSender.list() {
         sendMessage(PixivZipper.list().joinToString("\n") { file ->
-            "${file.name} ${file.length().toBytesSize()}"
+            "${file.name} ${bytes(file.length())}"
         })
     }
 

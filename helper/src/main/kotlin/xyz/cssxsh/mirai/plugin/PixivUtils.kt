@@ -510,7 +510,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         results.replicate()
 
         logger.info {
-            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${size.toBytesSize()}]{${totalBookmarks}}下载完成"
+            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${bytes(size)}]{${totalBookmarks}}下载完成"
         }
 
         for (url in downloads) {
@@ -541,12 +541,12 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
 
 internal val bit: (Int) -> Long = { 1L shl it }
 
-internal fun Long.toBytesSize() = when (this) {
+internal fun bytes(value: Long): String = when (value) {
     0L -> "0"
-    in bit(0) until bit(10) -> "%dB".format(this)
-    in bit(10) until bit(20) -> "%dKB".format(this / bit(10))
-    in bit(20) until bit(30) -> "%dMB".format(this / bit(20))
-    in bit(20) until bit(30) -> "%dGB".format(this / bit(20))
+    in bit(0) until bit(10) -> "%dB".format(value)
+    in bit(10) until bit(20) -> "%dKB".format(value / bit(10))
+    in bit(20) until bit(30) -> "%dMB".format(value / bit(20))
+    in bit(20) until bit(30) -> "%dGB".format(value / bit(20))
     else -> throw IllegalStateException("Too Big")
 }
 
