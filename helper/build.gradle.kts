@@ -51,12 +51,10 @@ dependencies {
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     implementation(cssxsh("baidu-oauth", Versions.baidu))
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
-    compileOnly("net.mamoe:mirai-core-jvm:2.8.0-RC")
+    compileOnly("net.mamoe:mirai-core-jvm:2.8.0")
 
-    testImplementation(kotlin("test-junit5"))
-    testImplementation(junit("api", Versions.junit))
-    testImplementation("net.mamoe.yamlkt:yamlkt:0.10.0")
-    testRuntimeOnly(junit("engine", Versions.junit))
+    testImplementation(kotlin("test", "1.5.31"))
+    testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testRuntimeOnly("mysql:mysql-connector-java:8.0.26")
     testRuntimeOnly(fileTree(File(System.getenv("OPENCV_HOME")).resolve("build/java")))
 }
