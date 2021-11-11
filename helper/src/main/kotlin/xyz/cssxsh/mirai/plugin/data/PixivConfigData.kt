@@ -2,7 +2,7 @@ package xyz.cssxsh.mirai.plugin.data
 
 import net.mamoe.mirai.console.data.*
 
-object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
+object PixivConfigData : AutoSavePluginConfig("PixivConfig"), PixivHelperConfig {
     @ValueName("default_token")
     @ValueDescription("默认助手配置")
     var default: String by value("")

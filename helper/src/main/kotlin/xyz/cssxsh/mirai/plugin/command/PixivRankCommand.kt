@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -11,8 +13,9 @@ object PixivRankCommand : CompositeCommand(
     "rank", "排行",
     description = "PIXIV排行指令，通过http://pixiv.navirank.com/",
     overrideContext = PixivCommandArgumentContext
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     private suspend fun NaviRank.rank(year: Year, vararg words: String) =

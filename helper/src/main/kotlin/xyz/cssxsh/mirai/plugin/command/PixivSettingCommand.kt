@@ -8,7 +8,7 @@ object PixivSettingCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "setting",
     description = "PIXIV设置"
-) {
+), PixivHelperCommand {
 
     @SubCommand
     @Description("设置Task连续发送间隔时间, 单位秒")

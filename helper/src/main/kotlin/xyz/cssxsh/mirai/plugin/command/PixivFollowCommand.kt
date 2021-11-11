@@ -11,7 +11,7 @@ object PixivFollowCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "follow",
     description = "PIXIV关注指令"
-) {
+), PixivHelperCommand {
 
     private var PixivHelper.follow by PixivHelperDelegate { CompletedJob }
 

@@ -14,7 +14,7 @@ object PixivTaskCommand : CompositeCommand(
     "task",
     description = "PIXIV定时器",
     overrideContext = PixivCommandArgumentContext
-) {
+), PixivHelperCommand {
     private const val TASK_DURATION = 3 * 60
 
     private const val MINUTE = 60 * 1000L

@@ -13,7 +13,7 @@ object PixivDeleteCommand : CompositeCommand(
     "delete",
     description = "PIXIV删除指令",
     overrideContext = PixivCommandArgumentContext
-) {
+), PixivHelperCommand {
 
     private fun delete(pid: Long): Boolean {
         return imagesFolder(pid).listFiles { file ->

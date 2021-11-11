@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -16,8 +18,9 @@ object PixivPlayCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "play", "播放",
     description = "PIXIV播放指令"
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     private var PixivHelper.play by PixivHelperDelegate { CompletedJob }

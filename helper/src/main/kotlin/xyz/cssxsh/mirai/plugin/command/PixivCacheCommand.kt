@@ -16,7 +16,7 @@ object PixivCacheCommand : CompositeCommand(
     "cache",
     description = "PIXIV缓存指令",
     overrideContext = PixivCommandArgumentContext
-) {
+), PixivHelperCommand {
 
     private var PixivHelper.reply by PixivHelperDelegate { false }
 

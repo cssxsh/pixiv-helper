@@ -3,6 +3,8 @@ package xyz.cssxsh.mirai.plugin.command
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -12,8 +14,9 @@ object PixivTagCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "tag", "标签", "[饥饿]",
     description = "PIXIV标签"
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     private fun CommandSenderOnMessage<*>.record(tag: String, pid: Long?) = launch(SupervisorJob()) {

@@ -11,7 +11,7 @@ object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",
     description = "PIXIV信息指令"
-) {
+), PixivHelperCommand {
 
     @SubCommand
     @Description("获取助手信息")

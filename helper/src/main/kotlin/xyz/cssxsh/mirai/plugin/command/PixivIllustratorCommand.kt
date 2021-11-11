@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -12,8 +14,9 @@ object PixivIllustratorCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "illustrator", "画师",
     description = "PIXIV画师指令"
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     @SubCommand("uid", "id", "user", "用户")

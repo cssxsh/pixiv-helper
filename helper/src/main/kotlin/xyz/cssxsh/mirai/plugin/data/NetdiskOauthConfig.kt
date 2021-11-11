@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin.data
 import net.mamoe.mirai.console.data.*
 import xyz.cssxsh.baidu.*
 
-object NetdiskOauthConfig : ReadOnlyPluginConfig("NetdiskOauthConfig"), BaiduAuthConfig {
+object NetdiskOauthConfig : ReadOnlyPluginConfig("NetdiskOauthConfig"), PixivHelperConfig, BaiduAuthConfig {
     @ValueName("app_id")
     override val appId: Long by value(0L)
 

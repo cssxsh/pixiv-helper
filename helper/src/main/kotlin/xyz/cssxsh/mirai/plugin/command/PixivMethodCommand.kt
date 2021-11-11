@@ -16,7 +16,7 @@ object PixivMethodCommand : CompositeCommand(
     "pixiv",
     description = "PIXIV基本方法",
     overrideContext = PixivCommandArgumentContext
-) {
+), PixivHelperCommand {
 
     @SubCommand
     @Description("登录 通过 登录关联的微博")

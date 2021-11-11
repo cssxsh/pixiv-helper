@@ -9,7 +9,7 @@ object PixivMarkCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "mark", "bookmark",
     description = "PIXIV收藏指令"
-) {
+), PixivHelperCommand {
 
     @SubCommand
     @Description("添加指定作品收藏，并设定TAG")

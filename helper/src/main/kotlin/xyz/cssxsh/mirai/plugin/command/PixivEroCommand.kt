@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
@@ -11,8 +13,9 @@ object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "ero", "色图", "涩图", "瑟图", "[色]",
     description = "PIXIV色图指令"
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()

@@ -4,11 +4,12 @@ import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
 import net.mamoe.mirai.console.internal.data.*
 import net.mamoe.mirai.console.plugin.jvm.*
+import net.mamoe.mirai.console.util.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
 
-object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
+object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivHelperConfig, EroStandardConfig {
     @ValueName("cache_path")
     @ValueDescription("缓存目录")
     private val cachePath: String by value(System.getenv("PIXIV_CACHE").orEmpty())
@@ -94,6 +95,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroSta
 
     private lateinit var plugin: AbstractJvmPlugin
 
+    @OptIn(ConsoleExperimentalApi::class)
     override fun onInit(owner: PluginDataHolder, storage: PluginDataStorage) {
         plugin = owner as AbstractJvmPlugin
     }

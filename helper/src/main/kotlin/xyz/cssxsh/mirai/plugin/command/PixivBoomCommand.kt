@@ -2,6 +2,8 @@ package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -13,8 +15,9 @@ object PixivBoomCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "boom", "射爆", "社保",
     description = "PIXIV色图爆炸指令"
-) {
+), PixivHelperCommand {
 
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
     @Handler
@@ -29,7 +32,7 @@ object PixivBoomCommand : SimpleCommand(
                 val flow = getRank(mode = mode)
                 addCacheJob(name = "RANK[${mode.name}](new)", reply = false) { flow }
 
-                flow.eros().map { list -> list.map { illust -> illust.toArtWorkInfo() } }.toList().flatten().take(limit)
+                flow.map { list -> list.map { illust -> illust.toArtWorkInfo() } }.toList().flatten().take(limit)
             }
             word.toLongOrNull() != null -> {
                 ArtWorkInfo.user(uid = word.toLong()).sortedByDescending { it.pid }.take(limit)

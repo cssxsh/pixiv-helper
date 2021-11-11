@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin.data
 import com.squareup.gifencoder.*
 import net.mamoe.mirai.console.data.*
 
-object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig") {
+object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig"), PixivHelperConfig {
     val QUANTIZER_LIST = listOf(
         "com.squareup.gifencoder.UniformQuantizer",
         "com.squareup.gifencoder.MedianCutQuantizer",

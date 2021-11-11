@@ -21,7 +21,7 @@ object PixivBackupCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "backup",
     description = "PIXIV备份指令"
-) {
+), PixivHelperCommand {
 
     private val compress = Mutex()
 
