@@ -18,7 +18,7 @@ object PixivFollowCommand : CompositeCommand(
     private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }
         follow = launch(Dispatchers.IO) {
-            block().groupBy { uid ->
+            val (success, failure) = block().groupBy { uid ->
                 isActive && runCatching {
                     userFollowAdd(uid = uid)
                 }.onSuccess {
@@ -26,10 +26,10 @@ object PixivFollowCommand : CompositeCommand(
                 }.onFailure {
                     logger.warning({ "用户(${info().user.uid})添加关注(${uid})失败, 将开始延时" }, it)
                 }.isSuccess
-            }.let { (success, failure) ->
-                send {
-                    "关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}"
-                }
+            }
+
+            send {
+                "关注画师完毕, 关注成功数: ${success?.size ?: 0}, 失败数: ${failure?.size ?: 0}"
             }
         }
         null

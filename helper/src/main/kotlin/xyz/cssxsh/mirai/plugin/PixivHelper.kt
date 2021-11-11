@@ -100,7 +100,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         if (reply) send {
             "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个新作品等待缓存"
         }
-        list.map { illust ->
+        emit(list.map { illust ->
             async {
                 try {
                     when (illust.type) {
@@ -119,9 +119,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
                     }
                 }
             }
-        }.let {
-            emit(it)
-        }
+        })
     }
 
     private suspend fun Flow<List<Deferred<*>>>.await(capacity: Int) = buffer(capacity).collect { it.awaitAll() }

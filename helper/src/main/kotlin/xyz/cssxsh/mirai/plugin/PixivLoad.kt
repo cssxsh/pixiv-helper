@@ -382,15 +382,13 @@ internal fun localCache(range: LongRange) = flow {
     }.listDirs(range).orEmpty().asFlow().map { first ->
         for (second in first.listDirs(range).orEmpty()) {
             if (active().not()) break
-            second.listDirs(range).orEmpty().mapNotNull { dir ->
+            val list = second.listDirs(range).orEmpty().mapNotNull { dir ->
                 dir.resolve("${dir.name}.json").takeIf { file ->
                     dir.name.toLong() in ArtWorkInfo && file.canRead()
                 }?.readIllustInfo()
-            }.let {
-                if (it.isNotEmpty()) {
-                    emit(it)
-                }
             }
+
+            if (list.isNotEmpty()) emit(list)
         }
     }
 }

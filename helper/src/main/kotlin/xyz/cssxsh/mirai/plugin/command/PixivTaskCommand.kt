@@ -68,6 +68,8 @@ object PixivTaskCommand : CompositeCommand(
             check(it.isNotEmpty()) { "来自${url}加载的作品ID应该不为空" }
             sendMessage("来自${url}加载得到${it}，定时任务将添加")
         }
+
+        sendMessage("来自${url}加载得到${set}，定时任务将添加")
         "WEB(${url.host})<${pattern}>[${contact}]" to TimerTask.Web(
             interval = duration * MINUTE,
             delegate = contact.delegate,

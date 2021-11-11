@@ -60,25 +60,28 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = withHelper {
-        histories.getOrPut(fromEvent.subject) { History() }.let { history ->
-            if ("更色" in fromEvent.message.content) {
-                history.minSanityLevel++
-            } else {
-                history.minSanityLevel = 0
-            }
-            if ("更好" !in fromEvent.message.content && history.expire) {
-                history.minBookmarks = 0
-            }
-            randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).randomOrNull().also { info ->
-                requireNotNull(info) { "sanity >= ${history.minSanityLevel}, bookmarks >= ${history.minBookmarks}, 随机失败，请刷慢一点哦" }
-                synchronized(caches) {
-                    caches.remove(info.pid)
-                    history.minSanityLevel = info.sanity
-                    history.minBookmarks = info.bookmarks
-                    history.last = System.currentTimeMillis()
-                    record(pid = info.pid)
-                }
-            }
+        val history = histories.getOrPut(fromEvent.subject) { History() }
+
+        if ("更色" in fromEvent.message.content) {
+            history.minSanityLevel++
+        } else {
+            history.minSanityLevel = 0
         }
+        if ("更好" !in fromEvent.message.content && history.expire) {
+            history.minBookmarks = 0
+        }
+
+        val info = randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).randomOrNull()
+            ?: throw IllegalArgumentException("sanity >= ${history.minSanityLevel}, bookmarks >= ${history.minBookmarks}, 随机失败，请刷慢一点哦")
+
+        synchronized(caches) {
+            caches.remove(info.pid)
+            history.minSanityLevel = info.sanity
+            history.minBookmarks = info.bookmarks
+            history.last = System.currentTimeMillis()
+            record(pid = info.pid)
+        }
+
+        info
     }
 }

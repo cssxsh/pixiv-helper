@@ -78,46 +78,46 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存别名画师列表作品")
     suspend fun CommandSenderOnMessage<*>.alias() = withHelper {
-        AliasSetting.all().also { list ->
-            addCacheJob(name = "ALIAS", reply = reply) { getAliasUserIllusts(list = list) }
-        }.let {
-            "别名列表中共${it.size}个画师需要缓存"
-        }
+        val list = AliasSetting.all()
+
+        addCacheJob(name = "ALIAS", reply = reply) { getAliasUserIllusts(list = list) }
+
+        "别名列表中共${list.size}个画师需要缓存"
     }
 
     @SubCommand
     @Description("将关注画师列表检查，缓存所有作品")
     suspend fun CommandSenderOnMessage<*>.following(flush: Boolean = false, uid: Long? = null) = withHelper {
-        userDetail(uid = uid ?: info().user.uid).also {
-            addCacheJob(name = "FOLLOW_ALL(${it.user.id})", reply = reply) {
-                getUserFollowing(detail = it, flush = flush)
-            }
-        }.let {
-            "@${it.user.name}关注列表中共${it.profile.totalFollowUsers}个画师需要缓存"
+        val detail = userDetail(uid = uid ?: info().user.uid)
+
+        addCacheJob(name = "FOLLOW_ALL(${detail.user.id})", reply = reply) {
+            getUserFollowing(detail = detail, flush = flush)
         }
+
+        "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师需要缓存"
     }
 
     @SubCommand("fms")
     @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
     suspend fun CommandSenderOnMessage<*>.followingWithMarks(jump: Int = 0, uid: Long? = null) = withHelper {
-        userDetail(uid = uid ?: info().user.uid).also {
-            addCacheJob(name = "FOLLOW_MARKS(${it.user.id})", write = false, reply = reply) {
-                getUserFollowingMark(detail = it, jump = jump).eros()
-            }
-        }.let {
-            "@${it.user.name}关注列表中共${it.profile.totalFollowUsers}个画师的收藏需要缓存"
+        val detail = userDetail(uid = uid ?: info().user.uid)
+
+        addCacheJob(name = "FOLLOW_MARKS(${detail.user.id})", write = false, reply = reply) {
+            getUserFollowingMark(detail = detail, jump = jump).eros()
         }
+
+        "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师的收藏需要缓存"
     }
 
     @SubCommand
     @Description("缓存指定画师作品")
     suspend fun CommandSenderOnMessage<*>.user(uid: Long) = withHelper {
-        userDetail(uid = uid).also {
-            it.twitter() // XXX Save Twitter
-            addCacheJob(name = "USER(${uid})", reply = reply) { getUserIllusts(detail = it) }
-        }.let {
-            "画师[${it.user.name}]有${it.total()}个作品需要缓存"
-        }
+        val detail = userDetail(uid = uid)
+
+        detail.twitter() // XXX Save Twitter
+        addCacheJob(name = "USER(${uid})", reply = reply) { getUserIllusts(detail = detail) }
+
+        "画师[${detail.user.name}]有${detail.total()}个作品需要缓存"
     }
 
     @SubCommand
@@ -187,11 +187,11 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("缓存搜索记录")
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
-        PixivSearchResult.noCached().also {
-            addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = it, check = false) }
-        }.let {
-            "搜索结果有${it.size}个作品需要缓存"
-        }
+        val list = PixivSearchResult.noCached()
+
+        addCacheJob(name = "SEARCH", reply = reply) { getListIllusts(info = list, check = false) }
+
+        "搜索结果有${list.size}个作品需要缓存"
     }
 
     @SubCommand

@@ -308,11 +308,13 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
             add("部分图片省略\n".toPlainText())
             files.subList(0, max)
         }.map { file ->
-            add(try {
-                file.uploadAsImage(contact)
-            } catch (e: Throwable) {
-                "上传失败, $e\n".toPlainText()
-            })
+            add(
+                try {
+                    file.uploadAsImage(contact)
+                } catch (e: Throwable) {
+                    "上传失败, $e\n".toPlainText()
+                }
+            )
         }
     } else {
         add("R18禁止！".toPlainText())
@@ -325,18 +327,20 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     appendLine("ACCOUNT: ${preview.user.account}")
     appendLine("FOLLOWED: ${preview.user.isFollowed}")
     appendLine("TWITTER: ${preview.user.twitter()}")
-    runCatching {
+    try {
         append(preview.user.getProfileImage().uploadAsImage(contact))
-    }.onFailure {
-        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, it)
+    } catch (e: Throwable) {
+        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, e)
     }
     for (illust in preview.illusts.apply { replicate() }.write()) {
         if (illust.isEro().not()) continue
-        runCatching {
+        try {
             val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
             }
+        } catch (e: Throwable) {
+            logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
         }
     }
 }
@@ -348,10 +352,10 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
     appendLine("FOLLOWED: ${detail.user.isFollowed}")
     appendLine("TOTAL: ${detail.total()}")
     appendLine("TWITTER: ${detail.twitter()}")
-    runCatching {
+    try {
         append(detail.user.getProfileImage().uploadAsImage(contact))
-    }.onFailure {
-        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, it)
+    } catch (e: Throwable) {
+        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, e)
     }
 }
 
@@ -434,8 +438,8 @@ internal suspend fun PixivHelper.getIllustInfo(
     block: suspend PixivHelper.(Long) -> IllustInfo = FlushIllustInfo,
 ): IllustInfo = illust(pid).let { file ->
     if (!flush && file.exists()) {
-        runCatching {
-            file.readIllustInfo()
+        file.runCatching {
+            readIllustInfo()
         }.onFailure {
             logger.warning({ "文件${file.absolutePath}读取存在问题" }, it)
         }.getOrThrow()
@@ -445,9 +449,6 @@ internal suspend fun PixivHelper.getIllustInfo(
         }
     }
 }
-
-internal fun Throwable.isCancellationException() =
-    (this is CancellationException || message == "No more continuations to resume")
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
@@ -567,16 +568,13 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     check(account.isNotBlank()) { "Account is Blank" }
     UserBaseInfo.account(account)?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
-    return useHttpClient { client ->
+    val location = useHttpClient { client ->
         client.config {
             expectSuccess = false
             followRedirects = false
         }.head<HttpMessage>(url).headers[HttpHeaders.Location].orEmpty()
-    }.let { location ->
-        requireNotNull(URL_USER_REGEX.find(location)) {
-            "跳转失败, $url -> $location"
-        }
-    }.value.toLong()
+    }
+    return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
 }
 
 internal fun MessageSource.key() = ids.asList() + time

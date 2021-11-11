@@ -78,12 +78,10 @@ object PixivBackupCommand : CompositeCommand(
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
         val list = ArtWorkInfo.tag(word = tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
-        compressArtWorks(
+        listOf(compressArtWorks(
             list = list,
             basename = "TAG[${tag}]"
-        ).let {
-            listOf(it)
-        }
+        ))
     }
 
     @SubCommand
@@ -104,9 +102,8 @@ object PixivBackupCommand : CompositeCommand(
     @Description("获取备份文件，发送文件消息")
     suspend fun MemberCommandSenderOnMessage.get(filename: String) {
         runCatching {
-            requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }.let { file ->
-                file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
-            }
+            val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
+            file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
         }.onFailure {
             sendMessage("上传失败: ${it.message}")
         }

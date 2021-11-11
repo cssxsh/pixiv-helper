@@ -13,35 +13,37 @@ object PixivSettingCommand : CompositeCommand(
     @SubCommand
     @Description("设置Task连续发送间隔时间, 单位秒")
     suspend fun CommandSenderOnMessage<*>.interval(sec: Int) = withHelper {
-        "$TaskSendInterval -> ${sec}s".also { PixivConfigData.interval = sec }
+        val old = PixivConfigData.interval
+        PixivConfigData.interval = sec
+        "$old -> ${sec}s"
     }
 
     @SubCommand
     @Description("设置Task通过转发发送")
     suspend fun CommandSenderOnMessage<*>.forward() = withHelper {
         PixivConfigData.forward = !TaskForward
-        "$TaskForward"
+        TaskForward
     }
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
     suspend fun CommandSenderOnMessage<*>.link() = withHelper {
         link = !link
-        "$link"
+        link
     }
 
     @SubCommand
     @Description("设置是否显示TAG INFO")
     suspend fun CommandSenderOnMessage<*>.tag() = withHelper {
         tag = !tag
-        "$tag"
+        tag
     }
 
     @SubCommand
     @Description("设置是否显示作品属性")
     suspend fun CommandSenderOnMessage<*>.attr() = withHelper {
         attr = !attr
-        "$attr"
+        attr
     }
 
     @SubCommand

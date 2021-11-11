@@ -21,7 +21,7 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     @Description("登录 通过 登录关联的微博")
     suspend fun CommandSenderOnMessage<*>.sina() = withHelper {
-        sina { url ->
+        val result = sina { url ->
             sendMessage(
                 try {
                     useHttpClient { it.get<InputStream>(url) }.use { it.uploadAsImage(contact) }
@@ -31,9 +31,9 @@ object PixivMethodCommand : CompositeCommand(
                 } + " 请扫码登录关联了Pixiv的微博".toPlainText()
             )
             logger.info { "微博 登录二维码  $url" }
-        }.let {
-            "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
         }
+
+        "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
     }
 
     @SubCommand
@@ -41,20 +41,20 @@ object PixivMethodCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.cookie() = withHelper {
         val json = File("cookie.json")
         sendMessage("加载 cookie 从 ${json.absolutePath}")
-        cookie {
+        val result = cookie {
             @OptIn(ExperimentalSerializationApi::class)
             PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).map { it.toCookie() }
-        }.let {
-            "登陆成功，请妥善保管 RefreshToken: ${it.refreshToken}"
         }
+
+        "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
     }
 
     @SubCommand
     @Description("登录 通过 RefreshToken")
     suspend fun CommandSenderOnMessage<*>.refresh(token: String) = withHelper {
         config { refreshToken = token }
-        refresh().let {
-            "${it.user.name} 登陆成功 AccessToken: ${it.accessToken}, ExpiresTime: $expires"
-        }
+        val result = refresh()
+
+        "${result.user.name} 登陆成功 AccessToken: ${result.accessToken}, ExpiresTime: $expires"
     }
 }

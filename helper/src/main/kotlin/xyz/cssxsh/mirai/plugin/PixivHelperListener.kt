@@ -49,9 +49,7 @@ object PixivHelperListener {
     }
 
     internal fun stop() = synchronized(listeners) {
-        listeners.forEach { (_, listener) ->
-            listener.cancel()
-        }
+        for ((_, listener) in listeners) listener.cancel()
         listeners.clear()
     }
 

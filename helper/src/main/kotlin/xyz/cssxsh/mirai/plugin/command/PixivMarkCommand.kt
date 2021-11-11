@@ -21,9 +21,8 @@ object PixivMarkCommand : CompositeCommand(
     @SubCommand
     @Description("删除指定作品收藏")
     suspend fun CommandSenderOnMessage<*>.delete(pid: Long) = withHelper {
-        illustBookmarkDelete(pid = pid).let {
-            "取消收藏${pid}成功, $it"
-        }
+        illustBookmarkDelete(pid = pid)
+        "取消收藏${pid}成功"
     }
 
     @SubCommand
