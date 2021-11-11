@@ -191,6 +191,11 @@ internal val EroAgeLimit get() = if (PixivHelperSettings.eroSFW) AgeLimit.ALL el
  */
 internal val CacheCapacity by PixivHelperSettings::cacheCapacity
 
+/**
+ * CACHE JUMP
+ */
+internal val CacheJump by PixivHelperSettings::cacheJump
+
 internal class TitleDisplayStrategy(val title: String) : ForwardMessage.DisplayStrategy {
     override fun generateTitle(forward: RawForwardMessage): String = title
 }

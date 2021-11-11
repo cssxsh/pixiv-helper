@@ -57,7 +57,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
             try {
                 logger.info { "PixivHelper:${contact}#CacheTask start" }
                 supervisorScope {
-                    cacheChannel.consumeAsFlow().save().download().await(CacheCapacity)
+                    cacheChannel.consumeAsFlow().save().download(CacheJump).await(CacheCapacity)
                 }
             } catch (e: Throwable) {
                 logger.warning { "PixivHelper:${contact}#CacheTask $e" }
@@ -92,7 +92,8 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         }
     }
 
-    private suspend fun Flow<DownloadTask>.download() = transform { (name, list, reply) ->
+    private suspend fun Flow<DownloadTask>.download(jump: Boolean = false) = transform { (name, list, reply) ->
+        if (jump) return@transform
         if (list.isEmpty()) return@transform
         logger.verbose {
             "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存"
@@ -122,7 +123,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         })
     }
 
-    private suspend fun Flow<List<Deferred<*>>>.await(capacity: Int) = buffer(capacity).collect { it.awaitAll() }
+    private suspend fun Flow<List<Deferred<*>>>.await(capacity: Int = 3) = buffer(capacity).collect { it.awaitAll() }
 
     suspend fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
         cacheChannel.send(CacheTask(name = name, write = write, reply = reply, block = block))

@@ -93,6 +93,10 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
     @ValueDescription("下载缓存容量，同时下载的图片上限")
     val cacheCapacity: Int by value(3)
 
+    @ValueName("cache_jump")
+    @ValueDescription("缓存是否跳过下载")
+    val cacheJump: Boolean by value(false)
+
     private lateinit var plugin: AbstractJvmPlugin
 
     @OptIn(ConsoleExperimentalApi::class)
