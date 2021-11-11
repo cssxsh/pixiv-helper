@@ -541,13 +541,15 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
 
 internal val bit: (Int) -> Long = { 1L shl it }
 
-internal fun bytes(value: Long): String = when (value) {
-    0L -> "0"
-    in bit(0) until bit(10) -> "%dB".format(value)
-    in bit(10) until bit(20) -> "%dKB".format(value / bit(10))
-    in bit(20) until bit(30) -> "%dMB".format(value / bit(20))
-    in bit(20) until bit(30) -> "%dGB".format(value / bit(20))
-    else -> throw IllegalStateException("Too Big")
+internal val bytes: (Long) -> String = {
+    when (it) {
+        0L -> "0"
+        in bit(0) until bit(10) -> "%dB".format(it)
+        in bit(10) until bit(20) -> "%dKB".format(it / bit(10))
+        in bit(20) until bit(30) -> "%dMB".format(it / bit(20))
+        in bit(20) until bit(30) -> "%dGB".format(it / bit(20))
+        else -> throw IllegalStateException("Too Big")
+    }
 }
 
 internal fun backups(): Map<String, File> {
