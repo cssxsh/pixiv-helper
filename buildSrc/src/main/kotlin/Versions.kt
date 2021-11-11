@@ -15,5 +15,5 @@ object Versions {
     const val hibernate = "5.5.5.Final"
     const val mybatis = "3.5.6"
     const val sqlite = "3.34.0"
-    const val baidu = "0.1.0-dev-15"
+    const val baidu = "1.0.0"
 }

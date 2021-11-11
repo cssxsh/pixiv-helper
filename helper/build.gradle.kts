@@ -64,16 +64,7 @@ dependencies {
 kotlin {
     sourceSets {
         all {
-//            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-//            languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
-//            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
-//            languageSettings.useExperimentalAnnotation("net.mamoe.mirai.utils.MiraiInternalApi")
-            languageSettings.optIn("net.mamoe.mirai.console.util.ConsoleExperimentalApi")
-            languageSettings.optIn("net.mamoe.mirai.console.command.descriptor.ExperimentalCommandDescriptors")
-//            languageSettings.useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
-//            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
-//            languageSettings.useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
-//            languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
+            languageSettings.optIn("kotlin.RequiresOptIn")
         }
     }
 }
