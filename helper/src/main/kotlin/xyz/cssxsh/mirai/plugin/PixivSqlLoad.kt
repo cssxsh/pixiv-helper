@@ -98,6 +98,16 @@ private fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R
 
 internal val SqlMetaData get() = useSession { session -> session.doReturningWork { it.metaData } }
 
+/**
+ * Only with Mysql
+ */
+internal fun variables() = useSession { session ->
+    session.createNativeQuery("SHOW VARIABLES").list().associate { row ->
+        row as Array<*>
+        row[0].toString() to row[1].toString()
+    }
+}
+
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
     val config = Configuration().apply { Entities.forEach(::addAnnotatedClass) }
@@ -165,7 +175,7 @@ internal fun ArtWorkInfo.SQL.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-    }.singleResult
+    }.uniqueResult()
 }
 
 internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
@@ -177,7 +187,7 @@ internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
                 isTrue(artwork.get("ero")),
                 equal(artwork.get<Int>("age"), age.ordinal)
             )
-    }.singleResult
+    }.uniqueResult()
 }
 
 internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
@@ -185,7 +195,7 @@ internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession 
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
             .where(equal(artwork.get<Long>("pid"), pid))
-    }.singleResult > 0
+    }.uniqueResult() > 0
 }
 
 internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
@@ -193,7 +203,7 @@ internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSessi
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
             .where(artwork.get<Long>("pid").`in`(ids))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.interval(
@@ -210,7 +220,7 @@ internal fun ArtWorkInfo.SQL.interval(
                 lt(artwork.get("bookmarks"), marks),
                 gt(artwork.get("pages"), pages)
             )
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useSession { session ->
@@ -221,7 +231,7 @@ internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useS
                 isTrue(artwork.get("deleted")),
                 between(artwork.get("pid"), range.first, range.last)
             )
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.type(
@@ -236,7 +246,7 @@ internal fun ArtWorkInfo.SQL.type(
                 between(artwork.get("pid"), range.first, range.last),
                 artwork.get<Int>("type").`in`(types.map { it.ordinal })
             )
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
@@ -247,7 +257,7 @@ internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { s
                 isFalse(artwork.get("deleted")),
                 equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
             )
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.tag(
@@ -282,7 +292,7 @@ internal fun ArtWorkInfo.SQL.tag(
             )
             .orderBy(asc(rand()))
             .distinct(true)
-    }.setMaxResults(limit).resultList.orEmpty()
+    }.setMaxResults(limit).list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.random(
@@ -302,7 +312,7 @@ internal fun ArtWorkInfo.SQL.random(
                 gt(artwork.get<Long>("bookmarks"), marks)
             )
             .orderBy(asc(rand()))
-    }.setMaxResults(limit).resultList.orEmpty()
+    }.setMaxResults(limit).list().orEmpty()
 }
 
 internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession { session ->
@@ -429,7 +439,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
             .where(
                 equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
             )
-    }.singleResult
+    }.uniqueResult()
 }
 
 internal fun UserBaseInfo.SQL.account(account: String): UserBaseInfo? = useSession { session ->
@@ -481,7 +491,7 @@ internal fun Twitter.SQL.find(uid: Long): List<Twitter> = useSession { session -
         val twitter = criteria.from(Twitter::class.java)
         criteria.select(twitter)
             .where(equal(twitter.get<Long>("uid"), uid))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { session ->
@@ -489,7 +499,7 @@ internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { sess
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
             .where(like(file.get("md5"), hash))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
@@ -512,7 +522,7 @@ internal operator fun StatisticTaskInfo.SQL.contains(pair: Pair<String, Long>): 
                 equal(task.get<Long>("pid"), pid),
                 like(task.get("task"), name)
             )
-    }.singleResult > 0
+    }.uniqueResult() > 0
 }
 
 internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useSession { session ->
@@ -521,7 +531,7 @@ internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useS
         criteria.select(task)
             .where(like(task.get("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
-    }.setMaxResults(1).resultList.singleOrNull()
+    }.setMaxResults(1).list().singleOrNull()
 }
 
 internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSession { session ->
@@ -529,7 +539,7 @@ internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSe
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
             .where(equal(tag.get<Long>("sender"), id))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useSession { session ->
@@ -537,7 +547,7 @@ internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useS
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
             .where(equal(tag.get<Long>("group"), id))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -547,7 +557,7 @@ internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = use
         criteria.select(construct(Pair::class.java, tag.get<String>("tag"), count(tag)))
             .groupBy(tag.get<String>("tag"))
             .orderBy(desc(count(tag)))
-    }.setMaxResults(limit).resultList.orEmpty() as List<Pair<String, Int>>
+    }.setMaxResults(limit).list().orEmpty() as List<Pair<String, Int>>
 }
 
 internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSession { session ->
@@ -555,7 +565,7 @@ internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSe
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
             .where(equal(ero.get<Long>("sender"), id))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useSession { session ->
@@ -563,7 +573,7 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
             .where(equal(ero.get<Long>("group"), id))
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
@@ -585,7 +595,7 @@ internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session -
     session.withCriteria<AliasSetting> { criteria ->
         val alias = criteria.from(AliasSetting::class.java)
         criteria.select(alias)
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
 internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { session ->
@@ -621,6 +631,6 @@ internal fun PixivSearchResult.SQL.noCached(): List<PixivSearchResult> = useSess
         val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)
         criteria.select(search)
             .where(artwork.isNull)
-    }.resultList.orEmpty()
+    }.list().orEmpty()
 }
 
