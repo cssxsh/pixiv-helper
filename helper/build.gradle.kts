@@ -1,4 +1,3 @@
-
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -18,7 +17,7 @@ mirai {
         }
         exclude {
             val features = listOf("auth", "compression", "json")
-            it.path.startsWith("io/ktor") && features.none { f ->  it.path.startsWith("io/ktor/client/features/$f") }
+            it.path.startsWith("io/ktor") && features.none { f -> it.path.startsWith("io/ktor/client/features/$f") }
         }
         exclude {
             it.path.startsWith("okhttp3/internal")

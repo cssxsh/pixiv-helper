@@ -21,5 +21,5 @@ data class PixivArticle(
         override val uid: Long,
         @SerialName("name")
         override val name: String,
-    ): SimpleArtworkInfo
+    ) : SimpleArtworkInfo
 }

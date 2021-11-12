@@ -22,4 +22,4 @@ data class NaviRankRecord(
     override val uid: Long,
     override val name: String,
     val tags: List<String>
-): SimpleArtworkInfo
+) : SimpleArtworkInfo

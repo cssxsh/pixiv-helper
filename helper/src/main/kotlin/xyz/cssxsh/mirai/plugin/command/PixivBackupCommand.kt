@@ -3,13 +3,13 @@ package xyz.cssxsh.mirai.plugin.command
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.*
-import net.mamoe.mirai.utils.*
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
+import net.mamoe.mirai.utils.*
 import org.hibernate.*
-import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.baidu.*
+import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.baidu.oauth.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
@@ -77,11 +77,14 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定标签的作品")
     fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
-        val list = ArtWorkInfo.tag(word = tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
-        listOf(compressArtWorks(
-            list = list,
-            basename = "TAG[${tag}]"
-        ))
+        val list =
+            ArtWorkInfo.tag(word = tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
+        listOf(
+            compressArtWorks(
+                list = list,
+                basename = "TAG[${tag}]"
+            )
+        )
     }
 
     @SubCommand

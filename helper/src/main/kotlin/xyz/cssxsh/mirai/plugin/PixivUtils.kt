@@ -17,7 +17,6 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.*
-import java.lang.*
 
 internal val logger by lazy {
     val open = System.getProperty("xyz.cssxsh.mirai.plugin.logger", "${true}").toBoolean()
@@ -584,4 +583,7 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
 }
 
+/**
+ * XXX: [MessageSource.equals]
+ */
 internal fun MessageSource.key() = ids.asList() + time

@@ -41,7 +41,7 @@ abstract class HtmlParser(var ignore: Ignore) {
     protected fun Element.href(): String = attr("href")
 
     protected suspend fun <R> http(block: suspend (HttpClient) -> R): R = supervisorScope {
-        while(isActive) {
+        while (isActive) {
             try {
                 return@supervisorScope block(client)
             } catch (throwable: Throwable) {

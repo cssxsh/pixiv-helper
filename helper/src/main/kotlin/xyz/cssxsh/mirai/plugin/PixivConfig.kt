@@ -102,7 +102,7 @@ internal val PIXIV_HOST = mapOf(
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
 @OptIn(DelicateCoroutinesApi::class)
-internal fun PixivHelperSettings.init(scope:  CoroutineScope = GlobalScope) {
+internal fun PixivHelperSettings.init(scope: CoroutineScope = GlobalScope) {
     cacheFolder.mkdirs()
     backupFolder.mkdirs()
     tempFolder.mkdirs()
@@ -136,7 +136,7 @@ internal fun PixivHelperSettings.init(scope:  CoroutineScope = GlobalScope) {
     }
 }
 
-internal fun BaiduNetDiskUpdater.init(scope:  CoroutineScope) = scope.launch {
+internal fun BaiduNetDiskUpdater.init(scope: CoroutineScope) = scope.launch {
     loadToken()
     try {
         check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }

@@ -11,7 +11,7 @@ sealed class SendModel {
     object Normal : SendModel()
     object Flash : SendModel()
     data class Recall(val ms: Long) : SendModel()
-    object Forward: SendModel()
+    object Forward : SendModel()
 
     @Serializable
     data class Info(

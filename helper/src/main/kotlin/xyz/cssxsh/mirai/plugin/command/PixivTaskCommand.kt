@@ -86,7 +86,7 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("推送，删除")
-    suspend fun  CommandSenderOnMessage<*>.delete(name: String) = withHelper {
+    suspend fun CommandSenderOnMessage<*>.delete(name: String) = withHelper {
         PixivHelperScheduler.removeTimerTask(name)
         "定时任务${name}已删除".toPlainText()
     }
