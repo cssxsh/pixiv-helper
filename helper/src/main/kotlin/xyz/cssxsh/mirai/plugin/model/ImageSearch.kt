@@ -32,7 +32,7 @@ data class PixivSearchResult(
     @Column(name = "name", nullable = false)
     @SerialName("member_name")
     override var name: String = ""
-): SimpleArtworkInfo, SearchResult, java.io.Serializable {
+) : SimpleArtworkInfo, SearchResult, PixivEntity {
     @ManyToOne(cascade = [], fetch = FetchType.EAGER)
     @JoinColumn(name = "pid", insertable = false, updatable = false, nullable = true)
     @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
@@ -47,13 +47,13 @@ data class TwitterSearchResult(
     override val similarity: Double = 0.0,
     val tweet: String = "",
     val image: String = "",
-): SearchResult
+) : SearchResult
 
 data class OtherSearchResult(
     override val md5: String = "",
     override val similarity: Double = 0.0,
     val text: String = "",
-): SearchResult
+) : SearchResult
 
 @Serializable
 data class JsonSearchResults(
@@ -67,7 +67,7 @@ data class JsonSearchResults(
         @SerialName("account_type")
         val accountType: Int,
         @SerialName("index")
-        val index: Map<Int,MapValue> = emptyMap(),
+        val index: Map<Int, MapValue> = emptyMap(),
         @SerialName("long_limit")
         val longLimit: Int,
         @SerialName("long_remaining")

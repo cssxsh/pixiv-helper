@@ -17,18 +17,7 @@ import javax.persistence.*
 import javax.persistence.criteria.*
 import kotlin.streams.*
 
-private val Entities = listOf(
-    UserBaseInfo::class.java,
-    ArtWorkInfo::class.java,
-    TagBaseInfo::class.java,
-    FileInfo::class.java,
-    PixivSearchResult::class.java,
-    StatisticEroInfo::class.java,
-    StatisticTagInfo::class.java,
-    StatisticTaskInfo::class.java,
-    AliasSetting::class.java,
-    Twitter::class.java
-)
+private val Entities = PixivEntity::class.sealedSubclasses.map { it.java }
 
 private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
 
@@ -118,7 +107,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.c3p0.max_size", "${1}")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
-        Entities.onEach { clazz ->
+        for (clazz in Entities) {
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
             new.withCriteria<Any> { it.select(it.from(clazz)) }

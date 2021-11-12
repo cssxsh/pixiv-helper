@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.plugin.model
 
 import xyz.cssxsh.pixiv.*
 import javax.persistence.*
-import java.io.*
 
 @Entity
 @Table(name = "artworks")
@@ -41,7 +40,7 @@ data class ArtWorkInfo(
     @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false, updatable = false)
     val author: UserBaseInfo = UserBaseInfo()
-) {
+) : PixivEntity {
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "pid", insertable = false, updatable = false)
     lateinit var tags: List<TagBaseInfo>
@@ -68,7 +67,7 @@ data class FileInfo(
     val url: String = "",
     @Column(name = "size", nullable = false)
     val size: Int = 0
-) : Serializable {
+) : PixivEntity {
     companion object SQL
 }
 
@@ -83,7 +82,7 @@ data class TagBaseInfo(
     val name: String = "",
     @Column(name = "translated_name", nullable = true)
     val translated: String? = null
-) : Serializable
+) : PixivEntity
 
 @Entity
 @Table(name = "users")
@@ -95,7 +94,7 @@ data class UserBaseInfo(
     val name: String = "",
     @Column(name = "account", nullable = false, length = 32)
     val account: String = ""
-) {
+) : PixivEntity {
     companion object SQL
 }
 
@@ -107,6 +106,6 @@ data class Twitter(
     val screen: String = "",
     @Column(name = "uid", nullable = false, updatable = false)
     val uid: Long,
-) {
+) : PixivEntity {
     companion object SQL
 }
