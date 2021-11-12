@@ -291,7 +291,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
 配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
-下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar)
+下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/)
 , 然后放进 `plugins` 文件夹  
 关于表的自动创建可以查看 [sql](helper/src/main/resources/xyz/cssxsh/mirai/plugin/model)  
 配置 文件
@@ -300,7 +300,6 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv?serverTimezone=Aisa/Shanghai
 hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
 hibernate.connection.CharSet=utf8mb4
-hibernate.connection.characterEncoding=utf8
 hibernate.connection.useUnicode=true
 hibernate.connection.username=username
 hibernate.connection.password=password
