@@ -293,6 +293,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
 下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar)
 , 然后放进 `plugins` 文件夹  
+关于表的自动创建可以查看 [sql](helper/src/main/resources/xyz/cssxsh/mirai/plugin/model)  
 配置 文件
 
 ```

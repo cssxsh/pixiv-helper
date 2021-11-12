@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users
     `name`    VARCHAR(15)      NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `account` VARCHAR(32)      NOT NULL COLLATE 'ascii_general_ci',
     PRIMARY KEY (`uid`)
-);
+) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS artworks
 (
     `pid`             INTEGER UNSIGNED NOT NULL,
@@ -28,17 +28,17 @@ CREATE TABLE IF NOT EXISTS artworks
     `deleted`         BOOLEAN          NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`pid`),
     FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
-);
+) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER     NOT NULL,
     `name`            VARCHAR(30) NOT NULL COLLATE 'utf8mb4_bin',
     `translated_name` VARCHAR(64) COLLATE 'utf8mb4_bin',
     PRIMARY KEY (`pid`, `name`),
-    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
-CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
+    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX tag_name (`name`),
+    INDEX tag_translated_name (`translated_name`)
+) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER UNSIGNED NOT NULL,
@@ -48,9 +48,9 @@ CREATE TABLE IF NOT EXISTS files
     -- file size max 32MB
     `size`  INTEGER          NOT NULL,
     PRIMARY KEY (`pid`, `index`),
-    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX file_md5 (`md5`)
 );
-CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
 CREATE TABLE IF NOT EXISTS twitter
 (
     `screen` VARCHAR(15) NOT NULL COLLATE 'ascii_general_ci',
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS statistic_search
     `uid`        INTEGER UNSIGNED NOT NULL,
     `name`       VARCHAR(15)      NOT NULL,
     PRIMARY KEY (`md5`)
-);
+) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS statistic_alias
 (
     `name` VARCHAR(15)      NOT NULL,

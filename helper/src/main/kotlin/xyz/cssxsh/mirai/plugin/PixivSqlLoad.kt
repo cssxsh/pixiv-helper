@@ -15,6 +15,7 @@ import java.io.*
 import java.sql.*
 import javax.persistence.*
 import javax.persistence.criteria.*
+import kotlin.reflect.full.*
 import kotlin.streams.*
 
 private val Entities = PixivEntity::class.sealedSubclasses.map { it.java }
@@ -60,8 +61,8 @@ private val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply
 private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
     session.transaction.begin()
-    kotlin.runCatching {
-        val meta = session.doReturningWork { it.metaData }
+    session.runCatching {
+        val meta = doReturningWork { it.metaData }
         val name = meta.databaseProductName
         val sql = when {
             name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
@@ -70,10 +71,11 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
             name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
             else -> "create.default.sql"
         }
-        requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "读取 Create Sql 失败" }
+        logger.info("Create Table by $sql with $name")
+        requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "Read Create Sql 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
-            .forEach { session.createNativeQuery(it).executeUpdate() }
+            .forEach { createNativeQuery(it).executeUpdate() }
         meta
     }.onSuccess {
         session.transaction.commit()
@@ -110,16 +112,16 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
         for (clazz in Entities) {
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
-            new.withCriteria<Any> { it.select(it.from(clazz)) }
+            new.withCriteria<PixivEntity> { it.select(it.from(clazz)) }
                 .setReadOnly(true)
                 .setCacheable(false)
-                .resultStream
+                .stream()
                 .asSequence()
                 .chunked(chunk)
                 .forEach { list ->
                     session.transaction.begin()
-                    runCatching {
-                        for (item in list) session.replicate(item, mode)
+                    session.runCatching {
+                        for (item in list) replicate(item, mode)
                         count += list.size
                         annotation to count
                     }.onSuccess {
@@ -144,6 +146,20 @@ internal inline fun <reified T> Session.withCriteria(block: CriteriaBuilder.(cri
 
 internal inline fun <reified T> Session.withCriteriaUpdate(block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit) =
     createQuery(with(criteriaBuilder) { createCriteriaUpdate(T::class.java).also { block(it) } })
+
+internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERWRITE) {
+    val entity = this
+    useSession(entity::class.companionObjectInstance) { session ->
+        session.transaction.begin()
+        session.runCatching {
+            replicate(entity, mode)
+        }.onSuccess {
+            session.transaction.commit()
+        }.onFailure {
+            session.transaction.rollback()
+        }.getOrThrow()
+    }
+}
 
 internal fun ArtWorkInfo.SQL.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
@@ -291,8 +307,8 @@ internal fun ArtWorkInfo.SQL.random(
 
 internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
-    kotlin.runCatching {
-        session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
+    session.runCatching {
+        withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment).set("deleted", true)
                 .where(
@@ -309,8 +325,8 @@ internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSessio
 
 internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
-    kotlin.runCatching {
-        session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
+    session.runCatching {
+        withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment).set("deleted", true)
                 .where(
@@ -318,17 +334,6 @@ internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSe
                     equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
                 )
         }.executeUpdate()
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
-internal fun ArtWorkInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -368,14 +373,15 @@ internal fun IllustInfo.toTagBaseInfos(): List<TagBaseInfo> = tags.distinctBy { 
 
 internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (pid == 0L) return@useSession
-    kotlin.runCatching {
-        // XXX Save twitter
+    try {
         user.twitter()
+    } catch (e: Throwable) {
+        logger.warning({ "Save twitter" }, e)
     }
     session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
-        for (tag in toTagBaseInfos()) session.replicate(tag, ReplicationMode.IGNORE)
+    session.runCatching {
+        replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
+        for (tag in toTagBaseInfos()) replicate(tag, ReplicationMode.IGNORE)
     }.onSuccess {
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
@@ -387,22 +393,23 @@ internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
 
 internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     if (isEmpty()) return@useSession
-    kotlin.runCatching {
-        // XXX Save twitter
+    try {
         for (info in this) {
             info.user.twitter()
         }
+    } catch (e: Throwable) {
+        logger.warning({ "Save twitter" }, e)
     }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
-    kotlin.runCatching {
+    session.runCatching {
         val users = mutableMapOf<Long, UserBaseInfo>()
 
-        for (info in this) {
+        for (info in this@replicate) {
             if (info.pid == 0L) continue
             val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
-            session.replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
-            for (tag in info.toTagBaseInfos()) session.replicate(tag, ReplicationMode.IGNORE)
+            replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
+            for (tag in info.toTagBaseInfos()) replicate(tag, ReplicationMode.IGNORE)
         }
     }.onSuccess {
         session.transaction.commit()
@@ -465,19 +472,6 @@ internal fun UserInfo.twitter(): String? {
     return screen
 }
 
-internal fun Twitter.replicate(): Unit = useSession(Twitter) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this@replicate, ReplicationMode.OVERWRITE)
-    }.onSuccess {
-        session.transaction.commit()
-        logger.info { "uid: $uid -> screen: $screen 信息已记录" }
-    }.onFailure {
-        session.transaction.rollback()
-        logger.warning({ "uid: $uid -> screen: $screen 信息记录失败" }, it)
-    }.getOrThrow()
-}
-
 internal fun Twitter.SQL.find(screen: String): Twitter? = useSession { session ->
     session.find(Twitter::class.java, screen)
 }
@@ -500,19 +494,8 @@ internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { sess
 
 internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
-    kotlin.runCatching {
-        for (item in this) session.replicate(item, ReplicationMode.OVERWRITE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
-internal fun StatisticTaskInfo.replicate(): Unit = useSession(StatisticTaskInfo) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.OVERWRITE)
+    session.runCatching {
+        for (item in this@replicate) replicate(item, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -541,17 +524,6 @@ internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useS
     }.setMaxResults(1).resultList.singleOrNull()
 }
 
-internal fun StatisticTagInfo.replicate(): Unit = useSession(StatisticTagInfo) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.OVERWRITE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
 internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSession { session ->
     session.withCriteria<StatisticTagInfo> { criteria ->
         val tag = criteria.from(StatisticTagInfo::class.java)
@@ -578,17 +550,6 @@ internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = use
     }.setMaxResults(limit).resultList.orEmpty() as List<Pair<String, Int>>
 }
 
-internal fun StatisticEroInfo.replicate(): Unit = useSession(StatisticEroInfo) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.OVERWRITE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
 internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSession { session ->
     session.withCriteria<StatisticEroInfo> { criteria ->
         val ero = criteria.from(StatisticEroInfo::class.java)
@@ -607,23 +568,12 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
 
 internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
 
-internal fun AliasSetting.replicate(): Unit = useSession(AliasSetting) { session ->
-    session.transaction.begin()
-    kotlin.runCatching {
-        session.replicate(this, ReplicationMode.OVERWRITE)
-    }.onSuccess {
-        session.transaction.commit()
-    }.onFailure {
-        session.transaction.rollback()
-    }.getOrThrow()
-}
-
 internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSetting) { session ->
     val record = session.get(AliasSetting::class.java, alias) ?: return@useSession
     session.transaction.begin()
-    kotlin.runCatching {
-        session.delete(record)
-        session.replicate(this, ReplicationMode.OVERWRITE)
+    session.runCatching {
+        delete(record)
+        replicate(this@delete, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -644,15 +594,15 @@ internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { s
 
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
-    kotlin.runCatching {
-        val info by lazy { session.find(ArtWorkInfo::class.java, pid) }
+    session.runCatching {
+        val info by lazy { find(ArtWorkInfo::class.java, pid) }
         if (uid == 0L && info?.pid != null) {
             title = info.title
             uid = info.author.uid
             name = info.author.name
-            session.replicate(this, ReplicationMode.OVERWRITE)
+            replicate(this, ReplicationMode.OVERWRITE)
         } else {
-            session.replicate(this, ReplicationMode.IGNORE)
+            replicate(this, ReplicationMode.IGNORE)
         }
     }.onSuccess {
         session.transaction.commit()
