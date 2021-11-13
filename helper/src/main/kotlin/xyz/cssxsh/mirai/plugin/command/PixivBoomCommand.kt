@@ -76,6 +76,8 @@ object PixivBoomCommand : SimpleCommand(
             }
         }
 
-        RawForwardMessage(list).render(TitleDisplayStrategy("${word.ifEmpty { "随机的" }}的快递"))
+        RawForwardMessage(list).render {
+            title = "${word.ifEmpty { "随机的" }}的快递"
+        }
     }
 }

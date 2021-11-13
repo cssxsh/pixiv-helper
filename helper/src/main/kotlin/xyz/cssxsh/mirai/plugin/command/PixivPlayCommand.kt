@@ -82,7 +82,9 @@ object PixivPlayCommand : CompositeCommand(
         }
 
         logger.info { "play list 合成完毕" }
-        return RawForwardMessage(list).render(TitleDisplayStrategy(title))
+        return RawForwardMessage(list).render {
+            this.title = title
+        }
     }
 
     @SubCommand("ranking", "排行榜")
@@ -145,7 +147,9 @@ object PixivPlayCommand : CompositeCommand(
                 }
             }
 
-            RawForwardMessage(list).render(TitleDisplayStrategy("NaviRank[${rank.title}]"))
+            RawForwardMessage(list).render {
+                title = "NaviRank[${rank.title}]"
+            }
         }
     }
 
@@ -220,7 +224,9 @@ object PixivPlayCommand : CompositeCommand(
                 }
             }
 
-            RawForwardMessage(list).render(TitleDisplayStrategy("特辑《${article.title}》"))
+            RawForwardMessage(list).render {
+                title = "特辑《${article.title}》"
+            }
         }
     }
 

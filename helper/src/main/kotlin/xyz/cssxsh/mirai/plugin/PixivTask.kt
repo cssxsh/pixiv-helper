@@ -153,7 +153,10 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 
     if (TaskForward) {
         send {
-            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = type, size = nodes.size))
+            RawForwardMessage(nodes).render {
+                title = type
+                summary = "查看推送的${nodes.size}个作品"
+            }
         }
     }
 }
@@ -198,7 +201,10 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
 
     if (TaskForward) {
         send {
-            RawForwardMessage(nodes).render(TaskDisplayStrategy(task = type, size = nodes.size))
+            RawForwardMessage(nodes).render {
+                title = type
+                summary = "查看推送的${nodes.size}个作品"
+            }
         }
     }
 }

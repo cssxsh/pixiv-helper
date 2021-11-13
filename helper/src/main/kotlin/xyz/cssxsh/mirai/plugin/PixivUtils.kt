@@ -195,8 +195,34 @@ internal val CacheCapacity by PixivHelperSettings::cacheCapacity
  */
 internal val CacheJump by PixivHelperSettings::cacheJump
 
-internal class TitleDisplayStrategy(val title: String) : ForwardMessage.DisplayStrategy {
-    override fun generateTitle(forward: RawForwardMessage): String = title
+internal class DisplayStrategyBuilder {
+    var title: String? = null
+    var brief: String? = null
+    var source: String? = null
+    var preview: List<String>? = null
+    var summary: String? = null
+
+    fun build() = object : ForwardMessage.DisplayStrategy {
+
+        override fun generateTitle(forward: RawForwardMessage): String =
+            title ?: ForwardMessage.DisplayStrategy.Default.generateTitle(forward)
+
+        override fun generateBrief(forward: RawForwardMessage): String =
+            brief ?: ForwardMessage.DisplayStrategy.Default.generateBrief(forward)
+
+        override fun generateSource(forward: RawForwardMessage): String =
+            source ?: ForwardMessage.DisplayStrategy.Default.generateSource(forward)
+
+        override fun generatePreview(forward: RawForwardMessage): List<String> =
+            preview ?: ForwardMessage.DisplayStrategy.Default.generatePreview(forward)
+
+        override fun generateSummary(forward: RawForwardMessage): String =
+            summary ?: ForwardMessage.DisplayStrategy.Default.generateSummary(forward)
+    }
+}
+
+internal fun RawForwardMessage.render(display: DisplayStrategyBuilder.() -> Unit): ForwardMessage {
+    return render(DisplayStrategyBuilder().apply(display).build())
 }
 
 internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
@@ -261,11 +287,6 @@ internal fun SearchResult.getContent() = buildMessageChain {
     }
 }
 
-private object SearchResultStrategy : ForwardMessage.DisplayStrategy {
-    override fun generateTitle(forward: RawForwardMessage): String = "搜图结果"
-    override fun generateSummary(forward: RawForwardMessage): String = "查看${forward.nodeList.size}条搜图结果"
-}
-
 internal fun List<SearchResult>.getContent(sender: User): Message {
     if (isEmpty()) return "结果为空".toPlainText()
 
@@ -277,7 +298,10 @@ internal fun List<SearchResult>.getContent(sender: User): Message {
                 senderName = sender.nameCardOrNick,
                 result.getContent()
             )
-        }).render(SearchResultStrategy)
+        }).render {
+            title = "搜图结果"
+            summary = "查看${size}条搜图结果"
+        }
     } else {
         map { "<=============>\n".toPlainText() + it.getContent() }.toMessageChain()
     }
