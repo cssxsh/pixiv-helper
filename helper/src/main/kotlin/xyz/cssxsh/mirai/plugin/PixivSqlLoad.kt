@@ -604,8 +604,8 @@ internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { s
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
     session.runCatching {
-        val info by lazy { find(ArtWorkInfo::class.java, pid) }
-        if (uid == 0L && info?.pid != null) {
+        if (uid == 0L && pid in ArtWorkInfo) {
+            val info = find(ArtWorkInfo::class.java, pid)
             title = info.title
             uid = info.author.uid
             name = info.author.name
