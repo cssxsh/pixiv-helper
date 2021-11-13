@@ -193,6 +193,11 @@ internal val URL_USER_REGEX = """(?<=pixiv\.net/(en/)?(u/|users/|member\.php\?id
  */
 internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
+/**
+ * https://www.pixivision.net/zh/a/6858
+ */
+internal val URL_PIXIVISION_ARTICLE = """(?<=pixivision\.net/[\w-]{2,5}/a/)\d+""".toRegex()
+
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
