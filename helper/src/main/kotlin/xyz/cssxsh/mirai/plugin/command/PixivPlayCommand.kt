@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
@@ -74,7 +75,7 @@ object PixivPlayCommand : CompositeCommand(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
-                        message = "[${illust.pid}]构建失败".toPlainText()
+                        message = "[${illust.pid}]构建失败 ${e.message.orEmpty()}".toPlainText()
                     )
                 )
                 logger.warning { "播放错误 $e" }
@@ -201,32 +202,8 @@ object PixivPlayCommand : CompositeCommand(
             }
             "开始播放特辑《${article.title}》，共${article.illusts.size}个作品，间隔 $duration"
         } else {
-            if (article.illusts.isEmpty()) return@withHelper "列表为空"
-            val list = mutableListOf<ForwardMessage.Node>()
-
-            for (info in article.illusts) {
-                if (isActive.not()) break
-
-                try {
-                    val illust = getIllustInfo(pid = info.pid, flush = false)
-                    val sender = (subject as? User) ?: (subject as Group).members.random()
-
-                    list.add(
-                        ForwardMessage.Node(
-                            senderId = sender.id,
-                            senderName = sender.nameCardOrNick,
-                            time = illust.createAt.toEpochSecond().toInt(),
-                            message = buildMessageByIllust(illust)
-                        )
-                    )
-                } catch (e: Throwable) {
-                    logger.warning { "播放错误 $e" }
-                }
-            }
-
-            RawForwardMessage(list).render {
-                title = "特辑《${article.title}》"
-            }
+            val illusts = getListIllusts(info = article.illusts).toList().flatten()
+            forward(illusts = illusts, title = "特辑《${article.title}》")
         }
     }
 
