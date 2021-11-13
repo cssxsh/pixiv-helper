@@ -583,7 +583,6 @@ internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSett
     session.transaction.begin()
     session.runCatching {
         delete(record)
-        replicate(this@delete, ReplicationMode.OVERWRITE)
     }.onSuccess {
         session.transaction.commit()
     }.onFailure {
@@ -610,9 +609,9 @@ internal fun PixivSearchResult.associate(): Unit = useSession { session ->
             title = info.title
             uid = info.author.uid
             name = info.author.name
-            replicate(this, ReplicationMode.OVERWRITE)
+            replicate(this@associate, ReplicationMode.OVERWRITE)
         } else {
-            replicate(this, ReplicationMode.IGNORE)
+            replicate(this@associate, ReplicationMode.IGNORE)
         }
     }.onSuccess {
         session.transaction.commit()
