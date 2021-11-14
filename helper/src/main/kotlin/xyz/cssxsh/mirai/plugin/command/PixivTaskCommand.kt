@@ -95,7 +95,7 @@ object PixivTaskCommand : CompositeCommand(
     @Description("查看任务详情")
     suspend fun CommandSenderOnMessage<*>.detail() = withHelper {
         buildMessageChain {
-            PixivTaskData.tasks.forEach { (name, task) ->
+            for ((name, task) in PixivTaskData.tasks) {
                 appendLine("名称: $name , 间隔: ${task.interval / MINUTE}min")
                 StatisticTaskInfo.last(name)?.let { record ->
                     val time = OffsetDateTime.ofInstant(Instant.ofEpochSecond(record.timestamp), ZoneId.systemDefault())

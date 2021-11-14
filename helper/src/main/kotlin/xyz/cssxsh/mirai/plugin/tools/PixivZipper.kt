@@ -75,11 +75,11 @@ object PixivZipper {
     }
 
     private fun ZipOutputStream.addDir(dir: File, zip: File, root: String = dir.parent) {
-        dir.listFiles()?.forEach {
-            if (it.isFile) {
-                addFile(file = it, zip = zip, root = root)
+        for (temp in dir.listFiles().orEmpty()) {
+            if (temp.isFile) {
+                addFile(file = temp, zip = zip, root = root)
             } else {
-                addDir(dir = it, zip = zip, root = root)
+                addDir(dir = temp, zip = zip, root = root)
             }
         }
     }

@@ -46,7 +46,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("参数界限为解析缓存月榜作品")
     suspend fun CommandSenderOnMessage<*>.range(start: LocalDate, end: LocalDate) = withHelper {
         check(start <= end) { "start 要在 end 之前" }
-        (start..end).forEach { date ->
+        for (date in start..end) {
             addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = reply) {
                 getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).notCached()
             }
@@ -170,7 +170,7 @@ object PixivCacheCommand : CompositeCommand(
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         val exists = dir.resolve("exists").apply { mkdirs() }
         val other = dir.resolve("other").apply { mkdirs() }
-        dir.listFiles()?.forEach { source ->
+        for (source in dir.listFiles().orEmpty()) {
             FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
                 if (id.toLong() in ArtWorkInfo) {
                     source.renameTo(exists.resolve(source.name))
