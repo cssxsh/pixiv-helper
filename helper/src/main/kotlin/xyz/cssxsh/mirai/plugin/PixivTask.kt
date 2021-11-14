@@ -29,9 +29,7 @@ internal data class DownloadTask(
     val reply: Boolean,
 )
 
-internal val TimerTask.helper by ReadOnlyProperty<TimerTask, PixivHelper> { task, _ ->
-    requireNotNull(findContact(task.delegate)) { "找不到联系人" }.getHelper()
-}
+internal val TimerTask.helper get() = requireNotNull(findContact(delegate)) { "找不到联系人" }.helper
 
 typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
 
@@ -107,11 +105,6 @@ sealed class TimerTask {
         @SerialName("times")
         val times: Int,
     ) : TimerTask()
-}
-
-private class TaskDisplayStrategy(val task: String, val size: Int) : ForwardMessage.DisplayStrategy {
-    override fun generateTitle(forward: RawForwardMessage): String = task
-    override fun generateSummary(forward: RawForwardMessage): String = "查看推送的${size}个作品"
 }
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {

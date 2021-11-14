@@ -79,11 +79,11 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
     }
 }
 
-internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         if (active().not() || url == null) return@flow
         runCatching {
-            userBookmarksIllust(uid = uid, tag = tag, url = url)
+            PixivHelper().userBookmarksIllust(uid = uid, tag = tag, url = url)
         }.onSuccess { (list, _) ->
             emit(list)
             logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
@@ -93,18 +93,18 @@ internal suspend fun PixivHelper.getBookmarks(uid: Long, tag: String? = null, li
     }
 }
 
-internal suspend fun PixivHelper.bookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
+internal suspend fun bookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
     val max = (0..detail.profile.totalIllustBookmarksPublic).random() + PAGE_SIZE
-    return userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
+    return PixivHelper().userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
         check(illusts.isEmpty()) { "随机收藏USER[${detail.user.id}]<${tag}>失败" }
     }
 }
 
-internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
+internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
-            userIllusts(uid = detail.user.id, offset = offset).illusts
+            PixivHelper().userIllusts(uid = detail.user.id, offset = offset).illusts
         }.onSuccess {
             emit(it)
             logger.verbose { "加载用户(${detail.user.id})作品第${page}页{${it.size}}成功" }
@@ -114,11 +114,11 @@ internal suspend fun PixivHelper.getUserIllusts(detail: UserDetail, limit: Long?
     }
 }
 
-internal suspend fun PixivHelper.getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
+internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
-            userFollowing(uid = detail.user.id, offset = offset).previews
+            PixivHelper().userFollowing(uid = detail.user.id, offset = offset).previews
         }.onSuccess {
             emit(it)
             logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${it.size}}成功" }
@@ -142,7 +142,7 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
                     val count = author.user.count()
                     if (total - count > preview.illusts.size || flush) {
                         logger.info { "${index}.USER(${author.user.id})[${total}]尝试缓存" }
-                        emitAll(getUserIllusts(author))
+                        emitAll(getUserIllusts(detail = author))
                     } else {
                         logger.info { "${index}.USER(${author.user.id})[${total}]有${preview.illusts.size}个作品尝试缓存" }
                         emit(preview.illusts)
@@ -166,13 +166,12 @@ internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: 
             if (active().not()) break
             if (index > jump) {
                 runCatching {
-                    getBookmarks(uid = preview.user.id).onEach {
+                    getBookmarks(uid = preview.user.id).fold(0) { count, it ->
                         emit(it)
-                    }.fold(0) { acc, it ->
-                        acc + it.size
+                        count + it.size
                     }
-                }.onSuccess {
-                    logger.info { "${index}.USER(${preview.user.id})[${it}]加载成功" }
+                }.onSuccess { total ->
+                    logger.info { "${index}.USER(${preview.user.id})[${total}]加载成功" }
                 }.onFailure {
                     logger.warning { "${index}.USER(${preview.user.id})加载失败 $it" }
                 }
@@ -200,12 +199,12 @@ internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_
 
 internal val DELETE_REGEX = """該当作品は削除されたか|作品已删除或者被限制|该作品已被删除，或作品ID不存在。""".toRegex()
 
-internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
+internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
     val list = mutableListOf<IllustInfo>()
     for (pid in set) {
         if (active().not()) break
         try {
-            with(getIllustInfo(pid = pid, flush = flush)) {
+            with(PixivHelper().getIllustInfo(pid = pid, flush = flush)) {
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
@@ -222,13 +221,13 @@ internal suspend fun PixivHelper.getListIllusts(set: Set<Long>, flush: Boolean =
     if (list.isNotEmpty()) emit(list)
 }
 
-internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
+internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
     val list = mutableListOf<IllustInfo>()
     for (item in info) {
         if (active().not()) break
         if (check && item.pid in ArtWorkInfo) continue
         try {
-            with(getIllustInfo(pid = item.pid, flush = true)) {
+            with(PixivHelper().getIllustInfo(pid = item.pid, flush = true)) {
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
@@ -245,17 +244,17 @@ internal suspend fun PixivHelper.getListIllusts(info: Collection<SimpleArtworkIn
     if (list.isNotEmpty()) emit(list)
 }
 
-internal suspend fun PixivHelper.getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
+internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
     val records = mutableSetOf<Long>()
     for ((alias, uid) in list) {
         if (active().not()) break
         if (uid in records) continue
 
         try {
-            val detail = userDetail(uid = uid).apply { twitter() }
+            val detail = PixivHelper().userDetail(uid = uid).apply { twitter() }
             if (detail.total() > detail.user.count()) {
                 logger.verbose { "ALIAS<${alias}>(${uid})有${detail.total()}个作品尝试缓存" }
-                emitAll(getUserIllusts(detail))
+                emitAll(getUserIllusts(detail = detail))
             }
         } catch (e: Throwable) {
             logger.warning({ "别名缓存${uid}失败" }, e)
@@ -304,7 +303,7 @@ private fun months(year: Year?) = buildList {
     }
 }
 
-internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
+internal suspend fun getNaviRank(list: List<YearMonth>) = flow {
     for (month in list) {
         if (active().not()) break
         NaviRank.runCatching {
@@ -319,9 +318,9 @@ internal suspend fun PixivHelper.getNaviRank(list: List<YearMonth>) = flow {
     }
 }
 
-internal suspend fun PixivHelper.getNaviRank(year: Year?) = getNaviRank(list = months(year = year))
+internal suspend fun getNaviRank(year: Year?) = getNaviRank(list = months(year = year))
 
-internal suspend fun PixivHelper.getArticle(article: SpotlightArticle) = getListIllusts(
+internal suspend fun getArticle(article: SpotlightArticle) = getListIllusts(
     info = Pixivision.getArticle(aid = article.aid).illusts
 )
 

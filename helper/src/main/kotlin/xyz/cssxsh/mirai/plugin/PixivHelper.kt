@@ -23,14 +23,15 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     @OptIn(ConsoleExperimentalApi::class)
     override val coroutineContext: CoroutineContext by lazy {
-        PixivHelperPlugin.childScopeContext("PixivHelper:${contact}")
+        contact.childScopeContext("PixivHelper:${contact}")
     }
 
     override var config: PixivConfig by ConfigDelegate
 
     override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
 
-    override var authInfo: AuthResult? by AuthResultDelegate
+    public override var authInfo: AuthResult? by AuthResultDelegate
+        protected set
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
 
@@ -106,7 +107,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
                 try {
                     when (illust.type) {
                         WorkContentType.ILLUST -> illust.getImages()
-                        WorkContentType.UGOIRA -> getUgoira(illust)
+                        WorkContentType.UGOIRA -> illust.getUgoira()
                         WorkContentType.MANGA -> Unit
                     }
                 } catch (e: CancellationException) {

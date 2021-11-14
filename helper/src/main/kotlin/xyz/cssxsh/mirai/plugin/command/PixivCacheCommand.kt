@@ -146,7 +146,7 @@ object PixivCacheCommand : CompositeCommand(
             for (artwork in eros) {
                 if (isActive.not()) break
                 try {
-                    getUgoira(getIllustInfo(pid = artwork.pid, flush = false))
+                    getIllustInfo(pid = artwork.pid, flush = false).getUgoira()
                 } catch (e: Throwable) {
                     if (DELETE_REGEX in e.message.orEmpty()) {
                         ArtWorkInfo.delete(pid = artwork.pid, comment = e.message.orEmpty())

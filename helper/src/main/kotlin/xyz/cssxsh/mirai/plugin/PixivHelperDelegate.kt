@@ -46,10 +46,12 @@ object AuthResultDelegate : ReadWriteProperty<PixivHelper, AuthResult?> {
         }
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult? = when (thisRef.contact) {
-        is User -> UserAuthInfos[thisRef.contact.id] ?: DefaultAuthInfo
-        is Group -> DefaultAuthInfo
-        else -> throw IllegalAccessException("未知类型联系人!")
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): AuthResult? {
+        return when (thisRef.contact) {
+            is User -> UserAuthInfos[thisRef.contact.id] ?: DefaultAuthInfo
+            is Group -> DefaultAuthInfo
+            else -> throw IllegalAccessException("未知类型联系人!")
+        }
     }
 }
 
@@ -67,10 +69,12 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
         }
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): OffsetDateTime = when (thisRef.contact) {
-        is User -> UserExpiresTimes.getOrPut(thisRef.contact.id) { OffsetDateTime.MIN }
-        is Group -> DefaultExpiresTime
-        else -> throw IllegalAccessException("未知类型联系人!")
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): OffsetDateTime {
+        return when (thisRef.contact) {
+            is User -> UserExpiresTimes.getOrPut(thisRef.contact.id) { OffsetDateTime.MIN }
+            is Group -> DefaultExpiresTime
+            else -> throw IllegalAccessException("未知类型联系人!")
+        }
     }
 }
 
@@ -80,10 +84,12 @@ object MutexDelegate : ReadOnlyProperty<PixivHelper, Mutex> {
 
     private val DefaultMutex: Mutex = Mutex()
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Mutex = when (thisRef.contact) {
-        is User -> UserMutexes.getOrPut(thisRef.contact.id, ::Mutex)
-        is Group -> DefaultMutex
-        else -> throw IllegalAccessException("未知类型联系人!")
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Mutex {
+        return when (thisRef.contact) {
+            is User -> UserMutexes.getOrPut(thisRef.contact.id, ::Mutex)
+            is Group -> DefaultMutex
+            else -> throw IllegalAccessException("未知类型联系人!")
+        }
     }
 }
 
@@ -93,8 +99,11 @@ object LinkDelegate : ReadWriteProperty<PixivHelper, Boolean> {
         PixivConfigData.link[thisRef.contact.toString()] = value
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
-        PixivConfigData.link.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean {
+        return PixivConfigData.link.getOrPut(thisRef.contact.toString()) {
+            thisRef.contact !is Group
+        }
+    }
 
 }
 
@@ -104,8 +113,11 @@ object TagDelegate : ReadWriteProperty<PixivHelper, Boolean> {
         PixivConfigData.tag[thisRef.contact.toString()] = value
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
-        PixivConfigData.tag.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean {
+        return PixivConfigData.tag.getOrPut(thisRef.contact.toString()) {
+            thisRef.contact !is Group
+        }
+    }
 
 }
 
@@ -115,8 +127,11 @@ object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
         PixivConfigData.attr[thisRef.contact.toString()] = value
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean =
-        PixivConfigData.attr.getOrPut(thisRef.contact.toString()) { thisRef.contact !is Group }
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Boolean {
+        return PixivConfigData.attr.getOrPut(thisRef.contact.toString()) {
+            thisRef.contact !is Group
+        }
+    }
 
 }
 
@@ -126,8 +141,9 @@ object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
         PixivConfigData.max[thisRef.contact.toString()] = value
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Int =
-        PixivConfigData.max.getOrPut(thisRef.contact.toString()) { 3 }
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Int {
+        return PixivConfigData.max.getOrPut(thisRef.contact.toString()) { 3 }
+    }
 
 }
 
@@ -137,15 +153,30 @@ object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
         PixivConfigData.model[thisRef.contact.toString()] = value
     }
 
-    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): SendModel =
-        PixivConfigData.model.getOrPut(thisRef.contact.toString()) { SendModel.Normal }
+    override fun getValue(thisRef: PixivHelper, property: KProperty<*>): SendModel {
+        return PixivConfigData.model.getOrPut(thisRef.contact.toString()) { SendModel.Normal }
+    }
+
 }
 
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
-internal fun Contact.getHelper(): PixivHelper {
-    return helpers.getOrPut(this) {
-        PixivHelper(this).apply {
+private var last: Int = 0
+
+internal val abilities get() = helpers.values.distinctBy { it.authInfo?.user?.uid }.filter { it.authInfo != null }
+
+/**
+ * random get authed helper at [helpers]
+ */
+internal fun PixivHelper(): PixivHelper {
+    val helper = abilities[last++]
+    last %= abilities.size
+    return helper
+}
+
+internal val Contact.helper by ReadOnlyProperty<Contact, PixivHelper> { contact, _ ->
+    helpers.getOrPut(contact) {
+        PixivHelper(contact).apply {
             if (contact is User && config.refreshToken.isNullOrBlank()) {
                 launch {
                     send {
@@ -157,9 +188,7 @@ internal fun Contact.getHelper(): PixivHelper {
     }
 }
 
-internal val CommandSenderOnMessage<*>.helper by ReadOnlyProperty<CommandSenderOnMessage<*>, PixivHelper> { sender, _ ->
-    sender.fromEvent.subject.getHelper()
-}
+internal val CommandSenderOnMessage<*>.helper get() = fromEvent.subject.helper
 
 class PixivHelperDelegate<T>(private val default: (Contact) -> T) : ReadWriteProperty<PixivHelper, T> {
 

@@ -101,8 +101,7 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-@OptIn(DelicateCoroutinesApi::class)
-internal fun PixivHelperSettings.init(scope: CoroutineScope = GlobalScope) {
+internal fun PixivHelperSettings.init(scope: CoroutineScope) {
     cacheFolder.mkdirs()
     backupFolder.mkdirs()
     tempFolder.mkdirs()

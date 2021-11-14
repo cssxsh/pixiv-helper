@@ -5,10 +5,14 @@ import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
+import net.mamoe.mirai.console.util.*
+import net.mamoe.mirai.console.util.ContactUtils.getContactOrNull
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.*
+import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.tools.*
 
 object PixivHelperListener {
@@ -52,6 +56,17 @@ object PixivHelperListener {
                     }
                 }
             }
+        }
+        "InitHelper" with subscribeAlways<BotOnlineEvent> {
+            for ((id, _) in PixivConfigData.tokens) {
+                try {
+                    @OptIn(ConsoleExperimentalApi::class)
+                    bot.getContactOrNull(id)?.helper?.info()
+                } catch (e: Throwable) {
+                    logger.warning { "init $id $e" }
+                }
+            }
+            logger.info { "abilities: ${abilities.mapNotNull { it.authInfo?.user?.uid }}" }
         }
     }
 

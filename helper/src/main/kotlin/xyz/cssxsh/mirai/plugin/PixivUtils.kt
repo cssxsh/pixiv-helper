@@ -327,7 +327,7 @@ internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightA
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
     add(illust.getContent(link, tag, attr))
-    val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
+    val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(illust.getUgoira())
     if (illust.age == AgeLimit.ALL) {
         if (files.size <= max) {
             files
@@ -363,7 +363,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     for (illust in preview.illusts.apply { replicate() }.write()) {
         if (illust.isEro().not()) continue
         try {
-            val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(getUgoira(illust))
+            val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(illust.getUgoira())
             if (illust.age == AgeLimit.ALL) {
                 add(files.first().uploadAsImage(contact))
             }
@@ -550,11 +550,11 @@ internal suspend fun IllustInfo.getImages(): List<File> {
     return files
 }
 
-internal suspend fun PixivHelper.getUgoira(illust: IllustInfo, flush: Boolean = false) = with(PixivHelperGifEncoder) {
-    val json = ugoira(illust.pid)
+internal suspend fun IllustInfo.getUgoira(flush: Boolean = false) = with(PixivHelperGifEncoder) {
+    val json = ugoira(pid)
     val meta = json.takeIf { it.exists() }?.readUgoiraMetadata()
-        ?: ugoiraMetadata(illust.pid).ugoira.also { it.write(json) }
-    build(illust, meta, flush)
+        ?: PixivHelper().ugoiraMetadata(pid).ugoira.also { it.write(json) }
+    build(this@getUgoira, meta, flush)
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {
