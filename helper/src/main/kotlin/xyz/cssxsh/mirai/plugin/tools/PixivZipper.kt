@@ -33,16 +33,18 @@ object PixivZipper {
 
     private fun ArtWorkInfo.toSignText() = "(${pid})[${title}]{${pages}}"
 
-    private fun getZipFile(basename: String) = PixivHelperSettings.backupFolder.resolve("${basename}.zip").apply {
+    private val folder get() = PixivHelperSettings.backupFolder
+
+    private fun zip(basename: String) = folder.resolve("${basename}.zip").apply {
         renameTo(parentFile.resolve("${basename}.old").apply { delete() })
         createNewFile()
     }
 
-    fun list() = PixivHelperSettings.backupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
+    fun list() = folder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
     fun find(name: String) = list().firstOrNull { file -> file.name.startsWith(name) }
 
-    fun compressArtWorks(list: List<ArtWorkInfo>, basename: String): File = getZipFile(basename).also { zip ->
+    fun artworks(list: List<ArtWorkInfo>, basename: String): File = zip(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
@@ -82,8 +84,8 @@ object PixivZipper {
         }
     }
 
-    fun compressData(list: Map<String, File>): List<File> = list.map { (basename, source) ->
-        getZipFile(basename).also { zip ->
+    fun files(list: Map<String, File>): List<File> = list.map { (basename, source) ->
+        zip(basename).also { zip ->
             logger.verbose { "将备份数据目录${source.absolutePath}到${zip.absolutePath}" }
             ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
                 stream.setLevel(Deflater.BEST_COMPRESSION)

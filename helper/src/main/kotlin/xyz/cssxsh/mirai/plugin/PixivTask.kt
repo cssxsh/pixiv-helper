@@ -14,7 +14,6 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.time.*
-import kotlin.properties.*
 
 internal data class CacheTask(
     val name: String,
@@ -258,7 +257,7 @@ internal suspend fun TimerTask.run(name: String) = when (this) {
     }
     is TimerTask.Backup -> {
         val contact = helper.contact
-        for (file in PixivZipper.compressData(list = backups())) {
+        for (file in PixivZipper.files(list = backups())) {
             if (contact is FileSupported) {
                 contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
                 runCatching {

@@ -63,34 +63,28 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份指定用户的作品")
     fun CommandSender.user(uid: Long) = compress {
-        listOf(compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]"))
+        listOf(artworks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]"))
     }
 
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
         AliasSetting.all().mapTo(mutableSetOf()) { it.uid }.map { uid ->
-            compressArtWorks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
+            artworks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
         }
     }
 
     @SubCommand
     @Description("备份指定标签的作品")
-    fun CommandSender.tag(tag: String, bookmark: Long = 0, fuzzy: Boolean = false) = compress {
-        val list =
-            ArtWorkInfo.tag(word = tag, marks = bookmark, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
-        listOf(
-            compressArtWorks(
-                list = list,
-                basename = "TAG[${tag}]"
-            )
-        )
+    fun CommandSender.tag(tag: String, marks: Long = 0, fuzzy: Boolean = false) = compress {
+        val list = ArtWorkInfo.tag(word = tag, marks = marks, fuzzy = fuzzy, limit = Int.MAX_VALUE, age = AgeLimit.R18G)
+        listOf(artworks(list = list, basename = "TAG[${tag}]"))
     }
 
     @SubCommand
     @Description("备份插件数据")
     fun CommandSender.data() = compress {
-        compressData(list = backups())
+        files(list = backups())
     }
 
     @SubCommand
