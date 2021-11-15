@@ -263,7 +263,7 @@ internal val TagCooling by lazy {
  * 2. [PixivHelperSettings.tagSFW]
  */
 internal val TagAgeLimit by lazy {
-    if (System.getProperty(TAG_SFW_PROPERTY)?.toBooleanStrictOrNull() ?: PixivHelperSettings.tagSFW) {
+    if (System.getProperty(TAG_SFW_PROPERTY)?.toBoolean() ?: PixivHelperSettings.tagSFW) {
         AgeLimit.ALL
     } else {
         AgeLimit.R18G
@@ -276,7 +276,7 @@ internal val TagAgeLimit by lazy {
  * 2. [PixivHelperSettings.eroSFW]
  */
 internal val EroAgeLimit by lazy {
-    if (System.getProperty(ERO_SFW_PROPERTY)?.toBooleanStrictOrNull() ?: PixivHelperSettings.eroSFW) {
+    if (System.getProperty(ERO_SFW_PROPERTY)?.toBoolean() ?: PixivHelperSettings.eroSFW) {
         AgeLimit.ALL
     } else {
         AgeLimit.R18G
