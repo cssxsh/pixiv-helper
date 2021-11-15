@@ -18,8 +18,32 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 
+private const val LOGGER_PROPERTY = "xyz.cssxsh.mirai.plugin.logger"
+
+private const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
+
+private const val BACKUP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.backup"
+
+private const val TEMP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.temp"
+
+private const val ERO_CHUNK_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.chunk"
+
+private const val ERO_UP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.up"
+
+private const val ERO_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.sfw"
+
+private const val ERO_STANDARD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.standard"
+
+private const val TAG_COOLING_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.cooling"
+
+private const val TAG_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.sfw"
+
+private const val CACHE_CAPACITY_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.capacity"
+
+private const val CACHE_JUMP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.jump"
+
 internal val logger by lazy {
-    val open = System.getProperty("xyz.cssxsh.mirai.plugin.logger", "${true}").toBoolean()
+    val open = System.getProperty(LOGGER_PROPERTY, "${true}").toBoolean()
     if (open) PixivHelperPlugin.logger else SilentLogger
 }
 
@@ -146,54 +170,124 @@ fun findContact(delegate: Long): Contact? {
 }
 
 /**
+ * 1. [CACHE_FOLDER_PROPERTY]
+ * 2. [PixivHelperSettings.cacheFolder]
+ */
+internal val CacheFolder by lazy {
+    val path = System.getProperty(CACHE_FOLDER_PROPERTY)
+    if (path.isNullOrBlank()) PixivHelperSettings.cacheFolder else File(path)
+}
+
+/**
+ * 1. [BACKUP_FOLDER_PROPERTY]
+ * 2. [PixivHelperSettings.backupFolder]
+ */
+internal val BackupFolder by lazy {
+    val path = System.getProperty(BACKUP_FOLDER_PROPERTY)
+    if (path.isNullOrBlank()) PixivHelperSettings.backupFolder else File(path)
+}
+
+/**
+ * 1. [TEMP_FOLDER_PROPERTY]
+ * 2. [PixivHelperSettings.tempFolder]
+ */
+internal val TempFolder by lazy {
+    val path = System.getProperty(TEMP_FOLDER_PROPERTY)
+    if (path.isNullOrBlank()) PixivHelperSettings.tempFolder else File(path)
+}
+
+/**
  * Task连续发送间隔时间
+ * 1. [PixivConfigData.interval]
  */
 internal val TaskSendInterval by PixivConfigData::interval
 
 /**
  * Task通过转发发送
+ * 1. [PixivConfigData.interval]
  */
 internal val TaskForward by PixivConfigData::forward
 
 /**
  * 涩图防重复间隔
+ * 1. [ERO_CHUNK_PROPERTY]
+ * 2. [PixivHelperSettings.eroChunk]
  */
-internal val EroChunk by PixivHelperSettings::eroChunk
+internal val EroChunk by lazy {
+    System.getProperty(ERO_CHUNK_PROPERTY)?.toInt() ?: PixivHelperSettings.eroChunk
+}
 
 /**
  * 涩图提高收藏数时间
+ * 1. [ERO_UP_PROPERTY]
+ * 2. [PixivHelperSettings.eroUpExpire]
  */
-internal val EroUpExpire by PixivHelperSettings::eroUpExpire
+internal val EroUpExpire by lazy {
+    System.getProperty(ERO_UP_PROPERTY)?.toInt() ?: PixivHelperSettings.eroUpExpire
+}
 
 /**
  * 涩图标准
+ * 1. [ERO_STANDARD_PROPERTY]
+ * 2. [PixivHelperSettings]
  */
-internal val EroStandard: EroStandardConfig get() = PixivHelperSettings
+internal val EroStandard by lazy {
+    System.getProperty(ERO_STANDARD_PROPERTY)?.let { PixivJson.decodeFromString(EroStandardData.serializer(), it) }
+        ?: PixivHelperSettings
+}
 
 /**
  * Tag指令冷却时间
+ * 1. [TAG_COOLING_PROPERTY]
+ * 2. [PixivHelperSettings.tagCooling]
  */
-internal val TagCooling by PixivHelperSettings::tagCooling
+internal val TagCooling by lazy {
+    System.getProperty(TAG_COOLING_PROPERTY)?.toInt() ?: PixivHelperSettings.tagCooling
+}
 
 /**
  * TAG 年龄限制
+ * 1. [TAG_SFW_PROPERTY]
+ * 2. [PixivHelperSettings.tagSFW]
  */
-internal val TagAgeLimit get() = if (PixivHelperSettings.tagSFW) AgeLimit.ALL else AgeLimit.R18G
+internal val TagAgeLimit by lazy {
+    if (System.getProperty(TAG_SFW_PROPERTY)?.toBooleanStrictOrNull() ?: PixivHelperSettings.tagSFW) {
+        AgeLimit.ALL
+    } else {
+        AgeLimit.R18G
+    }
+}
 
 /**
  * ERO 年龄限制
+ * 1. [ERO_SFW_PROPERTY]
+ * 2. [PixivHelperSettings.eroSFW]
  */
-internal val EroAgeLimit get() = if (PixivHelperSettings.eroSFW) AgeLimit.ALL else AgeLimit.R18G
+internal val EroAgeLimit by lazy {
+    if (System.getProperty(ERO_SFW_PROPERTY)?.toBooleanStrictOrNull() ?: PixivHelperSettings.eroSFW) {
+        AgeLimit.ALL
+    } else {
+        AgeLimit.R18G
+    }
+}
 
 /**
- * CACHE CAPACITY
+ * 下载缓存容量，同时下载的图片任务上限
+ * 1. [CACHE_CAPACITY_PROPERTY]
+ * 2. [PixivHelperSettings.cacheCapacity]
  */
-internal val CacheCapacity by PixivHelperSettings::cacheCapacity
+internal val CacheCapacity by lazy {
+    System.getProperty(CACHE_CAPACITY_PROPERTY)?.toInt() ?: PixivHelperSettings.cacheCapacity
+}
 
 /**
- * CACHE JUMP
+ * 缓存是否跳过下载
+ * 1. [CACHE_JUMP_PROPERTY]
+ * 2. [PixivHelperSettings.cacheJump]
  */
-internal val CacheJump by PixivHelperSettings::cacheJump
+internal val CacheJump by lazy {
+    System.getProperty(CACHE_JUMP_PROPERTY)?.toInt() ?: PixivHelperSettings.cacheJump
+}
 
 internal class DisplayStrategyBuilder {
     var title: String? = null
@@ -414,18 +508,18 @@ internal fun IllustInfo.check() = apply {
 /**
  * 用户文件保存目录
  */
-internal val profilesFolder: File get() = PixivHelperSettings.cacheFolder.resolve("profile")
+internal val ProfileFolder: File get() = CacheFolder.resolve("profile")
 
 /**
  * 特辑文件保存目录
  */
-internal val articlesFolder: File get() = PixivHelperSettings.cacheFolder.resolve("article")
+internal val ArticleFolder: File get() = CacheFolder.resolve("article")
 
 /**
  * 图片目录
  */
 internal fun imagesFolder(pid: Long): File {
-    return PixivHelperSettings.cacheFolder
+    return CacheFolder
         .resolve("%03d______".format(pid / 1_000_000))
         .resolve("%06d___".format(pid / 1_000))
         .resolve("$pid")
@@ -434,7 +528,7 @@ internal fun imagesFolder(pid: Long): File {
 /**
  * GIF目录
  */
-internal val ugoiraImagesFolder: File get() = PixivHelperSettings.tempFolder.resolve("gif")
+internal val UgoiraImagesFolder: File get() = TempFolder.resolve("gif")
 
 internal fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
 
@@ -480,7 +574,7 @@ internal suspend fun PixivHelper.getIllustInfo(
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
-    return profilesFolder.resolve(image.filename).apply {
+    return ProfileFolder.resolve(image.filename).apply {
         if (exists().not()) {
             writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "用户 $image 下载完成" }
@@ -559,7 +653,7 @@ internal suspend fun IllustInfo.getUgoira(flush: Boolean = false) = with(PixivHe
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     val image = Url(thumbnail)
-    return articlesFolder.resolve(image.filename).apply {
+    return ArticleFolder.resolve(image.filename).apply {
         if (exists().not()) {
             writeBytes(PixivHelperDownloader.download(url = image))
             logger.info { "特辑封面 $image 下载完成" }

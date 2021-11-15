@@ -11,7 +11,7 @@ import java.io.*
 
 object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
 
-    public override val dir: File get() = ugoiraImagesFolder
+    public override val dir: File get() = UgoiraImagesFolder
 
     override suspend fun download(url: Url, filename: String) = dir.resolve(filename).apply {
         if (exists().not()) {

@@ -33,14 +33,12 @@ object PixivZipper {
 
     private fun ArtWorkInfo.toSignText() = "(${pid})[${title}]{${pages}}"
 
-    private val folder get() = PixivHelperSettings.backupFolder
-
-    private fun zip(basename: String) = folder.resolve("${basename}.zip").apply {
+    private fun zip(basename: String) = BackupFolder.resolve("${basename}.zip").apply {
         renameTo(parentFile.resolve("${basename}.old").apply { delete() })
         createNewFile()
     }
 
-    fun list() = folder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
+    fun list() = BackupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
     fun find(name: String) = list().firstOrNull { file -> file.name.startsWith(name) }
 

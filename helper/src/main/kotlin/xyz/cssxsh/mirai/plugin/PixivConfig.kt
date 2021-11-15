@@ -102,15 +102,15 @@ internal val PIXIV_HOST = mapOf(
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
 internal fun PixivHelperSettings.init(scope: CoroutineScope) {
-    cacheFolder.mkdirs()
-    backupFolder.mkdirs()
-    tempFolder.mkdirs()
-    profilesFolder.mkdirs()
-    articlesFolder.mkdirs()
-    ugoiraImagesFolder.mkdirs()
-    logger.info { "CacheFolder: ${cacheFolder.absolutePath}" }
-    logger.info { "BackupFolder: ${backupFolder.absolutePath}" }
-    logger.info { "TempFolder: ${tempFolder.absolutePath}" }
+    CacheFolder.mkdirs()
+    BackupFolder.mkdirs()
+    TempFolder.mkdirs()
+    ProfileFolder.mkdirs()
+    ArticleFolder.mkdirs()
+    UgoiraImagesFolder.mkdirs()
+    logger.info { "CacheFolder: ${CacheFolder.absolutePath}" }
+    logger.info { "BackupFolder: ${BackupFolder.absolutePath}" }
+    logger.info { "TempFolder: ${TempFolder.absolutePath}" }
     if (pximg.isNotBlank()) {
         logger.warning { "镜像代理已开启 i.pximg.net -> $pximg 不推荐修改这个配置，建议保持留空" }
     }

@@ -144,7 +144,7 @@ object PixivCacheCommand : CompositeCommand(
             if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
             val eros = artworks.filter {
-                it.ero && ugoiraImagesFolder.resolve("${it.pid}.gif").exists().not()
+                it.ero && UgoiraImagesFolder.resolve("${it.pid}.gif").exists().not()
             }
             if (eros.isEmpty()) continue
             logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
