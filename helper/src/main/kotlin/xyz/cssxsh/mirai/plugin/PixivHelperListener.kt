@@ -58,6 +58,9 @@ object PixivHelperListener {
             }
         }
         "InitHelper" with subscribeAlways<BotOnlineEvent> {
+            if (PixivConfigData.default.isNotBlank()) {
+                bot.groups.random().helper
+            }
             for ((id, _) in PixivConfigData.tokens) {
                 try {
                     @OptIn(ConsoleExperimentalApi::class)
