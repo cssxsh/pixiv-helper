@@ -34,10 +34,10 @@ internal fun Flow<Collection<IllustInfo>>.notHistory(task: String) = map { list 
 
 internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
 
-internal suspend fun PixivHelper.getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
+internal suspend fun getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        runCatching {
+        PixivHelper().runCatching {
             illustRanking(mode = mode, date = date, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -82,8 +82,8 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
 internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         if (active().not() || url == null) return@flow
-        runCatching {
-            PixivHelper().userBookmarksIllust(uid = uid, tag = tag, url = url)
+        PixivHelper().runCatching {
+            userBookmarksIllust(uid = uid, tag = tag, url = url)
         }.onSuccess { (list, _) ->
             emit(list)
             logger.verbose { "加载用户(${uid})收藏页{${list.size}} ${url}成功" }
@@ -93,7 +93,7 @@ internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = 
     }
 }
 
-internal suspend fun bookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
+internal suspend fun getBookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
     val max = (0..detail.profile.totalIllustBookmarksPublic).random() + PAGE_SIZE
     return PixivHelper().userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
         check(illusts.isEmpty()) { "随机收藏USER[${detail.user.id}]<${tag}>失败" }
@@ -103,8 +103,8 @@ internal suspend fun bookmarksRandom(detail: UserDetail, tag: String? = null): I
 internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        runCatching {
-            PixivHelper().userIllusts(uid = detail.user.id, offset = offset).illusts
+        PixivHelper().runCatching {
+            userIllusts(uid = detail.user.id, offset = offset).illusts
         }.onSuccess {
             emit(it)
             logger.verbose { "加载用户(${detail.user.id})作品第${page}页{${it.size}}成功" }
@@ -117,8 +117,8 @@ internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = f
 internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        runCatching {
-            PixivHelper().userFollowing(uid = detail.user.id, offset = offset).previews
+        PixivHelper().runCatching {
+            userFollowing(uid = detail.user.id, offset = offset).previews
         }.onSuccess {
             emit(it)
             logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${it.size}}成功" }
@@ -128,7 +128,7 @@ internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = 
     }
 }
 
-internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boolean): Flow<List<IllustInfo>> {
+internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<List<IllustInfo>> {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师需要缓存" }
     var index = 0
     return getUserFollowingPreview(detail = detail).transform { list ->
@@ -136,7 +136,7 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
             index++
             if (active().not()) break
             if (Twitter.find(preview.user.id).isEmpty() || preview.isLoaded().not() || flush) {
-                runCatching {
+                PixivHelper().runCatching {
                     val author = userDetail(uid = preview.user.id).apply { twitter() }
                     val total = author.total()
                     val count = author.user.count()
@@ -152,12 +152,10 @@ internal suspend fun PixivHelper.getUserFollowing(detail: UserDetail, flush: Boo
                 }
             }
         }
-    }.onCompletion {
-        send { "共${index}个画师处理完成" }
     }
 }
 
-internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: Int = 0): Flow<List<IllustInfo>> {
+internal suspend fun getUserFollowingMark(detail: UserDetail, jump: Int = 0): Flow<List<IllustInfo>> {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师收藏需要缓存" }
     var index = 0
     return getUserFollowingPreview(detail = detail).transform { previews ->
@@ -177,8 +175,6 @@ internal suspend fun PixivHelper.getUserFollowingMark(detail: UserDetail, jump: 
                 }
             }
         }
-    }.onCompletion {
-        send { "共${index + 1}个画师处理完成" }
     }
 }
 

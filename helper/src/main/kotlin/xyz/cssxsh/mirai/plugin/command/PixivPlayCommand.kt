@@ -176,7 +176,7 @@ object PixivPlayCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
-        val illusts = bookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
+        val illusts = getBookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
 
         if (model != SendModel.Forward && duration > 0) {
             play = play(illusts)

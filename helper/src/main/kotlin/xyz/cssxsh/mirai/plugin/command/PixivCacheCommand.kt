@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -91,7 +92,9 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_ALL(${detail.user.id})", reply = reply) {
-            getUserFollowing(detail = detail, flush = flush)
+            getUserFollowing(detail = detail, flush = flush).onCompletion {
+                send { "共${detail.profile.totalFollowUsers}个画师处理完成" }
+            }
         }
 
         "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师需要缓存"
@@ -103,7 +106,9 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_MARKS(${detail.user.id})", write = false, reply = reply) {
-            getUserFollowingMark(detail = detail, jump = jump).eros()
+            getUserFollowingMark(detail = detail, jump = jump).eros().onCompletion {
+                send { "共${detail.profile.totalFollowUsers}个画师处理完成" }
+            }
         }
 
         "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师的收藏需要缓存"
