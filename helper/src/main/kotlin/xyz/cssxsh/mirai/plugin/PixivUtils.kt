@@ -235,7 +235,7 @@ internal val EroChunk by lazy {
  * 2. [PixivHelperSettings.eroUpExpire]
  */
 internal val EroUpExpire by lazy {
-    System.getProperty(ERO_UP_PROPERTY)?.toInt() ?: PixivHelperSettings.eroUpExpire
+    System.getProperty(ERO_UP_PROPERTY)?.toLong() ?: PixivHelperSettings.eroUpExpire
 }
 
 /**

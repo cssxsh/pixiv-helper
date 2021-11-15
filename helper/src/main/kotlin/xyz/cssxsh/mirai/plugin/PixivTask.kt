@@ -237,7 +237,7 @@ internal suspend fun TimerTask.pre(): Unit = when (this) {
 internal suspend fun TimerTask.run(name: String) = when (this) {
     is TimerTask.User -> {
         helper.subscribe(name) {
-            getUserIllusts(detail = userDetail(uid = uid), limit = PAGE_SIZE).isToday()
+            getUserIllusts(detail = userDetail(uid = this@run.uid), limit = PAGE_SIZE).isToday()
         }
     }
     is TimerTask.Rank -> {
