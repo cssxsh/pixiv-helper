@@ -59,7 +59,7 @@ object PixivHelperListener {
         }
         "InitHelper" with subscribeAlways<BotOnlineEvent> {
             if (PixivConfigData.default.isNotBlank()) {
-                bot.groups.random().helper
+                bot.groups.randomOrNull()?.helper
             }
             for ((id, _) in PixivConfigData.tokens) {
                 try {
