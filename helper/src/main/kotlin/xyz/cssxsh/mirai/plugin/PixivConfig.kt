@@ -4,7 +4,6 @@ import io.ktor.client.features.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.mirai.plugin.data.*
@@ -15,7 +14,6 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import xyz.cssxsh.pixiv.tool.*
 import java.io.*
-import java.time.*
 import kotlin.math.*
 
 typealias Ignore = suspend (Throwable) -> Boolean
@@ -44,11 +42,11 @@ internal fun Ignore(helper: PixivHelper): Ignore = { throwable ->
             val response = throwable.response.headers.toMap()
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
-                    helper.mutex.withLock {
-                        if (helper.expires >= OffsetDateTime.now()) {
-                            helper.expires = OffsetDateTime.MIN
-                            logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
-                        }
+                    logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
+                    try {
+                        helper.refresh()
+                    } catch (cause: Throwable) {
+                        logger.warning { "刷新 Token 失败 $cause" }
                     }
                     true
                 }

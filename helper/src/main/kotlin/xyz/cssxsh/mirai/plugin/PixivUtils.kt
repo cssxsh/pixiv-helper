@@ -66,10 +66,8 @@ suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage
 suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
 
 internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
-    return runCatching {
-        helper.block()
-    }.onSuccess { message ->
-        when (message) {
+    return try {
+        when (val message = helper.block()) {
             null, Unit -> Unit
             is ForwardMessage -> {
                 check(message.nodeList.size <= 200) {
@@ -87,27 +85,28 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
             is ArtWorkInfo -> sendArtwork(message)
             else -> quoteReply(message.toString())
         }
-    }.onFailure {
-        logger.warning({ "消息回复失败" }, it)
+        true
+    } catch (cause: Throwable) {
+        logger.warning({ "消息回复失败" }, cause)
         when {
-            it is AppApiException -> {
-                quoteReply("ApiException, ${it.message}")
+            cause is AppApiException -> {
+                quoteReply("ApiException, ${cause.json}")
             }
-            SendLimit in it.message.orEmpty() -> {
+            SendLimit in cause.message.orEmpty() -> {
                 delay(60 * 1000L)
-                quoteReply(SendLimit.find(it.message!!)!!.value)
+                quoteReply(SendLimit.find(cause.message!!)!!.value)
             }
             else -> {
-                quoteReply(it.toString())
+                quoteReply(cause.toString())
             }
         }
-    }.isSuccess
+        false
+    }
 }
 
 internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
-    return runCatching {
-        helper.buildMessageByIllust(illust = illust)
-    }.mapCatching { message ->
+    return try {
+        val message = helper.buildMessageByIllust(illust = illust)
         withTimeout(3 * 60 * 1000L) {
             when (val model = helper.model) {
                 is SendModel.Normal -> quoteReply(message)
@@ -129,22 +128,24 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                 }
             }
         }
-    }.onFailure {
+        true
+    } catch (cause: Throwable) {
         when {
-            SendLimit in it.message.orEmpty() -> {
+            SendLimit in cause.message.orEmpty() -> {
                 delay(60 * 1000L)
-                quoteReply(SendLimit.find(it.message!!)!!.value)
+                quoteReply(SendLimit.find(cause.message!!)!!.value)
             }
             else -> {
-                logger.warning({ "读取色图失败" }, it)
-                quoteReply("读取色图失败, ${it.message}")
+                logger.warning({ "读取色图失败" }, cause)
+                quoteReply("读取色图失败, ${cause.message}")
             }
         }
-    }.isSuccess
+        false
+    }
 }
 
 internal suspend fun CommandSenderOnMessage<*>.sendArtwork(info: ArtWorkInfo): Boolean {
-    return sendIllust(helper.getIllustInfo(pid = info.pid, flush = false))
+    return sendIllust(illust = helper.getIllustInfo(pid = info.pid, flush = false))
 }
 
 /**
