@@ -28,7 +28,7 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
             is Group -> PixivConfigData.default
             else -> throw IllegalAccessException("未知类型联系人!")
         }
-        return DEFAULT_PIXIV_CONFIG.copy(proxy = PixivHelperSettings.proxyApi, refreshToken = token)
+        return DEFAULT_PIXIV_CONFIG.copy(proxy = ProxyApi, refreshToken = token)
     }
 }
 
@@ -163,7 +163,7 @@ private val helpers = mutableMapOf<Contact, PixivHelper>()
 
 private var last: Int = 0
 
-internal val abilities get() = helpers.values.distinctBy { it.authInfo?.user?.uid }.filter { it.authInfo != null }
+internal val abilities get() = helpers.values.distinctBy { it.uid }.filter { it.uid != null }
 
 /**
  * random get authed helper at [helpers]

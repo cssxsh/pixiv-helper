@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
@@ -171,7 +170,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载临时文件夹中未保存的作品")
     suspend fun CommandSenderOnMessage<*>.temp(path: String = "") = withHelper {
         val list = mutableSetOf<Long>()
-        val dir = if (path.isEmpty()) PixivHelperSettings.tempFolder else File(path)
+        val dir = if (path.isEmpty()) TempFolder else File(path)
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
         val exists = dir.resolve("exists").apply { mkdirs() }
         val other = dir.resolve("other").apply { mkdirs() }

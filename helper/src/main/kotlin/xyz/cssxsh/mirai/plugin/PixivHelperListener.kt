@@ -66,7 +66,7 @@ object PixivHelperListener {
                     logger.warning { "init $id $e" }
                 }
             }
-            logger.info { "abilities: ${abilities.mapNotNull { it.authInfo?.user?.uid }}" }
+            logger.info { "abilities: ${abilities.mapNotNull { it.uid }}" }
         }
     }
 

@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.plugin.tools
 
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import java.io.*
 import java.nio.file.attribute.*
@@ -47,7 +46,7 @@ object PixivZipper {
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
             for (info in list) {
-                for (file in imagesFolder(info.pid).listFiles().orEmpty()) {
+                for (file in images(info.pid).listFiles().orEmpty()) {
                     stream.putNextEntry(ZipEntry("[${info.pid}](${info.getFullWidthTitle()})/${file.name}").apply {
                         creationTime = FileTime.from(Instant.ofEpochSecond(info.created))
                         lastModifiedTime = FileTime.from(Instant.ofEpochSecond(info.created))

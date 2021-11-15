@@ -16,7 +16,7 @@ object PixivDeleteCommand : CompositeCommand(
 ), PixivHelperCommand {
 
     private fun delete(pid: Long): Boolean {
-        return imagesFolder(pid).listFiles { file ->
+        return images(pid).listFiles { file ->
             file.isFile && file.extension != "json"
         }?.all { it.delete() } ?: true
     }

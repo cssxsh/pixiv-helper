@@ -18,29 +18,41 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 
-private const val LOGGER_PROPERTY = "xyz.cssxsh.mirai.plugin.logger"
+internal const val LOGGER_PROPERTY = "xyz.cssxsh.mirai.plugin.logger"
 
-private const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
+internal const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
 
-private const val BACKUP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.backup"
+internal const val BACKUP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.backup"
 
-private const val TEMP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.temp"
+internal const val TEMP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.temp"
 
-private const val ERO_CHUNK_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.chunk"
+internal const val ERO_CHUNK_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.chunk"
 
-private const val ERO_UP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.up"
+internal const val ERO_UP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.up"
 
-private const val ERO_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.sfw"
+internal const val ERO_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.sfw"
 
-private const val ERO_STANDARD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.standard"
+internal const val ERO_STANDARD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.standard"
 
-private const val TAG_COOLING_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.cooling"
+internal const val TAG_COOLING_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.cooling"
 
-private const val TAG_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.sfw"
+internal const val TAG_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.sfw"
 
-private const val CACHE_CAPACITY_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.capacity"
+internal const val CACHE_CAPACITY_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.capacity"
 
-private const val CACHE_JUMP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.jump"
+internal const val CACHE_JUMP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.jump"
+
+internal const val TIMEOUT_API_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.timeout.api"
+
+internal const val TIMEOUT_DOWNLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.timeout.download"
+
+internal const val PROXY_API_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.api"
+
+internal const val PROXY_DOWNLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.download"
+
+internal const val PROXY_MIRROR_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.mirror"
+
+internal const val BLOCK_SIZE_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.block"
 
 internal val logger by lazy {
     val open = System.getProperty(LOGGER_PROPERTY, "${true}").toBoolean()
@@ -286,7 +298,56 @@ internal val CacheCapacity by lazy {
  * 2. [PixivHelperSettings.cacheJump]
  */
 internal val CacheJump by lazy {
-    System.getProperty(CACHE_JUMP_PROPERTY)?.toInt() ?: PixivHelperSettings.cacheJump
+    System.getProperty(CACHE_JUMP_PROPERTY)?.toBoolean() ?: PixivHelperSettings.cacheJump
+}
+
+/**
+ * API超时时间, 单位ms
+ * 1. [TIMEOUT_API_PROPERTY]
+ * 2. [PixivHelperSettings.timeoutApi]
+ */
+internal val TimeoutApi by lazy {
+    System.getProperty(TIMEOUT_API_PROPERTY)?.toLong() ?: PixivHelperSettings.timeoutApi
+}
+
+/**
+ * DOWNLOAD超时时间, 单位ms
+ * 1. [TIMEOUT_DOWNLOAD_PROPERTY]
+ * 2. [PixivHelperSettings.timeoutDownload]
+ */
+internal val TimeoutDownload by lazy {
+    System.getProperty(TIMEOUT_DOWNLOAD_PROPERTY)?.toLong() ?: PixivHelperSettings.timeoutDownload
+}
+
+/**
+ * API代理
+ * 1. [PROXY_API_PROPERTY]
+ * 2. [PixivHelperSettings.proxyApi]
+ */
+internal val ProxyApi by lazy {
+    System.getProperty(PROXY_API_PROPERTY) ?: PixivHelperSettings.proxyApi
+}
+
+/**
+ * DOWNLOAD代理
+ * 1. [PROXY_DOWNLOAD_PROPERTY]
+ * 2. [PixivHelperSettings.proxyDownload]
+ */
+internal val ProxyDownload by lazy {
+    System.getProperty(PROXY_DOWNLOAD_PROPERTY) ?: PixivHelperSettings.proxyDownload
+}
+
+/**
+ * MIRROR代理
+ * 1. [PROXY_MIRROR_PROPERTY]
+ * 2. [PixivHelperSettings.pximg]
+ */
+internal val ProxyMirror by lazy {
+    System.getProperty(PROXY_MIRROR_PROPERTY) ?: PixivHelperSettings.pximg
+}
+
+internal val BlockSize by lazy {
+    System.getProperty(BLOCK_SIZE_PROPERTY)?.toInt() ?: PixivHelperSettings.blockSize
 }
 
 internal class DisplayStrategyBuilder {
@@ -518,7 +579,7 @@ internal val ArticleFolder: File get() = CacheFolder.resolve("article")
 /**
  * 图片目录
  */
-internal fun imagesFolder(pid: Long): File {
+internal fun images(pid: Long): File {
     return CacheFolder
         .resolve("%03d______".format(pid / 1_000_000))
         .resolve("%06d___".format(pid / 1_000))
@@ -530,9 +591,9 @@ internal fun imagesFolder(pid: Long): File {
  */
 internal val UgoiraImagesFolder: File get() = TempFolder.resolve("gif")
 
-internal fun illust(pid: Long) = imagesFolder(pid).resolve("${pid}.json")
+internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")
 
-internal fun ugoira(pid: Long) = imagesFolder(pid).resolve("${pid}.ugoira.json")
+internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
 
 internal fun File.readIllustInfo() = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 
@@ -583,8 +644,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = imagesFolder(pid).apply { mkdirs() }
-    val temp = PixivHelperSettings.tempFolder
+    val dir = images(pid).apply { mkdirs() }
     val downloads = mutableListOf<Url>()
     val urls = getOriginImageUrls().filter { "$pid" in it.encodedPath }
     val files = urls.map { url ->
@@ -607,7 +667,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         var size = 0L
 
         downloads.removeIf { url ->
-            val file = temp.resolve(url.filename)
+            val file = TempFolder.resolve(url.filename)
             val exists = file.exists()
             if (exists) {
                 logger.info { "从[${file}]移动文件" }
@@ -620,7 +680,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, deferred ->
             try {
                 val bytes = deferred.await()
-                temp.resolve(url.filename).writeBytes(bytes)
+                TempFolder.resolve(url.filename).writeBytes(bytes)
                 size += bytes.size
                 results.add(FileInfo(url = url, bytes = bytes))
             } catch (e: Throwable) {
@@ -636,7 +696,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         }
 
         for (url in downloads) {
-            temp.resolve(url.filename).apply {
+            TempFolder.resolve(url.filename).apply {
                 if (exists()) renameTo(dir.resolve(url.filename))
             }
         }

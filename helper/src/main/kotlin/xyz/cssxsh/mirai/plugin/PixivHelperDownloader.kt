@@ -2,23 +2,22 @@ package xyz.cssxsh.mirai.plugin
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
 import java.net.*
 
 object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
 
-    override val ignore: suspend (Throwable) -> Boolean get() = PixivDownloadIgnore
+    override val ignore: Ignore get() = PixivDownloadIgnore
 
-    override val timeout: Long by PixivHelperSettings::timeoutDownload
+    override val timeout: Long get() = TimeoutDownload
 
-    override val blockSize: Int by PixivHelperSettings::blockSize
+    override val blockSize: Int get() = BlockSize
 
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     override val proxy: Proxy? by lazy {
-        if (PixivHelperSettings.proxyDownload.isNotBlank()) {
-            Url(PixivHelperSettings.proxyDownload).toProxy()
+        if (ProxyDownload.isNotBlank()) {
+            Url(ProxyDownload).toProxy()
         } else {
             null
         }
@@ -28,7 +27,7 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
         urls: List<Url>,
         block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
     ): List<R> {
-        val proxy = PixivHelperSettings.pximg
+        val proxy = ProxyMirror
         return if (proxy.isNotBlank()) {
             super.downloadImageUrls(urls.map { if (it.host == "i.pximg.net") it.copy(host = proxy) else it }, block)
         } else {

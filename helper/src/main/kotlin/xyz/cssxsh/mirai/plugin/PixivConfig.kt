@@ -30,7 +30,7 @@ internal val SAUCENAO_ORIGIN = listOf("45.32.0.237", "chr1.saucenao.com")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { throwable ->
+internal fun Ignore(helper: PixivHelper): Ignore = { throwable ->
     when (throwable) {
         is IOException,
         is HttpRequestTimeoutException,
@@ -44,9 +44,9 @@ internal val PixivApiIgnore: suspend PixivHelper.(Throwable) -> Boolean = { thro
             val response = throwable.response.headers.toMap()
             when {
                 "Please check your Access Token to fix this." in throwable.message -> {
-                    mutex.withLock {
-                        if (expires >= OffsetDateTime.now()) {
-                            expires = OffsetDateTime.MIN
+                    helper.mutex.withLock {
+                        if (helper.expires >= OffsetDateTime.now()) {
+                            helper.expires = OffsetDateTime.MIN
                             logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
                         }
                     }
@@ -111,18 +111,18 @@ internal fun PixivHelperSettings.init(scope: CoroutineScope) {
     logger.info { "CacheFolder: ${CacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${BackupFolder.absolutePath}" }
     logger.info { "TempFolder: ${TempFolder.absolutePath}" }
-    if (pximg.isNotBlank()) {
-        logger.warning { "镜像代理已开启 i.pximg.net -> $pximg 不推荐修改这个配置，建议保持留空" }
+    if (ProxyMirror.isNotBlank()) {
+        logger.warning { "镜像代理已开启 i.pximg.net -> $ProxyMirror 不推荐修改这个配置，建议保持留空" }
     }
-    if (proxyApi.isNotBlank()) {
-        logger.warning { "已加载 API 代理 $proxyApi API代理可能会导致SSL连接异常，请十分谨慎的开启这个功能" }
+    if (ProxyApi.isNotBlank()) {
+        logger.warning { "已加载 API 代理 $ProxyApi API代理可能会导致SSL连接异常，请十分谨慎的开启这个功能" }
     }
-    if (proxyDownload.isNotBlank()) {
-        logger.warning { "已加载 DOWNLOAD 代理 $proxyDownload  图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
+    if (ProxyDownload.isNotBlank()) {
+        logger.warning { "已加载 DOWNLOAD 代理 $ProxyDownload  图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
     }
-    if (blockSize <= 0) {
+    if (BlockSize <= 0) {
         logger.warning { "分块下载关闭，通常来说分块下载可以加快下载速度，建议开启，但分块不宜太小" }
-    } else if (blockSize < HTTP_KILO) {
+    } else if (BlockSize < HTTP_KILO) {
         logger.warning { "下载分块过小" }
     }
     scope.launch {

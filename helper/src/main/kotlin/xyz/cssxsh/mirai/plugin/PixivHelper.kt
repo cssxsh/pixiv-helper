@@ -30,16 +30,17 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
 
-    public override var authInfo: AuthResult? by AuthResultDelegate
-        protected set
+    override var authInfo: AuthResult? by AuthResultDelegate
+
+    internal val uid get() = authInfo?.user?.uid
 
     public override var expires: OffsetDateTime by ExpiresTimeDelegate
 
     public override val mutex: Mutex by MutexDelegate
 
-    override val ignore: Ignore get() = { PixivApiIgnore(it) }
+    override val ignore: Ignore = Ignore(helper = this)
 
-    override val timeout: Long by PixivHelperSettings::timeoutApi
+    override val timeout: Long get() = TimeoutApi
 
     internal var link: Boolean by LinkDelegate
 

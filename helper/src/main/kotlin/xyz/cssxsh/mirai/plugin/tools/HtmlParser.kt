@@ -10,7 +10,6 @@ import org.jsoup.*
 import org.jsoup.nodes.*
 import org.jsoup.select.*
 import xyz.cssxsh.mirai.plugin.*
-import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
 
@@ -23,8 +22,8 @@ abstract class HtmlParser(var ignore: Ignore) {
         BrowserUserAgent()
         engine {
             config {
-                if (PixivHelperSettings.proxyApi.isNotBlank()) {
-                    proxy(Url(PixivHelperSettings.proxyApi).toProxy())
+                if (ProxyApi.isNotBlank()) {
+                    proxy(Url(ProxyApi).toProxy())
                 } else {
                     sslSocketFactory(RubySSLSocketFactory, RubyX509TrustManager)
                     hostnameVerifier { _, _ -> true }
