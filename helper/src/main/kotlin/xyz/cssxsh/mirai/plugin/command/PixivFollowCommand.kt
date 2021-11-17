@@ -15,7 +15,7 @@ object PixivFollowCommand : CompositeCommand(
 
     private var PixivHelper.follow by PixivHelperDelegate { CompletedJob }
 
-    private suspend fun CommandSenderOnMessage<*>.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
+    private suspend fun UserCommandSender.follow(block: suspend PixivHelper.() -> Set<Long>) = withHelper {
         check(!follow.isActive) { "正在关注中, ${follow}..." }
         follow = launch(Dispatchers.IO) {
             val (success, failure) = block().groupBy { uid ->
@@ -44,9 +44,10 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("为当前助手关注指定用户")
-    suspend fun CommandSenderOnMessage<*>.user(vararg uid: String) = follow { uid.map { it.toLong() }.toSet() }
+    suspend fun UserCommandSender.user(vararg uid: String) =
+        follow { uid.mapTo(mutableSetOf()) { it.toLong() } }
 
     @SubCommand
     @Description("关注指定用户的关注")
-    suspend fun CommandSenderOnMessage<*>.copy(uid: Long) = follow { getFollowed(uid = uid) }
+    suspend fun UserCommandSender.copy(uid: Long) = follow { getFollowed(uid = uid) }
 }

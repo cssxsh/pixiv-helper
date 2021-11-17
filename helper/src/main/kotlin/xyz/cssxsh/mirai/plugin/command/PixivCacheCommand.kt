@@ -22,7 +22,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存关注推送")
-    suspend fun CommandSenderOnMessage<*>.follow() = withHelper {
+    suspend fun UserCommandSender.follow() = withHelper {
         addCacheJob(name = "FOLLOW", reply = reply) { name ->
             getFollowIllusts().onCompletion {
                 send { "${name}处理完成" }
@@ -33,7 +33,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存指定排行榜信息")
-    suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode, date: LocalDate? = null) = withHelper {
+    suspend fun UserCommandSender.rank(mode: RankMode, date: LocalDate? = null) = withHelper {
         addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})", reply = reply) { name ->
             getRank(mode = mode, date = date).onCompletion {
                 send { "${name}处理完成" }
@@ -52,7 +52,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("参数界限为解析缓存月榜作品")
-    suspend fun CommandSenderOnMessage<*>.range(start: LocalDate, end: LocalDate) = withHelper {
+    suspend fun UserCommandSender.range(start: LocalDate, end: LocalDate) = withHelper {
         check(start <= end) { "start 要在 end 之前" }
         for (date in start..end) {
             addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = reply) { name ->
@@ -66,7 +66,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存NaviRank榜作品")
-    suspend fun CommandSenderOnMessage<*>.navirank(year: Year? = null) = withHelper {
+    suspend fun UserCommandSender.navirank(year: Year? = null) = withHelper {
         addCacheJob(name = "NAVIRANK${year?.let { "[${it}]" } ?: ""}", reply = reply) { name ->
             getNaviRank(year = year).onCompletion {
                 send { "${name}处理完成" }
@@ -77,7 +77,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("从推荐画师的预览中缓存色图作品，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
+    suspend fun UserCommandSender.recommended() = withHelper {
         addCacheJob(name = "RECOMMENDED", reply = reply) { name ->
             getRecommended().eros().onCompletion {
                 send { "${name}处理完成" }
@@ -88,7 +88,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("从指定用户的收藏中缓存色图作品")
-    suspend fun CommandSenderOnMessage<*>.bookmarks(uid: Long? = null) = withHelper {
+    suspend fun UserCommandSender.bookmarks(uid: Long? = null) = withHelper {
         addCacheJob(name = "BOOKMARKS(${uid ?: "me"})", reply = reply) { name ->
             getBookmarks(uid = uid ?: info().user.uid).onCompletion {
                 send { "${name}处理完成" }
@@ -99,7 +99,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存别名画师列表作品")
-    suspend fun CommandSenderOnMessage<*>.alias() = withHelper {
+    suspend fun UserCommandSender.alias() = withHelper {
         val list = AliasSetting.all()
 
         addCacheJob(name = "ALIAS", reply = reply) { name ->
@@ -113,7 +113,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("将关注画师列表检查，缓存所有作品")
-    suspend fun CommandSenderOnMessage<*>.following(flush: Boolean = false, uid: Long? = null) = withHelper {
+    suspend fun UserCommandSender.following(flush: Boolean = false, uid: Long? = null) = withHelper {
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_ALL(${detail.user.id})", reply = reply) { name ->
@@ -127,7 +127,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand("fms")
     @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.followingWithMarks(jump: Int = 0, uid: Long? = null) = withHelper {
+    suspend fun UserCommandSender.followingWithMarks(jump: Int = 0, uid: Long? = null) = withHelper {
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_MARKS(${detail.user.id})", write = false, reply = reply) { name ->
@@ -141,7 +141,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存指定画师作品")
-    suspend fun CommandSenderOnMessage<*>.user(uid: Long) = withHelper {
+    suspend fun UserCommandSender.user(uid: Long) = withHelper {
         val detail = userDetail(uid = uid).apply { twitter() }
 
         addCacheJob(name = "USER(${uid})", reply = reply) { name ->
@@ -155,7 +155,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存搜索得到的tag，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.tag(tag: String) = withHelper {
+    suspend fun UserCommandSender.tag(tag: String) = withHelper {
         addCacheJob(name = "TAG(${tag})", reply = reply) { name ->
             getSearchTag(tag = tag).eros().onCompletion {
                 send { "${name}处理完成" }
@@ -166,7 +166,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载缓存文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<*>.local(range: LongRange = MAX_RANGE) = withHelper {
+    suspend fun UserCommandSender.local(range: LongRange = MAX_RANGE) = withHelper {
         addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { name ->
             localCache(range = range).onCompletion {
                 send { "${name}处理完成" }
@@ -176,7 +176,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载动图作品")
-    suspend fun CommandSenderOnMessage<*>.ugoira() = withHelper {
+    suspend fun UserCommandSender.ugoira() = withHelper {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
@@ -206,7 +206,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载临时文件夹中未保存的作品")
-    suspend fun CommandSenderOnMessage<*>.temp(path: String = "") = withHelper {
+    suspend fun UserCommandSender.temp(path: String = "") = withHelper {
         val list = mutableSetOf<Long>()
         val dir = if (path.isEmpty()) TempFolder else File(path)
         logger.verbose { "从 ${dir.absolutePath} 加载文件" }
@@ -231,7 +231,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存搜索记录")
-    suspend fun CommandSenderOnMessage<*>.search() = withHelper {
+    suspend fun UserCommandSender.search() = withHelper {
         val list = PixivSearchResult.noCached()
 
         addCacheJob(name = "SEARCH", reply = reply) { name ->
@@ -245,7 +245,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存漫游，ERO过滤")
-    suspend fun CommandSenderOnMessage<*>.walkthrough(times: Int = 1) = withHelper {
+    suspend fun UserCommandSender.walkthrough(times: Int = 1) = withHelper {
         addCacheJob(name = "WALK_THROUGH(${times})", reply = reply) { name ->
             getWalkThrough(times = times).eros().onCompletion {
                 send { "${name}处理完成" }
@@ -256,14 +256,14 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("回复缓存细节")
-    suspend fun CommandSenderOnMessage<*>.reply(open: Boolean) = withHelper {
+    suspend fun UserCommandSender.reply(open: Boolean) = withHelper {
         reply = open
         "已设置回复状态为${reply}"
     }
 
     @SubCommand
     @Description("停止当前助手缓存任务")
-    suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
+    suspend fun UserCommandSender.stop() = withHelper {
         cacheStop()
         "任务已停止"
     }

@@ -21,7 +21,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("uid", "id", "user", "用户")
     @Description("根据画师UID随机发送画师作品")
-    suspend fun CommandSenderOnMessage<*>.uid(uid: Long) = withHelper {
+    suspend fun UserCommandSender.uid(uid: Long) = withHelper {
         ArtWorkInfo.user(uid).also { list ->
             logger.verbose { "画师(${uid})共找到${list.size}个作品" }
         }.randomOrNull() ?: "画师 $uid 没有找到缓存"
@@ -29,7 +29,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("name", "名称", "名字", "推特")
     @Description("根据画师name或者alias或twitter随机发送画师作品")
-    suspend fun CommandSenderOnMessage<*>.name(name: String) = withHelper {
+    suspend fun UserCommandSender.name(name: String) = withHelper {
         val uid = requireNotNull(
             AliasSetting.find(name)?.uid
                 ?: UserBaseInfo.name(name)?.uid
@@ -43,7 +43,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("alias", "别名")
     @Description("设置画师alias")
-    suspend fun CommandSenderOnMessage<*>.alias(name: String, uid: Long) = withHelper {
+    suspend fun UserCommandSender.alias(name: String, uid: Long) = withHelper {
         if (uid > 0) {
             AliasSetting(alias = name, uid = uid).replicate()
             "设置 [$name] -> ($uid)"
@@ -55,7 +55,7 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("list", "列表")
     @Description("显示别名列表")
-    suspend fun CommandSenderOnMessage<*>.list() = withHelper {
+    suspend fun UserCommandSender.list() = withHelper {
         AliasSetting.all().joinToString("\n") {
             "[${it.alias}] -> (${it.uid})"
         }
@@ -63,13 +63,13 @@ object PixivIllustratorCommand : CompositeCommand(
 
     @SubCommand("info", "信息")
     @Description("获取画师信息")
-    suspend fun CommandSenderOnMessage<*>.info(uid: Long) = withHelper {
+    suspend fun UserCommandSender.info(uid: Long) = withHelper {
         buildMessageByUser(uid = uid)
     }
 
     @SubCommand("search", "搜索")
     @Description("搜索画师")
-    suspend fun CommandSenderOnMessage<*>.search(name: String, limit: Long = PAGE_SIZE) = withHelper {
+    suspend fun UserCommandSender.search(name: String, limit: Long = PAGE_SIZE) = withHelper {
         getSearchUser(name = name, limit = limit).toList().flatten().map { preview ->
             "===============>\n".toPlainText() + buildMessageByUser(preview = preview)
         }.toMessageChain()

@@ -15,7 +15,7 @@ object PixivArticleCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.load() = withHelper {
+    suspend fun UserCommandSender.load() = withHelper {
         buildMessageByArticle(articles = randomArticles().onEach { article ->
             addCacheJob(name = "ARTICLE[${article.aid}]", reply = false) { getArticle(article = article).eros() }
         })

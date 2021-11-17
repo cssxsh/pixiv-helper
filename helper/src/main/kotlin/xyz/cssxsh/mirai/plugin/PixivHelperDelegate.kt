@@ -188,7 +188,7 @@ internal val Contact.helper by ReadOnlyProperty<Contact, PixivHelper> { contact,
     }
 }
 
-internal val CommandSenderOnMessage<*>.helper get() = fromEvent.subject.helper
+internal val UserCommandSender.helper get() = subject.helper
 
 class PixivHelperDelegate<T>(private val default: (Contact) -> T) : ReadWriteProperty<PixivHelper, T> {
 

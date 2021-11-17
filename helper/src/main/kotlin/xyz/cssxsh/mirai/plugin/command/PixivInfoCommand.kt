@@ -15,7 +15,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取助手信息")
-    suspend fun CommandSenderOnMessage<*>.helper() = withHelper {
+    suspend fun UserCommandSender.helper() = withHelper {
         val info = info()
         buildMessageChain {
             appendLine("User: ${info.user.uid}")
@@ -30,7 +30,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取用户信息")
-    suspend fun CommandSenderOnMessage<*>.user(target: User = subject as User) = withHelper {
+    suspend fun UserCommandSender.user(target: User = subject as User) = withHelper {
         buildMessageChain {
             appendLine("用户: ${target.nameCardOrNick}")
             appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}")
@@ -45,7 +45,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取群组信息")
-    suspend fun CommandSenderOnMessage<*>.group(target: Group = subject as Group) = withHelper {
+    suspend fun UserCommandSender.group(target: Group = subject as Group) = withHelper {
         buildMessageChain {
             appendLine("群组: ${target.name}")
             StatisticEroInfo.group(target.id).run {
@@ -72,7 +72,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取TAG指令统计信息")
-    suspend fun CommandSenderOnMessage<*>.top(limit: Int = TAG_TOP_LIMIT) = withHelper {
+    suspend fun UserCommandSender.top(limit: Int = TAG_TOP_LIMIT) = withHelper {
         buildMessageChain {
             appendLine("# TAG指令关键词排行")
             appendLine("| index | name | count |")
@@ -85,7 +85,7 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取缓存信息")
-    suspend fun CommandSenderOnMessage<*>.cache() = withHelper {
+    suspend fun UserCommandSender.cache() = withHelper {
         buildMessageChain {
             appendLine("缓存数: ${ArtWorkInfo.count()}")
             appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")

@@ -19,7 +19,7 @@ object PixivTaskCommand : CompositeCommand(
 
     private const val MINUTE = 60 * 1000L
 
-    private suspend fun CommandSenderOnMessage<*>.setTask(block: BuildTask) = withHelper {
+    private suspend fun UserCommandSender.setTask(block: BuildTask) = withHelper {
         val (name, task) = block()
         PixivHelperScheduler.setTimerTask(name = name, info = task)
         "定时任务${name}已添加，间隔${task.interval / MINUTE}min"
@@ -27,42 +27,42 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("推送用户新作品")
-    suspend fun CommandSenderOnMessage<*>.user(uid: Long, duration: Int = TASK_DURATION) = setTask {
+    suspend fun UserCommandSender.user(uid: Long, duration: Int = TASK_DURATION) = setTask {
         "User($uid)[${contact}]" to
             TimerTask.User(uid = uid, interval = duration * MINUTE, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("推送排行榜新作品")
-    suspend fun CommandSenderOnMessage<*>.rank(mode: RankMode) = setTask {
+    suspend fun UserCommandSender.rank(mode: RankMode) = setTask {
         "Rank<$mode>[${contact}]" to
             TimerTask.Rank(mode = mode, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("推送关注用户作品")
-    suspend fun CommandSenderOnMessage<*>.follow(duration: Int = TASK_DURATION) = setTask {
+    suspend fun UserCommandSender.follow(duration: Int = TASK_DURATION) = setTask {
         "Follow(${info().user.uid})[${contact}]" to
             TimerTask.Follow(interval = duration * MINUTE, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("推送推荐作品")
-    suspend fun CommandSenderOnMessage<*>.recommended(duration: Int = TASK_DURATION) = setTask {
+    suspend fun UserCommandSender.recommended(duration: Int = TASK_DURATION) = setTask {
         "Recommended(${info().user.uid})[${contact}]" to
             TimerTask.Recommended(interval = duration * MINUTE, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("定时备份任务")
-    suspend fun CommandSenderOnMessage<*>.backup(duration: Int = TASK_DURATION) = setTask {
+    suspend fun UserCommandSender.backup(duration: Int = TASK_DURATION) = setTask {
         "Backup" to
             TimerTask.Backup(interval = duration * MINUTE, delegate = contact.delegate)
     }
 
     @SubCommand
     @Description("推送，从url链接获取")
-    suspend fun CommandSenderOnMessage<*>.web(pattern: String, link: String, duration: Int = TASK_DURATION) = setTask {
+    suspend fun UserCommandSender.web(pattern: String, link: String, duration: Int = TASK_DURATION) = setTask {
         val url = Url(link)
         val set = loadWeb(url = url, regex = pattern.toRegex()).ifEmpty {
             throw IllegalStateException("来自${url}加载的作品ID应该不为空")
@@ -79,21 +79,21 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("推送热门标签")
-    suspend fun CommandSenderOnMessage<*>.trending(duration: Int = TASK_DURATION, times: Int = 1) = setTask {
+    suspend fun UserCommandSender.trending(duration: Int = TASK_DURATION, times: Int = 1) = setTask {
         "Trending[${contact}]" to
             TimerTask.Trending(interval = duration * MINUTE, delegate = contact.delegate, times = times)
     }
 
     @SubCommand
     @Description("推送，删除")
-    suspend fun CommandSenderOnMessage<*>.delete(name: String) = withHelper {
+    suspend fun UserCommandSender.delete(name: String) = withHelper {
         PixivHelperScheduler.removeTimerTask(name)
         "定时任务${name}已删除".toPlainText()
     }
 
     @SubCommand
     @Description("查看任务详情")
-    suspend fun CommandSenderOnMessage<*>.detail() = withHelper {
+    suspend fun UserCommandSender.detail() = withHelper {
         buildMessageChain {
             for ((name, task) in PixivTaskData.tasks) {
                 appendLine("名称: $name , 间隔: ${task.interval / MINUTE}min")

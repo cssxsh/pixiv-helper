@@ -21,7 +21,7 @@ object PixivBoomCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.handle(limit: Int = EroChunk, word: String = "") = withHelper {
+    suspend fun UserCommandSender.handle(limit: Int = EroChunk, word: String = "") = withHelper {
         val artworks = when {
             word.isEmpty() -> {
                 ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)

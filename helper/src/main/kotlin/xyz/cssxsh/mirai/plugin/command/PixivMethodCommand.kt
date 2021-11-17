@@ -20,7 +20,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 登录关联的微博")
-    suspend fun CommandSenderOnMessage<*>.sina() = withHelper {
+    suspend fun UserCommandSender.sina() = withHelper {
         val result = sina { url ->
             sendMessage(
                 try {
@@ -38,7 +38,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 Cookie")
-    suspend fun CommandSenderOnMessage<*>.cookie() = withHelper {
+    suspend fun UserCommandSender.cookie() = withHelper {
         val json = File("cookie.json")
         sendMessage("加载 cookie 从 ${json.absolutePath}")
         val result = cookie {
@@ -51,7 +51,7 @@ object PixivMethodCommand : CompositeCommand(
 
     @SubCommand
     @Description("登录 通过 RefreshToken")
-    suspend fun CommandSenderOnMessage<*>.refresh(token: String) = withHelper {
+    suspend fun UserCommandSender.refresh(token: String) = withHelper {
         config { refreshToken = token }
         val result = refresh()
 

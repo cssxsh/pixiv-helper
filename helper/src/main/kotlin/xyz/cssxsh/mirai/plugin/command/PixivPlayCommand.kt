@@ -30,12 +30,12 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("interval", "间隔")
     @Description("设置间隔")
-    suspend fun CommandSenderOnMessage<*>.interval(seconds: Int) = withHelper {
+    suspend fun UserCommandSender.interval(seconds: Int) = withHelper {
         duration = seconds * 1000L
         "设置间隔 $duration"
     }
 
-    private suspend fun CommandSenderOnMessage<*>.play(illusts: List<IllustInfo>) = launch {
+    private suspend fun UserCommandSender.play(illusts: List<IllustInfo>) = launch {
         for (illust in illusts) {
             if (isActive.not()) break
             delay(helper.duration)
@@ -90,7 +90,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("ranking", "排行榜")
     @Description("根据 排行榜 播放图集")
-    suspend fun CommandSenderOnMessage<*>.ranking(mode: RankMode, date: LocalDate? = null) = withHelper {
+    suspend fun UserCommandSender.ranking(mode: RankMode, date: LocalDate? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val illusts = illustRanking(mode = mode, date = date).illusts
             .apply { replicate() }
@@ -106,7 +106,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("rank", "排行")
     @Description("根据 words 播放NaviRank")
-    suspend fun CommandSenderOnMessage<*>.rank(vararg words: String) = withHelper {
+    suspend fun UserCommandSender.rank(vararg words: String) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val rank = NaviRank.getTagRank(words = words)
 
@@ -156,7 +156,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("recommended", "推荐")
     @Description("根据 系统推荐 播放图集")
-    suspend fun CommandSenderOnMessage<*>.recommended() = withHelper {
+    suspend fun UserCommandSender.recommended() = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
         val illusts = illustRecommended().illusts
@@ -173,7 +173,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("mark", "收藏")
     @Description("播放收藏")
-    suspend fun CommandSenderOnMessage<*>.mark(tag: String? = null) = withHelper {
+    suspend fun UserCommandSender.mark(tag: String? = null) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val user = info().user
         val illusts = getBookmarksRandom(detail = userDetail(uid = user.uid), tag = tag).illusts
@@ -188,7 +188,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("article", "特辑")
     @Description("根据 AID 播放特辑")
-    suspend fun CommandSenderOnMessage<*>.article(aid: Long) = withHelper {
+    suspend fun UserCommandSender.article(aid: Long) = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val article = Pixivision.getArticle(aid = aid)
 
@@ -209,7 +209,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("walkthrough", "random", "漫游", "随机")
     @Description("漫游")
-    suspend fun CommandSenderOnMessage<*>.walkthrough() = withHelper {
+    suspend fun UserCommandSender.walkthrough() = withHelper {
         check(!play.isActive) { "其他列表播放中" }
         val illusts = illustWalkThrough().illusts
             .apply { replicate() }
@@ -225,7 +225,7 @@ object PixivPlayCommand : CompositeCommand(
 
     @SubCommand("stop", "停止")
     @Description("停止播放当前列表")
-    suspend fun CommandSenderOnMessage<*>.stop() = withHelper {
+    suspend fun UserCommandSender.stop() = withHelper {
         if (play.isActive) {
             play.cancelAndJoin()
             "当前列表已停止播放"

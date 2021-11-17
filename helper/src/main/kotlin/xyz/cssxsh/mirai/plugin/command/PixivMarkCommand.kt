@@ -13,29 +13,29 @@ object PixivMarkCommand : CompositeCommand(
 
     @SubCommand
     @Description("添加指定作品收藏，并设定TAG")
-    suspend fun CommandSenderOnMessage<*>.add(pid: Long, vararg words: String) = withHelper {
+    suspend fun UserCommandSender.add(pid: Long, vararg words: String) = withHelper {
         illustBookmarkAdd(pid = pid, tags = words.toSet())
         "收藏${pid} -> [${words.joinToString()}] 成功"
     }
 
     @SubCommand
     @Description("删除指定作品收藏")
-    suspend fun CommandSenderOnMessage<*>.delete(pid: Long) = withHelper {
+    suspend fun UserCommandSender.delete(pid: Long) = withHelper {
         illustBookmarkDelete(pid = pid)
         "取消收藏${pid}成功"
     }
 
     @SubCommand
     @Description("随机发送一个收藏的作品")
-    suspend fun CommandSenderOnMessage<*>.random(tag: String? = null) = withHelper {
-        getBookmarks(uid = info().user.uid, tag = tag).also {
-            addCacheJob(name = "MARK_RANDOM", reply = false) { it }
+    suspend fun UserCommandSender.random(tag: String? = null) = withHelper {
+        getBookmarks(uid = info().user.uid, tag = tag).also { flow ->
+            addCacheJob(name = "MARK_RANDOM", reply = false) { flow }
         }.toList().flatten().random()
     }
 
     @SubCommand
     @Description("显示收藏列表")
-    suspend fun CommandSenderOnMessage<*>.list() = withHelper {
+    suspend fun UserCommandSender.list() = withHelper {
         getBookmarkTagInfos().toList().flatten().joinToString("\n") { (name, count) ->
             "[${name}] -> $count"
         }

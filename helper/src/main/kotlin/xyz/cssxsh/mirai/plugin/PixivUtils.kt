@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.message.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
@@ -61,18 +62,25 @@ internal val logger by lazy {
 
 val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
-suspend fun CommandSenderOnMessage<*>.quoteReply(message: Message) = sendMessage(fromEvent.message.quote() + message)
+suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Contact>? {
+    return if (this is CommandSenderOnMessage<*>) {
+        sendMessage(fromEvent.message.quote() + message)
+    } else {
+        sendMessage(At(user) + message)
+    }
+}
 
-suspend fun CommandSenderOnMessage<*>.quoteReply(message: String) = quoteReply(message.toPlainText())
+suspend fun UserCommandSender.quoteReply(message: String) = quoteReply(message.toPlainText())
 
-internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
+internal suspend fun CommandSender.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
+    this as UserCommandSender
     return try {
         when (val message = helper.block()) {
             null, Unit -> Unit
             is ForwardMessage -> {
                 check(message.nodeList.size <= 200) {
                     throw MessageTooLargeException(
-                        fromEvent.subject, message, message,
+                        subject, message, message,
                         "ForwardMessage allows up to 200 nodes, but found ${message.nodeList.size}"
                     )
                 }
@@ -104,7 +112,7 @@ internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHe
     }
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): Boolean {
+internal suspend fun UserCommandSender.sendIllust(illust: IllustInfo): Boolean {
     return try {
         val message = helper.buildMessageByIllust(illust = illust)
         withTimeout(3 * 60 * 1000L) {
@@ -112,7 +120,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                 is SendModel.Normal -> quoteReply(message)
                 is SendModel.Flash -> {
                     val images = message.filterIsInstance<Image>()
-                    quoteReply((message - images).toMessageChain())
+                    quoteReply(message.firstIsInstance<PlainText>())
                     for (image in images) quoteReply(image.flash())
                 }
                 is SendModel.Recall -> {
@@ -121,7 +129,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
                 is SendModel.Forward -> {
                     sendMessage(
                         message.toForwardMessage(
-                            sender = user!!,
+                            sender = user,
                             displayStrategy = illust.toDisplayStrategy()
                         )
                     )
@@ -144,7 +152,7 @@ internal suspend fun CommandSenderOnMessage<*>.sendIllust(illust: IllustInfo): B
     }
 }
 
-internal suspend fun CommandSenderOnMessage<*>.sendArtwork(info: ArtWorkInfo): Boolean {
+internal suspend fun UserCommandSender.sendArtwork(info: ArtWorkInfo): Boolean {
     return sendIllust(illust = helper.getIllustInfo(pid = info.pid, flush = false))
 }
 

@@ -78,22 +78,22 @@ object PixivHelperListener {
         listeners.clear()
     }
 
-    private suspend fun CommandSenderOnMessage<*>.sendIllustInfo(pid: Long) = withHelper {
+    private suspend fun CommandSender.sendIllustInfo(pid: Long) = withHelper {
         getIllustInfo(pid = pid, flush = false)
     }
 
-    private suspend fun CommandSenderOnMessage<*>.sendUserInfo(uid: Long) = withHelper {
+    private suspend fun CommandSender.sendUserInfo(uid: Long) = withHelper {
         buildMessageByUser(uid = uid)
     }
 
-    private suspend fun CommandSenderOnMessage<*>.sendUserInfo(account: String) = withHelper {
+    private suspend fun CommandSender.sendUserInfo(account: String) = withHelper {
         buildMessageByUser(uid = redirect(account = account))
     }
 
     /**
      * XXX: send by forward
      */
-    private suspend fun CommandSenderOnMessage<*>.sendArticle(aid: Long) = withHelper {
+    private suspend fun CommandSender.sendArticle(aid: Long) = withHelper {
         val article = Pixivision.getArticle(aid = aid)
         val illusts = getListIllusts(info = article.illusts).transform { list -> emitAll(list.asFlow()) }
         RawForwardMessage(illusts.map { illust ->
