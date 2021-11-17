@@ -28,9 +28,7 @@ object PixivEroCommand : SimpleCommand(
 
     private val histories: MutableMap<Contact, History> = mutableMapOf()
 
-    private fun good(sanity: Int, marks: Long) = caches.values.filter { info ->
-        info.sanity >= sanity && info.bookmarks > marks
-    }
+    private fun good(sanity: Int, marks: Long) = caches.values.filter { it.sanity >= sanity && it.bookmarks > marks }
 
     private fun randomEroArtWorkInfos(sanity: Int, marks: Long): List<ArtWorkInfo> {
         if (good(sanity, marks).isEmpty()) {
@@ -60,28 +58,29 @@ object PixivEroCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.ero() = withHelper {
-        val history = histories.getOrPut(fromEvent.subject) { History() }
+        with(histories.getOrPut(fromEvent.subject) { History() }) {
+            if ("更色" in fromEvent.message.content) {
+                minSanityLevel++
+            } else {
+                minSanityLevel = 0
+            }
+            if ("更好" !in fromEvent.message.content && expire) {
+                minBookmarks = 0
+            }
 
-        if ("更色" in fromEvent.message.content) {
-            history.minSanityLevel++
-        } else {
-            history.minSanityLevel = 0
+            val info = requireNotNull(randomEroArtWorkInfos(minSanityLevel, minBookmarks).randomOrNull()) {
+                "sanity >= ${minSanityLevel}, bookmarks >= ${minBookmarks}, 随机失败，请刷慢一点哦"
+            }
+
+            synchronized(caches) {
+                caches.remove(info.pid)
+                minSanityLevel = info.sanity
+                minBookmarks = info.bookmarks
+                last = System.currentTimeMillis()
+                record(pid = info.pid)
+            }
+
+            info
         }
-        if ("更好" !in fromEvent.message.content && history.expire) {
-            history.minBookmarks = 0
-        }
-
-        val info = randomEroArtWorkInfos(history.minSanityLevel, history.minBookmarks).randomOrNull()
-            ?: throw IllegalArgumentException("sanity >= ${history.minSanityLevel}, bookmarks >= ${history.minBookmarks}, 随机失败，请刷慢一点哦")
-
-        synchronized(caches) {
-            caches.remove(info.pid)
-            history.minSanityLevel = info.sanity
-            history.minBookmarks = info.bookmarks
-            history.last = System.currentTimeMillis()
-            record(pid = info.pid)
-        }
-
-        info
     }
 }

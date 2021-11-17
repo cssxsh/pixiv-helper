@@ -22,7 +22,7 @@ object PixivTagCommand : SimpleCommand(
     private fun CommandSenderOnMessage<*>.record(tag: String, pid: Long?) = launch(SupervisorJob()) {
         StatisticTagInfo(
             sender = fromEvent.sender.id,
-            group = fromEvent.subject.takeIf { it is Group }?.id,
+            group = (fromEvent.subject as? Group)?.id,
             pid = pid,
             tag = tag,
             timestamp = fromEvent.time.toLong()
@@ -44,21 +44,21 @@ object PixivTagCommand : SimpleCommand(
         val artwork = list.randomOrNull()
 
         PixivEroCommand += list
-        var job = "TAG[${word}]"
-        if (list.size < EroChunk && jobs.add(job)) {
-            addCacheJob(name = job, reply = false) {
+        val tag = "TAG[${word}]"
+        if (list.size < EroChunk && jobs.add(tag)) {
+            addCacheJob(name = tag, reply = false) {
                 getSearchTag(tag = word).eros().onCompletion {
-                    jobs.remove(job)
+                    jobs.remove(tag)
                 }
             }
         }
 
         if (artwork != null) {
-            job = "RELATED(${artwork.pid})"
-            if (list.size < EroChunk && jobs.add(job)) {
-                addCacheJob(name = job, reply = false) {
+            val related = "RELATED(${artwork.pid})"
+            if (list.size < EroChunk && jobs.add(related)) {
+                addCacheJob(name = related, reply = false) {
                     getRelated(pid = artwork.pid).eros().onCompletion {
-                        jobs.remove(job)
+                        jobs.remove(related)
                     }
                 }
             }
