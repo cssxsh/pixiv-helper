@@ -37,7 +37,7 @@ internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
 internal suspend fun getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        PixivHelper().runCatching {
+        PixivAuthClient().runCatching {
             illustRanking(mode = mode, date = date, offset = offset).illusts
         }.onSuccess {
             if (it.isEmpty()) return@flow
@@ -82,7 +82,7 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
 internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         if (active().not() || url == null) return@flow
-        PixivHelper().runCatching {
+        PixivAuthClient().runCatching {
             userBookmarksIllust(uid = uid, tag = tag, url = url)
         }.onSuccess { (list, _) ->
             emit(list)
@@ -95,7 +95,7 @@ internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = 
 
 internal suspend fun getBookmarksRandom(detail: UserDetail, tag: String? = null): IllustData {
     val max = (0..detail.profile.totalIllustBookmarksPublic).random() + PAGE_SIZE
-    return PixivHelper().userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
+    return PixivAuthClient().userBookmarksIllust(uid = detail.user.id, tag = tag, max = max).apply {
         check(illusts.isEmpty()) { "随机收藏USER[${detail.user.id}]<${tag}>失败" }
     }
 }
@@ -103,7 +103,7 @@ internal suspend fun getBookmarksRandom(detail: UserDetail, tag: String? = null)
 internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        PixivHelper().runCatching {
+        PixivAuthClient().runCatching {
             userIllusts(uid = detail.user.id, offset = offset).illusts
         }.onSuccess {
             emit(it)
@@ -117,7 +117,7 @@ internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = f
 internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
-        PixivHelper().runCatching {
+        PixivAuthClient().runCatching {
             userFollowing(uid = detail.user.id, offset = offset).previews
         }.onSuccess {
             emit(it)
@@ -136,7 +136,7 @@ internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<
             index++
             if (active().not()) break
             if (Twitter.find(preview.user.id).isEmpty() || preview.isLoaded().not() || flush) {
-                PixivHelper().runCatching {
+                PixivAuthClient().runCatching {
                     val author = userDetail(uid = preview.user.id).apply { twitter() }
                     val total = author.total()
                     val count = author.user.count()
@@ -200,7 +200,7 @@ internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = fl
     for (pid in set) {
         if (active().not()) break
         try {
-            with(PixivHelper().getIllustInfo(pid = pid, flush = flush)) {
+            with(PixivAuthClient().getIllustInfo(pid = pid, flush = flush)) {
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
@@ -223,7 +223,7 @@ internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: 
         if (active().not()) break
         if (check && item.pid in ArtWorkInfo) continue
         try {
-            with(PixivHelper().getIllustInfo(pid = item.pid, flush = true)) {
+            with(PixivAuthClient().getIllustInfo(pid = item.pid, flush = true)) {
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
@@ -247,7 +247,7 @@ internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow 
         if (uid in records) continue
 
         try {
-            val detail = PixivHelper().userDetail(uid = uid).apply { twitter() }
+            val detail = PixivAuthClient().userDetail(uid = uid).apply { twitter() }
             if (detail.total() > detail.user.count()) {
                 logger.verbose { "ALIAS<${alias}>(${uid})有${detail.total()}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = detail))

@@ -38,7 +38,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     public override val mutex: Mutex by MutexDelegate
 
-    override val ignore: Ignore = Ignore(helper = this)
+    override val ignore: Ignore = Ignore(client = this)
 
     override val timeout: Long get() = TimeoutApi
 

@@ -28,7 +28,7 @@ internal val SAUCENAO_ORIGIN = listOf("45.32.0.237", "chr1.saucenao.com")
 
 internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
 
-internal fun Ignore(helper: PixivHelper): Ignore = { throwable ->
+internal fun Ignore(client: PixivAuthClient): Ignore = { throwable ->
     when (throwable) {
         is IOException,
         is HttpRequestTimeoutException,
@@ -44,7 +44,7 @@ internal fun Ignore(helper: PixivHelper): Ignore = { throwable ->
                 "Please check your Access Token to fix this." in throwable.message -> {
                     logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
                     try {
-                        helper.refresh()
+                        client.refresh()
                     } catch (cause: Throwable) {
                         logger.warning { "刷新 Token 失败 $cause" }
                     }

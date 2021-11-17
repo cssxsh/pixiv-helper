@@ -161,7 +161,7 @@ object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
 
 private val helpers = mutableMapOf<Contact, PixivHelper>()
 
-private var iterator = emptyList<PixivHelper>().iterator()
+private var iterator = emptyList<PixivAuthClient>().iterator()
     get() {
         if (!field.hasNext()) field = abilities.iterator()
         return field
@@ -172,7 +172,7 @@ internal val abilities get() = helpers.values.distinctBy { it.uid }.filter { it.
 /**
  * random get authed helper at [helpers]
  */
-internal fun PixivHelper(): PixivHelper = iterator.next()
+internal fun PixivAuthClient(): PixivAuthClient = iterator.next()
 
 internal val Contact.helper by ReadOnlyProperty<Contact, PixivHelper> { contact, _ ->
     helpers.getOrPut(contact) {

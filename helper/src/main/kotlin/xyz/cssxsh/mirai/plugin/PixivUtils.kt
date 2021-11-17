@@ -612,14 +612,14 @@ internal fun UgoiraMetadata.write(file: File) {
 
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
-private val FlushIllustInfo: suspend PixivHelper.(Long) -> IllustInfo = { pid ->
+private val FlushIllustInfo: suspend PixivAppClient.(Long) -> IllustInfo = { pid ->
     illustDetail(pid).illust.check().apply { replicate() }
 }
 
-internal suspend fun PixivHelper.getIllustInfo(
+internal suspend fun PixivAppClient.getIllustInfo(
     pid: Long,
     flush: Boolean,
-    block: suspend PixivHelper.(Long) -> IllustInfo = FlushIllustInfo,
+    block: suspend PixivAppClient.(Long) -> IllustInfo = FlushIllustInfo,
 ): IllustInfo = illust(pid).let { file ->
     if (!flush && file.exists()) {
         file.runCatching {
@@ -708,7 +708,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 internal suspend fun IllustInfo.getUgoira(flush: Boolean = false) = with(PixivHelperGifEncoder) {
     val json = ugoira(pid)
     val meta = json.takeIf { it.exists() }?.readUgoiraMetadata()
-        ?: PixivHelper().ugoiraMetadata(pid).ugoira.also { it.write(json) }
+        ?: PixivAuthClient().ugoiraMetadata(pid).ugoira.also { it.write(json) }
     build(this@getUgoira, meta, flush)
 }
 
