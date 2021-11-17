@@ -13,7 +13,7 @@ import xyz.cssxsh.pixiv.*
 
 object PixivBoomCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "boom", "射爆", "社保",
+    "boom", "射爆", "社保", "[炸弹]",
     description = "PIXIV色图爆炸指令"
 ), PixivHelperCommand {
 
