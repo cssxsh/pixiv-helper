@@ -15,10 +15,9 @@ object PixivHelperScheduler : CoroutineScope {
     private const val CHECK_DELAY = 30 * 60 * 1000L
 
     private fun runTimerTask(name: String, info: TimerTask) = launch {
-        logger.info {
-            "${info}开始运行"
-        }
-        info.pre()
+        val millis = info.pre()
+        logger.info { "${info}在${millis / 60_000}ms后开始运行" }
+        delay(millis)
         while (isActive) {
             info.run(name)
             delay(info.interval)

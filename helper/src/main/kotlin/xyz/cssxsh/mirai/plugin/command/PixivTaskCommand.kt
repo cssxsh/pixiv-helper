@@ -61,6 +61,13 @@ object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
+    @Description("定时缓存任务")
+    suspend fun UserCommandSender.cache(vararg args: String) = setTask {
+        "Cache(${args.joinToString()})[${contact}]" to
+            TimerTask.Cache(delegate = contact.delegate, user = user.id, arguments = args.joinToString(separator = " "))
+    }
+
+    @SubCommand
     @Description("推送，从url链接获取")
     suspend fun UserCommandSender.web(pattern: String, link: String, duration: Int = TASK_DURATION) = setTask {
         val url = Url(link)

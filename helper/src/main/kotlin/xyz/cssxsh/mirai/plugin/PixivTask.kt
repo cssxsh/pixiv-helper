@@ -4,11 +4,17 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
+import net.mamoe.mirai.console.command.CommandSender.Companion.asMemberCommandSender
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import xyz.cssxsh.baidu.*
+import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
@@ -104,6 +110,19 @@ sealed class TimerTask {
         @SerialName("times")
         val times: Int,
     ) : TimerTask()
+
+    @Serializable
+    data class Cache(
+        @SerialName("delegate")
+        override val delegate: Long,
+        @SerialName("user")
+        val user: Long,
+        @SerialName("arguments")
+        val arguments: String
+    ) : TimerTask() {
+        override val interval: Long
+            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) } * 1000L
+    }
 }
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
@@ -208,85 +227,90 @@ internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
 
 internal fun OffsetDateTime.goto(next: OffsetDateTime) = next.toEpochSecond() - toEpochSecond()
 
-private val random get() = (10..60).random() * 60 * 1000L
+private val RandomMinute get() = (3..10).random() * 60 * 1000L
 
-internal suspend fun TimerTask.pre(): Unit = when (this) {
-    is TimerTask.User -> {
-        delay(random)
-    }
-    is TimerTask.Rank -> {
-        delay(random)
-    }
-    is TimerTask.Follow -> {
-        delay(random)
-    }
-    is TimerTask.Recommended -> {
-        delay(interval)
-    }
-    is TimerTask.Backup -> {
-        delay(interval)
-    }
-    is TimerTask.Web -> {
-        delay(random)
-    }
-    is TimerTask.Trending -> {
-        delay(interval)
+internal fun TimerTask.pre(): Long {
+    return when (this) {
+        is TimerTask.User -> RandomMinute
+        is TimerTask.Rank -> RandomMinute
+        is TimerTask.Follow -> RandomMinute
+        is TimerTask.Recommended -> interval
+        is TimerTask.Backup -> interval
+        is TimerTask.Web -> RandomMinute
+        is TimerTask.Trending -> interval
+        is TimerTask.Cache -> RandomMinute
     }
 }
 
-internal suspend fun TimerTask.run(name: String) = when (this) {
-    is TimerTask.User -> {
-        helper.subscribe(name) {
-            getUserIllusts(detail = userDetail(uid = this@run.uid), limit = PAGE_SIZE).isToday()
+internal suspend fun TimerTask.run(name: String) {
+    when (this) {
+        is TimerTask.User -> {
+            helper.subscribe(name) {
+                getUserIllusts(detail = userDetail(uid = this@run.uid), limit = PAGE_SIZE).isToday()
+            }
         }
-    }
-    is TimerTask.Rank -> {
-        helper.subscribe(name) {
-            getRank(mode = mode).eros()
+        is TimerTask.Rank -> {
+            helper.subscribe(name) {
+                getRank(mode = mode).eros()
+            }
         }
-    }
-    is TimerTask.Follow -> {
-        helper.subscribe(name) {
-            getFollowIllusts(limit = TASK_LOAD).isToday()
+        is TimerTask.Follow -> {
+            helper.subscribe(name) {
+                getFollowIllusts(limit = TASK_LOAD).isToday()
+            }
         }
-    }
-    is TimerTask.Recommended -> {
-        helper.subscribe(name) {
-            getRecommended(limit = PAGE_SIZE).eros()
+        is TimerTask.Recommended -> {
+            helper.subscribe(name) {
+                getRecommended(limit = PAGE_SIZE).eros()
+            }
         }
-    }
-    is TimerTask.Backup -> {
-        val contact = helper.contact
-        for (file in PixivZipper.files(list = backups())) {
-            if (contact is FileSupported) {
-                contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
-                runCatching {
-                    file.toExternalResource().use { contact.files.uploadNewFile(filepath = file.name, content = it) }
-                }.onFailure {
-                    contact.sendMessage("上传失败: ${it.message}")
-                }
-            } else {
-                contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
-                runCatching {
-                    BaiduNetDiskUpdater.uploadFile(file)
-                }.onSuccess {
-                    val code = file.getRapidUploadInfo().format()
-                    logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                    contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
-                }.onFailure {
-                    logger.warning({ "[${file.name}]上传失败" }, it)
-                    contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+        is TimerTask.Backup -> {
+            val contact = helper.contact
+            for (file in PixivZipper.files(list = backups())) {
+                if (contact is FileSupported) {
+                    contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
+                    runCatching {
+                        file.toExternalResource()
+                            .use { contact.files.uploadNewFile(filepath = file.name, content = it) }
+                    }.onFailure {
+                        contact.sendMessage("上传失败: ${it.message}")
+                    }
+                } else {
+                    contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
+                    runCatching {
+                        BaiduNetDiskUpdater.uploadFile(file)
+                    }.onSuccess {
+                        val code = file.getRapidUploadInfo().format()
+                        logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
+                        contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
+                    }.onFailure {
+                        logger.warning({ "[${file.name}]上传失败" }, it)
+                        contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+                    }
                 }
             }
         }
-    }
-    is TimerTask.Web -> {
-        helper.subscribe(name) {
-            getListIllusts(set = loadWeb(url = Url(url), regex = pattern.toRegex()))
+        is TimerTask.Web -> {
+            helper.subscribe(name) {
+                getListIllusts(set = loadWeb(url = Url(url), regex = pattern.toRegex()))
+            }
         }
-    }
-    is TimerTask.Trending -> {
-        helper.trending(name = name, times = times)
+        is TimerTask.Trending -> {
+            helper.trending(name = name, times = times)
+        }
+        is TimerTask.Cache -> {
+            @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
+            try {
+                val sender = (helper.contact as? Group)?.getOrFail(user)?.asMemberCommandSender()
+                    ?: (helper.contact as User).asCommandSender(false)
+                val result = PixivCacheCommand.execute(sender = sender, arguments = arguments, checkPermission = false)
+                if (result.isFailure()) {
+                    logger.warning { "Task Cache 执行错误 $result" }
+                }
+            } catch (cause: Throwable) {
+                logger.warning { "Task Cache 执行错误 $cause" }
+            }
+        }
     }
 }
 
