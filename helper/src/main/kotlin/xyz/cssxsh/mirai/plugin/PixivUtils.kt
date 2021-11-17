@@ -412,6 +412,7 @@ internal fun IllustInfo.getPixivCat() = buildMessageChain {
 }
 
 internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStrategy {
+
     override fun generateTitle(forward: RawForwardMessage): String = "${user.name} - $title"
 
     override fun generatePreview(forward: RawForwardMessage): List<String> = tags.map { it.getContent() }
