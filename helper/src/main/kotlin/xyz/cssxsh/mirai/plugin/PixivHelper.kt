@@ -70,7 +70,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
         try {
-            block.invoke(this@PixivHelper).collect { list ->
+            this@PixivHelper.block(name).collect { list ->
                 if (list.isEmpty()) return@collect
                 try {
                     val (success, failure) = list.groupBy { it.pid in ArtWorkInfo }

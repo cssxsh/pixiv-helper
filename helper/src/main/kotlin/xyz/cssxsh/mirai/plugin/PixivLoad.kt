@@ -14,7 +14,7 @@ import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 import java.time.*
 
-typealias LoadTask = suspend PixivHelper.() -> Flow<Collection<IllustInfo>>
+typealias LoadTask = suspend PixivHelper.(String) -> Flow<Collection<IllustInfo>>
 
 private suspend fun active() = currentCoroutineContext().isActive
 

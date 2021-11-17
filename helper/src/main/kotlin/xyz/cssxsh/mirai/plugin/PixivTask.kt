@@ -107,7 +107,7 @@ sealed class TimerTask {
 }
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    val flow = block().eros(mark = false).notHistory(task = name)
+    val flow = block(name).eros(mark = false).notHistory(task = name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
     val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     if (isActive.not() || list.isEmpty()) return
