@@ -34,7 +34,7 @@ object PixivInfoCommand : CompositeCommand(
         buildMessageChain {
             appendLine("用户: ${target.nameCardOrNick}")
             appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}")
-            StatisticTagInfo.user(target.id).run {
+            with(StatisticTagInfo.user(target.id)) {
                 appendLine("使用标签指令次数: $size")
                 groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
                     appendLine("检索最多的是 $tag ${list.size} 次")
@@ -48,7 +48,7 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun UserCommandSender.group(target: Group = subject as Group) = withHelper {
         buildMessageChain {
             appendLine("群组: ${target.name}")
-            StatisticEroInfo.group(target.id).run {
+            with(StatisticEroInfo.group(target.id)) {
                 appendLine("使用色图指令次数: $size")
                 groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
                     add("使用最多的是 ")
@@ -56,7 +56,7 @@ object PixivInfoCommand : CompositeCommand(
                     appendLine(" ${list.size} 次")
                 }
             }
-            StatisticTagInfo.group(target.id).run {
+            with(StatisticTagInfo.group(target.id)) {
                 appendLine("使用标签指令次数: $size")
                 groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
                     add("使用最多的是 ")
