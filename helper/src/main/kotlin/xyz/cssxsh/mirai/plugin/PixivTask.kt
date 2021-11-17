@@ -238,7 +238,7 @@ internal fun TimerTask.pre(): Long {
         is TimerTask.Backup -> interval
         is TimerTask.Web -> RandomMinute
         is TimerTask.Trending -> interval
-        is TimerTask.Cache -> RandomMinute
+        is TimerTask.Cache -> interval
     }
 }
 
