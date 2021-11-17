@@ -172,7 +172,7 @@ internal val abilities get() = helpers.values.distinctBy { it.uid }.filter { it.
 /**
  * random get authed helper at [helpers]
  */
-internal fun PixivAuthClient(): PixivAuthClient = iterator.next()
+internal fun PixivAuthClient(): PixivAuthClient = synchronized(iterator) { iterator.next() }
 
 internal val Contact.helper by ReadOnlyProperty<Contact, PixivHelper> { contact, _ ->
     helpers.getOrPut(contact) {
