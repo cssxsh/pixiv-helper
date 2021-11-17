@@ -88,9 +88,23 @@ object PixivInfoCommand : CompositeCommand(
     suspend fun UserCommandSender.cache() = withHelper {
         buildMessageChain {
             appendLine("缓存数: ${ArtWorkInfo.count()}")
+            appendLine("> ---------")
             appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")
             appendLine("R18色图数: ${ArtWorkInfo.eros(AgeLimit.R18)}")
             appendLine("R18G色图数: ${ArtWorkInfo.eros(AgeLimit.R18G)}")
+            appendLine("> ---------")
+            appendLine("插画色图数: ${ArtWorkInfo.eros(WorkContentType.ILLUST)}")
+            appendLine("动图色图数: ${ArtWorkInfo.eros(WorkContentType.UGOIRA)}")
+            appendLine("漫画色图数: ${ArtWorkInfo.eros(WorkContentType.MANGA)}")
+            appendLine("> ---------")
+            appendLine("Sanity(0)色图数: ${ArtWorkInfo.eros(SanityLevel.UNCHECKED)}")
+            appendLine("Sanity(1)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP1)}")
+            appendLine("Sanity(2)色图数: ${ArtWorkInfo.eros(SanityLevel.WHITE)}")
+            appendLine("Sanity(3)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP3)}")
+            appendLine("Sanity(4)色图数: ${ArtWorkInfo.eros(SanityLevel.SEMI_BLACK)}")
+            appendLine("Sanity(5)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP5)}")
+            appendLine("Sanity(6)色图数: ${ArtWorkInfo.eros(SanityLevel.BLACK)}")
+            appendLine("Sanity(7)色图数: ${ArtWorkInfo.eros(SanityLevel.NONE)}")
         }
     }
 }

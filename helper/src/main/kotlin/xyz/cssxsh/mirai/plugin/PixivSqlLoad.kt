@@ -190,6 +190,30 @@ internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
     }.uniqueResult()
 }
 
+internal fun ArtWorkInfo.SQL.eros(type: WorkContentType): Long = useSession { session ->
+    session.withCriteria<Long> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        criteria.select(count(artwork))
+            .where(
+                isFalse(artwork.get("deleted")),
+                isTrue(artwork.get("ero")),
+                equal(artwork.get<Int>("type"), type.ordinal)
+            )
+    }.uniqueResult()
+}
+
+internal fun ArtWorkInfo.SQL.eros(sanity: SanityLevel): Long = useSession { session ->
+    session.withCriteria<Long> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        criteria.select(count(artwork))
+            .where(
+                isFalse(artwork.get("deleted")),
+                isTrue(artwork.get("ero")),
+                equal(artwork.get<Int>("sanity"), sanity.ordinal)
+            )
+    }.uniqueResult()
+}
+
 internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
