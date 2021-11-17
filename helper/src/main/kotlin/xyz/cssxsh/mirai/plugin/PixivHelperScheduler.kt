@@ -41,7 +41,7 @@ object PixivHelperScheduler : CoroutineScope {
         coroutineContext = context
         launch {
             while (isActive) {
-                tasks.forEach { (name, info) ->
+                for ((name, info) in tasks) {
                     synchronized(jobs) {
                         jobs.compute(name) { _, job ->
                             job?.takeIf { it.isActive } ?: runTimerTask(name, info)
