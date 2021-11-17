@@ -78,16 +78,16 @@ EditThisCookie 安装地址
 tag指令检索结果过少时，会自动触发缓存  
 tag指令可以尝试按照格式`角色名(作品名)`检索角色, 举例 `红(明日方舟)`  
 tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连接起来，不要使用空格，举例 `明日方舟+巨乳`  
-`[image]?`为空时会从`回复消息`，`最近图片`获取  
+`[image]?`为空时会从`回复消息`，`最近图片`获取
 
-画师别名的`uid`为0时表示删除指定别名  
+画师别名的`uid`为0时表示删除指定别名
 
 搜图使用 <https://saucenao.com> 的 api，无KEY时，每天限额 100次， KEY参数在设置中添加  
 举例:  
 ![从指令参数中获取](image/search_1.png)  
 ![从回复消息中获取](image/search_2.png)  
 ![从最近图片中获取](image/search_3.png)  
-![从输入等待中获取](image/search_4.png)  
+![从输入等待中获取](image/search_4.png)
 
 ### 缓存指令
 
@@ -131,13 +131,15 @@ DAY_MANGA
 | `/<task> <follow> [duration]?`               | 推送关注用户作品    |
 | `/<task> <recommended> [duration]?`          | 推送推荐作品        |
 | `/<task> <backup> [duration]?`               | 数据自动备份        |
+| `/<task> <cache> {args}`                     | 数据自动缓存        |
 | `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
 | `/<task> <trending> [duration]? [times]?`    | 推送热门标签        |
 | `/<task> <detail>`                           | 查看任务详情        |
 | `/<task> <delete> [name]`                    | 删除任务            |
 
 备份文件优先推送到群文件，其次百度云  
-duration 单位分钟，默认3小时
+duration 单位分钟，默认3小时  
+`/task cache {args}` 是 task 和 cache 指令的组合，举例，`cache> <recommended`
 
 ### 设置指令
 
@@ -216,7 +218,7 @@ reload 的 chunk 为分段提交数量的大小, 默认8196
 ## URL 自动解析
 
 权限 id: `xyz.cssxsh.mirai.plugin.pixiv-helper:url`  
-匹配一下正则表达式的URL将会被解析  
+匹配一下正则表达式的URL将会被解析
 
 ```
 val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(i|artworks)/|illust_id=)\d+""".toRegex()
@@ -282,7 +284,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   `xyz.cssxsh.pixiv.tool.AtkinsonDitherer`  
   `xyz.cssxsh.pixiv.tool.JJNDitherer`  
   `xyz.cssxsh.pixiv.tool.SierraLiteDitherer`  
-  `xyz.cssxsh.pixiv.tool.StuckiDitherer`  
+  `xyz.cssxsh.pixiv.tool.StuckiDitherer`
 * disposal 切换方法  
   可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
 * max_count OpenCVQuantizer 最大迭代数
