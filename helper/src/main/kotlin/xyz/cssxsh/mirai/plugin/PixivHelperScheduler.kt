@@ -33,7 +33,7 @@ object PixivHelperScheduler : CoroutineScope {
     }
 
     fun removeTimerTask(name: String): Unit = synchronized(jobs) {
-        tasks.remove(name)
+        requireNotNull(tasks.remove(name)) { "任务不存在或者名称不完整" }
         jobs[name]?.cancel("命令任务终止")
     }
 
