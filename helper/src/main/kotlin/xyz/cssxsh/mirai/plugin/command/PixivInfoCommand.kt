@@ -21,6 +21,7 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("User: ${info.user.uid}")
             appendLine("Name: ${info.user.name}")
             appendLine("Account: ${info.user.account}")
+            appendLine("Premium: ${info.user.isPremium}")
             appendLine("AccessToken: ${info.accessToken}")
             appendLine("ExpiresTime: $expires")
             appendLine("RefreshToken: ${info.refreshToken}")
