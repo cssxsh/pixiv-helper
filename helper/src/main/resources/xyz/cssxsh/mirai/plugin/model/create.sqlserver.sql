@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS statistic_alias
 );
 CREATE TABLE IF NOT EXISTS statistic_task
 (
-    `task`      VARCHAR(64) NOT NULL COLLATE LATIN1_100_CI_AI,
+    `task`      VARCHAR(64) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
     `pid`       INTEGER     NOT NULL,
     `timestamp` INTEGER     NOT NULL,
     PRIMARY KEY (`task`, `pid`)

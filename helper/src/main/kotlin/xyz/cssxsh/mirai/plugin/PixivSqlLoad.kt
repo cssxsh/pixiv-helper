@@ -86,6 +86,22 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
     }
 }
 
+/**
+ * @see [Throwable.cause]
+ */
+internal inline fun <reified T> Throwable.findIsInstance(): T? {
+    var next: Throwable? = this
+    while (next !is T?) {
+        next = next?.cause
+    }
+    return next
+}
+
+/**
+ * @see [Throwable.findIsInstance]
+ */
+internal fun Throwable.findSQLException() = findIsInstance<SQLException>()
+
 private fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R {
     return if (lock == null) {
         factory.openSession().use(block)
@@ -555,7 +571,7 @@ internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useS
         criteria.select(task)
             .where(like(task.get("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
-    }.setMaxResults(1).list().singleOrNull()
+    }.setMaxResults(1).uniqueResult()
 }
 
 internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSession { session ->

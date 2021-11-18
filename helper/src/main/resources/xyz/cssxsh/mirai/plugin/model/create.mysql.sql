@@ -94,8 +94,10 @@ CREATE TABLE IF NOT EXISTS statistic_alias
 );
 CREATE TABLE IF NOT EXISTS statistic_task
 (
-    `task`      VARCHAR(64)      NOT NULL COLLATE 'ascii_general_ci',
+    `task`      VARCHAR(64)      NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `pid`       INTEGER UNSIGNED NOT NULL,
     `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`task`, `pid`)
 );
+ALTER TABLE `statistic_task`
+    CHANGE COLUMN `task` `task` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci' FIRST;

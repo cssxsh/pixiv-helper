@@ -103,10 +103,15 @@ object PixivTaskCommand : CompositeCommand(
     suspend fun UserCommandSender.detail() = withHelper {
         buildMessageChain {
             for ((name, task) in PixivTaskData.tasks) {
+                appendLine("> ---------")
                 appendLine("名称: $name , 间隔: ${task.interval / MINUTE}min")
-                StatisticTaskInfo.last(name)?.let { record ->
-                    val time = OffsetDateTime.ofInstant(Instant.ofEpochSecond(record.timestamp), ZoneId.systemDefault())
-                    appendLine("最后播放作品ID ${record.pid} 时间 $time")
+                try {
+                    with(StatisticTaskInfo.last(name) ?: continue) {
+                        val time = OffsetDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault())
+                        appendLine("最后播放作品ID $pid 时间 $time")
+                    }
+                } catch (cause: Throwable) {
+                    appendLine("最后播放作品ID 查询错误 ${cause.findSQLException() ?: cause}")
                 }
             }
         }.ifEmpty {
