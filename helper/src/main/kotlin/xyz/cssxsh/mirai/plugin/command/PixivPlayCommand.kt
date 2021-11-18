@@ -10,6 +10,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*

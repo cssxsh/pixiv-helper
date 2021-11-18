@@ -13,6 +13,7 @@ import net.mamoe.mirai.event.*
 import okhttp3.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
+import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 

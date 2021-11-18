@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.plugin.model
 
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
@@ -8,7 +8,7 @@ import org.hibernate.dialect.function.*
 import org.hibernate.query.criteria.internal.*
 import org.hibernate.query.criteria.internal.expression.function.*
 import org.hibernate.type.*
-import xyz.cssxsh.mirai.plugin.model.*
+import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.io.*
