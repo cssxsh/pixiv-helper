@@ -47,6 +47,7 @@ object PixivBoomCommand : SimpleCommand(
         PixivEroCommand += artworks
 
         val list = mutableListOf<ForwardMessage.Node>()
+        val current = System.currentTimeMillis()
 
         sendMessage("开始将${artworks.size}个作品合成转发消息，请稍后...")
 
@@ -75,6 +76,10 @@ object PixivBoomCommand : SimpleCommand(
                 logger.warning { "BOOM BUILD 错误 $e" }
             }
         }
+
+        val millis = System.currentTimeMillis() - current
+
+        logger.info { "BOOM BUILD ${word.ifEmpty { "随机" }} ${list.size} in ${millis}ms 完成" }
 
         RawForwardMessage(list).render {
             title = "${word.ifEmpty { "随机的" }}的快递"
