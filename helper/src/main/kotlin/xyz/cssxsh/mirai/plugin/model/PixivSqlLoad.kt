@@ -18,6 +18,8 @@ import javax.persistence.criteria.*
 import kotlin.reflect.full.*
 import kotlin.streams.*
 
+// region SqlConfiguration
+
 private val Entities = PixivEntity::class.sealedSubclasses.map { it.java }
 
 private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
@@ -186,6 +188,10 @@ internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERW
         }.getOrThrow()
     }
 }
+
+// endregion
+
+// region ArtWorkInfo
 
 internal fun ArtWorkInfo.SQL.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
@@ -470,6 +476,10 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) 
     }.getOrThrow()
 }
 
+// endregion
+
+// region UserInfo
+
 internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(id, name, account)
 
 internal fun UserInfo.count(): Long = useSession { session ->
@@ -552,6 +562,10 @@ internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session -
         session.transaction.rollback()
     }.getOrThrow()
 }
+
+// endregion
+
+// region Statistic
 
 internal operator fun StatisticTaskInfo.SQL.contains(pair: Pair<String, Long>): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
@@ -673,3 +687,4 @@ internal fun PixivSearchResult.SQL.noCached(): List<PixivSearchResult> = useSess
     }.list().orEmpty()
 }
 
+// endregion

@@ -19,6 +19,8 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 
+// region Send Message
+
 val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
 suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Contact>? {
@@ -148,6 +150,10 @@ fun findContact(delegate: Long): Contact? {
     }
     return null
 }
+
+// endregion
+
+// region Build Message
 
 internal class DisplayStrategyBuilder {
     var title: String? = null
@@ -492,6 +498,10 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     }
 }
 
+// endregion
+
+// region Tool
+
 internal val bit: (Int) -> Long = { 1L shl it }
 
 internal val bytes: (Long) -> String = {
@@ -536,3 +546,5 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
  * XXX: [MessageSource.equals]
  */
 internal fun MessageSource.key() = ids.asList() + time
+
+// endregion

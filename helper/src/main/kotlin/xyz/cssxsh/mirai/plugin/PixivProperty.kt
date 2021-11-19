@@ -5,11 +5,11 @@ import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
 import java.io.*
 
+// region PROPERTY
+
 internal const val LOGGER_PROPERTY = "xyz.cssxsh.mirai.plugin.logger"
 
 internal const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
-
-internal const val DATA_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.data"
 
 internal const val BACKUP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.backup"
 
@@ -42,6 +42,8 @@ internal const val PROXY_DOWNLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.prox
 internal const val PROXY_MIRROR_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.mirror"
 
 internal const val BLOCK_SIZE_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.block"
+
+// endregion
 
 /**
  * 1. [LOGGER_PROPERTY]
