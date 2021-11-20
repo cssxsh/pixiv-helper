@@ -33,8 +33,7 @@ suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Conta
 
 suspend fun UserCommandSender.quoteReply(message: String) = quoteReply(message.toPlainText())
 
-internal suspend fun CommandSender.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
-    this as UserCommandSender
+internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
     return try {
         when (val message = helper.block()) {
             null, Unit -> Unit
@@ -71,6 +70,10 @@ internal suspend fun CommandSender.withHelper(block: suspend PixivHelper.() -> A
         }
         false
     }
+}
+
+internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
+    return (this as UserCommandSender).withHelper(block)
 }
 
 internal suspend fun UserCommandSender.sendIllust(illust: IllustInfo): Boolean {
