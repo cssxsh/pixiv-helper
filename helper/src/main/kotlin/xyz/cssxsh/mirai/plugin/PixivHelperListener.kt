@@ -95,25 +95,29 @@ object PixivHelperListener {
      */
     private suspend fun CommandSenderOnMessage<*>.sendArticle(aid: Long) = withHelper {
         val article = Pixivision.getArticle(aid = aid)
-        val illusts = getListIllusts(info = article.illusts).transform { list -> emitAll(list.asFlow()) }
-        RawForwardMessage(illusts.map { illust ->
-            val sender = (contact as? User) ?: (contact as Group).members.random()
-            try {
-                ForwardMessage.Node(
-                    senderId = sender.id,
-                    senderName = sender.nameCardOrNick,
-                    time = illust.createAt.toEpochSecond().toInt(),
-                    message = buildMessageByIllust(illust = illust)
-                )
-            } catch (e: Throwable) {
-                ForwardMessage.Node(
-                    senderId = sender.id,
-                    senderName = sender.nameCardOrNick,
-                    time = illust.createAt.toEpochSecond().toInt(),
-                    message = "[${illust.pid}]构建失败 ${e.message.orEmpty()}".toPlainText()
-                )
+        val nodes = mutableListOf<ForwardMessage.Node>()
+        getListIllusts(info = article.illusts).collect { illusts ->
+            for (illust in illusts) {
+                val sender = (contact as? User) ?: (contact as Group).members.random()
+                val node = try {
+                    ForwardMessage.Node(
+                        senderId = sender.id,
+                        senderName = sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = buildMessageByIllust(illust = illust)
+                    )
+                } catch (e: Throwable) {
+                    ForwardMessage.Node(
+                        senderId = sender.id,
+                        senderName = sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = "[${illust.pid}]构建失败 ${e.message.orEmpty()}".toPlainText()
+                    )
+                }
+                nodes.add(node)
             }
-        }.toList()).render {
+        }
+        RawForwardMessage(nodes).render {
             title = "插画特辑"
             preview = listOf(article.title) + article.description.lines()
             summary = "查看特辑的${article.illusts.size}个作品"
