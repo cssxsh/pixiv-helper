@@ -134,7 +134,6 @@ internal fun PixivHelperSettings.init(scope: CoroutineScope) {
 }
 
 internal fun BaiduNetDiskUpdater.init(scope: CoroutineScope) = scope.launch {
-    loadToken()
     try {
         check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
         val info = getUserInfo()
