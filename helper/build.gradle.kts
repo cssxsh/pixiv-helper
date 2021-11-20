@@ -20,7 +20,7 @@ mirai {
             it.path.startsWith("io/ktor") && features.none { f -> it.path.startsWith("io/ktor/client/features/$f") }
         }
         exclude {
-            it.path.startsWith("okhttp3/internal")
+            it.path.startsWith("okhttp3") && it.path.startsWith("okhttp3/dnsoverhttps").not()
         }
         exclude {
             it.path.startsWith("okio")

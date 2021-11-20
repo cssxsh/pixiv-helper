@@ -62,7 +62,7 @@ sealed class TimerTask {
         override val delegate: Long,
     ) : TimerTask() {
         override val interval: Long
-            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) } * 1000L
+            get() = with(OffsetDateTime.now()) { goto(toNextRank()) } * 1000L
     }
 
     @Serializable
@@ -121,7 +121,7 @@ sealed class TimerTask {
         val arguments: String
     ) : TimerTask() {
         override val interval: Long
-            get() = OffsetDateTime.now().let { it.goto(it.toNextRank()) } * 1000L
+            get() = with(OffsetDateTime.now()) { goto(toNextRank()) } * 1000L
     }
 }
 
