@@ -164,4 +164,15 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
             false
         }
     }
+
+    internal fun <T> Flow<Collection<T>>.sendOnCompletion(block: suspend (Int) -> Any?): Flow<Collection<T>> {
+        var count = 0
+        return onEach { list ->
+            count += list.size
+        }.onCompletion {
+            send {
+                block(count)
+            }
+        }
+    }
 }

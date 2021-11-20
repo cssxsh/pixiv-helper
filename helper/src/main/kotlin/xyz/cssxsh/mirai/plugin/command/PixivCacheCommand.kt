@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -24,8 +23,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存关注推送")
     suspend fun UserCommandSender.follow() = withHelper {
         addCacheJob(name = "FOLLOW", reply = reply) { name ->
-            getFollowIllusts().onCompletion {
-                send { "${name}处理完成" }
+            getFollowIllusts().sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务FOLLOW已添加"
@@ -35,8 +34,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存指定排行榜信息")
     suspend fun UserCommandSender.rank(mode: RankMode, date: LocalDate? = null) = withHelper {
         addCacheJob(name = "RANK[${mode.name}](${date ?: "new"})", reply = reply) { name ->
-            getRank(mode = mode, date = date).onCompletion {
-                send { "${name}处理完成" }
+            getRank(mode = mode, date = date).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务RANK[${mode.name}](${date ?: "new"})已添加"
@@ -56,8 +55,8 @@ object PixivCacheCommand : CompositeCommand(
         check(start <= end) { "start 要在 end 之前" }
         for (date in start..end) {
             addCacheJob(name = "RANGE{${start}~${end}}-MONTH($date)", reply = reply) { name ->
-                getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).notCached().onCompletion {
-                    send { "${name}处理完成" }
+                getRank(mode = RankMode.MONTH, date = date, limit = TASK_LOAD).notCached().sendOnCompletion { total ->
+                    "${name}处理完成, 共${total}"
                 }
             }
         }
@@ -68,8 +67,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存NaviRank榜作品")
     suspend fun UserCommandSender.navirank(year: Year? = null) = withHelper {
         addCacheJob(name = "NAVIRANK${year?.let { "[${it}]" } ?: ""}", reply = reply) { name ->
-            getNaviRank(year = year).onCompletion {
-                send { "${name}处理完成" }
+            getNaviRank(year = year).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务NAVIRANK已添加"
@@ -79,8 +78,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("从推荐画师的预览中缓存色图作品，ERO过滤")
     suspend fun UserCommandSender.recommended() = withHelper {
         addCacheJob(name = "RECOMMENDED", reply = reply) { name ->
-            getRecommended().eros().onCompletion {
-                send { "${name}处理完成" }
+            getRecommended().eros().sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务RECOMMENDED已添加"
@@ -90,8 +89,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("从指定用户的收藏中缓存色图作品")
     suspend fun UserCommandSender.bookmarks(uid: Long? = null) = withHelper {
         addCacheJob(name = "BOOKMARKS(${uid ?: "me"})", reply = reply) { name ->
-            getBookmarks(uid = uid ?: info().user.uid).onCompletion {
-                send { "${name}处理完成" }
+            getBookmarks(uid = uid ?: info().user.uid).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务BOOKMARKS(${uid ?: "me"})已添加"
@@ -103,8 +102,8 @@ object PixivCacheCommand : CompositeCommand(
         val list = AliasSetting.all()
 
         addCacheJob(name = "ALIAS", reply = reply) { name ->
-            getAliasUserIllusts(list = list).onCompletion {
-                send { "${name}处理完成" }
+            getAliasUserIllusts(list = list).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
 
@@ -117,8 +116,8 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_ALL(${detail.user.id})", reply = reply) { name ->
-            getUserFollowing(detail = detail, flush = flush).onCompletion {
-                send { "${name}处理完成" }
+            getUserFollowing(detail = detail, flush = flush).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
 
@@ -131,8 +130,8 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_MARKS(${detail.user.id})", write = false, reply = reply) { name ->
-            getUserFollowingMark(detail = detail, jump = jump).eros().onCompletion {
-                send { "${name}处理完成" }
+            getUserFollowingMark(detail = detail, jump = jump).eros().sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
 
@@ -145,8 +144,8 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid).apply { twitter() }
 
         addCacheJob(name = "USER(${uid})", reply = reply) { name ->
-            getUserIllusts(detail = detail).onCompletion {
-                send { "${name}处理完成" }
+            getUserIllusts(detail = detail).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
 
@@ -157,8 +156,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存搜索得到的tag，ERO过滤")
     suspend fun UserCommandSender.tag(tag: String) = withHelper {
         addCacheJob(name = "TAG(${tag})", reply = reply) { name ->
-            getSearchTag(tag = tag).eros().onCompletion {
-                send { "${name}处理完成" }
+            getSearchTag(tag = tag).eros().sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "任务TAG(${tag})已添加"
@@ -168,8 +167,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载缓存文件夹中未保存的作品")
     suspend fun UserCommandSender.local(range: LongRange = MAX_RANGE) = withHelper {
         addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { name ->
-            localCache(range = range).onCompletion {
-                send { "${name}处理完成" }
+            localCache(range = range).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
     }
@@ -222,8 +221,8 @@ object PixivCacheCommand : CompositeCommand(
             } ?: source.renameTo(other.resolve(source.name))
         }
         addCacheJob(name = "TEMP(${dir.absolutePath})", reply = reply) { name ->
-            getListIllusts(set = list, flush = true).onCompletion {
-                send { "${name}处理完成" }
+            getListIllusts(set = list, flush = true).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "临时文件夹${dir.absolutePath}有${list.size}个作品需要缓存"
@@ -235,8 +234,8 @@ object PixivCacheCommand : CompositeCommand(
         val list = PixivSearchResult.noCached()
 
         addCacheJob(name = "SEARCH", reply = reply) { name ->
-            getListIllusts(info = list, check = false).onCompletion {
-                send { "${name}处理完成" }
+            getListIllusts(info = list, check = false).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
 
@@ -247,8 +246,8 @@ object PixivCacheCommand : CompositeCommand(
     @Description("缓存漫游，ERO过滤")
     suspend fun UserCommandSender.walkthrough(times: Int = 1) = withHelper {
         addCacheJob(name = "WALK_THROUGH(${times})", reply = reply) { name ->
-            getWalkThrough(times = times).eros().onCompletion {
-                send { "${name}处理完成" }
+            getWalkThrough(times = times).eros().sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
             }
         }
         "将会随机${times}次WalkThrough加载"
