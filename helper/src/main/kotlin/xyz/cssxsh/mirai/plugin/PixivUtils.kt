@@ -403,17 +403,17 @@ internal suspend fun PixivAppClient.getIllustInfo(
     pid: Long,
     flush: Boolean,
     block: suspend PixivAppClient.(Long) -> IllustInfo = FlushIllustInfo,
-): IllustInfo = illust(pid).let { file ->
-    if (!flush && file.exists()) {
-        file.runCatching {
-            readIllustInfo()
-        }.onFailure {
-            logger.warning({ "文件${file.absolutePath}读取存在问题" }, it)
-        }.getOrThrow()
-    } else {
-        block(pid).apply {
-            write(file = file)
+): IllustInfo {
+    val file = illust(pid)
+    return if (!flush && file.exists()) {
+        try {
+            file.readIllustInfo()
+        } catch (e: Throwable) {
+            logger.warning({ "文件${file.absolutePath}读取存在问题" }, e)
+            throw e
         }
+    } else {
+        block(pid).apply { write(file = file) }
     }
 }
 
@@ -432,25 +432,39 @@ internal suspend fun UserInfo.getProfileImage(): File {
 }
 
 internal suspend fun IllustInfo.getImages(): List<File> {
-    val dir = images(pid).apply { mkdirs() }
-    val downloads = mutableListOf<Url>()
+    val folder = images(pid).apply { mkdirs() }
+
+    /**
+     * 全部Url
+     */
     val urls = getOriginImageUrls().filter { "$pid" in it.encodedPath }
+
+    /**
+     * 需要下载的 Url
+     */
+    val downloads = mutableListOf<Url>()
+
+    /**
+     * 过滤Url
+     */
     val files = urls.map { url ->
-        dir.resolve(url.filename).apply {
+        folder.resolve(url.filename).apply {
             if (exists().not()) {
                 downloads.add(url)
             }
         }
     }
 
-    fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
-        pid = pid,
-        index = urls.indexOf(url),
-        md5 = bytes.toByteString().md5().hex(),
-        url = url.toString(),
-        size = bytes.size
-    )
     if (downloads.isNotEmpty()) {
+
+        fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
+            pid = pid,
+            index = urls.indexOf(url),
+            md5 = bytes.toByteString().md5().hex(),
+            url = url.toString(),
+            size = bytes.size
+        )
+
         val results = mutableListOf<FileInfo>()
         var size = 0L
 
@@ -460,7 +474,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
             if (exists) {
                 logger.info { "从[${file}]移动文件" }
                 results.add(FileInfo(url = url, bytes = file.readBytes()))
-                file.renameTo(dir.resolve(url.filename))
+                file.renameTo(folder.resolve(url.filename))
             }
             exists
         }
@@ -485,18 +499,18 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 
         for (url in downloads) {
             TempFolder.resolve(url.filename).apply {
-                if (exists()) renameTo(dir.resolve(url.filename))
+                if (exists()) renameTo(folder.resolve(url.filename))
             }
         }
     }
     return files
 }
 
-internal suspend fun IllustInfo.getUgoira(flush: Boolean = false) = with(PixivHelperGifEncoder) {
+internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
     val json = ugoira(pid)
-    val meta = json.takeIf { it.exists() }?.readUgoiraMetadata()
+    val metadata = json.takeIf { it.exists() }?.readUgoiraMetadata()
         ?: PixivAuthClient().ugoiraMetadata(pid).ugoira.also { it.write(json) }
-    build(this@getUgoira, meta, flush)
+    return PixivHelperGifEncoder.build(illust = this, metadata = metadata, flush = flush)
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {
@@ -513,8 +527,14 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
 
 // region Tool
 
+/**
+ * 二进制模，快速表示
+ */
 internal val bit: (Int) -> Long = { 1L shl it }
 
+/**
+ * 进制表示 bytes 大小
+ */
 internal val bytes: (Long) -> String = {
     when (it) {
         0L -> "0"
@@ -526,6 +546,9 @@ internal val bytes: (Long) -> String = {
     }
 }
 
+/**
+ * 备份文件大小
+ */
 internal fun backups(): Map<String, File> {
     return mutableMapOf<String, File>().apply {
         if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
@@ -540,6 +563,9 @@ internal fun backups(): Map<String, File> {
     }
 }
 
+/**
+ * pixiv.me 跳转
+ */
 internal suspend fun PixivHelper.redirect(account: String): Long {
     check(account.isNotBlank()) { "Account is Blank" }
     UserBaseInfo.account(account)?.let { return@redirect it.uid }

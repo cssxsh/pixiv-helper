@@ -167,7 +167,7 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载缓存文件夹中未保存的作品")
     suspend fun UserCommandSender.local(range: LongRange = MAX_RANGE) = withHelper {
         addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { name ->
-            localCache(range = range).sendOnCompletion { total ->
+            getLocalCache(range = range).sendOnCompletion { total ->
                 "${name}处理完成, 共${total}"
             }
         }
@@ -265,7 +265,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("停止当前助手缓存任务")
     suspend fun UserCommandSender.stop() = withHelper {
-        cacheStop()
+        cacheStop(message = "指令终止")
         "任务已停止"
     }
 }

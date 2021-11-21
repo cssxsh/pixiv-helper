@@ -368,15 +368,15 @@ private fun File.range() = name.replace('_', '0').toLong()..name.replace('_', '9
 
 private fun intersect(from: LongRange, to: LongRange) = from.first <= to.last && to.first <= from.last
 
-internal fun localCache(range: LongRange) = flow {
+internal fun getLocalCache(range: LongRange) = flow {
     logger.verbose { "从 ${CacheFolder.absolutePath} 加载作品信息" }
     CacheFolder.listDirs(range).orEmpty().asFlow().map { first ->
         for (second in first.listDirs(range).orEmpty()) {
             if (active().not()) break
-            val list = second.listDirs(range).orEmpty().mapNotNull { dir ->
-                dir.resolve("${dir.name}.json").takeIf { file ->
-                    dir.name.toLong() in ArtWorkInfo && file.canRead()
-                }?.readIllustInfo()
+            val list = second.listDirs(range).orEmpty().mapNotNull { cache ->
+                cache.resolve("${cache.name}.json")
+                    .takeIf { file -> cache.name.toLong() in ArtWorkInfo && file.canRead() }
+                    ?.readIllustInfo()
             }
 
             if (list.isNotEmpty()) emit(list)

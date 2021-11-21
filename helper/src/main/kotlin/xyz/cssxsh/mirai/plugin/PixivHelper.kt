@@ -134,10 +134,8 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
         cacheChannel.send(CacheTask(name = name, write = write, reply = reply, block = block))
     }
 
-    fun cacheStop() {
-        launch(SupervisorJob()) {
-            cacheJob.cancelChildren(CancellationException("指令终止"))
-        }
+    fun cacheStop(message: String) {
+        cacheJob.cancelChildren(CancellationException(message))
     }
 
     suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {

@@ -11,9 +11,9 @@ import java.io.*
 
 object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
 
-    public override val dir: File get() = UgoiraImagesFolder
+    public override val cache: File get() = UgoiraImagesFolder
 
-    override suspend fun download(url: Url, filename: String) = dir.resolve(filename).apply {
+    override suspend fun download(url: Url, filename: String) = cache.resolve(filename).apply {
         if (exists().not()) {
             writeBytes(downloader.download(url))
             logger.info { "$filename 下载完成" }
@@ -31,7 +31,7 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
 
     suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
         download(metadata.original, metadata.original.filename)
-        val gif = dir.resolve("${illust.pid}.gif")
+        val gif = cache.resolve("${illust.pid}.gif")
         return if (flush || gif.exists().not()) {
             single.withLock {
                 with(illust) {

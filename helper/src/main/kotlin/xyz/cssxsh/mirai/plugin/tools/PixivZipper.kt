@@ -71,12 +71,12 @@ object PixivZipper {
         System.gc()
     }
 
-    private fun ZipOutputStream.addDir(dir: File, zip: File, root: String = dir.parent) {
-        for (temp in dir.listFiles().orEmpty()) {
-            if (temp.isFile) {
-                addFile(file = temp, zip = zip, root = root)
+    private fun ZipOutputStream.addDirectory(directory: File, zip: File, root: String = directory.parent) {
+        for (item in directory.listFiles().orEmpty()) {
+            if (item.isFile) {
+                addFile(file = item, zip = zip, root = root)
             } else {
-                addDir(dir = temp, zip = zip, root = root)
+                addDirectory(directory = item, zip = zip, root = root)
             }
         }
     }
@@ -87,7 +87,7 @@ object PixivZipper {
             ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
                 stream.setLevel(Deflater.BEST_COMPRESSION)
                 if (source.isDirectory) {
-                    stream.addDir(dir = source, zip = zip)
+                    stream.addDirectory(directory = source, zip = zip)
                 } else if (source.isFile) {
                     stream.addFile(file = source, zip = zip)
                 }

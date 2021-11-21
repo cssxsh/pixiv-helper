@@ -269,24 +269,24 @@ internal suspend fun TimerTask.run(name: String) {
             for (file in PixivZipper.files(list = backups())) {
                 if (contact is FileSupported) {
                     contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
-                    runCatching {
+                    try {
                         file.toExternalResource()
                             .use { contact.files.uploadNewFile(filepath = file.name, content = it) }
-                    }.onFailure {
-                        contact.sendMessage("上传失败: ${it.message}")
+                    } catch (e: Throwable) {
+                        contact.sendMessage("上传失败: ${e.message}")
                     }
                 } else {
                     contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
-                    runCatching {
+                    val message = try {
                         BaiduNetDiskUpdater.uploadFile(file)
-                    }.onSuccess {
                         val code = file.getRapidUploadInfo().format()
                         logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                        contact.sendMessage("[${file.name}]上传成功，百度云标准码: $code")
-                    }.onFailure {
-                        logger.warning({ "[${file.name}]上传失败" }, it)
-                        contact.sendMessage("[${file.name}]上传失败, ${it.message}")
+                        "[${file.name}]上传成功，百度云标准码: $code"
+                    } catch (e: Throwable) {
+                        logger.warning({ "[${file.name}]上传失败" }, e)
+                        "[${file.name}]上传失败, ${e.message}"
                     }
+                    contact.sendMessage(message)
                 }
             }
         }
