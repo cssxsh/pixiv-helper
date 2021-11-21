@@ -13,9 +13,9 @@ object BaiduNetDiskUpdater : BaiduNetDiskClient(config = NetdiskOauthConfig) {
             return try {
                 super.accessToken
             } catch (cause: NotTokenException) {
-                check(refreshTokenValue.isBlank()) { "请使用使用 /backup auth 指令绑定百度云账户" }
+                check(refreshTokenValue.isNotBlank()) { "请使用使用 /backup auth 指令绑定百度云账户" }
                 runBlocking {
-                    cause.client.refresh().accessToken
+                    refresh().accessToken
                 }
             }
         }
