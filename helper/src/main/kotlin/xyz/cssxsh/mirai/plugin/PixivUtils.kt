@@ -371,6 +371,10 @@ internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(EroStandard)
         (user(userExclude).not())
 }
 
+// endregion
+
+// region Read Info
+
 internal fun IllustInfo.check() = apply {
     check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
 }
@@ -412,6 +416,10 @@ internal suspend fun PixivAppClient.getIllustInfo(
         }
     }
 }
+
+// endregion
+
+// region Download Image
 
 internal suspend fun UserInfo.getProfileImage(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
