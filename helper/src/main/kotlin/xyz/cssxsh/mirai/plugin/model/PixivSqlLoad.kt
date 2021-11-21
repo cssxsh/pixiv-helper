@@ -45,14 +45,13 @@ object HelperSqlConfiguration :
         setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
 
-    fun load(dir: File = File(".")) {
-        dir.resolve("hibernate.properties")
-            .apply { if (exists().not()) writeText(DefaultProperties) }
-            .reader().use(properties::load)
+    fun load(hibernate: File = PixivHelperPlugin.configFolder.resolve("hibernate.properties")) {
+        hibernate.apply { if (exists().not()) writeText(DefaultProperties) }.reader().use(properties::load)
         if (getProperty("hibernate.connection.url").orEmpty().startsWith("jdbc:sqlite")) {
             // SQLite 是单文件数据库，最好只有一个连接
             setProperty("hibernate.c3p0.min_size", "${1}")
             setProperty("hibernate.c3p0.max_size", "${1}")
+            // 设置 rand 别名
             addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
         }
     }

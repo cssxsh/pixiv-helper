@@ -40,7 +40,7 @@ object PixivHelperPlugin : KotlinPlugin(
 
     @OptIn(ConsoleExperimentalApi::class)
     override fun onEnable() {
-        HelperSqlConfiguration.load(configFolder)
+        HelperSqlConfiguration.load()
         for (config in PixivHelperConfig) {
             config.reload()
             if (config is ReadOnlyPluginConfig) config.save()
