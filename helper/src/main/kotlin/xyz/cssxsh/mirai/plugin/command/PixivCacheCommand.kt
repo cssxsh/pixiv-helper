@@ -207,12 +207,13 @@ object PixivCacheCommand : CompositeCommand(
     @Description("加载临时文件夹中未保存的作品")
     suspend fun UserCommandSender.temp(path: String = "") = withHelper {
         val list = mutableSetOf<Long>()
-        val dir = if (path.isEmpty()) TempFolder else File(path)
-        logger.verbose { "从 ${dir.absolutePath} 加载文件" }
-        val exists = dir.resolve("exists").apply { mkdirs() }
-        val other = dir.resolve("other").apply { mkdirs() }
-        for (source in dir.listFiles().orEmpty()) {
-            FILE_REGEX.find(source.name)?.destructured?.let { (id, _) ->
+        val temp = if (path.isEmpty()) TempFolder else File(path)
+        logger.info { "从 ${temp.absolutePath} 加载文件" }
+        val exists = temp.resolve("exists").apply { mkdirs() }
+        val other = temp.resolve("other").apply { mkdirs() }
+        for (source in temp.listFiles().orEmpty()) {
+            if (source.isDirectory) continue
+            FILE_REGEX.find(source.name)?.destructured?.let { (id) ->
                 if (id.toLong() in ArtWorkInfo) {
                     source.renameTo(exists.resolve(source.name))
                 } else {
@@ -220,12 +221,13 @@ object PixivCacheCommand : CompositeCommand(
                 }
             } ?: source.renameTo(other.resolve(source.name))
         }
-        addCacheJob(name = "TEMP(${dir.absolutePath})", reply = reply) { name ->
+
+        addCacheJob(name = "TEMP(${temp.absolutePath})", reply = reply) { name ->
             getListIllusts(set = list, flush = true).sendOnCompletion { total ->
                 "${name}处理完成, 共${total}"
             }
         }
-        "临时文件夹${dir.absolutePath}有${list.size}个作品需要缓存"
+        "临时文件夹${temp.absolutePath}有${list.size}个作品需要缓存"
     }
 
     @SubCommand
