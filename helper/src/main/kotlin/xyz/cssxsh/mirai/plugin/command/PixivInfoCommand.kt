@@ -1,6 +1,8 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.util.*
+import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.plugin.*
@@ -15,15 +17,17 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取助手信息")
-    suspend fun UserCommandSender.helper() = withHelper {
-        val info = info()
+    suspend fun UserCommandSender.helper(target: Contact = subject) = withHelper {
         buildMessageChain {
+            @OptIn(ConsoleExperimentalApi::class)
+            appendLine(target.render())
+            val info = target.helper.info()
             appendLine("User: ${info.user.uid}")
             appendLine("Name: ${info.user.name}")
             appendLine("Account: ${info.user.account}")
             appendLine("Premium: ${info.user.isPremium}")
             appendLine("AccessToken: ${info.accessToken}")
-            appendLine("ExpiresTime: $expires")
+            appendLine("ExpiresTime: ${target.helper.expires}")
             appendLine("RefreshToken: ${info.refreshToken}")
         }
     }
