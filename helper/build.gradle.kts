@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.7.0"
+version = "1.7.1"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -40,7 +40,6 @@ dependencies {
     implementation(ktor("client-serialization", Versions.ktor))
     implementation(ktor("client-encoding", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
-    // implementation(mybatis("mybatis", Versions.mybatis))
     implementation(hibernate("hibernate-core", Versions.hibernate))
     implementation(hibernate("hibernate-c3p0", Versions.hibernate))
     implementation("com.github.gwenn:sqlite-dialect:0.1.2")
@@ -50,12 +49,11 @@ dependencies {
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     implementation(cssxsh("baidu-oauth", Versions.baidu))
     implementation(cssxsh("baidu-netdisk", Versions.baidu))
-    compileOnly("net.mamoe:mirai-core-jvm:2.8.0")
+    compileOnly("net.mamoe:mirai-core-jvm:2.9.0-M1")
 
     testImplementation(kotlin("test", "1.5.31"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testRuntimeOnly("mysql:mysql-connector-java:8.0.26")
-    testRuntimeOnly(fileTree(File(System.getenv("OPENCV_HOME")).resolve("build/java")))
 }
 
 kotlin {
