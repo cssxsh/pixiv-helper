@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.plugin
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import net.mamoe.mirai.Bot
+import net.mamoe.mirai.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.*

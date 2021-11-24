@@ -8,8 +8,15 @@
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/pixiv` 指令登陆账号  
 然后使用 `/cache recommended` 缓存系统推荐作品，然后再使用色图相关指令  
-Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数  
-群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改  
+推荐使用 `/task cache recommended` 定时自动缓存
+
+Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数
+
+百度云上传功能需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
+但不必要，如果不使用上传功能请忽略
+
+群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
+
 发送模式可以使用 `/setting` 指令修改为闪照或撤销或转发  
 注意, 闪照等模式 并不会降低 `机器人被封禁` 的风险。  
 机器人被封禁的主要风险来自
@@ -20,7 +27,7 @@ Gif图片需要由机器人自己合成，如果设备性能不足，请调整�
 * 发送大量违规链接，或者触发关键词
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
-[![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)](https://shields.io/category/downloads)
+[Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
 [![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-yellow)](https://mirai.mamoe.net/topic/289)
 
 ## 指令
@@ -252,7 +259,11 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * cache_jump 缓存是否跳过下载
 * upload 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
 
-### NetdiskOauthConfig.yml
+### ~~NetdiskOauthConfig.yml~~
+
+从 1.7.2 开始 百度云上传功能需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 作前置插件  
+该配置作废，改由前置插件配置，并且需要重新验证  
+或者将 `PixivConfig.yml` 中的 token 手动迁移 到 前置插件的 `user.yml`
 
 插件上传文件功能需要百度网盘API支持，但这个配置(备份文件)是可选的，不影响其他功能的使用。  
 请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  

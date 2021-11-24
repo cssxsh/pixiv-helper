@@ -240,7 +240,7 @@ internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: 
 }
 
 internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
-    val records = mutableSetOf<Long>()
+    val records = HashSet<Long>()
     for ((alias, uid) in list) {
         if (active().not()) break
         if (uid in records) continue
@@ -357,14 +357,14 @@ internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARC
 internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
     val text: String = useHttpClient { it.get(url) }
     val result = regex.findAll(text)
-    return result.mapTo(mutableSetOf()) { it.value.toLong() }
+    return result.mapTo(HashSet()) { it.value.toLong() }
 }
 
 private fun File.listDirs(range: LongRange) = listFiles { file ->
-    file.name.matches("""\d+[_]+""".toRegex()) && file.isDirectory && intersect(file.range(), range)
+    file.name.matches("""\d+[_]+""".toRegex()) && file.isDirectory && intersect(file.name.range(), range)
 }
 
-private fun File.range() = name.replace('_', '0').toLong()..name.replace('_', '9').toLong()
+private fun String.range() = replace('_', '0').toLong()..replace('_', '9').toLong()
 
 private fun intersect(from: LongRange, to: LongRange) = from.first <= to.last && to.first <= from.last
 
