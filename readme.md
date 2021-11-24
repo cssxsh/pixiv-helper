@@ -250,6 +250,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * ero_sfw ero 是否过滤r18 依旧不会放出图片
 * cache_capacity 下载缓存容量，同时下载的任务上限
 * cache_jump 缓存是否跳过下载
+* upload 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
 
 ### NetdiskOauthConfig.yml
 

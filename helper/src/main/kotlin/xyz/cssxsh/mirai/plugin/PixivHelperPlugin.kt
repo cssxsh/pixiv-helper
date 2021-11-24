@@ -14,7 +14,6 @@ import okhttp3.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.tools.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
@@ -49,17 +48,11 @@ object PixivHelperPlugin : KotlinPlugin(
             command.register()
         }
 
-        PixivHelperSettings.init(childScope())
+        initConfiguration(childScope())
 
         PixivHelperListener.subscribe(globalEventChannel(), registerPermission("url", "PIXIV URL 解析"))
 
         PixivHelperScheduler.start(childScopeContext("PixivHelperScheduler"))
-
-        BaiduNetDiskUpdater.init(childScope())
-
-        ImageSearchConfig.init()
-
-        PixivGifConfig.init()
     }
 
     override fun onDisable() {

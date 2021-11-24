@@ -1,15 +1,14 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.github.gnuf0rce.mirai.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.message.*
-import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.contact.FileSupported
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
 import xyz.cssxsh.baidu.*
-import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -24,38 +23,32 @@ object PixivBackupCommand : CompositeCommand(
 
     private val compress = Mutex()
 
-    private val upload = Mutex()
-
     private fun CommandSender.compress(block: PixivZipper.() -> List<File>) = PixivHelperPlugin.launch(Dispatchers.IO) {
         for (file in compress.withLock { PixivZipper.block() }) {
-            if (this is MemberCommandSenderOnMessage && file.length() <= bit(30)) {
-                sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到群文件")
-                runCatching {
-                    file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
-                }.onFailure {
-                    sendMessage("[${file.name}]上传失败: ${it.message}")
+            if (BackupUpload) {
+                sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到百度云")
+                val message = try {
+                    val code = file.getRapidUploadInfo().format()
+                    NetDisk.uploadFile(file)
+                    logger.info { "[${file.name}]上传成功，百度云标准码: $code " }
+                    "[${file.name}]上传成功，百度云标准码: $code"
+                } catch (exception: NoClassDefFoundError) {
+                    logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
+                    "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception"
+                } catch (cause: Throwable) {
+                    logger.warning({ "[${file.name}]上传失败" }, cause)
+                    "[${file.name}]上传失败, ${cause.message}"
                 }
+                sendMessage(message)
             } else {
-                upload {
-                    sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到百度云")
-                    val code = file.getRapidUploadInfo()
-                    runCatching {
-                        uploadFile(file)
-                    }.onSuccess {
-                        logger.info { "[${file.name}]上传成功，百度云标准码: ${code.format()} " }
-                        sendMessage("[${file.name}]上传成功，百度云标准码: ${code.format()}")
-                    }.onFailure {
-                        logger.warning({ "[${file.name}]上传失败" }, it)
-                        sendMessage("[${file.name}]上传失败, ${it.message}")
-                    }
+                sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始发送文件")
+                try {
+                    file.toExternalResource()
+                        .use { (subject as FileSupported).files.uploadNewFile(filepath = file.name, content = it) }
+                } catch (cause: Throwable) {
+                    sendMessage("[${file.name}]上传失败: ${cause.message}")
                 }
             }
-        }
-    }
-
-    private fun upload(block: suspend BaiduNetDiskUpdater.() -> Unit) = PixivHelperPlugin.launch(Dispatchers.IO) {
-        upload.withLock {
-            BaiduNetDiskUpdater.block()
         }
     }
 
@@ -68,7 +61,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("备份已设定别名用户的作品")
     fun CommandSender.alias() = compress {
-        AliasSetting.all().mapTo(mutableSetOf()) { it.uid }.map { uid ->
+        AliasSetting.all().mapTo(HashSet()) { it.uid }.map { uid ->
             artworks(list = ArtWorkInfo.user(uid), basename = "USER[${uid}]")
         }
     }
@@ -96,47 +89,34 @@ object PixivBackupCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取备份文件，发送文件消息")
-    suspend fun MemberCommandSenderOnMessage.get(filename: String) {
-        runCatching {
+    suspend fun UserCommandSender.get(filename: String) {
+        try {
             val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
-            file.toExternalResource().use { group.files.uploadNewFile(filepath = file.name, content = it) }
-        }.onFailure {
-            sendMessage("上传失败: ${it.message}")
+            file.toExternalResource()
+                .use { (subject as FileSupported).files.uploadNewFile(filepath = file.name, content = it) }
+        } catch (cause: Throwable) {
+            sendMessage("上传失败: ${cause.message}")
         }
     }
 
     @SubCommand
     @Description("上传插件数据到百度云")
-    fun CommandSender.upload(filename: String) = upload {
+    suspend fun CommandSender.upload(filename: String) {
         val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
-        val code = file.getRapidUploadInfo().format()
-        runCatching {
-            uploadFile(file = file)
-        }.onSuccess { info ->
-            logger.info { "[${name}]($code)上传成功: $info" }
-            sendMessage("[${name}]($code)上传成功: $info")
-        }.onFailure {
-            logger.warning({ "[${name}]上传失败" }, it)
-            sendMessage("[${name}]上传失败, ${it.message}")
+        val message = try {
+            val code = file.getRapidUploadInfo().format()
+            val info = NetDisk.uploadFile(file = file)
+            logger.info { "$code 上传成功: $info" }
+            "$code 上传成功: $info"
+        } catch (exception: NoClassDefFoundError) {
+            logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
+            "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception"
+        } catch (cause: Throwable) {
+            logger.warning({ "[${name}]上传失败" }, cause)
+            "[${name}]上传失败, ${cause.message}"
         }
-    }
 
-    @SubCommand
-    @Description("百度云用户认证")
-    fun CommandSenderOnMessage<*>.auth() = upload {
-        runCatching {
-            authorize { url ->
-                sendMessage("请打开连接，然后在十分钟内输入获得的授权码: ${url}")
-
-                fromEvent.nextMessage(10 * 60 * 1000L).content.trim()
-            } to getUserInfo()
-        }.onSuccess { (token, user) ->
-            logger.info { "百度云用户认证成功, ${user.baiduName} by $token" }
-            sendMessage("百度云用户认证成功, ${user.baiduName} by $token")
-        }.onFailure {
-            logger.warning({ "认证失败" }, it)
-            sendMessage("百度云用户认证失败, ${it.message}")
-        }
+        sendMessage(message)
     }
 
     @SubCommand

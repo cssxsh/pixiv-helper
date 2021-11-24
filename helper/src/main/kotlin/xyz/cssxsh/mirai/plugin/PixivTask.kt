@@ -12,11 +12,8 @@ import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
-import xyz.cssxsh.baidu.*
 import xyz.cssxsh.mirai.plugin.command.*
 import xyz.cssxsh.mirai.plugin.model.*
-import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.time.*
@@ -34,14 +31,23 @@ internal data class DownloadTask(
     val reply: Boolean,
 )
 
-internal val TimerTask.helper get() = requireNotNull(findContact(delegate)) { "找不到联系人" }.helper
+internal val TimerTask.helper
+    get() = requireNotNull(findContact(subject)) { "找不到联系人 $subject" }.helper
+
+internal val TimerTask.sender
+    get() = when (val contact = requireNotNull(findContact(subject)) { "找不到联系人 $subject" }) {
+        is Group -> (contact[user] ?: contact.owner).asMemberCommandSender()
+        is User -> contact.asCommandSender(false)
+        else -> throw IllegalArgumentException("TimerTask Sender $this")
+    }
 
 typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
 
 @Serializable
 sealed class TimerTask {
     abstract val interval: Long
-    abstract val delegate: Long
+    abstract val subject: Long
+    open val user: Long get() = 12345
 
     @Serializable
     data class User(
@@ -51,7 +57,7 @@ sealed class TimerTask {
         @SerialName("uid")
         val uid: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
     ) : TimerTask()
 
     @Serializable
@@ -59,7 +65,7 @@ sealed class TimerTask {
         @SerialName("mode")
         val mode: RankMode,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
     ) : TimerTask() {
         override val interval: Long
             get() = with(OffsetDateTime.now()) { goto(toNextRank()) } * 1000L
@@ -70,7 +76,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
     ) : TimerTask()
 
     @Serializable
@@ -78,7 +84,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
     ) : TimerTask()
 
     @Serializable
@@ -86,7 +92,9 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
+        @SerialName("user")
+        override val user: Long = 12345,
     ) : TimerTask()
 
     @Serializable
@@ -94,7 +102,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
         @SerialName("url")
         val url: String,
         @SerialName("pattern")
@@ -106,7 +114,7 @@ sealed class TimerTask {
         @SerialName("interval")
         override val interval: Long,
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
         @SerialName("times")
         val times: Int,
     ) : TimerTask()
@@ -114,9 +122,9 @@ sealed class TimerTask {
     @Serializable
     data class Cache(
         @SerialName("delegate")
-        override val delegate: Long,
+        override val subject: Long,
         @SerialName("user")
-        val user: Long,
+        override val user: Long = 12345,
         @SerialName("arguments")
         val arguments: String
     ) : TimerTask() {
@@ -265,29 +273,8 @@ internal suspend fun TimerTask.run(name: String) {
             }
         }
         is TimerTask.Backup -> {
-            val contact = helper.contact
-            for (file in PixivZipper.files(list = backups())) {
-                if (contact is FileSupported) {
-                    contact.sendMessage("${file.name} 压缩完毕，开始上传到群文件")
-                    try {
-                        file.toExternalResource()
-                            .use { contact.files.uploadNewFile(filepath = file.name, content = it) }
-                    } catch (e: Throwable) {
-                        contact.sendMessage("上传失败: ${e.message}")
-                    }
-                } else {
-                    contact.sendMessage("${file.name} 压缩完毕，开始上传到百度云")
-                    val message = try {
-                        BaiduNetDiskUpdater.uploadFile(file)
-                        val code = file.getRapidUploadInfo().format()
-                        logger.info { "[${file.name}]上传成功: 百度云标准码${code} " }
-                        "[${file.name}]上传成功，百度云标准码: $code"
-                    } catch (e: Throwable) {
-                        logger.warning({ "[${file.name}]上传失败" }, e)
-                        "[${file.name}]上传失败, ${e.message}"
-                    }
-                    contact.sendMessage(message)
-                }
+            with(PixivBackupCommand) {
+                sender.data()
             }
         }
         is TimerTask.Web -> {
@@ -301,8 +288,6 @@ internal suspend fun TimerTask.run(name: String) {
         is TimerTask.Cache -> {
             @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
             try {
-                val sender = (helper.contact as? Group)?.getOrFail(user)?.asMemberCommandSender()
-                    ?: (helper.contact as User).asCommandSender(false)
                 val result = PixivCacheCommand.execute(sender = sender, arguments = arguments, checkPermission = false)
                 if (result.isFailure()) {
                     logger.warning { "Task Cache 执行错误 $result" }

@@ -97,6 +97,10 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
     @ValueDescription("缓存是否跳过下载")
     val cacheJump: Boolean by value(false)
 
+    @ValueName("upload")
+    @ValueDescription("压缩完成后是否上传百度云，不上传百度云则会尝试发送文件")
+    val upload: Boolean by value(false)
+
     private lateinit var plugin: AbstractJvmPlugin
 
     @OptIn(ConsoleExperimentalApi::class)

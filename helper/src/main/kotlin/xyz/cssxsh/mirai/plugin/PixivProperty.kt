@@ -43,6 +43,8 @@ internal const val PROXY_MIRROR_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.
 
 internal const val BLOCK_SIZE_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.block"
 
+internal const val UPLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.upload"
+
 // endregion
 
 /**
@@ -172,6 +174,14 @@ internal val CacheCapacity by lazy {
  */
 internal val CacheJump by lazy {
     System.getProperty(CACHE_JUMP_PROPERTY)?.toBoolean() ?: PixivHelperSettings.cacheJump
+}
+
+/**
+ * 1. [BACKUP_FOLDER_PROPERTY]
+ * 2. [PixivHelperSettings.backupFolder]
+ */
+internal val BackupUpload by lazy {
+    System.getProperty(UPLOAD_PROPERTY)?.toBoolean() ?: PixivHelperSettings.upload
 }
 
 /**

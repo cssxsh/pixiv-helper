@@ -47,8 +47,9 @@ dependencies {
     implementation(project(":client"))
     implementation(okhttp3("okhttp", Versions.okhttp))
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
-    implementation(cssxsh("baidu-oauth", Versions.baidu))
-    implementation(cssxsh("baidu-netdisk", Versions.baidu))
+//    implementation(cssxsh("baidu-oauth", Versions.baidu))
+//    implementation(cssxsh("baidu-netdisk", Versions.baidu))
+    compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.0")
     compileOnly("net.mamoe:mirai-core-jvm:2.9.0-M1")
 
     testImplementation(kotlin("test", "1.5.31"))

@@ -1,11 +1,11 @@
 package xyz.cssxsh.mirai.plugin
 
+import io.github.gnuf0rce.mirai.*
 import io.ktor.client.features.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
-import xyz.cssxsh.baidu.disk.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
@@ -99,7 +99,7 @@ internal val PIXIV_HOST = mapOf(
 
 internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
 
-internal fun PixivHelperSettings.init(scope: CoroutineScope) {
+internal fun initConfiguration(scope: CoroutineScope) {
     CacheFolder.mkdirs()
     BackupFolder.mkdirs()
     TempFolder.mkdirs()
@@ -116,53 +116,45 @@ internal fun PixivHelperSettings.init(scope: CoroutineScope) {
         logger.warning { "已加载 API 代理 $ProxyApi API代理可能会导致SSL连接异常，请十分谨慎的开启这个功能" }
     }
     if (ProxyDownload.isNotBlank()) {
-        logger.warning { "已加载 DOWNLOAD 代理 $ProxyDownload  图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
+        logger.warning { "已加载 DOWNLOAD 代理 $ProxyDownload 图片下载器会对代理产生很大的负荷，请十分谨慎的开启这个功能" }
     }
     if (BlockSize <= 0) {
         logger.warning { "分块下载关闭，通常来说分块下载可以加快下载速度，建议开启，但分块不宜太小" }
     } else if (BlockSize < HTTP_KILO) {
         logger.warning { "下载分块过小" }
     }
+    if (BackupUpload) {
+        try {
+            NetDisk
+        } catch (exception: NoClassDefFoundError) {
+            logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
+        }
+    }
+
+    ImageSearcher.key = ImageSearchConfig.key
+
+    with(PixivGifConfig) {
+        if (quantizer !in QUANTIZER_LIST) {
+            logger.warning { "PixivGifConfig.quantizer 非原生" }
+        } else {
+            if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
+                logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
+            } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
+                System.setProperty(OpenCVQuantizer.MAX_COUNT, "${PixivGifConfig.maxCount}")
+            }
+        }
+        if (ditherer !in DITHERER_LIST) {
+            logger.warning { "PixivGifConfig.ditherer 非原生" }
+        }
+    }
+
     scope.launch {
         val count = ArtWorkInfo.count()
-        if (count < eroChunk) {
-            logger.warning { "缓存数 $count < ${eroChunk}，建议使用指令( /cache recommended )进行缓存" }
+        if (count < EroChunk) {
+            logger.warning { "缓存数 $count < ${EroChunk}，建议使用指令( /cache recommended )进行缓存" }
         } else {
             logger.info { "缓存数 $count " }
         }
-    }
-}
-
-internal fun BaiduNetDiskUpdater.init(scope: CoroutineScope) = scope.launch {
-    try {
-        check(appId != 0L) { "网盘未配置 Oauth 信息，如需要不需要上传备份文件功能，请忽略" }
-        val info = getUserInfo()
-        logger.info { "百度网盘: ${info.baiduName} 已登录" }
-    } catch (e: Throwable) {
-        if ("Invalid Bduss" in e.message.orEmpty()) {
-            logger.warning { "百度网盘初始化失败, 需要重新登录, $e" }
-        } else {
-            logger.warning { "百度网盘初始化失败, $e" }
-        }
-    }
-}
-
-internal fun ImageSearchConfig.init() {
-    ImageSearcher.key = key
-}
-
-internal fun PixivGifConfig.init() {
-    if (quantizer !in QUANTIZER_LIST) {
-        logger.warning { "PixivGifConfig.quantizer 非原生" }
-    } else {
-        if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
-            logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
-        } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
-            System.setProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
-        }
-    }
-    if (ditherer !in DITHERER_LIST) {
-        logger.warning { "PixivGifConfig.ditherer 非原生" }
     }
 }
 
