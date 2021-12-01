@@ -15,8 +15,17 @@ object PixivDeleteCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ), PixivHelperCommand {
 
-    private fun delete(pid: Long): Boolean {
-        return images(pid)
+    private fun delete(arkwork: ArtWorkInfo): Boolean {
+        if (arkwork.type == WorkContentType.UGOIRA.ordinal) {
+            for (name in listOf("${arkwork.pid}.gif", "${arkwork.pid}_ugoira1920x1080.zip")) {
+                val source = UgoiraImagesFolder.resolve(name)
+                if (source.exists()) {
+                    val dest = OtherImagesFolder.resolve(name)
+                    source.renameTo(dest)
+                }
+            }
+        }
+        return images(arkwork.pid)
             .listFiles { file -> file.isFile && file.extension != "json" }
             ?.all { it.delete() } ?: true
     }
@@ -26,7 +35,12 @@ object PixivDeleteCommand : CompositeCommand(
     suspend fun CommandSender.artwork(pid: Long, record: Boolean = false) {
         logger.info { "作品(${pid})信息将从缓存移除" }
         if (record) ArtWorkInfo.delete(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
-        sendMessage("作品(${pid})图片将删除，结果${delete(pid)}")
+        val artwork = ArtWorkInfo.find(pid)
+        if (artwork == null) {
+            sendMessage("作品(${pid})不在数据库缓存中")
+            return
+        }
+        sendMessage("作品(${pid})[${artwork.author.uid}]图片将删除，结果${delete(artwork)}")
     }
 
     @SubCommand
@@ -36,8 +50,8 @@ object PixivDeleteCommand : CompositeCommand(
         if (record) ArtWorkInfo.deleteUser(uid = uid, comment = "command delete artwork in ${OffsetDateTime.now()}")
         sendMessage("USER(${uid})共${artworks.size}个作品需要删除")
         for (artwork in artworks) {
-            logger.info { "作品(${artwork.pid})信息将从缓存移除" }
-            delete(artwork.pid)
+            logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
+            delete(artwork)
         }
         sendMessage("删除完毕")
     }
@@ -52,12 +66,12 @@ object PixivDeleteCommand : CompositeCommand(
             if (artworks.isEmpty()) continue
             sendMessage("{$min}(${range})共${artworks.size}个作品需要删除")
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})信息将从缓存移除" }
+                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = artwork.pid,
                     comment = "command delete bookmarks $min in ${OffsetDateTime.now()}"
                 )
-                delete(artwork.pid)
+                delete(artwork)
             }
             sendMessage("删除完毕")
         }
@@ -73,12 +87,12 @@ object PixivDeleteCommand : CompositeCommand(
             if (artworks.isEmpty()) continue
             sendMessage("[$max](${range})共${artworks.size}个作品需要删除")
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})信息将从缓存移除" }
+                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = artwork.pid,
                     comment = "command delete page_count $max in ${OffsetDateTime.now()}"
                 )
-                delete(artwork.pid)
+                delete(artwork)
             }
             sendMessage("删除完毕")
         }
@@ -94,12 +108,12 @@ object PixivDeleteCommand : CompositeCommand(
             if (artworks.isEmpty()) continue
             sendMessage("[manga](${range})共${artworks.size}个作品需要删除")
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})信息将从缓存移除" }
+                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
                 if (record) ArtWorkInfo.delete(
                     pid = artwork.pid,
                     comment = "command delete manga in ${OffsetDateTime.now()}"
                 )
-                delete(artwork.pid)
+                delete(artwork)
             }
             sendMessage("删除完毕")
         }
@@ -115,8 +129,8 @@ object PixivDeleteCommand : CompositeCommand(
             if (artworks.isEmpty()) continue
             sendMessage("[record](${range})共${artworks.size}个作品需要删除")
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})信息将从缓存移除" }
-                delete(artwork.pid)
+                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
+                delete(artwork)
             }
             sendMessage("删除完毕")
         }

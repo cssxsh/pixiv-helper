@@ -264,6 +264,16 @@ internal fun images(pid: Long): File {
 internal val UgoiraImagesFolder: File get() = TempFolder.resolve("gif")
 
 /**
+ * OTHER目录
+ */
+internal val OtherImagesFolder: File get() = TempFolder.resolve("other")
+
+/**
+ * EXISTS目录
+ */
+internal val ExistsImagesFolder: File get() = TempFolder.resolve("exists")
+
+/**
  * 图片 JSON
  */
 internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")

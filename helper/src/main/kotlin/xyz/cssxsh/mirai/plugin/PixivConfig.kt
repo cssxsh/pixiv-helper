@@ -106,6 +106,8 @@ internal fun initConfiguration(scope: CoroutineScope) {
     ProfileFolder.mkdirs()
     ArticleFolder.mkdirs()
     UgoiraImagesFolder.mkdirs()
+    ExistsImagesFolder.mkdirs()
+    ExistsImagesFolder.mkdirs()
     logger.info { "CacheFolder: ${CacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${BackupFolder.absolutePath}" }
     logger.info { "TempFolder: ${TempFolder.absolutePath}" }

@@ -243,6 +243,10 @@ internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession 
     }.uniqueResult() > 0
 }
 
+internal fun ArtWorkInfo.SQL.find(id: Long): ArtWorkInfo? = useSession { session ->
+    session.find(ArtWorkInfo::class.java, id)
+}
+
 internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)

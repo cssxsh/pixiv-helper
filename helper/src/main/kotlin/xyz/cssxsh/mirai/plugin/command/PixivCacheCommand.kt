@@ -210,8 +210,8 @@ object PixivCacheCommand : CompositeCommand(
         val set = HashSet<Long>()
         val temp = if (path.isEmpty()) TempFolder else File(path)
         logger.info { "从 ${temp.absolutePath} 加载文件" }
-        val exists = temp.resolve("exists").apply { mkdirs() }
-        val other = temp.resolve("other").apply { mkdirs() }
+        val exists = ExistsImagesFolder
+        val other = OtherImagesFolder
         for (source in temp.listFiles { source -> source.isFile }.orEmpty()) {
             FILE_REGEX.find(source.name)
                 ?.destructured?.let { (id) -> set.add(id.toLong()) }
