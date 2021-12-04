@@ -17,9 +17,11 @@ import xyz.cssxsh.mirai.plugin.model.*
 import java.util.logging.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.7.2") {
+    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.7.3") {
         name("pixiv-helper")
         author("cssxsh")
+
+        dependsOn("io.github.gnuf0rce.file-sync", true)
     }
 ) {
 
@@ -31,8 +33,10 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 
     override fun PluginComponentStorage.onLoad() {
+        /**
+         * @see [org.jboss.logging.LoggerProviders.LOGGING_PROVIDER_KEY]
+         */
         System.setProperty("org.jboss.logging.provider", "slf4j")
-        Logger.getLogger("org.hibernate").level = Level.INFO
         Logger.getLogger(OkHttpClient::class.java.name).level = Level.OFF
     }
 

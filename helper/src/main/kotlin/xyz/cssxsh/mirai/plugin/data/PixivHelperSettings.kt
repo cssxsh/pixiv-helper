@@ -67,7 +67,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
 
     @ValueName("timeout_api")
     @ValueDescription("API超时时间, 单位ms")
-    val timeoutApi: Long by value(10_000L)
+    val timeoutApi: Long by value(15_000L)
 
     @ValueName("timeout_download")
     @ValueDescription("DOWNLOAD超时时间, 单位ms")
