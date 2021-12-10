@@ -52,60 +52,7 @@ data class ArtWorkInfo(
     companion object SQL
 }
 
-@Entity
-@Table(name = "files")
-data class FileInfo(
-    @Id
-    @Column(name = "pid", nullable = false, updatable = false)
-    val pid: Long = 0,
-    @Id
-    @Column(name = "`index`", nullable = false, updatable = false)
-    val index: Int = 0,
-    @Column(name = "md5", nullable = false, length = 32)
-    val md5: String = "",
-    @Column(name = "url", nullable = false)
-    val url: String = "",
-    @Column(name = "size", nullable = false)
-    val size: Int = 0
-) : PixivEntity {
-    companion object SQL
-}
 
-@Entity
-@Table(name = "tags")
-data class TagBaseInfo(
-    @Id
-    @Column(name = "pid", nullable = false, updatable = false)
-    val pid: Long = 0,
-    @Id
-    @Column(name = "name", nullable = false, length = 30, updatable = false)
-    val name: String = "",
-    @Column(name = "translated_name", nullable = true)
-    val translated: String? = null
-) : PixivEntity
 
-@Entity
-@Table(name = "users")
-data class UserBaseInfo(
-    @Id
-    @Column(name = "uid", nullable = false, updatable = false)
-    val uid: Long = 0,
-    @Column(name = "name", nullable = false, length = 15)
-    val name: String = "",
-    @Column(name = "account", nullable = false, length = 32)
-    val account: String = ""
-) : PixivEntity {
-    companion object SQL
-}
 
-@Entity
-@Table(name = "twitter")
-data class Twitter(
-    @Id
-    @Column(name = "screen", nullable = false, length = 50)
-    val screen: String = "",
-    @Column(name = "uid", nullable = false, updatable = false)
-    val uid: Long,
-) : PixivEntity {
-    companion object SQL
-}
+

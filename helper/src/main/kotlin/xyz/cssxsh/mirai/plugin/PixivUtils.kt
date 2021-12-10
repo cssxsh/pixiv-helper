@@ -550,17 +550,23 @@ internal val bytes: (Long) -> String = {
  * 备份文件大小
  */
 internal fun backups(): Map<String, File> {
-    return mutableMapOf<String, File>().apply {
-        if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
-            put("DATA", PixivHelperPlugin.dataFolder)
-        }
-        if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
-            put("CONFIG", PixivHelperPlugin.configFolder)
-        }
-        if (SqlMetaData.url.startsWith("jdbc:sqlite:")) {
-            put("DATABASE", File(SqlMetaData.url.removePrefix("jdbc:sqlite:")))
-        }
+    val map = mutableMapOf<String, File>()
+    if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
+        map["DATA"] = PixivHelperPlugin.dataFolder
     }
+    if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
+        map["CONFIG"] = PixivHelperPlugin.configFolder
+    }
+    val path: String = try {
+        DatabaseMetaData().url.substringAfter("jdbc:sqlite:", "")
+    } catch (_: Throwable) {
+        ""
+    }
+    if (path.isNotBlank()) {
+        map["DATABASE"] = File(path)
+    }
+
+    return map
 }
 
 /**

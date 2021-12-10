@@ -99,3 +99,11 @@ CREATE TABLE IF NOT EXISTS statistic_task
     `timestamp` INTEGER NOT NULL,
     PRIMARY KEY (`task`, `pid`)
 );
+
+-- view
+CREATE VIEW IF NOT EXISTS statistic_user AS
+SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
+FROM artworks
+WHERE NOT deleted
+GROUP BY uid
+ORDER BY uid

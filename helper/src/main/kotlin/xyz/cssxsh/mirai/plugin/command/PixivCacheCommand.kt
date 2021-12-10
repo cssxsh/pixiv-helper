@@ -204,18 +204,20 @@ object PixivCacheCommand : CompositeCommand(
 
     private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
 
+    private fun exists(source: File) = source.renameTo(ExistsImagesFolder.resolve(source.name))
+
+    private fun other(source: File) = source.renameTo(OtherImagesFolder.resolve(source.name))
+
     @SubCommand
     @Description("加载临时文件夹中未保存的作品")
     suspend fun UserCommandSender.temp(path: String = "") = withHelper {
         val set = HashSet<Long>()
         val temp = if (path.isEmpty()) TempFolder else File(path)
         logger.info { "从 ${temp.absolutePath} 加载文件" }
-        val exists = ExistsImagesFolder
-        val other = OtherImagesFolder
         for (source in temp.listFiles { source -> source.isFile }.orEmpty()) {
             FILE_REGEX.find(source.name)
                 ?.destructured?.let { (id) -> set.add(id.toLong()) }
-                ?: source.renameTo(other.resolve(source.name))
+                ?: other(source)
         }
 
         addCacheJob(name = "TEMP(${temp.absolutePath})", reply = reply) { name ->
@@ -224,11 +226,24 @@ object PixivCacheCommand : CompositeCommand(
                     "${name}处理完成, 共${total}"
                 }.onCompletion {
                     for (source in temp.listFiles { source -> source.isFile }.orEmpty()) {
-                        source.renameTo(exists.resolve(source.name))
+                        exists(source)
                     }
                 }
         }
         "临时文件夹${temp.absolutePath}有${set.size}个作品需要缓存"
+    }
+
+    @SubCommand
+    @Description("加载缓存中有色图作品的用户的其他作品")
+    suspend fun UserCommandSender.count() = withHelper {
+        val records = StatisticUserInfo.list(3..PAGE_SIZE)
+
+        addCacheJob(name = "USER_ERO_COUNT", reply = reply) { name ->
+            getCacheUser(records = records).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
+            }
+        }
+        "开始加载${records.size}个缓存用户"
     }
 
     @SubCommand

@@ -20,9 +20,9 @@ import kotlin.streams.*
 
 // region SqlConfiguration
 
-private val Entities = PixivEntity::class.sealedSubclasses.map { it.java }
+private val PixivEntities = PixivEntity::class.sealedSubclasses.map { it.java }
 
-private val PluginClassLoader get() = PixivHelperPlugin::class.java.classLoader
+private val PluginClassLoader: ClassLoader get() = PixivHelperPlugin::class.java.classLoader
 
 object HelperSqlConfiguration :
     Configuration(BootstrapServiceRegistryBuilder().applyClassLoader(PluginClassLoader).build()) {
@@ -40,24 +40,30 @@ object HelperSqlConfiguration :
             """.trimIndent()
 
     init {
-        Entities.forEach(::addAnnotatedClass)
+        PixivEntities.forEach(::addAnnotatedClass)
         setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
         setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
     }
 
     fun load(hibernate: File = PixivHelperPlugin.configFolder.resolve("hibernate.properties")) {
         hibernate.apply { if (exists().not()) writeText(DefaultProperties) }.reader().use(properties::load)
-        if (getProperty("hibernate.connection.url").orEmpty().startsWith("jdbc:sqlite")) {
-            // SQLite 是单文件数据库，最好只有一个连接
-            setProperty("hibernate.c3p0.min_size", "${1}")
-            setProperty("hibernate.c3p0.max_size", "${1}")
-            // 设置 rand 别名
-            addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
+        val url = getProperty("hibernate.connection.url").orEmpty()
+        when {
+            url.startsWith("jdbc:sqlite") -> {
+                // SQLite 是单文件数据库，最好只有一个连接
+                setProperty("hibernate.c3p0.min_size", "${1}")
+                setProperty("hibernate.c3p0.max_size", "${1}")
+                // 设置 rand 别名
+                addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
+            }
+            url.startsWith("jdbc:mysql") -> {
+                addAnnotatedClass(MySqlVariable::class.java)
+            }
         }
     }
 }
 
-private val factory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
+private val factory: SessionFactory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
 
 private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
@@ -113,21 +119,18 @@ private fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R
     }
 }
 
-internal val SqlMetaData get() = useSession { session -> session.doReturningWork { it.metaData } }
+internal fun DatabaseMetaData(): DatabaseMetaData = useSession { session -> session.doReturningWork { it.metaData } }
 
 /**
- * Only with Mysql
+ * Only with MySql
  */
-internal fun variables() = useSession { session ->
-    session.createNativeQuery("SHOW VARIABLES").list().associate { row ->
-        row as Array<*>
-        row[0].toString() to row[1].toString()
-    }
+internal fun variables(): List<MySqlVariable> = useSession { session ->
+    session.createNativeQuery<MySqlVariable>("""SHOW VARIABLES""", MySqlVariable::class.java).list()
 }
 
 internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
-    val config = Configuration().apply { Entities.forEach(::addAnnotatedClass) }
+    val config = Configuration().apply { PixivEntities.forEach(::addAnnotatedClass) }
     config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
     config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
     config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
@@ -136,7 +139,7 @@ internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (
     config.setProperty("hibernate.c3p0.max_size", "${1}")
     val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
     useSession { session ->
-        for (clazz in Entities) {
+        for (clazz in PixivEntities) {
             val annotation = clazz.getAnnotation(Table::class.java)
             var count = 0L
             new.withCriteria<PixivEntity> { it.select(it.from(clazz)) }
@@ -233,6 +236,17 @@ internal fun ArtWorkInfo.SQL.eros(sanity: SanityLevel): Long = useSession { sess
                 equal(artwork.get<Int>("sanity"), sanity.ordinal)
             )
     }.uniqueResult()
+}
+
+internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInfo> = useSession { session ->
+    session.withCriteria<StatisticUserInfo> { criteria ->
+        val record = criteria.from(StatisticUserInfo::class.java)
+        criteria.select(record)
+            .where(
+                lt(record.get<Long>("ero"), range.first),
+                gt(record.get<Long>("count"), range.last)
+            )
+    }.list()
 }
 
 internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
@@ -511,9 +525,9 @@ internal fun UserBaseInfo.SQL.name(name: String): UserBaseInfo? = useSession { s
     }.list().singleOrNull()
 }
 
-internal val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
+private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 
-internal val ScreenError = listOf("", "https", "http")
+private val ScreenError = listOf("", "https", "http")
 
 internal fun UserDetail.twitter(): String? {
     val screen = with(profile) {
@@ -546,6 +560,10 @@ internal fun Twitter.SQL.find(uid: Long): List<Twitter> = useSession { session -
             .where(equal(twitter.get<Long>("uid"), uid))
     }.list().orEmpty()
 }
+
+// endregion
+
+// region FileInfo
 
 internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
@@ -632,8 +650,6 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
             .where(equal(ero.get<Long>("group"), id))
     }.list().orEmpty()
 }
-
-internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
 
 internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSetting) { session ->
     val record = session.get(AliasSetting::class.java, alias) ?: return@useSession

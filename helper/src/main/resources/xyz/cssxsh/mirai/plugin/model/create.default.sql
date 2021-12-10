@@ -37,8 +37,6 @@ CREATE TABLE IF NOT EXISTS tags
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
-CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER      NOT NULL,
@@ -50,7 +48,6 @@ CREATE TABLE IF NOT EXISTS files
     PRIMARY KEY (`pid`, `index`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS file_md5 ON files (`md5`);
 CREATE TABLE IF NOT EXISTS twitter
 (
     `screen` VARCHAR(15) NOT NULL,
@@ -99,3 +96,11 @@ CREATE TABLE IF NOT EXISTS statistic_task
     `timestamp` INTEGER     NOT NULL,
     PRIMARY KEY (`task`, `pid`)
 );
+
+-- view
+CREATE OR REPLACE VIEW statistic_user AS
+SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
+FROM artworks
+WHERE NOT deleted
+GROUP BY uid
+ORDER BY uid

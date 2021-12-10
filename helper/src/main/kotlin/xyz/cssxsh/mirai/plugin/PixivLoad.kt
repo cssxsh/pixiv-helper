@@ -33,6 +33,8 @@ internal fun Flow<Collection<IllustInfo>>.notHistory(task: String) = map { list 
 
 internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
 
+internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
+
 internal suspend fun getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
@@ -248,7 +250,7 @@ internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow 
         try {
             val detail = PixivAuthClient().userDetail(uid = uid).apply { twitter() }
             if (detail.total() > detail.user.count()) {
-                logger.verbose { "ALIAS<${alias}>(${uid})有${detail.total()}个作品尝试缓存" }
+                logger.info { "ALIAS<${alias}>(${uid})[${detail.user.name}]有${detail.total()}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = detail))
             }
         } catch (e: Throwable) {
@@ -394,6 +396,24 @@ internal suspend fun PixivHelper.getTrending(times: Int = 1) = flow {
             logger.verbose { "加载第${page}次WalkThrough成功" }
         }.onFailure {
             logger.warning({ "加载第${page}次WalkThrough失败" }, it)
+        }
+    }
+}
+
+internal suspend fun getCacheUser(records: List<StatisticUserInfo>) = flow {
+    logger.info { "CacheUser有${records.size}个用户尝试缓存" }
+
+    for ((index, record) in records.withIndex()) {
+        if (active().not()) break
+        PixivAuthClient().runCatching {
+            val author = userDetail(uid = record.uid)
+            val total = author.total()
+            if (total > record.count) {
+                logger.info { "${index}.USER(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
+                emitAll(getUserIllusts(detail = author))
+            }
+        }.onFailure {
+            logger.warning({ "${index}.${record}加载失败" }, it)
         }
     }
 }

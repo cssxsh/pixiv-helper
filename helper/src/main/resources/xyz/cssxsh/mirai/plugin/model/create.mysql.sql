@@ -8,31 +8,31 @@ CREATE TABLE IF NOT EXISTS users
 ) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS artworks
 (
-    `pid`             INTEGER UNSIGNED NOT NULL,
-    `uid`             INTEGER UNSIGNED NOT NULL,
-    `title`           VARCHAR(32)      NOT NULL,
-    `caption`         TEXT             NOT NULL,
-    `create_at`       INTEGER UNSIGNED NOT NULL,
+    `pid`             INTEGER UNSIGNED  NOT NULL,
+    `uid`             INTEGER UNSIGNED  NOT NULL,
+    `title`           VARCHAR(32)       NOT NULL,
+    `caption`         TEXT              NOT NULL,
+    `create_at`       INTEGER UNSIGNED  NOT NULL,
     -- page_count max 200
-    `page_count`      SMALLINT         NOT NULL,
+    `page_count`      TINYINT UNSIGNED  NOT NULL,
     -- sanity_level 0 2 4 6 7
-    `sanity_level`    TINYINT          NOT NULL,
-    `type`            TINYINT          NOT NULL,
-    `width`           SMALLINT         NOT NULL,
-    `height`          SMALLINT         NOT NULL,
-    `total_bookmarks` INTEGER          NOT NULL DEFAULT 0,
-    `total_comments`  INTEGER          NOT NULL DEFAULT 0,
-    `total_view`      INTEGER          NOT NULL DEFAULT 0,
-    `age`             TINYINT          NOT NULL DEFAULT 0,
-    `is_ero`          BOOLEAN          NOT NULL DEFAULT FALSE,
-    `deleted`         BOOLEAN          NOT NULL DEFAULT FALSE,
+    `sanity_level`    TINYINT UNSIGNED  NOT NULL,
+    `type`            TINYINT UNSIGNED  NOT NULL,
+    `width`           SMALLINT UNSIGNED NOT NULL,
+    `height`          SMALLINT UNSIGNED NOT NULL,
+    `total_bookmarks` INTEGER UNSIGNED  NOT NULL DEFAULT 0,
+    `total_comments`  INTEGER UNSIGNED  NOT NULL DEFAULT 0,
+    `total_view`      INTEGER UNSIGNED  NOT NULL DEFAULT 0,
+    `age`             TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+    `is_ero`          BOOLEAN           NOT NULL DEFAULT FALSE,
+    `deleted`         BOOLEAN           NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`pid`),
     FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
 ) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS tags
 (
-    `pid`             INTEGER     NOT NULL,
-    `name`            VARCHAR(30) NOT NULL COLLATE 'utf8mb4_bin',
+    `pid`             INTEGER UNSIGNED NOT NULL,
+    `name`            VARCHAR(30)      NOT NULL COLLATE 'utf8mb4_bin',
     `translated_name` VARCHAR(64) COLLATE 'utf8mb4_bin',
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -42,19 +42,19 @@ CREATE TABLE IF NOT EXISTS tags
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER UNSIGNED NOT NULL,
-    `index` TINYINT          NOT NULL,
+    `index` TINYINT UNSIGNED NOT NULL,
     `md5`   CHAR(32)         NOT NULL COLLATE 'ascii_general_ci',
     `url`   TINYTEXT         NOT NULL COLLATE 'ascii_general_ci',
     -- file size max 32MB
-    `size`  INTEGER          NOT NULL,
+    `size`  INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`pid`, `index`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
     INDEX file_md5 (`md5`)
 );
 CREATE TABLE IF NOT EXISTS twitter
 (
-    `screen` VARCHAR(15) NOT NULL COLLATE 'ascii_general_ci',
-    `uid`    INTEGER     NOT NULL,
+    `screen` VARCHAR(15)      NOT NULL COLLATE 'ascii_general_ci',
+    `uid`    INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`screen`)
 );
 
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS statistic_ero
     `sender`    INTEGER UNSIGNED NOT NULL,
     `group`     INTEGER UNSIGNED,
     `pid`       INTEGER UNSIGNED NOT NULL,
-    `timestamp` INTEGER          NOT NULL,
+    `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`sender`, `timestamp`)
 );
 CREATE TABLE IF NOT EXISTS statistic_tag
@@ -99,5 +99,9 @@ CREATE TABLE IF NOT EXISTS statistic_task
     `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`task`, `pid`)
 );
-ALTER TABLE `statistic_task`
-    CHANGE COLUMN `task` `task` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci' FIRST;
+CREATE OR REPLACE VIEW statistic_user AS
+SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
+FROM artworks
+WHERE NOT deleted
+GROUP BY uid
+ORDER BY uid
