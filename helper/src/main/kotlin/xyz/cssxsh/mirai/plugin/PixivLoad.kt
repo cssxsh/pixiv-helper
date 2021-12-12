@@ -17,8 +17,6 @@ typealias LoadTask = suspend PixivHelper.(String) -> Flow<Collection<IllustInfo>
 
 private suspend fun active() = currentCoroutineContext().isActive
 
-internal fun UserDetail.total() = profile.totalIllusts + profile.totalManga
-
 internal fun Flow<Collection<IllustInfo>>.notCached() = map { list -> list.filterNot { it.pid in ArtWorkInfo } }
 
 internal fun Flow<Collection<IllustInfo>>.eros(mark: Boolean = true) = map { list -> list.filter { it.isEro(mark) } }
@@ -102,7 +100,7 @@ internal suspend fun getBookmarksRandom(detail: UserDetail, tag: String? = null)
 }
 
 internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
-    (0 until (limit ?: detail.total()) step PAGE_SIZE).forEachIndexed { page, offset ->
+    (0 until (limit ?: detail.profile.totalArtwork) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         PixivAuthClient().runCatching {
             userIllusts(uid = detail.user.id, offset = offset).illusts
@@ -139,7 +137,7 @@ internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<
             if (Twitter.find(preview.user.id).isEmpty() || preview.isLoaded().not() || flush) {
                 PixivAuthClient().runCatching {
                     val author = userDetail(uid = preview.user.id).apply { twitter() }
-                    val total = author.total()
+                    val total = author.profile.totalArtwork
                     val count = author.user.count()
                     if (total - count > preview.illusts.size || flush) {
                         logger.info { "${index}.USER(${author.user.id})[${total}]尝试缓存" }
@@ -249,8 +247,8 @@ internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow 
 
         try {
             val detail = PixivAuthClient().userDetail(uid = uid).apply { twitter() }
-            if (detail.total() > detail.user.count()) {
-                logger.info { "ALIAS<${alias}>(${uid})[${detail.user.name}]有${detail.total()}个作品尝试缓存" }
+            if (detail.profile.totalArtwork > detail.user.count()) {
+                logger.info { "ALIAS<${alias}>(${uid})[${detail.user.name}]有${detail.profile.totalArtwork}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = detail))
             }
         } catch (e: Throwable) {
@@ -407,7 +405,7 @@ internal suspend fun getCacheUser(records: List<StatisticUserInfo>) = flow {
         if (active().not()) break
         PixivAuthClient().runCatching {
             val author = userDetail(uid = record.uid)
-            val total = author.total()
+            val total = author.profile.totalArtwork
             if (total > record.count) {
                 logger.info { "${index}.USER(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = author))

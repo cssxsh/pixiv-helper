@@ -150,7 +150,7 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
 
-        "画师[${detail.user.name}]有${detail.total()}个作品需要缓存"
+        "画师[${detail.user.name}]有${detail.profile.totalArtwork}个作品需要缓存"
     }
 
     @SubCommand
