@@ -44,8 +44,7 @@ object PixivFollowCommand : CompositeCommand(
 
     @SubCommand
     @Description("为当前助手关注指定用户")
-    suspend fun UserCommandSender.user(vararg uid: String) =
-        follow { uid.mapTo(mutableSetOf()) { it.toLong() } }
+    suspend fun UserCommandSender.user(vararg uid: String) = follow { uid.mapTo(HashSet()) { it.toLong() } }
 
     @SubCommand
     @Description("关注指定用户的关注")

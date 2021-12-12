@@ -82,7 +82,6 @@ object PixivSearchCommand : SimpleCommand(
     suspend fun CommandSenderOnMessage<*>.search(image: Image? = null) = withHelper {
         val origin = image ?: getQuoteImage() ?: getCurrentImage() ?: getNextImage() ?: return@withHelper "等待超时"
         logger.info { "搜索 ${origin.queryUrl()}" }
-        @OptIn(MiraiInternalApi::class)
         val hash = origin.md5.toByteString().hex()
 
         val record = record(hash)

@@ -11,7 +11,7 @@ import java.time.*
 object PixivRankCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "rank", "排行",
-    description = "PIXIV排行指令，通过http://pixiv.navirank.com/",
+    description = "PIXIV排行指令，通过pixiv-navirank",
     overrideContext = PixivCommandArgumentContext
 ), PixivHelperCommand {
 

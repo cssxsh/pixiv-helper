@@ -240,7 +240,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
         is TwitterSearchResult -> {
             val screen = tweet.substringAfter("twitter.com/", "").substringBefore('/')
             Twitter.find(screen)?.let { (_, uid) ->
-                appendLine("UID: $uid")
+                appendLine("PIXIV_UID: $uid")
             }
             appendLine("Tweet: $tweet")
             appendLine("原图: $image")
@@ -342,7 +342,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
     appendLine("UID: ${detail.user.id}")
     appendLine("ACCOUNT: ${detail.user.account}")
     appendLine("FOLLOWED: ${detail.user.isFollowed}")
-    appendLine("TOTAL: ${detail.total()}")
+    appendLine("TOTAL: ${detail.profile.totalArtwork}")
     appendLine("TWITTER: ${detail.twitter()}")
     try {
         append(detail.user.getProfileImage().uploadAsImage(contact))
@@ -459,7 +459,12 @@ internal suspend fun IllustInfo.getImages(): List<File> {
 
         fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
             pid = pid,
-            index = urls.indexOf(url),
+            index = with(url.encodedPath) {
+                val end = lastIndexOf('.')
+                val start = lastIndexOf('p', end) + 1
+                substring(start, end)
+                    .toIntOrNull() ?: throw NoSuchElementException(url.encodedPath)
+            },
             md5 = bytes.toByteString().md5().hex(),
             url = url.toString(),
             size = bytes.size
@@ -475,8 +480,9 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 logger.info { "从[${file}]移动文件" }
                 results.add(FileInfo(url = url, bytes = file.readBytes()))
                 file.renameTo(folder.resolve(url.filename))
+            } else {
+                exists
             }
-            exists
         }
 
         PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, deferred ->

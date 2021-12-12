@@ -6,12 +6,13 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.7.3"
+version = "1.7.4"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
     configureShadow {
         archiveBaseName.set(rootProject.name)
+        exclude("module-info.class")
         exclude {
             it.path.startsWith("kotlin")
         }
@@ -47,8 +48,6 @@ dependencies {
     implementation(project(":client"))
     implementation(okhttp3("okhttp", Versions.okhttp))
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
-//    implementation(cssxsh("baidu-oauth", Versions.baidu))
-//    implementation(cssxsh("baidu-netdisk", Versions.baidu))
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.0")
     compileOnly("net.mamoe:mirai-core-jvm:2.9.0-M1")
 
