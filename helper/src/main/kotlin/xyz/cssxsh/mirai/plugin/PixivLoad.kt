@@ -403,15 +403,15 @@ internal suspend fun getCacheUser(records: List<StatisticUserInfo>) = flow {
 
     for ((index, record) in records.withIndex()) {
         if (active().not()) break
-        PixivAuthClient().runCatching {
-            val author = userDetail(uid = record.uid)
+        try {
+            val author = PixivAuthClient().userDetail(uid = record.uid)
             val total = author.profile.totalArtwork
             if (total > record.count) {
                 logger.info { "${index}.USER(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = author))
             }
-        }.onFailure {
-            logger.warning({ "${index}.${record}加载失败" }, it)
+        } catch (cause: Throwable) {
+            logger.warning({ "${index}.${record}加载失败" }, cause)
         }
     }
 }

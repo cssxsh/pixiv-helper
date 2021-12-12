@@ -243,8 +243,8 @@ internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInf
         val record = criteria.from(StatisticUserInfo::class.java)
         criteria.select(record)
             .where(
-                lt(record.get<Long>("ero"), range.first),
-                gt(record.get<Long>("count"), range.last)
+                gt(record.get<Long>("ero"), range.first),
+                lt(record.get<Long>("count"), range.last)
             )
     }.list()
 }

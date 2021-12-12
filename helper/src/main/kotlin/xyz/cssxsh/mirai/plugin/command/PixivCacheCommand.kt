@@ -222,6 +222,11 @@ object PixivCacheCommand : CompositeCommand(
 
         addCacheJob(name = "TEMP(${temp.absolutePath})", reply = reply) { name ->
             getListIllusts(set = set, flush = true)
+                .onEach { list ->
+                    for (illust in list) {
+                        illust.getImages()
+                    }
+                }
                 .sendOnCompletion { total ->
                     "${name}处理完成, 共${total}"
                 }.onCompletion {
@@ -236,7 +241,7 @@ object PixivCacheCommand : CompositeCommand(
     @SubCommand
     @Description("加载缓存中有色图作品的用户的其他作品")
     suspend fun UserCommandSender.count() = withHelper {
-        val records = StatisticUserInfo.list(3..PAGE_SIZE)
+        val records = StatisticUserInfo.list(range = 3..PAGE_SIZE)
 
         addCacheJob(name = "USER_ERO_COUNT", reply = reply) { name ->
             getCacheUser(records = records).sendOnCompletion { total ->
