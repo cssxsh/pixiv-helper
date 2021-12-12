@@ -38,19 +38,4 @@ object PixivConfigData : AutoSavePluginConfig("PixivConfig"), PixivHelperConfig 
     @ValueName("forward")
     @ValueDescription("task通过转发发送")
     var forward: Boolean by value(true)
-
-    @ValueName("netdisk_access")
-    @ValueDescription("百度网盘 访问TOKEN")
-    var netdiskAccessToken: String by value("")
-
-    @ValueName("netdisk_refresh")
-    @ValueDescription("百度网盘 刷新TOKEN")
-    var netdiskRefreshToken: String by value("")
-
-    @ValueName("netdisk_expires_time")
-    @ValueDescription("百度网盘 过期时间")
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-    var netdiskExpiresTime: OffsetDateTime by LazyReferenceValueImpl<OffsetDateTime>()
-        .serializableValueWith(OffsetDateTimeSerializer)
-        .apply { value = OffsetDateTime.MIN }
 }
