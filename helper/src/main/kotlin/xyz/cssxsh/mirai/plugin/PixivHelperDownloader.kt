@@ -27,11 +27,11 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
         urls: List<Url>,
         block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
     ): List<R> {
-        val proxy = ProxyMirror
-        return if (proxy.isNotBlank()) {
-            super.downloadImageUrls(urls.map { if (it.host == "i.pximg.net") it.copy(host = proxy) else it }, block)
+        val downloads = if (ProxyMirror.isNotBlank()) {
+            urls.map { if (it.host == "i.pximg.net") it.copy(host = ProxyMirror) else it }
         } else {
-            super.downloadImageUrls(urls, block)
+            urls
         }
+        return super.downloadImageUrls(downloads, block)
     }
 }

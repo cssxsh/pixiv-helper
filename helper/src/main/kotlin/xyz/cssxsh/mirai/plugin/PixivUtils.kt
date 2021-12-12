@@ -484,7 +484,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 val bytes = deferred.await()
                 TempFolder.resolve(url.filename).writeBytes(bytes)
                 size += bytes.size
-                results.add(FileInfo(url = url, bytes = bytes))
+                results += FileInfo(url = url, bytes = bytes)
             } catch (e: Throwable) {
                 logger.warning({ "[$url]下载失败" }, e)
             }
