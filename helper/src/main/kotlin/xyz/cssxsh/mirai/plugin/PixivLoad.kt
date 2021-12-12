@@ -226,9 +226,9 @@ internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: 
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
-        } catch (cause: AppApiException) {
-            if (DELETE_REGEX in cause.message) {
-                item.toArtWorkInfo(caption = cause.message).replicate()
+        } catch (cause: Throwable) {
+            if (DELETE_REGEX in cause.message.orEmpty()) {
+                item.toArtWorkInfo(caption = cause.message.orEmpty()).replicate()
             } else {
                 logger.warning({ "加载作品信息($item)失败" }, cause)
             }
