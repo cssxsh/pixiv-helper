@@ -114,7 +114,7 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
                         WorkContentType.UGOIRA -> illust.getUgoira()
                         WorkContentType.MANGA -> Unit
                     }
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     return@async
                 } catch (e: Throwable) {
                     logger.warning({
