@@ -98,7 +98,7 @@ object PixivInfoCommand : CompositeCommand(
             appendLine("R18G色图数: ${ArtWorkInfo.eros(AgeLimit.R18G)}")
             appendLine("> ---------")
             appendLine("插画色图数: ${ArtWorkInfo.eros(WorkContentType.ILLUST)}")
-            appendLine("动图色图数: ${ArtWorkInfo.eros(WorkContentType.UGOIRA)}")
+            appendLine("动画色图数: ${ArtWorkInfo.eros(WorkContentType.UGOIRA)}")
             appendLine("漫画色图数: ${ArtWorkInfo.eros(WorkContentType.MANGA)}")
             appendLine("> ---------")
             appendLine("Sanity(0)色图数: ${ArtWorkInfo.eros(SanityLevel.UNCHECKED)}")
