@@ -110,7 +110,7 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 | `/<cache> <tag> [tag]`                  | 缓存搜索tag得到的作品，ERO过滤 |
 | `/<cache> <search>`                     | 缓存搜索记录                   |
 | `/<cache> <stop>`                       | 停止当前助手缓存任务           |
-| `/<cache> <reply> [open]`               | 是否回复缓存细节，默认为否     |
+| `/<cache> <reply> [open]?`              | 是否回复缓存细节，默认为否     |
 
 `[uid]?` 会自动填充当前用户
 

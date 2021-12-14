@@ -278,7 +278,7 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("回复缓存细节")
-    suspend fun UserCommandSender.reply(open: Boolean) = withHelper {
+    suspend fun UserCommandSender.reply(open: Boolean = true) = withHelper {
         reply = open
         "已设置回复状态为${reply}"
     }
