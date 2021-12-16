@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS artworks
     PRIMARY KEY (`pid`),
     FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS user_id ON users (`uid`);
 CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER NOT NULL,
@@ -105,5 +106,4 @@ CREATE VIEW IF NOT EXISTS statistic_user AS
 SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
 FROM artworks
 WHERE NOT deleted
-GROUP BY uid
-ORDER BY uid
+GROUP BY uid;

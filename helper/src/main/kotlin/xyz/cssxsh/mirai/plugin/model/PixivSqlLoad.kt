@@ -246,6 +246,7 @@ internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInf
                 gt(record.get<Long>("ero"), range.first),
                 lt(record.get<Long>("count"), range.last)
             )
+            .orderBy(asc(record.get<Long>("uid")))
     }.list()
 }
 

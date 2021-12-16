@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS artworks
     `is_ero`          BOOLEAN           NOT NULL DEFAULT FALSE,
     `deleted`         BOOLEAN           NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`pid`),
-    FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX user_id (`uid`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS tags
 (
@@ -99,9 +100,10 @@ CREATE TABLE IF NOT EXISTS statistic_task
     `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`task`, `pid`)
 );
+
+-- view
 CREATE OR REPLACE VIEW statistic_user AS
 SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
 FROM artworks
 WHERE NOT deleted
-GROUP BY uid
-ORDER BY uid
+GROUP BY uid;

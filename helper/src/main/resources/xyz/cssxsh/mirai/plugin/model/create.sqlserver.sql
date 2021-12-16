@@ -33,7 +33,8 @@ CREATE TABLE artworks
     [is_ero]          BIT          NOT NULL DEFAULT FALSE,
     [deleted]         BIT          NOT NULL DEFAULT FALSE,
     PRIMARY KEY ([pid]),
-    FOREIGN KEY ([uid]) REFERENCES users ([uid]) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY ([uid]) REFERENCES users ([uid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX user_id ([uid])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
@@ -44,21 +45,23 @@ CREATE TABLE tags
     [name]            NVARCHAR(30) NOT NULL COLLATE LATIN1_100_BIN,
     [translated_name] VARCHAR(MAX) COLLATE LATIN1_100_BIN,
     PRIMARY KEY ([pid], [name]),
-    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX tag_name ([name]),
+    INDEX tag_translated_name ([translated_name])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'files')
 CREATE TABLE files
 (
-
     [pid]   INTEGER      NOT NULL,
     [index] TINYINT      NOT NULL,
     [md5]   CHAR(32)     NOT NULL COLLATE LATIN1_100_CI_AI,
     [url]   VARCHAR(255) NOT NULL COLLATE LATIN1_100_CI_AI,
     -- file size max 32MB size  INTEGER      NOT NULL,
     PRIMARY KEY ([pid], [index]),
-    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX file_md5 ([md5])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
@@ -87,11 +90,11 @@ IF NOT EXISTS(SELECT [name]
               WHERE [name] = 'statistic_tag')
 CREATE TABLE statistic_tag
 (
-    [sender]  BIGINT       NOT NULL,
-    [group]   INTEGER,
-    [pid]     INTEGER,
-    [tag]     NVARCHAR(30) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
-    timestamp INTEGER      NOT NULL,
+    [sender]    BIGINT       NOT NULL,
+    [group]     INTEGER,
+    [pid]       INTEGER,
+    [tag]       NVARCHAR(30) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
+    [timestamp] INTEGER      NOT NULL,
     PRIMARY KEY ([sender], [timestamp])
 );
 IF NOT EXISTS(SELECT [name]

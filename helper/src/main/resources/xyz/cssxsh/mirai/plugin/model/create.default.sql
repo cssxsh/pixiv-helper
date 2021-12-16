@@ -102,5 +102,4 @@ CREATE OR REPLACE VIEW statistic_user AS
 SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
 FROM artworks
 WHERE NOT deleted
-GROUP BY uid
-ORDER BY uid
+GROUP BY uid;
