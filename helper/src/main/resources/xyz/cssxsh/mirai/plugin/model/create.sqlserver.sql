@@ -6,8 +6,9 @@ CREATE TABLE users
 (
     [uid]     INTEGER      NOT NULL,
     [name]    NVARCHAR(15) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
-    [account] VARCHAR(32)  NOT NULL COLLATE LATIN1_100_BIN,
-    PRIMARY KEY ([uid])
+    [account] VARCHAR(32) DEFAULT NULL COLLATE LATIN1_100_BIN,
+    PRIMARY KEY ([uid]),
+    UNIQUE ([account])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables

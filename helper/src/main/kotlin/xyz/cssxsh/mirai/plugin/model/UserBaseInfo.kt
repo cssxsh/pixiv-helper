@@ -10,8 +10,8 @@ data class UserBaseInfo(
     val uid: Long = 0,
     @Column(name = "name", nullable = false, length = 15)
     val name: String = "",
-    @Column(name = "account", nullable = false, length = 32)
-    val account: String = ""
+    @Column(name = "account", nullable = true, length = 32)
+    val account: String? = null
 ) : PixivEntity {
     companion object SQL
 }

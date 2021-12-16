@@ -419,7 +419,7 @@ internal fun SimpleArtworkInfo.toArtWorkInfo(caption: String = "") = ArtWorkInfo
     pid = pid,
     title = title,
     caption = caption,
-    author = UserBaseInfo(uid, name, "")
+    author = UserBaseInfo(uid, name)
 )
 
 internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo()) = ArtWorkInfo(
@@ -477,7 +477,7 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) 
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
     session.runCatching {
-        val users = mutableMapOf<Long, UserBaseInfo>()
+        val users = HashMap<Long, UserBaseInfo>()
 
         for (info in this@replicate) {
             if (info.pid == 0L) continue
@@ -514,8 +514,8 @@ internal fun UserBaseInfo.SQL.account(account: String): UserBaseInfo? = useSessi
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
-            .where(like(user.get("account"), account))
-    }.list().singleOrNull()
+            .where(equal(user.get<String?>("account"), account))
+    }.uniqueResult()
 }
 
 internal fun UserBaseInfo.SQL.name(name: String): UserBaseInfo? = useSession { session ->

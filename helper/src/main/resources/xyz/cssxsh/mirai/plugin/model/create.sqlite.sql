@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS users
 (
     `uid`     INTEGER NOT NULL,
     `name`    TEXT    NOT NULL COLLATE RTRIM,
-    `account` TEXT    NOT NULL COLLATE RTRIM,
-    PRIMARY KEY (`uid`)
+    `account` TEXT DEFAULT NULL COLLATE RTRIM,
+    PRIMARY KEY (`uid`),
+    UNIQUE (`account`)
 );
 CREATE TABLE IF NOT EXISTS artworks
 (

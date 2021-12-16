@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS users
 (
     `uid`     INTEGER UNSIGNED NOT NULL,
     `name`    VARCHAR(15)      NOT NULL COLLATE 'utf8mb4_unicode_ci',
-    `account` VARCHAR(32)      NOT NULL COLLATE 'ascii_general_ci',
-    PRIMARY KEY (`uid`)
+    `account` VARCHAR(32) DEFAULT NULL COLLATE 'ascii_general_ci',
+    PRIMARY KEY (`uid`),
+    UNIQUE (`account`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS artworks
 (

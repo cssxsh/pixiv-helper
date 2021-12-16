@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS users
 (
     `uid`     INTEGER      NOT NULL,
     `name`    NVARCHAR(15) NOT NULL,
-    `account` VARCHAR(32)  NOT NULL,
-    PRIMARY KEY (`uid`)
+    `account` VARCHAR(32) DEFAULT NULL,
+    PRIMARY KEY (`uid`),
+    UNIQUE KEY (`account`)
 );
 CREATE TABLE IF NOT EXISTS artworks
 (
