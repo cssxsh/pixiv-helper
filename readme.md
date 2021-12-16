@@ -77,8 +77,7 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <list 列表>`                   | 显示别名列表                          |
 | `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                          |
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
-| `(/)<search 搜索 搜图> [image]?`                      | saucenao 搜索图片                     |
-| `(/)<ascii2d> [image]?`                               | ascii2d 搜索图片                      |
+| `(/)<search 搜索 搜图> [image]?`                      | saucenao、ascii2d 搜索图片            |
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
@@ -95,6 +94,8 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 ![从回复消息中获取](image/search_2.png)  
 ![从最近图片中获取](image/search_3.png)  
 ![从输入等待中获取](image/search_4.png)
+
+当 saucenao 的 搜索结果不足时，会自动补充 ascii2d 的搜索结果
 
 ### 缓存指令
 

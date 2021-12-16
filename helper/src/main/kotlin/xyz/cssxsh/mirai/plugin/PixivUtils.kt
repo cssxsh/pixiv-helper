@@ -260,7 +260,7 @@ internal fun List<SearchResult>.getContent(sender: User): Message {
                 senderId = sender.id,
                 time = (System.currentTimeMillis() / 1000).toInt(),
                 senderName = sender.nameCardOrNick,
-                result.getContent()
+                messageChain = result.getContent()
             )
         }).render {
             title = "搜图结果"

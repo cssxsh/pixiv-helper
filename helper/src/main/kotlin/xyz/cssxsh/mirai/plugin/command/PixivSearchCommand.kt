@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
@@ -15,8 +16,8 @@ import xyz.cssxsh.mirai.plugin.tools.*
 
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
-    "search", "搜索", "搜图", "ascii2d",
-    description = "PIXIV搜索指令，通过https://saucenao.com/"
+    "search", "搜索", "搜图",
+    description = "PIXIV搜索指令，通过 https://saucenao.com/ https://ascii2d.net/"
 ), PixivHelperCommand {
 
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
@@ -36,12 +37,10 @@ object PixivSearchCommand : SimpleCommand(
         return requireNotNull(images[metadata]) { "$subject 图片历史未找到" }
     }
 
-    private suspend fun CommandSenderOnMessage<*>.getNextImage(): Image? {
+    private fun CommandSenderOnMessage<*>.getNextImage(): Image? = runBlocking(coroutineContext) {
         sendMessage("${ImageSearchConfig.wait}s内，请发送图片")
-        return fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) { Image in it.message }?.firstIsInstance()
+        fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) { Image in it.message }?.firstIsInstance()
     }
-
-    private val CommandSenderOnMessage<*>.isAscii2d get() = "ascii2d" in fromEvent.message.content
 
     private suspend fun saucenao(image: Image) = with(ImageSearcher) {
         if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
@@ -87,8 +86,14 @@ object PixivSearchCommand : SimpleCommand(
         val record = record(hash)
         if (record != null) return@withHelper record.getContent()
 
-        val result = if (isAscii2d) ascii2d(origin) else saucenao(origin)
+        val result = saucenao(origin).let { saucenao ->
+            if (saucenao.none { it.similarity > MIN_SIMILARITY }) {
+                ascii2d(origin) + saucenao
+            } else {
+                saucenao
+            }
+        }
 
-        result.similarity(MIN_SIMILARITY).translate(hash).getContent(user!!)
+        result.similarity(MIN_SIMILARITY).translate(hash).getContent(fromEvent.sender)
     }
 }
