@@ -206,14 +206,14 @@ internal fun IllustInfo.getContent(link: Boolean, tag: Boolean, attr: Boolean) =
     if (attr) appendLine("创作于: $createAt ")
     if (attr) appendLine("共: $pageCount 张图片 ")
     if (tag) appendLine("标签：${tags.map { it.getContent() }}")
-    if (link) add(getPixivCat())
+    if (link) add(getMirror())
 }
 
 internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?: "")
 
-internal fun IllustInfo.getPixivCat() = buildMessageChain {
+internal fun IllustInfo.getMirror() = buildMessageChain {
     appendLine("原图连接: ")
-    for (url in getPixivCatUrls()) {
+    for (url in getMirrorUrls()) {
         appendLine(url.toString())
     }
 }
@@ -327,9 +327,13 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     for (illust in preview.illusts.apply { replicate() }.write()) {
         if (illust.isEro().not()) continue
         try {
-            val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(illust.getUgoira())
             if (illust.age == AgeLimit.ALL) {
-                add(files.first().uploadAsImage(contact))
+                val single = if (illust.type != WorkContentType.UGOIRA) {
+                    illust.getImages().first()
+                } else {
+                    illust.getUgoira()
+                }
+                add(single.uploadAsImage(contact))
             }
         } catch (e: Throwable) {
             logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
@@ -353,7 +357,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
 
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
 
-internal fun IllustInfo.getPixivCatUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
+internal fun IllustInfo.getMirrorUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
 private fun IllustInfo.bookmarks(min: Long): Boolean = (totalBookmarks ?: 0) > min
 

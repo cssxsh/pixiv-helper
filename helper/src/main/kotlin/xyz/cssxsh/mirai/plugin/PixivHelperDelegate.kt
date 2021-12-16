@@ -104,7 +104,6 @@ object LinkDelegate : ReadWriteProperty<PixivHelper, Boolean> {
             thisRef.contact !is Group
         }
     }
-
 }
 
 object TagDelegate : ReadWriteProperty<PixivHelper, Boolean> {
@@ -118,7 +117,6 @@ object TagDelegate : ReadWriteProperty<PixivHelper, Boolean> {
             thisRef.contact !is Group
         }
     }
-
 }
 
 object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
@@ -132,7 +130,6 @@ object AttrDelegate : ReadWriteProperty<PixivHelper, Boolean> {
             thisRef.contact !is Group
         }
     }
-
 }
 
 object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
@@ -144,7 +141,6 @@ object MaxDelegate : ReadWriteProperty<PixivHelper, Int> {
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): Int {
         return PixivConfigData.max.getOrPut(thisRef.contact.toString()) { 3 }
     }
-
 }
 
 object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
@@ -156,7 +152,6 @@ object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): SendModel {
         return PixivConfigData.model.getOrPut(thisRef.contact.toString()) { SendModel.Normal }
     }
-
 }
 
 private val helpers = mutableMapOf<Contact, PixivHelper>()
