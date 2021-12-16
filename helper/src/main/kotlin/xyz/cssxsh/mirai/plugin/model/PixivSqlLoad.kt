@@ -504,9 +504,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(count(artwork))
-            .where(
-                equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id)
-            )
+            .where(equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id))
     }.uniqueResult()
 }
 
