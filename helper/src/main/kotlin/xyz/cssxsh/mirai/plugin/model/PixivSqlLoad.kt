@@ -490,30 +490,32 @@ internal fun IllustInfo.toTagRecords(): List<TagRecord> = tags.map { info ->
     }
 }
 
-internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
-    if (pid == 0L) return@useSession
+internal fun IllustInfo.replicate() {
+    if (pid == 0L) return
     try {
         user.twitter()
     } catch (e: Throwable) {
         logger.warning({ "Save twitter" }, e)
     }
     toTagRecords()
-    session.transaction.begin()
-    try {
-        val artwork = toArtWorkInfo()
-        artwork.tags = tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
-        session.replicate(artwork, ReplicationMode.OVERWRITE)
-        session.transaction.commit()
-        logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
-    } catch (cause: Throwable) {
-        session.transaction.rollback()
-        logger.warning({ "作品(${pid})信息记录失败" }, cause)
-        throw cause
+    useSession(ArtWorkInfo) { session ->
+        session.transaction.begin()
+        try {
+            val artwork = toArtWorkInfo()
+            artwork.tags = tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
+            session.replicate(artwork, ReplicationMode.OVERWRITE)
+            session.transaction.commit()
+            logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
+        } catch (cause: Throwable) {
+            session.transaction.rollback()
+            logger.warning({ "作品(${pid})信息记录失败" }, cause)
+            throw cause
+        }
     }
 }
 
-internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) { session ->
-    if (isEmpty()) return@useSession
+internal fun Collection<IllustInfo>.replicate() {
+    if (isEmpty()) return
     try {
         for (info in this) {
             info.user.twitter()
@@ -525,23 +527,25 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) 
         info.toTagRecords()
     }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
-    session.transaction.begin()
-    try {
-        val users = HashMap<Long, UserBaseInfo>()
+    useSession(ArtWorkInfo) { session ->
+        session.transaction.begin()
+        try {
+            val users = HashMap<Long, UserBaseInfo>()
 
-        for (info in this@replicate) {
-            if (info.pid == 0L) continue
-            val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
-            val artwork = info.toArtWorkInfo(author)
-            artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
-            session.replicate(artwork, ReplicationMode.OVERWRITE)
+            for (info in this@replicate) {
+                if (info.pid == 0L) continue
+                val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
+                val artwork = info.toArtWorkInfo(author)
+                artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
+                session.replicate(artwork, ReplicationMode.OVERWRITE)
+            }
+            session.transaction.commit()
+            logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
+        } catch (cause: Throwable) {
+            session.transaction.rollback()
+            logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, cause)
+            throw cause
         }
-        session.transaction.commit()
-        logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
-    } catch (cause: Throwable) {
-        session.transaction.rollback()
-        logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, cause)
-        throw cause
     }
 }
 
