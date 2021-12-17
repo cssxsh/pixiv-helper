@@ -258,6 +258,7 @@ object PixivCacheCommand : CompositeCommand(
 
         addCacheJob(name = "SEARCH", reply = reply) { name ->
             getListIllusts(info = list, check = false).sendOnCompletion { total ->
+                for (item in list) item.associate()
                 "${name}处理完成, 共${total}"
             }
         }

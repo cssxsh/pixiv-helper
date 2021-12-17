@@ -87,7 +87,7 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
         logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
     } catch (cause: Throwable) {
         session.transaction.rollback()
-        logger.error("数据库初始化失败", cause)
+        logger.error({ "数据库初始化失败" }, cause)
         throw cause
     }
 
@@ -121,12 +121,16 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
             throw cause
         }
 
-        session.clear()
-
         session.transaction.begin()
         try {
             for (old in olds) {
-                val record = session.get(TagRecord::class.java, old.name)
+                val record0 = session.get(TagRecord::class.java, old.name)
+                val record = if (record0.tid != 0L) {
+                    record0
+                } else {
+                    session.detach(record0)
+                    session.get(TagRecord::class.java, old.name)
+                }
                 session.replicate(ArtworkTag(pid = old.pid, tag = record), ReplicationMode.IGNORE)
                 session.delete(old)
             }
@@ -381,19 +385,21 @@ internal fun ArtWorkInfo.SQL.tag(
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
-        val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }
+        val names = word.split(delimiters = TAG_DELIMITERS)
         val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
+        val likes = ArrayList<Predicate>()
+        for (name in names) {
+            if (name.isBlank()) continue
+            likes.add(like(records.get("name"), if (fuzzy) "%$name%" else name))
+            likes.add(like(records.get("translated"), if (fuzzy) "%$name%" else name))
+        }
+
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                *names.map { name ->
-                    or(
-                        like(records.get("name"), if (fuzzy) "%$name%" else name),
-                        like(records.get("translated"), if (fuzzy) "%$name%" else name)
-                    )
-                }.toTypedArray()
+                or(*likes.toTypedArray())
             )
             .orderBy(asc(rand()))
             .distinct(true)
@@ -484,20 +490,20 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
     author = author
 )
 
-internal fun IllustInfo.toTagRecords(): List<TagRecord> = tags.map { info ->
-    TagRecord(name = info.name, translated = info.translatedName).apply {
-        replicate(ReplicationMode.IGNORE)
+internal fun IllustInfo.saveTagRecords() {
+    for (tag in tags) {
+        TagRecord(name = tag.name, translated = tag.translatedName).replicate(ReplicationMode.IGNORE)
     }
 }
 
 internal fun IllustInfo.replicate() {
     if (pid == 0L) return
-    try {
-        user.twitter()
-    } catch (e: Throwable) {
-        logger.warning({ "Save twitter" }, e)
-    }
-    toTagRecords()
+//    try {
+//        user.twitter()
+//    } catch (e: Throwable) {
+//        logger.warning({ "Save twitter" }, e)
+//    }
+    saveTagRecords()
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
         try {
@@ -516,15 +522,15 @@ internal fun IllustInfo.replicate() {
 
 internal fun Collection<IllustInfo>.replicate() {
     if (isEmpty()) return
-    try {
-        for (info in this) {
-            info.user.twitter()
-        }
-    } catch (e: Throwable) {
-        logger.warning({ "Save twitter" }, e)
-    }
+//    try {
+//        for (info in this) {
+//            info.user.twitter()
+//        }
+//    } catch (e: Throwable) {
+//        logger.warning({ "Save twitter" }, e)
+//    }
     for (info in this) {
-        info.toTagRecords()
+        info.saveTagRecords()
     }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     useSession(ArtWorkInfo) { session ->
@@ -586,7 +592,7 @@ private val ScreenError = listOf("", "https", "http")
 internal fun UserDetail.twitter(): String? {
     val screen = with(profile) {
         twitterAccount?.takeUnless { it in ScreenError }
-            ?: twitterUrl?.let { ScreenRegex.find(it) }?.value?.takeUnless { it in ScreenError }
+            ?: twitterUrl?.let { ScreenRegex.find(it) }?.value
             ?: webpage?.let { ScreenRegex.find(it) }?.value
     } ?: user.comment?.let { ScreenRegex.find(it) }?.value ?: return null
 
