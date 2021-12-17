@@ -34,9 +34,24 @@ CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER      NOT NULL,
     `name`            NVARCHAR(30) NOT NULL,
-    `translated_name` TEXT,
+    `translated_name` TEXT DEFAULT NULL,
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE `tag`
+(
+    `name`            VARCHAR(30)      NOT NULL,
+    `translated_name` VARCHAR(64)      NULL DEFAULT NULL,
+    `tid`             INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    PRIMARY KEY (`name`),
+    UNIQUE INDEX `tid` (`tid`)
+);
+CREATE TABLE `artwork_tag`
+(
+    `pid` INTEGER UNSIGNED NOT NULL,
+    `tid` INTEGER UNSIGNED NOT NULL,
+    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (`tid`) REFERENCES tag (`tid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS files
 (

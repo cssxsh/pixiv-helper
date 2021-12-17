@@ -41,13 +41,17 @@ data class ArtWorkInfo(
     @JoinColumn(name = "uid", nullable = false, updatable = false)
     val author: UserBaseInfo = UserBaseInfo()
 ) : PixivEntity {
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", insertable = false, updatable = false)
-    lateinit var tags: List<TagBaseInfo>
+    @ManyToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "artwork_tag",
+        joinColumns = [JoinColumn(name = "pid", referencedColumnName = "pid")],
+        inverseJoinColumns = [JoinColumn(name = "tid", referencedColumnName = "tid")]
+    )
+    var tags: List<TagRecord> = emptyList()
 
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "pid", insertable = false, updatable = false)
-    lateinit var files: List<FileInfo>
+    var files: List<FileInfo> = emptyList()
 
     companion object SQL
 }

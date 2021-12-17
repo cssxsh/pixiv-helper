@@ -2,7 +2,7 @@
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'users')
-CREATE TABLE users
+CREATE TABLE [users]
 (
     [uid]     INTEGER      NOT NULL,
     [name]    NVARCHAR(15) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
@@ -13,7 +13,7 @@ CREATE TABLE users
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'artworks')
-CREATE TABLE artworks
+CREATE TABLE [artworks]
 (
     [pid]             INTEGER      NOT NULL,
     [uid]             INTEGER      NOT NULL,
@@ -34,26 +34,47 @@ CREATE TABLE artworks
     [is_ero]          BIT          NOT NULL DEFAULT FALSE,
     [deleted]         BIT          NOT NULL DEFAULT FALSE,
     PRIMARY KEY ([pid]),
-    FOREIGN KEY ([uid]) REFERENCES users ([uid]) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX user_id ([uid])
+    FOREIGN KEY ([uid]) REFERENCES [users] ([uid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX [user_id] ([uid])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'tags')
-CREATE TABLE tags
+CREATE TABLE [tags]
 (
     [pid]             INTEGER      NOT NULL,
     [name]            NVARCHAR(30) NOT NULL COLLATE LATIN1_100_BIN,
-    [translated_name] VARCHAR(MAX) COLLATE LATIN1_100_BIN,
+    [translated_name] VARCHAR(MAX) DEFAULT NULL COLLATE LATIN1_100_CI_AI_UTF8,
     PRIMARY KEY ([pid], [name]),
-    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX tag_name ([name]),
-    INDEX tag_translated_name ([translated_name])
+    FOREIGN KEY ([pid]) REFERENCES [artworks] ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX [tag_name] ([name]),
+    INDEX [tag_translated_name] ([translated_name])
+);
+IF NOT EXISTS(SELECT [name]
+              FROM sys.tables
+              WHERE [name] = 'tag')
+CREATE TABLE [tag]
+(
+    [name]            VARCHAR(50) NOT NULL COLLATE LATIN1_100_BIN,
+    [translated_name] VARCHAR(MAX) DEFAULT NULL COLLATE 'utf8mb4_bin',
+    [tid]             INTEGER     NOT NULL IDENTITY (0,1),
+    PRIMARY KEY ([name]),
+    UNIQUE ([tid])
+);
+IF NOT EXISTS(SELECT [name]
+              FROM sys.tables
+              WHERE [name] = 'artwork_tag')
+CREATE TABLE [artwork_tag]
+(
+    [pid] INTEGER NOT NULL,
+    [tid] INTEGER NOT NULL,
+    FOREIGN KEY ([pid]) REFERENCES [artworks] ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY ([tid]) REFERENCES [tag] ([tid]) ON UPDATE CASCADE ON DELETE CASCADE
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'files')
-CREATE TABLE files
+CREATE TABLE [files]
 (
     [pid]   INTEGER      NOT NULL,
     [index] TINYINT      NOT NULL,
@@ -61,13 +82,13 @@ CREATE TABLE files
     [url]   VARCHAR(255) NOT NULL COLLATE LATIN1_100_CI_AI,
     -- file size max 32MB size  INTEGER      NOT NULL,
     PRIMARY KEY ([pid], [index]),
-    FOREIGN KEY ([pid]) REFERENCES artworks ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX file_md5 ([md5])
+    FOREIGN KEY ([pid]) REFERENCES [artworks] ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX [file_md5] ([md5])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'twitter')
-CREATE TABLE twitter
+CREATE TABLE [twitter]
 (
     [screen] VARCHAR(15) NOT NULL COLLATE LATIN1_100_CI_AI,
     [uid]    INTEGER     NOT NULL,
@@ -78,7 +99,7 @@ CREATE TABLE twitter
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'statistic_ero')
-CREATE TABLE statistic_ero
+CREATE TABLE [statistic_ero]
 (
     [sender]    BIGINT  NOT NULL,
     [group]     INTEGER,
@@ -89,7 +110,7 @@ CREATE TABLE statistic_ero
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'statistic_tag')
-CREATE TABLE statistic_tag
+CREATE TABLE [statistic_tag]
 (
     [sender]    BIGINT       NOT NULL,
     [group]     INTEGER,
@@ -101,7 +122,7 @@ CREATE TABLE statistic_tag
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'statistic_search')
-CREATE TABLE statistic_search
+CREATE TABLE [statistic_search]
 (
     [md5]        CHAR(32)      NOT NULL COLLATE LATIN1_100_CI_AI,
     [similarity] NUMERIC(6, 4) NOT NULL,
@@ -109,12 +130,12 @@ CREATE TABLE statistic_search
     [title]      NVARCHAR(64)  NOT NULL,
     [uid]        INTEGER       NOT NULL,
     [name]       NVARCHAR(15)  NOT NULL,
-    PRIMARY KEY (md5)
+    PRIMARY KEY ([md5])
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'statistic_alias')
-CREATE TABLE statistic_alias
+CREATE TABLE [statistic_alias]
 (
     [name] NVARCHAR(15) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
     [uid]  INTEGER      NOT NULL,
@@ -123,7 +144,7 @@ CREATE TABLE statistic_alias
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
               WHERE [name] = 'statistic_task')
-CREATE TABLE statistic_task
+CREATE TABLE [statistic_task]
 (
     [task]      VARCHAR(64) NOT NULL COLLATE LATIN1_100_CI_AI_UTF8,
     [pid]       INTEGER     NOT NULL,
@@ -135,8 +156,8 @@ CREATE TABLE statistic_task
 IF NOT EXISTS(SELECT [name]
               FROM sys.views
               WHERE [name] = 'statistic_user')
-CREATE VIEW statistic_user AS
+CREATE VIEW [statistic_user] AS
 SELECT [uid], COUNT(*) AS [count], COUNT([is_ero] OR null) AS [ero]
-FROM artworks
-WHERE NOT deleted
-GROUP BY uid;
+FROM [artworks]
+WHERE NOT [deleted]
+GROUP BY [uid];

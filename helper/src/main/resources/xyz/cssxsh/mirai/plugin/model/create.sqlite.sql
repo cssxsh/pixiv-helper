@@ -35,12 +35,27 @@ CREATE TABLE IF NOT EXISTS tags
 (
     `pid`             INTEGER NOT NULL,
     `name`            TEXT    NOT NULL COLLATE RTRIM,
-    `translated_name` TEXT COLLATE RTRIM,
+    `translated_name` TEXT DEFAULT NULL COLLATE RTRIM,
     PRIMARY KEY (`pid`, `name`),
     FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
 CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
+CREATE TABLE IF NOT EXISTS tag
+(
+    `name`            TEXT                  NOT NULL COLLATE RTRIM,
+    `translated_name` TEXT DEFAULT NULL COLLATE NOCASE,
+    `tid`             INTEGER AUTOINCREMENT NOT NULL,
+    PRIMARY KEY (`name`),
+    UNIQUE (`tid`)
+);
+CREATE TABLE IF NOT EXISTS artwork_tag
+(
+    `pid` INTEGER UNSIGNED NOT NULL,
+    `tid` INTEGER UNSIGNED NOT NULL,
+    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (`tid`) REFERENCES tag (`tid`) ON UPDATE CASCADE ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS files
 (
     `pid`   INTEGER NOT NULL,
@@ -106,5 +121,5 @@ CREATE TABLE IF NOT EXISTS statistic_task
 CREATE VIEW IF NOT EXISTS statistic_user AS
 SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
 FROM artworks
-WHERE NOT deleted
-GROUP BY uid;
+WHERE NOT `deleted`
+GROUP BY `uid`;

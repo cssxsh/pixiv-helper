@@ -1,5 +1,5 @@
 -- Illust Data
-CREATE TABLE IF NOT EXISTS users
+CREATE TABLE IF NOT EXISTS `users`
 (
     `uid`     INTEGER UNSIGNED NOT NULL,
     `name`    VARCHAR(15)      NOT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users
     PRIMARY KEY (`uid`),
     UNIQUE (`account`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
-CREATE TABLE IF NOT EXISTS artworks
+CREATE TABLE IF NOT EXISTS `artworks`
 (
     `pid`             INTEGER UNSIGNED  NOT NULL,
     `uid`             INTEGER UNSIGNED  NOT NULL,
@@ -28,20 +28,35 @@ CREATE TABLE IF NOT EXISTS artworks
     `is_ero`          BOOLEAN           NOT NULL DEFAULT FALSE,
     `deleted`         BOOLEAN           NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`pid`),
-    FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX user_id (`uid`)
+    FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX (`uid`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
-CREATE TABLE IF NOT EXISTS tags
+CREATE TABLE IF NOT EXISTS `tags`
 (
     `pid`             INTEGER UNSIGNED NOT NULL,
     `name`            VARCHAR(30)      NOT NULL COLLATE 'utf8mb4_bin',
-    `translated_name` VARCHAR(64) COLLATE 'utf8mb4_bin',
+    `translated_name` VARCHAR(64) DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
     PRIMARY KEY (`pid`, `name`),
-    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX tag_name (`name`),
-    INDEX tag_translated_name (`translated_name`)
+    FOREIGN KEY (`pid`) REFERENCES `artworks` (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX (`name`),
+    INDEX (`translated_name`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
-CREATE TABLE IF NOT EXISTS files
+CREATE TABLE IF NOT EXISTS `tag`
+(
+    `name`            VARCHAR(50)      NOT NULL COLLATE 'utf8mb4_bin',
+    `translated_name` TINYTEXT DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+    `tid`             INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    PRIMARY KEY (`name`),
+    UNIQUE (`tid`)
+) DEFAULT CHARACTER SET 'utf8mb4';
+CREATE TABLE IF NOT EXISTS `artwork_tag`
+(
+    `pid` INTEGER UNSIGNED NOT NULL,
+    `tid` INTEGER UNSIGNED NOT NULL,
+    FOREIGN KEY (`pid`) REFERENCES `artworks` (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (`tid`) REFERENCES `tag` (`tid`) ON UPDATE CASCADE ON DELETE CASCADE
+) DEFAULT CHARACTER SET 'utf8mb4';
+CREATE TABLE IF NOT EXISTS `files`
 (
     `pid`   INTEGER UNSIGNED NOT NULL,
     `index` TINYINT UNSIGNED NOT NULL,
@@ -50,10 +65,10 @@ CREATE TABLE IF NOT EXISTS files
     -- file size max 32MB
     `size`  INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`pid`, `index`),
-    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX file_md5 (`md5`)
+    FOREIGN KEY (`pid`) REFERENCES `artworks` (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX (`md5`)
 );
-CREATE TABLE IF NOT EXISTS twitter
+CREATE TABLE IF NOT EXISTS `twitter`
 (
     `screen` VARCHAR(15)      NOT NULL COLLATE 'ascii_general_ci',
     `uid`    INTEGER UNSIGNED NOT NULL,
@@ -61,7 +76,7 @@ CREATE TABLE IF NOT EXISTS twitter
 );
 
 -- User Data
-CREATE TABLE IF NOT EXISTS statistic_ero
+CREATE TABLE IF NOT EXISTS `statistic_ero`
 (
     `sender`    INTEGER UNSIGNED NOT NULL,
     `group`     INTEGER UNSIGNED,
@@ -69,7 +84,7 @@ CREATE TABLE IF NOT EXISTS statistic_ero
     `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`sender`, `timestamp`)
 );
-CREATE TABLE IF NOT EXISTS statistic_tag
+CREATE TABLE IF NOT EXISTS `statistic_tag`
 (
     `sender`    INTEGER UNSIGNED NOT NULL,
     `group`     INTEGER UNSIGNED,
@@ -78,7 +93,7 @@ CREATE TABLE IF NOT EXISTS statistic_tag
     `timestamp` INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`sender`, `timestamp`)
 );
-CREATE TABLE IF NOT EXISTS statistic_search
+CREATE TABLE IF NOT EXISTS `statistic_search`
 (
     `md5`        CHAR(32)         NOT NULL COLLATE 'ascii_general_ci',
     `similarity` NUMERIC(6, 4)    NOT NULL,
@@ -88,13 +103,13 @@ CREATE TABLE IF NOT EXISTS statistic_search
     `name`       VARCHAR(15)      NOT NULL,
     PRIMARY KEY (`md5`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
-CREATE TABLE IF NOT EXISTS statistic_alias
+CREATE TABLE IF NOT EXISTS `statistic_alias`
 (
     `name` VARCHAR(15)      NOT NULL,
     `uid`  INTEGER UNSIGNED NOT NULL,
     PRIMARY KEY (`name`)
 );
-CREATE TABLE IF NOT EXISTS statistic_task
+CREATE TABLE IF NOT EXISTS `statistic_task`
 (
     `task`      VARCHAR(64)      NOT NULL COLLATE 'utf8mb4_unicode_ci',
     `pid`       INTEGER UNSIGNED NOT NULL,
@@ -103,8 +118,8 @@ CREATE TABLE IF NOT EXISTS statistic_task
 );
 
 -- view
-CREATE OR REPLACE VIEW statistic_user AS
+CREATE OR REPLACE VIEW `statistic_user` AS
 SELECT `uid`, COUNT(*) AS `count`, COUNT(is_ero OR null) AS `ero`
-FROM artworks
-WHERE NOT deleted
-GROUP BY uid;
+FROM `artworks`
+WHERE NOT `deleted`
+GROUP BY `uid`;

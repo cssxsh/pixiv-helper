@@ -485,7 +485,7 @@ internal suspend fun IllustInfo.getImages(): List<File> {
                 results.add(FileInfo(url = url, bytes = file.readBytes()))
                 file.renameTo(folder.resolve(url.filename))
             } else {
-                exists
+                false
             }
         }
 

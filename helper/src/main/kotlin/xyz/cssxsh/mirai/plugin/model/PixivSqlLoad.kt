@@ -68,8 +68,8 @@ private val factory: SessionFactory by lazy { HelperSqlConfiguration.buildSessio
 private fun SessionFactory.init(): Unit = openSession().use { session ->
     // 创建表
     session.transaction.begin()
-    session.runCatching {
-        val meta = doReturningWork { it.metaData }
+    try {
+        val meta = session.doReturningWork { it.metaData }
         val name = meta.databaseProductName
         val sql = when {
             name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
@@ -78,18 +78,66 @@ private fun SessionFactory.init(): Unit = openSession().use { session ->
             name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
             else -> "create.default.sql"
         }
-        logger.info("Create Table by $sql with $name")
+        logger.info { "Create Table by $sql with $name" }
         requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "Read Create Sql 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
-            .forEach { createNativeQuery(it).executeUpdate() }
-        meta
-    }.onSuccess {
+            .forEach { session.createNativeQuery(it).executeUpdate() }
         session.transaction.commit()
-        logger.info("数据库 ${it.url} by ${it.driverName} 初始化完成")
-    }.onFailure {
+        logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-        logger.error("数据库初始化失败", it)
+        logger.error("数据库初始化失败", cause)
+        throw cause
+    }
+
+    var count = 0
+    while (true) {
+        System.gc()
+
+        val olds: List<TagBaseInfo> = session.withCriteria<TagBaseInfo> { criteria ->
+            val tag = criteria.from(TagBaseInfo::class.java)
+            criteria.select(tag)
+        }.setMaxResults(8196).list().orEmpty()
+
+        if (olds.isEmpty()) break
+
+        logger.info { "TAG 数据迁移中 ${count}，请稍候" }
+
+        count += olds.size
+
+        session.transaction.begin()
+        val set = HashSet<String>()
+        try {
+            for (old in olds) {
+                if (set.add(old.name)) {
+                    val tag = TagRecord(name = old.name, translated = old.translated)
+                    session.replicate(tag, ReplicationMode.IGNORE)
+                }
+            }
+            session.transaction.commit()
+        } catch (cause: Throwable) {
+            session.transaction.rollback()
+            throw cause
+        }
+
+        session.clear()
+
+        session.transaction.begin()
+        try {
+            for (old in olds) {
+                val record = session.get(TagRecord::class.java, old.name)
+                session.replicate(ArtworkTag(pid = old.pid, tag = record), ReplicationMode.IGNORE)
+                session.delete(old)
+            }
+            session.transaction.commit()
+        } catch (cause: Throwable) {
+            session.transaction.rollback()
+            throw cause
+        }
+    }
+    if (count > 0) {
+        logger.info { "TAG 数据迁移完成 ${count}." }
     }
 }
 
@@ -181,13 +229,13 @@ internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERW
     val entity = this
     useSession(entity::class.companionObjectInstance) { session ->
         session.transaction.begin()
-        session.runCatching {
-            replicate(entity, mode)
-        }.onSuccess {
+        try {
+            session.replicate(entity, mode)
             session.transaction.commit()
-        }.onFailure {
+        } catch (cause: Throwable) {
             session.transaction.rollback()
-        }.getOrThrow()
+            throw cause
+        }
     }
 }
 
@@ -334,25 +382,18 @@ internal fun ArtWorkInfo.SQL.tag(
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }
-        val tag = { name: String, pid: Path<Long> ->
-            criteria.subquery(TagBaseInfo::class.java).also { sub ->
-                val info = sub.from(TagBaseInfo::class.java)
-                sub.select(info)
-                    .where(
-                        equal(info.get<Long>("pid"), pid),
-                        or(
-                            like(info.get("name"), if (fuzzy) "%$name%" else name),
-                            like(info.get("translated"), if (fuzzy) "%$name%" else name)
-                        )
-                    )
-            }
-        }
+        val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                *names.map { name -> exists(tag(name, artwork.get("pid"))) }.toTypedArray()
+                *names.map { name ->
+                    or(
+                        like(records.get("name"), if (fuzzy) "%$name%" else name),
+                        like(records.get("translated"), if (fuzzy) "%$name%" else name)
+                    )
+                }.toTypedArray()
             )
             .orderBy(asc(rand()))
             .distinct(true)
@@ -381,8 +422,8 @@ internal fun ArtWorkInfo.SQL.random(
 
 internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
-    session.runCatching {
-        withCriteriaUpdate<ArtWorkInfo> { criteria ->
+    try {
+        val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment).set("deleted", true)
                 .where(
@@ -390,17 +431,18 @@ internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSessio
                     equal(artwork.get<Long>("pid"), pid)
                 )
         }.executeUpdate()
-    }.onSuccess {
         session.transaction.commit()
-    }.onFailure {
+        total
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-    }.getOrThrow()
+        throw cause
+    }
 }
 
 internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSession { session ->
     session.transaction.begin()
-    session.runCatching {
-        withCriteriaUpdate<ArtWorkInfo> { criteria ->
+    try {
+        val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
             val artwork = criteria.from(ArtWorkInfo::class.java)
             criteria.set("caption", comment).set("deleted", true)
                 .where(
@@ -408,11 +450,12 @@ internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSe
                     equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
                 )
         }.executeUpdate()
-    }.onSuccess {
         session.transaction.commit()
-    }.onFailure {
+        total
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-    }.getOrThrow()
+        throw cause
+    }
 }
 
 internal fun SimpleArtworkInfo.toArtWorkInfo(caption: String = "") = ArtWorkInfo(
@@ -441,8 +484,10 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
     author = author
 )
 
-internal fun IllustInfo.toTagBaseInfos(): List<TagBaseInfo> = tags.distinctBy { it.name }.map {
-    TagBaseInfo(pid, it.name, it.translatedName)
+internal fun IllustInfo.toTagRecords(): List<TagRecord> = tags.map { info ->
+    TagRecord(name = info.name, translated = info.translatedName).apply {
+        replicate(ReplicationMode.IGNORE)
+    }
 }
 
 internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
@@ -452,17 +497,19 @@ internal fun IllustInfo.replicate(): Unit = useSession(ArtWorkInfo) { session ->
     } catch (e: Throwable) {
         logger.warning({ "Save twitter" }, e)
     }
+    toTagRecords()
     session.transaction.begin()
-    session.runCatching {
-        replicate(toArtWorkInfo(), ReplicationMode.OVERWRITE)
-        for (tag in toTagBaseInfos()) replicate(tag, ReplicationMode.IGNORE)
-    }.onSuccess {
+    try {
+        val artwork = toArtWorkInfo()
+        artwork.tags = tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
+        session.replicate(artwork, ReplicationMode.OVERWRITE)
         session.transaction.commit()
         logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
-    }.onFailure {
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-        logger.warning({ "作品(${pid})信息记录失败" }, it)
-    }.getOrThrow()
+        logger.warning({ "作品(${pid})信息记录失败" }, cause)
+        throw cause
+    }
 }
 
 internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) { session ->
@@ -474,24 +521,28 @@ internal fun Collection<IllustInfo>.replicate(): Unit = useSession(ArtWorkInfo) 
     } catch (e: Throwable) {
         logger.warning({ "Save twitter" }, e)
     }
+    for (info in this) {
+        info.toTagRecords()
+    }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     session.transaction.begin()
-    session.runCatching {
+    try {
         val users = HashMap<Long, UserBaseInfo>()
 
         for (info in this@replicate) {
             if (info.pid == 0L) continue
             val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
-            replicate(info.toArtWorkInfo(author), ReplicationMode.OVERWRITE)
-            for (tag in info.toTagBaseInfos()) replicate(tag, ReplicationMode.IGNORE)
+            val artwork = info.toArtWorkInfo(author)
+            artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
+            session.replicate(artwork, ReplicationMode.OVERWRITE)
         }
-    }.onSuccess {
         session.transaction.commit()
         logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
-    }.onFailure {
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-        logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, it)
-    }.getOrThrow()
+        logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, cause)
+        throw cause
+    }
 }
 
 // endregion
@@ -574,13 +625,13 @@ internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { sess
 
 internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
-    session.runCatching {
-        for (item in this@replicate) replicate(item, ReplicationMode.OVERWRITE)
-    }.onSuccess {
+    try {
+        for (item in this) session.replicate(item, ReplicationMode.OVERWRITE)
         session.transaction.commit()
-    }.onFailure {
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-    }.getOrThrow()
+        throw cause
+    }
 }
 
 // endregion
@@ -653,13 +704,12 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
 internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSetting) { session ->
     val record = session.get(AliasSetting::class.java, alias) ?: return@useSession
     session.transaction.begin()
-    session.runCatching {
-        delete(record)
-    }.onSuccess {
+    try {
+        session.delete(record)
         session.transaction.commit()
-    }.onFailure {
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-    }.getOrThrow()
+    }
 }
 
 internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session ->
@@ -675,21 +725,21 @@ internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { s
 
 internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     session.transaction.begin()
-    session.runCatching {
+    try {
         if (uid == 0L && pid in ArtWorkInfo) {
-            val info = find(ArtWorkInfo::class.java, pid)
+            val info = session.find(ArtWorkInfo::class.java, pid)
             title = info.title
             uid = info.author.uid
             name = info.author.name
-            replicate(this@associate, ReplicationMode.OVERWRITE)
+            session.replicate(this@associate, ReplicationMode.OVERWRITE)
         } else {
-            replicate(this@associate, ReplicationMode.IGNORE)
+            session.replicate(this@associate, ReplicationMode.IGNORE)
         }
-    }.onSuccess {
         session.transaction.commit()
-    }.onFailure {
+    } catch (cause: Throwable) {
         session.transaction.rollback()
-    }.getOrThrow()
+        throw cause
+    }
 }
 
 internal fun PixivSearchResult.SQL.find(hash: String): PixivSearchResult? = useSession { session ->
