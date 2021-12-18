@@ -30,7 +30,7 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
     private val single = Mutex()
 
     suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
-        download(metadata.original, metadata.original.filename)
+        metadata.download()
         val gif = cache.resolve("${illust.pid}.gif")
         return if (flush || gif.exists().not()) {
             single.withLock {

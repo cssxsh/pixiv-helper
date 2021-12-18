@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.7.4"
+version = "1.8.0"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11

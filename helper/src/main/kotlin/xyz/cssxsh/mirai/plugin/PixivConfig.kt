@@ -142,7 +142,7 @@ internal fun initConfiguration(scope: CoroutineScope) {
             if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
                 logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
             } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
-                System.setProperty(OpenCVQuantizer.MAX_COUNT, "${PixivGifConfig.maxCount}")
+                System.setProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
             }
         }
         if (ditherer !in DITHERER_LIST) {
