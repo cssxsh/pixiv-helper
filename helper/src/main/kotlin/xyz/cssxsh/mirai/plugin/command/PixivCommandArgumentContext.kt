@@ -27,7 +27,7 @@ object TemporalCommandArgumentContext : CommandArgumentContext {
     override fun <T : Any> get(kClass: KClass<T>): CommandValueArgumentParser<T>? {
         if (kClass.isSubclassOf(temporalKlass).not()) return null
 
-        var parser: CommandValueArgumentParser<T>? = cache[kClass.java] as CommandValueArgumentParser<T>
+        var parser = cache[kClass.java] as? CommandValueArgumentParser<T>
 
         if (parser != null) return parser
 
