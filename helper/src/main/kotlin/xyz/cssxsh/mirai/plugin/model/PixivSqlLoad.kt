@@ -350,17 +350,14 @@ internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useS
     }.list().orEmpty()
 }
 
-internal fun ArtWorkInfo.SQL.type(
-    range: LongRange,
-    vararg types: WorkContentType
-): List<ArtWorkInfo> = useSession { session ->
+internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 between(artwork.get("pid"), range.first, range.last),
-                artwork.get<Int>("type").`in`(types.map { it.ordinal })
+                equal(artwork.get<Int>("type"), type.ordinal)
             )
     }.list().orEmpty()
 }

@@ -99,12 +99,12 @@ object PixivDeleteCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("删除 漫画，动图")
+    @Description("删除 漫画")
     suspend fun CommandSender.manga(record: Boolean = false) = supervisorScope {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
-            val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA, WorkContentType.UGOIRA)
+            val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA)
             if (artworks.isEmpty()) continue
             sendMessage("[manga](${range})共${artworks.size}个作品需要删除")
             for (artwork in artworks) {
