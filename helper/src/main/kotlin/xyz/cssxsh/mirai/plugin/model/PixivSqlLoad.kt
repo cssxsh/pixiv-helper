@@ -382,13 +382,17 @@ internal fun ArtWorkInfo.SQL.tag(
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
-        val names = word.split(delimiters = TAG_DELIMITERS)
+        val names = word.splitToSequence(delimiters = TAG_DELIMITERS)
         val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
         val likes = ArrayList<Predicate>()
         for (name in names) {
             if (name.isBlank()) continue
-            likes.add(like(records.get("name"), if (fuzzy) "%$name%" else name))
-            likes.add(like(records.get("translated"), if (fuzzy) "%$name%" else name))
+            likes.add(
+                or(
+                    like(records.get("name"), if (fuzzy) "%$name%" else name),
+                    like(records.get("translated"), if (fuzzy) "%$name%" else name)
+                )
+            )
         }
 
         criteria.select(artwork)
@@ -396,7 +400,7 @@ internal fun ArtWorkInfo.SQL.tag(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                or(*likes.toTypedArray())
+                *likes.toTypedArray()
             )
             .orderBy(asc(rand()))
             .distinct(true)
