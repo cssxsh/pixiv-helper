@@ -15,9 +15,9 @@ object PixivDeleteCommand : CompositeCommand(
     overrideContext = PixivCommandArgumentContext
 ), PixivHelperCommand {
 
-    private fun delete(arkwork: ArtWorkInfo): Boolean {
-        if (arkwork.type == WorkContentType.UGOIRA.ordinal) {
-            for (name in listOf("${arkwork.pid}.gif", "${arkwork.pid}_ugoira1920x1080.zip")) {
+    private fun delete(artwork: ArtWorkInfo): Boolean {
+        if (artwork.type == WorkContentType.UGOIRA.ordinal) {
+            for (name in listOf("${artwork.pid}.gif", "${artwork.pid}_ugoira1920x1080.zip")) {
                 val source = UgoiraImagesFolder.resolve(name)
                 if (source.exists()) {
                     val dest = OtherImagesFolder.resolve(name)
@@ -25,9 +25,9 @@ object PixivDeleteCommand : CompositeCommand(
                 }
             }
         }
-        return images(arkwork.pid)
+        return images(artwork.pid)
             .listFiles { file -> file.isFile && file.extension != "json" }
-            ?.all { it.delete() } ?: true
+            ?.all { it.delete() } ?: false
     }
 
     @SubCommand
