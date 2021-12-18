@@ -240,8 +240,8 @@ object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载缓存中有色图作品的用户的其他作品")
-    suspend fun UserCommandSender.count() = withHelper {
-        val records = StatisticUserInfo.list(range = 3..PAGE_SIZE)
+    suspend fun UserCommandSender.count(range: LongRange = 3..PAGE_SIZE) = withHelper {
+        val records = StatisticUserInfo.list(range = range)
 
         addCacheJob(name = "USER_ERO_COUNT", reply = reply) { name ->
             getCacheUser(records = records).sendOnCompletion { total ->
