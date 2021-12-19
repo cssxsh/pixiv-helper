@@ -385,19 +385,22 @@ internal fun ArtWorkInfo.SQL.tag(
     age: AgeLimit,
     limit: Int
 ): List<ArtWorkInfo> = useSession { session ->
+    val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
-        val names = word.splitToSequence(delimiters = TAG_DELIMITERS)
-        val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
-        val likes = ArrayList<Predicate>()
-        for (name in names) {
-            if (name.isBlank()) continue
-            likes.add(
-                or(
-                    like(records.get("name"), if (fuzzy) "%$name%" else name),
-                    like(records.get("translated"), if (fuzzy) "%$name%" else name)
-                )
-            )
+        val tag = { name: String ->
+            criteria.subquery(Long::class.java).also { sub ->
+                val info = sub.from(ArtWorkInfo::class.java)
+                val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
+                sub.select(records.get("tid"))
+                    .where(
+                        equal(info.get<Long>("pid"), artwork.get<Long>("pid")),
+                        or(
+                            like(records.get("name"), if (fuzzy) "%$name%" else name),
+                            like(records.get("translated"), if (fuzzy) "%$name%" else name)
+                        )
+                    )
+            }
         }
 
         criteria.select(artwork)
@@ -405,7 +408,7 @@ internal fun ArtWorkInfo.SQL.tag(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                *likes.toTypedArray()
+                *names.map { name -> exists(tag(name)) }.toTypedArray()
             )
             .orderBy(asc(rand()))
             .distinct(true)
