@@ -411,7 +411,6 @@ internal fun ArtWorkInfo.SQL.tag(
                 *names.map { name -> exists(tag(name)) }.toTypedArray()
             )
             .orderBy(asc(rand()))
-            .distinct(true)
     }.setMaxResults(limit).list().orEmpty()
 }
 
