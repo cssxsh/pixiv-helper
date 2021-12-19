@@ -350,6 +350,23 @@ internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List
     }.list().orEmpty()
 }
 
+internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useSession { session ->
+    session.withCriteria<ArtWorkInfo> { criteria ->
+        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val files = with(criteria.subquery(FileInfo::class.java)) {
+            val file = from(FileInfo::class.java)
+            select(file).where(equal(artwork.get<Long>("pid"), file.get<Long>("pid")))
+        }
+        criteria.select(artwork)
+            .where(
+                isFalse(artwork.get("deleted")),
+                isTrue(artwork.get("ero")),
+                between(artwork.get("pid"), range.first, range.last),
+                exists(files).not()
+            )
+    }.list().orEmpty()
+}
+
 internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)

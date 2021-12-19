@@ -175,31 +175,33 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("加载动图作品")
-    suspend fun UserCommandSender.ugoira() = withHelper {
+    @Description("缓存色图作品")
+    suspend fun UserCommandSender.nocache() = withHelper {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
-            val artworks = ArtWorkInfo.type(range, WorkContentType.UGOIRA)
-            val eros = artworks.filter {
-                it.ero && UgoiraImagesFolder.resolve("${it.pid}.gif").exists().not()
-            }
-            if (eros.isEmpty()) continue
-            logger.info { "ugoira (${range})${eros.map { it.pid }}共${eros.size}个GIF需要build" }
-            for (artwork in eros) {
-                if (isActive.not()) break
+            val artworks = ArtWorkInfo.nocache(range)
+            if (artworks.isEmpty()) continue
+            logger.info { "NOCACHE(${range})共${artworks.size}个ArtWork需要Cache" }
+            for (artwork in artworks) {
                 try {
-                    getIllustInfo(pid = artwork.pid, flush = false).getUgoira()
-                } catch (e: Throwable) {
-                    if (DELETE_REGEX in e.message.orEmpty()) {
-                        ArtWorkInfo.delete(pid = artwork.pid, comment = e.message.orEmpty())
+                    val illust = getIllustInfo(pid = artwork.pid, flush = false)
+                    when (illust.type) {
+                        WorkContentType.ILLUST -> illust.getImages()
+                        WorkContentType.UGOIRA -> illust.getUgoira()
+                        WorkContentType.MANGA -> Unit
                     }
-                    logger.warning { "ugoira build ${artwork.pid} ${e.message}" }
+                } catch (cause: Throwable) {
+                    if (DELETE_REGEX in cause.message.orEmpty()) {
+                        ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message.orEmpty())
+                    }
+                    logger.warning { "cache ${artwork.pid} ${cause.message}" }
                 }
             }
-            logger.info { "$range Build 完毕" }
+
+            logger.info { "$range Cache 完毕" }
             System.gc()
         }
-        "UGOIRA Build 完毕"
+        "Cache 完毕"
     }
 
     private val FILE_REGEX = """(\d+)_p(\d+)\.(jpg|png)""".toRegex()
