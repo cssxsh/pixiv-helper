@@ -290,18 +290,6 @@ internal fun ArtWorkInfo.SQL.eros(sanity: SanityLevel): Long = useSession { sess
     }.uniqueResult()
 }
 
-internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInfo> = useSession { session ->
-    session.withCriteria<StatisticUserInfo> { criteria ->
-        val record = criteria.from(StatisticUserInfo::class.java)
-        criteria.select(record)
-            .where(
-                gt(record.get<Long>("ero"), range.first),
-                lt(record.get<Long>("count"), range.last)
-            )
-            .orderBy(asc(record.get<Long>("uid")))
-    }.list()
-}
-
 internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
@@ -710,6 +698,18 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
         criteria.select(ero)
             .where(equal(ero.get<Long>("group"), id))
     }.list().orEmpty()
+}
+
+internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInfo> = useSession { session ->
+    session.withCriteria<StatisticUserInfo> { criteria ->
+        val record = criteria.from(StatisticUserInfo::class.java)
+        criteria.select(record)
+            .where(
+                gt(record.get<Long>("ero"), range.first),
+                lt(record.get<Long>("count"), range.last)
+            )
+            .orderBy(asc(record.get<Long>("uid")))
+    }.list()
 }
 
 internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSetting) { session ->

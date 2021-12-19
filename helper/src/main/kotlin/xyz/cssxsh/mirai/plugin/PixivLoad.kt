@@ -203,9 +203,9 @@ internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = fl
                 check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
                 list.add(this)
             }
-        } catch (cause: AppApiException) {
-            if (DELETE_REGEX in cause.message) {
-                ArtWorkInfo(pid = pid, caption = cause.message).replicate()
+        } catch (cause: Throwable) {
+            if (DELETE_REGEX in cause.message.orEmpty()) {
+                ArtWorkInfo(pid = pid, caption = cause.message.orEmpty()).replicate()
             } else {
                 logger.warning({ "加载作品($pid)失败" }, cause)
             }
