@@ -86,14 +86,10 @@ object PixivSearchCommand : SimpleCommand(
         val record = record(hash)
         if (record != null) return@withHelper record.getContent()
 
-        val result = saucenao(origin).let { saucenao ->
-            if (saucenao.none { it.similarity > MIN_SIMILARITY }) {
-                ascii2d(origin) + saucenao
-            } else {
-                saucenao
-            }
-        }
+        val saucenao = saucenao(origin).similarity(MIN_SIMILARITY).translate(hash)
 
-        result.similarity(MIN_SIMILARITY).translate(hash).getContent(fromEvent.sender)
+        val result = if (saucenao.none { it.similarity > MIN_SIMILARITY }) saucenao + ascii2d(origin) else saucenao
+
+        result.getContent(fromEvent.sender)
     }
 }
