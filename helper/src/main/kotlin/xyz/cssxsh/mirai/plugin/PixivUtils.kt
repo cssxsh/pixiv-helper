@@ -60,6 +60,14 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
             cause is AppApiException -> {
                 quoteReply("ApiException, ${cause.json}")
             }
+            cause is RestrictException -> {
+                if (cause.illust.pid in ArtWorkInfo) {
+                    ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
+                } else {
+                    cause.illust.toArtWorkInfo().copy(caption = cause.message).replicate()
+                }
+                quoteReply("RestrictException, ${cause.illust}")
+            }
             SendLimit in cause.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(cause.message!!)!!.value)
@@ -102,7 +110,19 @@ internal suspend fun UserCommandSender.sendIllust(illust: IllustInfo): Boolean {
         }
         true
     } catch (cause: Throwable) {
+        logger.warning({ "消息作品失败" }, cause)
         when {
+            cause is AppApiException -> {
+                quoteReply("ApiException, ${cause.json}")
+            }
+            cause is RestrictException -> {
+                if (cause.illust.pid in ArtWorkInfo) {
+                    ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
+                } else {
+                    cause.illust.toArtWorkInfo().copy(caption = cause.message).replicate()
+                }
+                quoteReply("RestrictException, ${cause.illust}")
+            }
             SendLimit in cause.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(cause.message!!)!!.value)
@@ -379,10 +399,6 @@ internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(EroStandard)
 
 // region Read Info
 
-internal fun IllustInfo.check() = apply {
-    check(user.id != 0L) { "[$pid] 作品已删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-}
-
 internal fun File.readIllustInfo() = PixivJson.decodeFromString(IllustInfo.serializer(), readText())
 
 internal fun File.readUgoiraMetadata() = PixivJson.decodeFromString(UgoiraMetadata.serializer(), readText())
@@ -400,7 +416,10 @@ internal fun UgoiraMetadata.write(file: File) {
 internal fun Collection<IllustInfo>.write() = onEach { it.write() }
 
 private val FlushIllustInfo: suspend PixivAppClient.(Long) -> IllustInfo = { pid ->
-    illustDetail(pid).illust.check().apply { replicate() }
+    val illust = illustDetail(pid).illust
+    if (illust.user.id == 0L) throw RestrictException(illust = illust)
+    illust.replicate()
+    illust
 }
 
 internal suspend fun PixivAppClient.getIllustInfo(
@@ -557,7 +576,7 @@ internal val bytes: (Long) -> String = {
 }
 
 /**
- * 备份文件大小
+ * 备份文件
  */
 internal fun backups(): Map<String, File> {
     val map = mutableMapOf<String, File>()

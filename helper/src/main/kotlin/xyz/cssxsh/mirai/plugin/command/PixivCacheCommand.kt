@@ -8,6 +8,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import xyz.cssxsh.pixiv.exception.*
 import java.io.*
 import java.time.*
 
@@ -193,11 +194,15 @@ object PixivCacheCommand : CompositeCommand(
                             WorkContentType.MANGA -> Unit
                         }
                     })
-                } catch (cause: Throwable) {
-                    if (DELETE_REGEX in cause.message.orEmpty()) {
-                        ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message.orEmpty())
+                } catch (cause: AppApiException) {
+                    if (DELETE_REGEX in cause.message) {
+                        ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message)
+                    } else {
+                        logger.warning({ "NOCACHE 加载作品(${artwork.pid})失败" }, cause)
                     }
-                    logger.warning { "cache ${artwork.pid} ${cause.message}" }
+                } catch (cause: RestrictException) {
+                    ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message)
+                    logger.warning { "NOCACHE ${cause.illust}" }
                 }
             }
             try {

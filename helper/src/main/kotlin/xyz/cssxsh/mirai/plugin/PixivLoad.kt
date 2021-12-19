@@ -199,16 +199,15 @@ internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = fl
     for (pid in set) {
         if (active().not()) break
         try {
-            with(PixivAuthClient().getIllustInfo(pid = pid, flush = flush)) {
-                check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-                list.add(this)
-            }
-        } catch (cause: Throwable) {
-            if (DELETE_REGEX in cause.message.orEmpty()) {
-                ArtWorkInfo(pid = pid, caption = cause.message.orEmpty()).replicate()
+            list.add(PixivAuthClient().getIllustInfo(pid = pid, flush = flush))
+        } catch (cause: AppApiException) {
+            if (DELETE_REGEX in cause.message) {
+                ArtWorkInfo(pid = pid, caption = cause.message).replicate()
             } else {
                 logger.warning({ "加载作品($pid)失败" }, cause)
             }
+        } catch (cause: RestrictException) {
+            cause.illust.toArtWorkInfo().copy(pid = pid, caption = cause.message).replicate()
         }
 
         if (list.size > PAGE_SIZE) emit(list)
@@ -222,16 +221,16 @@ internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: 
         if (active().not()) break
         if (check && item.pid in ArtWorkInfo) continue
         try {
-            with(PixivAuthClient().getIllustInfo(pid = item.pid, flush = true)) {
-                check(user.id != 0L) { "该作品已被删除或者被限制, Redirect: ${getOriginImageUrls().single()}" }
-                list.add(this)
-            }
-        } catch (cause: Throwable) {
-            if (DELETE_REGEX in cause.message.orEmpty()) {
-                item.toArtWorkInfo(caption = cause.message.orEmpty()).replicate()
+            list.add(PixivAuthClient().getIllustInfo(pid = item.pid, flush = true))
+        } catch (cause: AppApiException) {
+            if (DELETE_REGEX in cause.message) {
+                item.toArtWorkInfo(caption = cause.message).replicate()
             } else {
                 logger.warning({ "加载作品信息($item)失败" }, cause)
             }
+        } catch (cause: RestrictException) {
+            cause.illust.toArtWorkInfo(author = UserBaseInfo(uid = item.uid, name = item.name))
+                .copy(pid = item.pid, caption = cause.message).replicate()
         }
 
         if (list.size > PAGE_SIZE) emit(list)
