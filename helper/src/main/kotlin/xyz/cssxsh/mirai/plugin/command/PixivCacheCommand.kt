@@ -182,20 +182,28 @@ object PixivCacheCommand : CompositeCommand(
             val artworks = ArtWorkInfo.nocache(range)
             if (artworks.isEmpty()) continue
             logger.info { "NOCACHE(${range})共${artworks.size}个ArtWork需要Cache" }
+            val jobs = ArrayList<Deferred<*>>()
             for (artwork in artworks) {
                 try {
                     val illust = getIllustInfo(pid = artwork.pid, flush = false)
-                    when (illust.type) {
-                        WorkContentType.ILLUST -> illust.getImages()
-                        WorkContentType.UGOIRA -> illust.getUgoira()
-                        WorkContentType.MANGA -> Unit
-                    }
+                    jobs.add(async {
+                        when (illust.type) {
+                            WorkContentType.ILLUST -> illust.getImages()
+                            WorkContentType.UGOIRA -> illust.getUgoira()
+                            WorkContentType.MANGA -> Unit
+                        }
+                    })
                 } catch (cause: Throwable) {
                     if (DELETE_REGEX in cause.message.orEmpty()) {
                         ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message.orEmpty())
                     }
                     logger.warning { "cache ${artwork.pid} ${cause.message}" }
                 }
+            }
+            try {
+                jobs.awaitAll()
+            } catch (_: Throwable) {
+                //
             }
 
             logger.info { "$range Cache 完毕" }
