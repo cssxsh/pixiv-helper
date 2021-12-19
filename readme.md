@@ -147,7 +147,7 @@ DAY_MANGA
 
 备份文件优先推送到群文件，其次百度云  
 duration 单位分钟，默认3小时  
-`/task cache {args}` 是 task 和 cache 指令的组合，举例，`cache> <recommended`
+`/task cache {args}` 是 task 和 cache 指令的组合，举例，`/task cache recommended`
 
 ### 设置指令
 
