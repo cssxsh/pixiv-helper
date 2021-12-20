@@ -338,7 +338,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     appendLine("UID: ${preview.user.id}")
     appendLine("ACCOUNT: ${preview.user.account}")
     appendLine("FOLLOWED: ${preview.user.isFollowed}")
-    appendLine("TWITTER: ${preview.user.twitter()}")
+    appendLine("TWITTER: ${Twitter.find(uid = preview.user.id).firstOrNull()?.screen}")
     try {
         append(preview.user.getProfileImage().uploadAsImage(contact))
     } catch (e: Throwable) {

@@ -609,14 +609,6 @@ internal fun UserDetail.twitter(): String? {
     return screen
 }
 
-internal fun UserInfo.twitter(): String? {
-    val screen = comment?.let { ScreenRegex.find(it) }?.value ?: return null
-
-    Twitter(screen, id).replicate()
-
-    return screen
-}
-
 internal fun Twitter.SQL.find(screen: String): Twitter? = useSession { session ->
     session.find(Twitter::class.java, screen)
 }
