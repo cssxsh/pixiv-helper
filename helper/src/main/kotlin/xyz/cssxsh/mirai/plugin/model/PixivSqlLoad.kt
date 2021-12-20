@@ -161,7 +161,7 @@ internal inline fun <reified T> Throwable.findIsInstance(): T? {
  */
 internal fun Throwable.findSQLException() = findIsInstance<SQLException>()
 
-private fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R {
+internal fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R {
     return if (lock == null) {
         factory.openSession().use(block)
     } else {
@@ -298,7 +298,7 @@ internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession 
     }.uniqueResult() > 0
 }
 
-internal fun ArtWorkInfo.SQL.find(id: Long): ArtWorkInfo? = useSession { session ->
+internal operator fun ArtWorkInfo.SQL.get(id: Long): ArtWorkInfo? = useSession { session ->
     session.find(ArtWorkInfo::class.java, id)
 }
 
@@ -577,7 +577,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
     }.uniqueResult()
 }
 
-internal fun UserBaseInfo.SQL.account(account: String): UserBaseInfo? = useSession { session ->
+internal operator fun UserBaseInfo.SQL.get(account: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
@@ -585,7 +585,7 @@ internal fun UserBaseInfo.SQL.account(account: String): UserBaseInfo? = useSessi
     }.uniqueResult()
 }
 
-internal fun UserBaseInfo.SQL.name(name: String): UserBaseInfo? = useSession { session ->
+internal fun UserBaseInfo.SQL.like(name: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
         val user = criteria.from(UserBaseInfo::class.java)
         criteria.select(user)
@@ -609,11 +609,11 @@ internal fun UserDetail.twitter(): String? {
     return screen
 }
 
-internal fun Twitter.SQL.find(screen: String): Twitter? = useSession { session ->
+internal operator fun Twitter.SQL.get(screen: String): Twitter? = useSession { session ->
     session.find(Twitter::class.java, screen)
 }
 
-internal fun Twitter.SQL.find(uid: Long): List<Twitter> = useSession { session ->
+internal operator fun Twitter.SQL.get(uid: Long): List<Twitter> = useSession { session ->
     session.withCriteria<Twitter> { criteria ->
         val twitter = criteria.from(Twitter::class.java)
         criteria.select(twitter)
@@ -625,7 +625,7 @@ internal fun Twitter.SQL.find(uid: Long): List<Twitter> = useSession { session -
 
 // region FileInfo
 
-internal fun FileInfo.SQL.find(hash: String): List<FileInfo> = useSession { session ->
+internal operator fun FileInfo.SQL.get(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
@@ -741,7 +741,7 @@ internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session -
     }.list().orEmpty()
 }
 
-internal fun AliasSetting.SQL.find(name: String): AliasSetting? = useSession { session ->
+internal operator fun AliasSetting.SQL.get(name: String): AliasSetting? = useSession { session ->
     session.find(AliasSetting::class.java, name)
 }
 
@@ -764,7 +764,7 @@ internal fun PixivSearchResult.associate(): Unit = useSession { session ->
     }
 }
 
-internal fun PixivSearchResult.SQL.find(hash: String): PixivSearchResult? = useSession { session ->
+internal operator fun PixivSearchResult.SQL.get(hash: String): PixivSearchResult? = useSession { session ->
     session.find(PixivSearchResult::class.java, hash)
 }
 

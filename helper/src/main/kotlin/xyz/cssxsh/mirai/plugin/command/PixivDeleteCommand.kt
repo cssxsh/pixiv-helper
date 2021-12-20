@@ -35,7 +35,7 @@ object PixivDeleteCommand : CompositeCommand(
     suspend fun CommandSender.artwork(pid: Long, record: Boolean = false) {
         logger.info { "作品(${pid})信息将从缓存移除" }
         if (record) ArtWorkInfo.delete(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
-        val artwork = ArtWorkInfo.find(pid)
+        val artwork = ArtWorkInfo[pid]
         if (artwork == null) {
             sendMessage("作品(${pid})不在数据库缓存中")
             return

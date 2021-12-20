@@ -134,7 +134,7 @@ internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<
         for (preview in list) {
             index++
             if (active().not()) break
-            if (Twitter.find(preview.user.id).isEmpty() || preview.isLoaded().not() || flush) {
+            if (Twitter[preview.user.id].isEmpty() || preview.isLoaded().not() || flush) {
                 PixivAuthClient().runCatching {
                     val author = userDetail(uid = preview.user.id).apply { twitter() }
                     val total = author.profile.totalArtwork

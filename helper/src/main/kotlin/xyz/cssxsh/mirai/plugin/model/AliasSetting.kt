@@ -9,7 +9,7 @@ data class AliasSetting(
     @Column(name = "name", nullable = false)
     val alias: String = "",
     @Column(name = "uid", nullable = false)
-    val uid: Long = 0
-) : PixivEntity {
+    override val uid: Long = 0
+) : PixivEntity, Author {
     companion object SQL
 }

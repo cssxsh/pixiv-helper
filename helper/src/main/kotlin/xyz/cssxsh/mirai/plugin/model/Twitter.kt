@@ -9,7 +9,7 @@ data class Twitter(
     @Column(name = "screen", nullable = false, length = 50)
     val screen: String = "",
     @Column(name = "uid", nullable = false, updatable = false)
-    val uid: Long,
-) : PixivEntity {
+    override val uid: Long,
+) : PixivEntity, Author {
     companion object SQL
 }

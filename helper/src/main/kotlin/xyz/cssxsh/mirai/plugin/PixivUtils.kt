@@ -259,7 +259,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
         }
         is TwitterSearchResult -> {
             val screen = tweet.substringAfter("twitter.com/", "").substringBefore('/')
-            Twitter.find(screen)?.let { (_, uid) ->
+            Twitter[screen]?.let { (_, uid) ->
                 appendLine("PIXIV_UID: $uid")
             }
             appendLine("Tweet: $tweet")
@@ -338,7 +338,7 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
     appendLine("UID: ${preview.user.id}")
     appendLine("ACCOUNT: ${preview.user.account}")
     appendLine("FOLLOWED: ${preview.user.isFollowed}")
-    appendLine("TWITTER: ${Twitter.find(uid = preview.user.id).firstOrNull()?.screen}")
+    appendLine("TWITTER: ${Twitter[preview.user.id].joinToString { it.screen }}")
     try {
         append(preview.user.getProfileImage().uploadAsImage(contact))
     } catch (e: Throwable) {
@@ -603,7 +603,7 @@ internal fun backups(): Map<String, File> {
  */
 internal suspend fun PixivHelper.redirect(account: String): Long {
     check(account.isNotBlank()) { "Account is Blank" }
-    UserBaseInfo.account(account)?.let { return@redirect it.uid }
+    UserBaseInfo[account]?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
     val location = useHttpClient { client ->
         client.config {

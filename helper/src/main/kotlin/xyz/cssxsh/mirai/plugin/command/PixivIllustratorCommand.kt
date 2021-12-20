@@ -22,23 +22,15 @@ object PixivIllustratorCommand : CompositeCommand(
     @SubCommand("uid", "id", "user", "用户")
     @Description("根据画师UID随机发送画师作品")
     suspend fun UserCommandSender.uid(uid: Long) = withHelper {
-        ArtWorkInfo.user(uid).also { list ->
-            logger.verbose { "画师(${uid})共找到${list.size}个作品" }
-        }.randomOrNull() ?: "画师 $uid 没有找到缓存"
+        ArtWorkInfo.user(uid).randomOrNull() ?: "画师 $uid 没有找到缓存"
     }
 
     @SubCommand("name", "名称", "名字", "推特")
     @Description("根据画师name或者alias或twitter随机发送画师作品")
     suspend fun UserCommandSender.name(name: String) = withHelper {
-        val uid = requireNotNull(
-            AliasSetting.find(name)?.uid
-                ?: UserBaseInfo.name(name)?.uid
-                ?: Twitter.find(name)?.uid
-        ) { "找不到名称'${name}'" }
+        val author = requireNotNull(AliasSetting[name] ?: UserBaseInfo.like(name) ?: Twitter[name]) { "找不到名称'${name}'" }
 
-        ArtWorkInfo.user(uid).also { list ->
-            logger.verbose { "画师(${uid})[${name}]共找到${list.size}个作品" }
-        }.randomOrNull() ?: "画师 $name 没有找到缓存"
+        ArtWorkInfo.user(author.uid).randomOrNull() ?: "画师 $name 没有找到缓存"
     }
 
     @SubCommand("alias", "别名")

@@ -61,9 +61,9 @@ object PixivSearchCommand : SimpleCommand(
 
     private fun record(hash: String): PixivSearchResult? {
         if (hash.isNotBlank()) return null
-        val cache = PixivSearchResult.find(hash)
+        val cache = PixivSearchResult[hash]
         if (cache != null) return cache
-        val file = FileInfo.find(hash).firstOrNull()
+        val file = FileInfo[hash].firstOrNull()
         if (file != null) return PixivSearchResult(md5 = hash, similarity = 1.0, pid = file.pid)
         return null
     }
