@@ -312,19 +312,19 @@ internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightA
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
     add(illust.getContent(link, tag, attr))
     val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(illust.getUgoira())
+    var count = 0
     if (illust.age == AgeLimit.ALL) {
-        if (files.size <= max) {
-            files
-        } else {
-            logger.warning { "[${illust.pid}](${files.size})图片过多" }
-            add("部分图片省略\n".toPlainText())
-            files.subList(0, max)
-        }.map { file ->
+        for (file in files) {
+            if (count++ > max) {
+                logger.warning { "[${illust.pid}](${files.size})图片过多" }
+                add("部分图片省略\n".toPlainText())
+                break
+            }
             add(
                 try {
                     file.uploadAsImage(contact)
-                } catch (e: Throwable) {
-                    "上传失败, $e\n".toPlainText()
+                } catch (cause: Throwable) {
+                    "${file.name}上传失败, $cause\n".toPlainText()
                 }
             )
         }
