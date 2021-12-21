@@ -598,13 +598,22 @@ private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 private val ScreenError = listOf("", "https", "http")
 
 internal fun UserDetail.twitter(): String? {
-    val screen = with(profile) {
-        twitterAccount?.takeUnless { it in ScreenError }
-            ?: twitterUrl?.let { ScreenRegex.find(it) }?.value
-            ?: webpage?.let { ScreenRegex.find(it) }?.value
-    } ?: user.comment?.let { ScreenRegex.find(it) }?.value ?: return null
+    val screen = profile.twitterAccount?.takeUnless { it in ScreenError }
+        ?: listOfNotNull(profile.twitterUrl, profile.webpage, user.comment)
+            .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
+        ?: return null
 
     Twitter(screen, user.id).replicate()
+
+    return screen
+}
+
+internal fun FanBoxCreator.twitter(): String? {
+    val screen = (profileLinks + description)
+        .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
+        ?: return null
+
+    Twitter(screen, user.uid).replicate()
 
     return screen
 }

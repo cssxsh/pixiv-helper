@@ -17,6 +17,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
+import xyz.cssxsh.pixiv.web.*
 import java.io.*
 
 // region Send Message
@@ -377,6 +378,20 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
 
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
 
+internal suspend fun PixivHelper.buildMessageByCreator(creator: FanBoxCreator) = buildMessageChain {
+    appendLine("NAME: ${creator.user.name}")
+    appendLine("UID: ${creator.user.uid}")
+    appendLine("CREATOR_ID: ${creator.id}")
+    appendLine("HAS_ADULT_CONTENT: ${creator.hasAdultContent}")
+    appendLine("TWITTER: ${creator.twitter()}")
+    appendLine(creator.description)
+    try {
+        append(creator.getCoverImage().uploadAsImage(contact))
+    } catch (e: Throwable) {
+        logger.warning({ "Creator(${creator.id}) CoverImage 下载失败" }, e)
+    }
+}
+
 internal fun IllustInfo.getMirrorUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
 
 private fun IllustInfo.bookmarks(min: Long): Boolean = (totalBookmarks ?: 0) > min
@@ -552,6 +567,16 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     }
 }
 
+internal suspend fun FanBoxCreator.getCoverImage(): File {
+    val image = Url(coverImageUrl)
+    return ProfileFolder.resolve(image.filename).apply {
+        if (exists().not()) {
+            writeBytes(PixivHelperDownloader.download(url = image))
+            logger.info { "用户 $image 下载完成" }
+        }
+    }
+}
+
 // endregion
 
 // region Tool
@@ -602,16 +627,31 @@ internal fun backups(): Map<String, File> {
  * pixiv.me 跳转
  */
 internal suspend fun PixivHelper.redirect(account: String): Long {
-    check(account.isNotBlank()) { "Account is Blank" }
     UserBaseInfo[account]?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
-    val location = useHttpClient { client ->
-        client.config {
-            expectSuccess = false
-            followRedirects = false
-        }.head<HttpMessage>(url).headers[HttpHeaders.Location].orEmpty()
-    }
+    val location = location(url = url).orEmpty()
     return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
+}
+
+/**
+ * fanbox creator 解析
+ */
+internal suspend fun PixivHelper.fanbox(id: String): FanBoxCreator {
+    return ajax(api = "https://api.fanbox.cc/creator.get") {
+        header(HttpHeaders.Origin, "https://${id}.fanbox.cc")
+        header(HttpHeaders.Referrer, "https://${id}.fanbox.cc/")
+        
+        parameter("creatorId", id)
+    }
+}
+
+/**
+ * fanbox id 解析
+ */
+internal suspend fun PixivHelper.creator(uid: Long): String {
+    val url = Url("https://www.pixiv.net/fanbox/creator/$uid")
+    val location = location(url = url).orEmpty()
+    return requireNotNull(URL_FANBOX_ID_REGEX.find(location)) { "跳转失败, $url -> $location" }.value
 }
 
 /**

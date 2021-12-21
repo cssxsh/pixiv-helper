@@ -45,6 +45,15 @@ object PixivHelperListener {
                 logger.info { "匹配ARTICLE(${result.value})" }
                 toCommandSender().takeIf { permission.testPermission(it) }?.sendArticle(aid = result.value.toLong())
             }
+            URL_FANBOX_CREATOR_REGEX finding { result ->
+                if (result.value == "api" || result.value == "www") return@finding
+                logger.info { "匹配FANBOX(${result.value})" }
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(id = result.value)
+            }
+            URL_FANBOX_ID_REGEX finding { result ->
+                logger.info { "匹配FANBOX(${result.value})" }
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(uid = result.value.toLong())
+            }
         }
         "SearchImage" with subscribeMessages {
             always {
@@ -88,6 +97,14 @@ object PixivHelperListener {
 
     private suspend fun CommandSenderOnMessage<*>.sendUserInfo(account: String) = withHelper {
         buildMessageByUser(uid = redirect(account = account))
+    }
+
+    private suspend fun CommandSenderOnMessage<*>.sendCreatorInfo(id: String) = withHelper {
+        buildMessageByCreator(creator = fanbox(id = id))
+    }
+
+    private suspend fun CommandSenderOnMessage<*>.sendCreatorInfo(uid: Long) = withHelper {
+        buildMessageByCreator(creator = fanbox(id = creator(uid = uid)))
     }
 
     /**

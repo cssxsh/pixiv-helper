@@ -161,30 +161,39 @@ internal fun initConfiguration(scope: CoroutineScope) {
 }
 
 /**
- * https://www.pixiv.net/i/79695391
- * https://www.pixiv.net/artworks/79695391
- * https://www.pixiv.net/en/artworks/79695391
- * https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433
+ * * `https://www.pixiv.net/i/79695391`
+ * * `https://www.pixiv.net/artworks/79695391`
+ * * `https://www.pixiv.net/en/artworks/79695391`
+ * * `https://www.pixiv.net/member_illust.php?mode=medium&illust_id=82876433`
  */
 internal val URL_ARTWORK_REGEX = """(?<=pixiv\.net/(en/)?(i|artworks)/|illust_id=)\d+""".toRegex()
 
 /**
- * https://www.pixiv.net/u/902077
- * https://www.pixiv.net/users/902077
- * https://www.pixiv.net/en/users/902077
- * https://www.pixiv.net/member.php?id=902077
+ * * `https://www.pixiv.net/u/902077`
+ * * `https://www.pixiv.net/users/902077`
+ * * `https://www.pixiv.net/en/users/902077`
+ * * `https://www.pixiv.net/member.php?id=902077`
  */
 internal val URL_USER_REGEX = """(?<=pixiv\.net/(en/)?(u/|users/|member\.php\?id=))\d+""".toRegex()
 
 /**
  * [リダイレクトURLサービス](https://www.pixiv.net/info.php?id=1554)
- *
- * https://pixiv.me/milkpanda-yellow
+ * * `https://pixiv.me/milkpanda-yellow`
  */
 internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 /**
- * https://www.pixivision.net/zh/a/6858
+ * * `https://shiokojii.fanbox.cc/`
+ */
+internal val URL_FANBOX_CREATOR_REGEX = """([\w-]{3,16})(?=\.fanbox\.cc)""".toRegex()
+
+/**
+ * * `https://www.pixiv.net/fanbox/creator/31386013`
+ */
+internal val URL_FANBOX_ID_REGEX = """(?<=pixiv\.net/fanbox/creator/)\d+""".toRegex()
+
+/**
+ * * `https://www.pixivision.net/zh/a/6858`
  */
 internal val URL_PIXIVISION_ARTICLE = """(?<=pixivision\.net/[\w-]{2,5}/a/)\d+""".toRegex()
 

@@ -19,7 +19,7 @@ import kotlin.coroutines.*
 /**
  * 助手实例
  */
-class PixivHelper(val contact: Contact) : PixivAuthClient() {
+class PixivHelper(val contact: Contact) : PixivAuthClient(), PixivWebClient {
 
     @OptIn(ConsoleExperimentalApi::class)
     override val coroutineContext: CoroutineContext by lazy {
@@ -28,7 +28,11 @@ class PixivHelper(val contact: Contact) : PixivAuthClient() {
 
     override var config: PixivConfig by ConfigDelegate
 
-    override fun config(block: PixivConfig.() -> Unit): PixivConfig = super.config(block).also { config = it }
+    override fun config(block: PixivConfig.() -> Unit): PixivConfig {
+        val new = super<PixivAuthClient>.config(block)
+        config = new
+        return config
+    }
 
     override var authInfo: AuthResult? by AuthResultDelegate
 
