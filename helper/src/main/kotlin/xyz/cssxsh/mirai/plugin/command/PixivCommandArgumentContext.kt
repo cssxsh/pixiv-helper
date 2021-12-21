@@ -46,7 +46,7 @@ object TemporalCommandArgumentContext : CommandArgumentContext {
 }
 
 val RangeCommandArgumentContext = buildCommandArgumentContext {
-    val regex = """(\d+)(?=\.{2,4}|-|~)(\d+)""".toRegex()
+    val regex = """(\d+)(?:\.{2,4}|-|~)(\d+)""".toRegex()
     LongRange::class with RawValueArgumentParser(LongRange::class) { raw ->
         requireNotNull(regex.find(raw)) { "未找到$regex" }.destructured.let { (start, end) -> start.toLong()..end.toLong() }
     }
