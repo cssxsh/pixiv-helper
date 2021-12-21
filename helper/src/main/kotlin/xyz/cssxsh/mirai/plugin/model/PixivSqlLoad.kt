@@ -598,6 +598,7 @@ private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 private val ScreenError = listOf("", "https", "http")
 
 internal fun UserDetail.twitter(): String? {
+    user.toUserBaseInfo().replicate()
     val screen = profile.twitterAccount?.takeUnless { it in ScreenError }
         ?: listOfNotNull(profile.twitterUrl, profile.webpage, user.comment)
             .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
