@@ -34,9 +34,9 @@ data class FanBoxCreator(
         @SerialName("id")
         val id: String,
         @SerialName("imageUrl")
-        val imageUrl: String,
+        val imageUrl: String? = null,
         @SerialName("thumbnailUrl")
-        val thumbnailUrl: String,
+        val thumbnailUrl: String? = null,
         @SerialName("type")
         val type: String
     )
