@@ -643,6 +643,14 @@ internal operator fun FileInfo.SQL.get(hash: String): List<FileInfo> = useSessio
     }.list().orEmpty()
 }
 
+internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession { session ->
+    session.withCriteria<FileInfo> { criteria ->
+        val file = criteria.from(FileInfo::class.java)
+        criteria.select(file)
+            .where(equal(file.get<Long>("pid"), pid))
+    }.list().orEmpty()
+}
+
 internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     try {

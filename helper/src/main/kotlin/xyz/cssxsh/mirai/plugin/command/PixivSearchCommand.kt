@@ -84,7 +84,7 @@ object PixivSearchCommand : SimpleCommand(
         val hash = origin.md5.toByteString().hex()
 
         val record = record(hash)
-        if (record != null) return@withHelper record.getContent()
+        if (record != null) return@withHelper record.getContent(fromEvent.subject)
 
         val saucenao = saucenao(origin).similarity(MIN_SIMILARITY).translate(hash)
 

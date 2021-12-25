@@ -10,6 +10,7 @@ import net.mamoe.mirai.message.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.plugin.data.*
@@ -248,7 +249,7 @@ internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStr
     override fun generateSummary(forward: RawForwardMessage): String = "查看${user.name}的作品"
 }
 
-internal fun SearchResult.getContent() = buildMessageChain {
+internal fun SearchResult.getContent(contact: Contact) = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
@@ -257,6 +258,22 @@ internal fun SearchResult.getContent() = buildMessageChain {
             appendLine("UID: $uid ")
             appendLine("标题: $title ")
             appendLine("PID: $pid ")
+
+            try {
+                val info = ArtWorkInfo[pid]
+                if (info != null && info.age == AgeLimit.ALL.ordinal) {
+                    with(contact.helper) {
+                        runBlocking(coroutineContext) {
+                            withTimeout(30_000L) {
+                                getIllustInfo(pid = info.pid, flush = false)
+                                    .useImageResources { _, resource -> add(resource.uploadAsImage(contact)) }
+                            }
+                        }
+                    }
+                }
+            } catch (_: Throwable) {
+                // ignore
+            }
         }
         is TwitterSearchResult -> {
             val screen = tweet.substringAfter("twitter.com/", "").substringBefore('/')
@@ -274,6 +291,7 @@ internal fun SearchResult.getContent() = buildMessageChain {
 
 internal fun List<SearchResult>.getContent(sender: User): Message {
     if (isEmpty()) return "结果为空".toPlainText()
+    val contact = (sender as? Member)?.group ?: sender
 
     return if (ImageSearchConfig.forward) {
         RawForwardMessage(map { result ->
@@ -281,14 +299,14 @@ internal fun List<SearchResult>.getContent(sender: User): Message {
                 senderId = sender.id,
                 time = (System.currentTimeMillis() / 1000).toInt(),
                 senderName = sender.nameCardOrNick,
-                messageChain = result.getContent()
+                messageChain = result.getContent(contact)
             )
         }).render {
             title = "搜图结果"
             summary = "查看${size}条搜图结果"
         }
     } else {
-        map { "<=============>\n".toPlainText() + it.getContent() }.toMessageChain()
+        map { "<=============>\n".toPlainText() + it.getContent(contact) }.toMessageChain()
     }
 }
 
@@ -312,22 +330,24 @@ internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightA
 
 internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
     add(illust.getContent(link, tag, attr))
-    val files = if (illust.type != WorkContentType.UGOIRA) illust.getImages() else listOf(illust.getUgoira())
-    var count = 0
     if (illust.age == AgeLimit.ALL) {
-        for (file in files) {
-            if (count++ > max) {
-                logger.warning { "[${illust.pid}](${files.size})图片过多" }
-                add("部分图片省略\n".toPlainText())
-                break
-            }
-            add(
-                try {
-                    file.uploadAsImage(contact)
-                } catch (cause: Throwable) {
-                    "${file.name}上传失败, $cause\n".toPlainText()
+        illust.useImageResources { index, resource ->
+            when {
+                index == max -> {
+                    logger.warning { "[${illust.pid}](${illust.pageCount})图片过多" }
+                    add("部分图片省略\n".toPlainText())
                 }
-            )
+                index < max -> {
+                    add(
+                        try {
+                            resource.uploadAsImage(contact)
+                        } catch (cause: Throwable) {
+                            "${(resource.origin as? File)?.name}上传失败, $cause\n".toPlainText()
+                        }
+                    )
+                }
+                else -> Unit
+            }
         }
     } else {
         add("R18禁止！".toPlainText())
@@ -349,12 +369,9 @@ internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buil
         if (illust.isEro().not()) continue
         try {
             if (illust.age == AgeLimit.ALL) {
-                val single = if (illust.type != WorkContentType.UGOIRA) {
-                    illust.getImages().first()
-                } else {
-                    illust.getUgoira()
+                illust.useImageResources { index, resource ->
+                    if (index < 1) add(resource.uploadAsImage(contact))
                 }
-                add(single.uploadAsImage(contact))
             }
         } catch (e: Throwable) {
             logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
@@ -548,6 +565,36 @@ internal suspend fun IllustInfo.getImages(): List<File> {
         }
     }
     return files
+}
+
+internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, ExternalResource) -> T): List<T> {
+    if (type == WorkContentType.UGOIRA) {
+        return listOf(getUgoira().toExternalResource().use { block(0, it) })
+    }
+
+    val images = ArrayList<T>()
+    val folder = images(pid).apply { mkdirs() }
+    val infos = FileInfo[pid]
+    if (pid !in ArtWorkInfo) toArtWorkInfo().replicate()
+    for ((index, url) in getOriginImageUrls().withIndex()) {
+        val info = infos.find { it.index == index } ?: kotlin.run {
+            val bytes = PixivHelperDownloader.download(url)
+            val info = FileInfo(
+                pid = pid,
+                index = index,
+                md5 = bytes.toByteString().md5().hex(),
+                url = url.toString(),
+                size = bytes.size
+            )
+            info.replicate()
+            folder.resolve(url.filename).writeBytes(bytes)
+            info
+        }
+
+        images.add(PixivImageResource(info).use { resource -> block(index, resource) })
+    }
+
+    return images
 }
 
 internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
