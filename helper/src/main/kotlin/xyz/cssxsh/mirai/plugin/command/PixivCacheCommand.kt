@@ -166,16 +166,6 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("加载缓存文件夹中未保存的作品")
-    suspend fun UserCommandSender.local(range: LongRange = MAX_RANGE) = withHelper {
-        addCacheJob(name = "LOCAL(${range})", write = false, reply = reply) { name ->
-            getLocalCache(range = range).sendOnCompletion { total ->
-                "${name}处理完成, 共${total}"
-            }
-        }
-    }
-
-    @SubCommand
     @Description("缓存色图作品")
     suspend fun UserCommandSender.nocache() = withHelper {
         for (range in ALL_RANGE) {

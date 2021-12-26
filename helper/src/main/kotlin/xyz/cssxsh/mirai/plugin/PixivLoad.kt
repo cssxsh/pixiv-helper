@@ -10,7 +10,6 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
-import java.io.*
 import java.time.*
 
 typealias LoadTask = suspend PixivHelper.(String) -> Flow<Collection<IllustInfo>>
@@ -357,30 +356,6 @@ internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
     val text: String = useHttpClient { it.get(url) }
     val result = regex.findAll(text)
     return result.mapTo(HashSet()) { it.value.toLong() }
-}
-
-private fun File.listDirs(range: LongRange) = listFiles { file ->
-    file.name.matches("""\d+[_]+""".toRegex()) && file.isDirectory && intersect(file.name.range(), range)
-}
-
-private fun String.range() = replace('_', '0').toLong()..replace('_', '9').toLong()
-
-private fun intersect(from: LongRange, to: LongRange) = from.first <= to.last && to.first <= from.last
-
-internal fun getLocalCache(range: LongRange) = flow {
-    logger.verbose { "从 ${CacheFolder.absolutePath} 加载作品信息" }
-    CacheFolder.listDirs(range).orEmpty().asFlow().map { first ->
-        for (second in first.listDirs(range).orEmpty()) {
-            if (active().not()) break
-            val list = second.listDirs(range).orEmpty().mapNotNull { cache ->
-                cache.resolve("${cache.name}.json")
-                    .takeIf { file -> cache.name.toLong() in ArtWorkInfo && file.canRead() }
-                    ?.readIllustInfo()
-            }
-
-            if (list.isNotEmpty()) emit(list)
-        }
-    }
 }
 
 internal suspend fun PixivHelper.getTrending(times: Int = 1) = flow {
