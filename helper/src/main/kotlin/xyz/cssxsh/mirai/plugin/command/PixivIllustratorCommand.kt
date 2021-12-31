@@ -5,7 +5,6 @@ import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.apps.*
@@ -29,7 +28,6 @@ object PixivIllustratorCommand : CompositeCommand(
     @Description("根据画师name或者alias或twitter随机发送画师作品")
     suspend fun UserCommandSender.name(name: String) = withHelper {
         val author = requireNotNull(AliasSetting[name] ?: UserBaseInfo.like(name) ?: Twitter[name]) { "找不到名称'${name}'" }
-
         ArtWorkInfo.user(author.uid).randomOrNull() ?: "画师 $name 没有找到缓存"
     }
 

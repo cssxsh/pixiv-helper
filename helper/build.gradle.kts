@@ -31,14 +31,16 @@ mirai {
 
 repositories {
     mavenLocal()
-//    maven(url = "https://maven.aliyun.com/repository/central")
+    maven(url = "https://maven.aliyun.com/repository/central")
     mavenCentral()
     maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
 }
 
 dependencies {
-    implementation(ktor("client-serialization", Versions.ktor))
+    implementation(ktor("client-serialization", Versions.ktor)) {
+        exclude("org.jetbrains.kotlinx")
+    }
     implementation(ktor("client-encoding", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
     implementation(hibernate("hibernate-core", Versions.hibernate))
@@ -48,12 +50,13 @@ dependencies {
     implementation(project(":client"))
     implementation(okhttp3("okhttp", Versions.okhttp))
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
-    compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.0")
-    compileOnly("net.mamoe:mirai-core-jvm:2.9.0-M1")
+    compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
+    compileOnly("net.mamoe:mirai-core-jvm:2.9.0-RC2")
+    compileOnly("mysql:mysql-connector-java:8.0.26")
 
-    testImplementation(kotlin("test", "1.5.31"))
+    testImplementation(kotlin("test", "1.6.0"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
-    testRuntimeOnly("mysql:mysql-connector-java:8.0.26")
+    testImplementation("mysql:mysql-connector-java:8.0.26")
 }
 
 kotlin {
@@ -67,6 +70,7 @@ kotlin {
 tasks {
     compileKotlin {
         kotlinOptions.freeCompilerArgs += "-Xunrestricted-builder-inference"
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
     test {
         useJUnitPlatform()

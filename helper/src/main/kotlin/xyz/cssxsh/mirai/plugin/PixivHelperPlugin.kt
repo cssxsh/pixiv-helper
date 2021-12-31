@@ -25,9 +25,6 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 ) {
 
-    @OptIn(ConsoleExperimentalApi::class)
-    private fun <T : PluginConfig> T.save() = loader.configStorage.store(this@PixivHelperPlugin, this)
-
     private fun JvmPlugin.registerPermission(name: String, description: String): Permission {
         return PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
     }

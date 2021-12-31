@@ -163,9 +163,6 @@ fun findContact(delegate: Long): Contact? {
             for (stranger in bot.strangers) {
                 if (stranger.id == delegate) return stranger
             }
-            for (friend in bot.friends) {
-                if (friend.id == delegate) return friend
-            }
             for (group in bot.groups) {
                 for (member in group.members) {
                     if (member.id == delegate) return member
@@ -685,9 +682,9 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
  */
 internal suspend fun PixivHelper.fanbox(id: String): FanBoxCreator {
     return ajax(api = "https://api.fanbox.cc/creator.get") {
-        header(HttpHeaders.Origin, "https://${id}.fanbox.cc")
-        header(HttpHeaders.Referrer, "https://${id}.fanbox.cc/")
-        
+        header(HttpHeaders.Origin, "https://www.fanbox.cc")
+        header(HttpHeaders.Referrer, "https://www.fanbox.cc/")
+
         parameter("creatorId", id)
     }
 }

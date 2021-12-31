@@ -25,17 +25,22 @@ object PixivBoomCommand : SimpleCommand(
         val artworks = when {
             word.isEmpty() -> {
                 ArtWorkInfo.random(level = 0, marks = 0, age = EroAgeLimit, limit = limit)
-
             }
             RankMode.values().any { it.name == word.uppercase() } -> {
                 val mode = RankMode.valueOf(word.uppercase())
                 val flow = getRank(mode = mode)
                 addCacheJob(name = "RANK[${mode.name}](new)", reply = false) { flow }
 
-                flow.map { list -> list.map { illust -> illust.toArtWorkInfo() } }.toList().flatten().take(limit)
+                flow.fold(ArrayList(limit)) { result, list ->
+                    for (illust in list) {
+                        if (result.size >= limit) break
+                        result.add(illust.toArtWorkInfo())
+                    }
+                    result
+                }
             }
             word.toLongOrNull() != null -> {
-                ArtWorkInfo.user(uid = word.toLong()).sortedByDescending { it.pid }.take(limit)
+                ArtWorkInfo.user(uid = word.toLong()).shuffled().take(limit)
             }
             else -> {
                 ArtWorkInfo.tag(word = word, marks = EroStandard.marks, fuzzy = false, age = TagAgeLimit, limit = limit)
@@ -79,10 +84,10 @@ object PixivBoomCommand : SimpleCommand(
 
         val millis = System.currentTimeMillis() - current
 
-        logger.info { "BOOM BUILD ${word.ifEmpty { "随机" }} ${list.size} in ${millis}ms 完成" }
+        logger.info { "BOOM BUILD ${word.ifEmpty { "RANDOM" }} ${list.size} in ${millis}ms 完成" }
 
         RawForwardMessage(list).render {
-            title = "${word.ifEmpty { "随机的" }}的快递"
+            title = "${word.ifEmpty { "随机" }}的快递"
         }
     }
 }

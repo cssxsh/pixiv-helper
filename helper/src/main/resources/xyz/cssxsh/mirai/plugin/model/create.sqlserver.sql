@@ -17,7 +17,7 @@ CREATE TABLE [artworks]
 (
     [pid]             INTEGER      NOT NULL,
     [uid]             INTEGER      NOT NULL,
-    [title]           NVARCHAR(32) NOT NULL,
+    [title]           NVARCHAR(64) NOT NULL,
     [caption]         VARCHAR(MAX) NOT NULL,
     [create_at]       INTEGER      NOT NULL,
     -- page_count max 200

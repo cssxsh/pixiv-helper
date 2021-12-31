@@ -1,6 +1,6 @@
 
 object Versions {
-    const val coroutines = "1.5.0"
+    const val coroutines = "1.5.1"
     const val ktor = "1.5.4"
     // web
     const val okhttp = "4.9.2"

@@ -166,7 +166,7 @@ object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("缓存色图作品")
+    @Description("缓存未缓存的色图作品")
     suspend fun UserCommandSender.nocache() = withHelper {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
@@ -192,12 +192,14 @@ object PixivCacheCommand : CompositeCommand(
                     }
                 } catch (cause: RestrictException) {
                     ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message)
-                    logger.warning { "NOCACHE ${cause.illust}" }
+                    logger.warning { "NOCACHE 加载作品失败 ${cause.illust}" }
+                } catch (cause: Throwable) {
+                    logger.warning({ "NOCACHE 加载作品(${artwork.pid})失败" }, cause)
                 }
             }
             try {
                 jobs.awaitAll()
-            } catch (_: Throwable) {
+            } catch (_: CancellationException) {
                 //
             }
 

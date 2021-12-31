@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `artworks`
 (
     `pid`             INTEGER UNSIGNED  NOT NULL,
     `uid`             INTEGER UNSIGNED  NOT NULL,
-    `title`           VARCHAR(32)       NOT NULL,
+    `title`           TINYTEXT          NOT NULL,
     `caption`         TEXT              NOT NULL,
     `create_at`       INTEGER UNSIGNED  NOT NULL,
     -- page_count max 200
