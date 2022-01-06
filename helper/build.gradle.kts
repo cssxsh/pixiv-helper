@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.8.0"
+version = "1.8.1"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -51,10 +51,10 @@ dependencies {
     implementation(okhttp3("okhttp", Versions.okhttp))
     implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
-    compileOnly("net.mamoe:mirai-core-jvm:2.9.0-RC2")
+    compileOnly("net.mamoe:mirai-core-jvm:2.9.2")
     compileOnly("mysql:mysql-connector-java:8.0.26")
 
-    testImplementation(kotlin("test", "1.6.0"))
+    testImplementation(kotlin("test", "1.5.31"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testImplementation("mysql:mysql-connector-java:8.0.26")
 }
