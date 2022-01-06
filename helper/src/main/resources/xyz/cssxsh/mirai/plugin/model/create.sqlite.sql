@@ -43,11 +43,10 @@ CREATE INDEX IF NOT EXISTS tag_name ON tags (`name`);
 CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
 CREATE TABLE IF NOT EXISTS tag
 (
-    `name`            TEXT                  NOT NULL COLLATE RTRIM,
+    `name`            TEXT                              NOT NULL COLLATE RTRIM,
     `translated_name` TEXT DEFAULT NULL COLLATE NOCASE,
-    `tid`             INTEGER AUTOINCREMENT NOT NULL,
-    PRIMARY KEY (`name`),
-    UNIQUE (`tid`)
+    `tid`             INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    UNIQUE (`name`)
 );
 CREATE TABLE IF NOT EXISTS artwork_tag
 (
