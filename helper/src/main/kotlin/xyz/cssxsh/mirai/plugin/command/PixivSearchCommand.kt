@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
+import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.message.*
@@ -80,7 +81,7 @@ object PixivSearchCommand : SimpleCommand(
     @Handler
     suspend fun CommandSenderOnMessage<*>.search(image: Image? = null) = withHelper {
         val origin = image ?: getQuoteImage() ?: getCurrentImage() ?: getNextImage() ?: return@withHelper "等待超时"
-        logger.info { "搜索 ${origin.queryUrl()}" }
+        logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }
         val hash = origin.md5.toByteString().hex()
 
         val record = record(hash)
