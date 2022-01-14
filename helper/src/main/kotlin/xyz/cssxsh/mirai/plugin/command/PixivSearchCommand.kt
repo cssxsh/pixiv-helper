@@ -44,11 +44,21 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     private suspend fun saucenao(image: Image) = with(ImageSearcher) {
-        if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
+        try {
+            if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
+        } catch (e: Throwable) {
+            logger.warning({ "saucenao 搜索 $image 失败" }, e)
+            emptyList()
+        }
     }
 
     private suspend fun ascii2d(image: Image) = with(ImageSearcher) {
-        ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
+        try {
+            ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
+        } catch (e: Throwable) {
+            logger.warning({ "ascii2d 搜索 $image 失败" }, e)
+            emptyList()
+        }
     }
 
     private fun List<SearchResult>.similarity(min: Double): List<SearchResult> {
@@ -79,6 +89,7 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     @Handler
+    @OptIn(ConsoleExperimentalApi::class)
     suspend fun CommandSenderOnMessage<*>.search(image: Image? = null) = withHelper {
         val origin = image ?: getQuoteImage() ?: getCurrentImage() ?: getNextImage() ?: return@withHelper "等待超时"
         logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }
