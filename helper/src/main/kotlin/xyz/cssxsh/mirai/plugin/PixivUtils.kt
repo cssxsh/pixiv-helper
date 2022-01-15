@@ -673,7 +673,7 @@ internal fun backups(): Map<String, File> {
 internal suspend fun PixivHelper.redirect(account: String): Long {
     UserBaseInfo[account]?.let { return@redirect it.uid }
     val url = Url("https://pixiv.me/$account")
-    val location = location(url = url).orEmpty()
+    val location = location(url = url)
     return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
 }
 
