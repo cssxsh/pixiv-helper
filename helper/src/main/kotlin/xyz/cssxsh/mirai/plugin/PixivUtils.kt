@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin
 
-import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.*
@@ -18,6 +17,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
+import xyz.cssxsh.pixiv.fanbox.*
 import xyz.cssxsh.pixiv.web.*
 import java.io.*
 
@@ -392,7 +392,7 @@ internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildM
 
 internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
 
-internal suspend fun PixivHelper.buildMessageByCreator(creator: FanBoxCreator) = buildMessageChain {
+internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) = buildMessageChain {
     appendLine("NAME: ${creator.user.name}")
     appendLine("UID: ${creator.user.uid}")
     appendLine("CREATOR_ID: ${creator.id}")
@@ -611,7 +611,7 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     }
 }
 
-internal suspend fun FanBoxCreator.getCoverImage(): File {
+internal suspend fun CreatorDetail.getCoverImage(): File {
     val image = Url(coverImageUrl)
     return ProfileFolder.resolve(image.filename).apply {
         if (exists().not()) {
@@ -675,27 +675,6 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     val url = Url("https://pixiv.me/$account")
     val location = location(url = url)
     return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
-}
-
-/**
- * fanbox creator 解析
- */
-internal suspend fun PixivHelper.fanbox(id: String): FanBoxCreator {
-    return ajax(api = "https://api.fanbox.cc/creator.get") {
-        header(HttpHeaders.Origin, "https://www.fanbox.cc")
-        header(HttpHeaders.Referrer, "https://www.fanbox.cc/")
-
-        parameter("creatorId", id)
-    }
-}
-
-/**
- * fanbox id 解析
- */
-internal suspend fun PixivHelper.creator(uid: Long): String {
-    val url = Url("https://www.pixiv.net/fanbox/creator/$uid")
-    val location = location(url = url).orEmpty()
-    return requireNotNull(URL_FANBOX_ID_REGEX.find(location)) { "跳转失败, $url -> $location" }.value
 }
 
 /**

@@ -12,6 +12,7 @@ import xyz.cssxsh.mirai.plugin.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
+import xyz.cssxsh.pixiv.fanbox.*
 import xyz.cssxsh.pixiv.tool.*
 import java.io.*
 import kotlin.math.*
@@ -183,9 +184,10 @@ internal val URL_USER_REGEX = """(?<=pixiv\.net/(en/)?(u/|users/|member\.php\?id
 internal val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 /**
- * * `https://shiokojii.fanbox.cc/`
+ * * `https://official.fanbox.cc/`
+ * * `https://www.fanbox.cc/@official`
  */
-internal val URL_FANBOX_CREATOR_REGEX = """([\w-]{3,16})(?=\.fanbox\.cc)""".toRegex()
+internal val URL_FANBOX_CREATOR_REGEX get() = FanBoxCreator.URL_FANBOX_CREATOR_REGEX
 
 /**
  * * `https://www.pixiv.net/fanbox/creator/31386013`

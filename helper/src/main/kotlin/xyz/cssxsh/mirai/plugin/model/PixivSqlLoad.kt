@@ -11,6 +11,7 @@ import org.hibernate.type.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
+import xyz.cssxsh.pixiv.fanbox.*
 import java.io.*
 import java.sql.*
 import javax.persistence.*
@@ -609,7 +610,7 @@ internal fun UserDetail.twitter(): String? {
     return screen
 }
 
-internal fun FanBoxCreator.twitter(): String? {
+internal fun CreatorDetail.twitter(): String? {
     val screen = (profileLinks + description)
         .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
         ?: return null
