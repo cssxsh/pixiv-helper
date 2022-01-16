@@ -615,7 +615,7 @@ internal fun CreatorDetail.twitter(): String? {
         .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
         ?: return null
 
-    Twitter(screen, user.uid).replicate()
+    Twitter(screen, user.userId).replicate()
 
     return screen
 }

@@ -394,15 +394,15 @@ internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByU
 
 internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) = buildMessageChain {
     appendLine("NAME: ${creator.user.name}")
-    appendLine("UID: ${creator.user.uid}")
-    appendLine("CREATOR_ID: ${creator.id}")
+    appendLine("UID: ${creator.user.userId}")
+    appendLine("CREATOR_ID: ${creator.creatorId}")
     appendLine("HAS_ADULT_CONTENT: ${creator.hasAdultContent}")
     appendLine("TWITTER: ${creator.twitter()}")
     appendLine(creator.description)
     try {
-        append(creator.getCoverImage().uploadAsImage(contact))
+        append(creator.getCoverImage()?.uploadAsImage(contact) ?: "".toPlainText())
     } catch (e: Throwable) {
-        logger.warning({ "Creator(${creator.id}) CoverImage 下载失败" }, e)
+        logger.warning({ "Creator(${creator.creatorId}) CoverImage 下载失败" }, e)
     }
 }
 
@@ -611,8 +611,8 @@ internal suspend fun SpotlightArticle.getThumbnailImage(): File {
     }
 }
 
-internal suspend fun CreatorDetail.getCoverImage(): File {
-    val image = Url(coverImageUrl)
+internal suspend fun CreatorDetail.getCoverImage(): File? {
+    val image = Url(coverImageUrl ?: return null)
     return ProfileFolder.resolve(image.filename).apply {
         if (exists().not()) {
             writeBytes(PixivHelperDownloader.download(url = image))
