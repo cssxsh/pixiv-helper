@@ -12,8 +12,13 @@ R18图会按照Pixiv所给信息过滤
 
 Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数
 
+自 `1.8.3` 起将数据库部分功能拆分  
+需要 [Mirai Hibernate Plugin](https://github.com/cssxsh/mirai-hibernate-plugin) 做前置插件  
+这是**必要**的  
+MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel stable --type plugin`
+
 百度云上传功能需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
-但不必要，如果不使用上传功能请忽略
+但**不必要**，如果不使用上传功能请忽略
 
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
 
@@ -238,27 +243,27 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 ### PixivHelperSettings.yml
 
-* cache_path 缓存目录
-* backup_path 备份目录
-* temp_path 临时目录
-* ero_chunk 色图分块大小 和自动触发TAG缓存有关
-* ero_up_expire 色图自动触发更高收藏数的最大时间，单位毫秒
-* ero_work_types 涩图标准 内容类型 `ILLUST, UGOIRA, MANGA`, 为空则全部符合
-* ero_bookmarks 涩图标准 收藏
-* ero_page_count 涩图标准 页数
-* ero_tag_exclude 涩图标准 排除的正则表达式
-* ero_user_exclude 涩图标准 排除的UID
-* pximg 反向代理, 若非特殊情况不要修改这个配置，保持留空，可选代理 `i.pixiv.re, i.pixiv.cat`
-* proxy API代理
-* proxy_download DOWNLOAD代理 `图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能
-* timeout_api API超时时间, 单位ms
-* timeout_download DOWNLOAD超时时间, 单位ms
-* block_size DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
-* tag_sfw tag 是否过滤r18 依旧不会放出图片
-* ero_sfw ero 是否过滤r18 依旧不会放出图片
-* cache_capacity 下载缓存容量，同时下载的任务上限
-* cache_jump 缓存是否跳过下载
-* upload 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
+* `cache_path` 缓存目录
+* `backup_path` 备份目录
+* `temp_path` 临时目录
+* `ero_chunk` 色图分块大小 和自动触发TAG缓存有关
+* `ero_up_expire` 色图自动触发更高收藏数的最大时间，单位毫秒
+* `ero_work_types` 涩图标准 内容类型 `ILLUST, UGOIRA, MANGA`, 为空则全部符合
+* `ero_bookmarks` 涩图标准 收藏
+* `ero_page_count` 涩图标准 页数
+* `ero_tag_exclude` 涩图标准 排除的正则表达式
+* `ero_user_exclude` 涩图标准 排除的UID
+* `pximg` 反向代理, 若非特殊情况不要修改这个配置，保持留空，可选代理 `i.pixiv.re, i.pixiv.cat`
+* `proxy` API代理
+* `proxy_download` DOWNLOAD代理 `图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能
+* `timeout_api` API超时时间, 单位ms
+* `timeout_download` DOWNLOAD超时时间, 单位ms
+* `block_size` DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
+* `tag_sfw` tag 是否过滤r18 依旧不会放出图片
+* `ero_sfw` ero 是否过滤r18 依旧不会放出图片
+* `cache_capacity` 下载缓存容量，同时下载的任务上限
+* `cache_jump` 缓存是否跳过下载
+* `upload` 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
 
 ### ~~NetdiskOauthConfig.yml~~
 
@@ -272,25 +277,25 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 
 ### ImageSearchConfig.yml
 
-* key KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
+* `key` KEY 不是必须的，无KEY状态下，根据IP每天可以搜索 100 次，有KEY状态下搜索次数依据于账户  
   KEY 参数请到 <https://saucenao.com/> 注册账号，  
   在用户页面 <https://saucenao.com/user.php?page=search-api> 获得的KEY填入  
   信息只在启动时读取，修改后需重启
-* limit 显示的搜索结果数
-* bovw ascii2d 检索类型，false色合検索 true特徴検索
-* wait 图片等待时间，单位秒
-* forward 转发方式发送搜索结果
+* `limit` 显示的搜索结果数
+* `bovw` ascii2d 检索类型，false色合検索 true特徴検索
+* `wait` 图片等待时间，单位秒
+* `forward` 转发方式发送搜索结果
 
 ### PixivGifConfig.yml
 
-* quantizer 编码器, `com.squareup.gifencoder.ColorQuantizer` 的实现  
+* `quantizer` 编码器, `com.squareup.gifencoder.ColorQuantizer` 的实现  
   目前可选值，图片质量和所需性能按顺序递增, 推荐使用 `OctTreeQuantizer`  
   `com.squareup.gifencoder.UniformQuantizer`  
   `com.squareup.gifencoder.MedianCutQuantizer`  
   `com.squareup.gifencoder.OctTreeQuantizer`  
   `com.squareup.gifencoder.KMeansQuantizer`  
   `xyz.cssxsh.pixiv.tool.OpenCVQuantizer` (需要 安装 OpenCV, 对应 `jar` 放进 `plugins` 文件夹)
-* ditherer 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
+* `ditherer` 抖动器, `com.squareup.gifencoder.Ditherer` 的实现  
   目前可选值, 推荐使用 `AtkinsonDitherer`  
   `com.squareup.gifencoder.FloydSteinbergDitherer`  
   `com.squareup.gifencoder.NearestColorDitherer`  
@@ -298,17 +303,16 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
   `xyz.cssxsh.pixiv.tool.JJNDitherer`  
   `xyz.cssxsh.pixiv.tool.SierraLiteDitherer`  
   `xyz.cssxsh.pixiv.tool.StuckiDitherer`
-* disposal 切换方法  
+* `disposal` 切换方法  
   可选值 `UNSPECIFIED`, `DO_NOT_DISPOSE`, `RESTORE_TO_BACKGROUND`, `RESTORE_TO_PREVIOUS`
-* max_count OpenCVQuantizer 最大迭代数
+* `max_count` OpenCVQuantizer 最大迭代数
 
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
 配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
-下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/)
-, 然后放进 `plugins` 文件夹  
-关于表的自动创建可以查看 [sql](helper/src/main/resources/xyz/cssxsh/mirai/plugin/model)  
+~~下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/)
+, 然后放进 `plugins` 文件夹~~ (1.8.3+，`mirai-hibernate-plugin` 自带 `mysql` 此步骤不再需要)  
 配置 文件
 
 ```
@@ -325,3 +329,5 @@ hibernate-connection-autocommit=true
 hibernate.connection.show_sql=false
 hibernate.autoReconnect=true
 ```
+
+关于表的自动创建可以查看 [model](helper/src/main/resources/xyz/cssxsh/mirai/plugin/model)  
