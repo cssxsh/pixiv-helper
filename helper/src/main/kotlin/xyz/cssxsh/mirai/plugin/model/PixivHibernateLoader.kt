@@ -71,7 +71,7 @@ object PixivHibernateLoader : MiraiHibernateLoader {
             logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
         } catch (cause: Throwable) {
             session.transaction.rollback()
-            logger.error({ "数据库初始化失败" }, cause)
+            logger.error({ "数据库初始化失败" }, cause.findSQLException() ?: cause)
             throw cause
         }
     }
@@ -104,6 +104,7 @@ object PixivHibernateLoader : MiraiHibernateLoader {
                 session.transaction.commit()
             } catch (cause: Throwable) {
                 session.transaction.rollback()
+                logger.warning({ "TAG data move failure." }, cause.findSQLException() ?: cause)
                 throw cause
             }
 
@@ -123,6 +124,7 @@ object PixivHibernateLoader : MiraiHibernateLoader {
                 session.transaction.commit()
             } catch (cause: Throwable) {
                 session.transaction.rollback()
+                logger.warning({ "TAG data move failure." }, cause.findSQLException() ?: cause)
                 throw cause
             }
         }
