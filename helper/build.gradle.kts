@@ -13,19 +13,6 @@ mirai {
     configureShadow {
         archiveBaseName.set(rootProject.name)
         exclude("module-info.class")
-        exclude {
-            it.path.startsWith("kotlin")
-        }
-        exclude {
-            val features = listOf("auth", "compression", "json")
-            it.path.startsWith("io/ktor") && features.none { f -> it.path.startsWith("io/ktor/client/features/$f") }
-        }
-        exclude {
-            it.path.startsWith("okhttp3") && it.path.startsWith("okhttp3/dnsoverhttps").not()
-        }
-        exclude {
-            it.path.startsWith("okio")
-        }
     }
 }
 
@@ -38,18 +25,21 @@ repositories {
 }
 
 dependencies {
-    implementation(ktor("client-serialization", Versions.ktor)) {
-        exclude("org.jetbrains.kotlinx")
-    }
-    implementation(ktor("client-encoding", Versions.ktor))
     implementation(jsoup(Versions.jsoup))
     implementation(hibernate("hibernate-core", Versions.hibernate))
     implementation(hibernate("hibernate-c3p0", Versions.hibernate))
-    implementation("com.github.gwenn:sqlite-dialect:0.1.2")
+    implementation("com.github.gwenn:sqlite-dialect:0.1.2") {
+        exclude(group = "org.hibernate")
+    }
     implementation(xerial("sqlite-jdbc", Versions.sqlite))
-    implementation(project(":client"))
-    implementation(okhttp3("okhttp", Versions.okhttp))
-    implementation(okhttp3("okhttp-dnsoverhttps", Versions.okhttp))
+    implementation(project(":client")) {
+        exclude(group = "org.jetbrains.kotlin")
+        exclude(group = "org.jetbrains.kotlinx")
+        exclude(group = "org.slf4j")
+        exclude(group = "io.ktor", module = "ktor-client-core")
+        exclude(group = "io.ktor", module = "ktor-client-okhttp")
+        exclude(group = "com.squareup.okhttp3", module = "okhttp")
+    }
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
     compileOnly("net.mamoe:mirai-core-jvm:2.9.2")
     compileOnly("mysql:mysql-connector-java:8.0.26")
