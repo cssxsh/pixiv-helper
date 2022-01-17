@@ -24,18 +24,16 @@ object PixivSearchCommand : SimpleCommand(
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
-    private val current by PixivHelperListener::current
-
-    private val images by PixivHelperListener::images
-
     private fun CommandSenderOnMessage<*>.getQuoteImage(): Image? {
         val quote = fromEvent.message.findIsInstance<QuoteReply>() ?: return null
-        return requireNotNull(images[quote.source.key()]) { "$subject 图片历史未找到" }
+        return MiraiHibernateRecorder[quote.source]
+            .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
-        val metadata = current.remove(fromEvent.subject.id) ?: return null
-        return requireNotNull(images[metadata]) { "$subject 图片历史未找到" }
+        return MiraiHibernateRecorder.get(contact = fromEvent.subject, start = 600, end = fromEvent.time)
+            .reversed()
+            .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
 
     private fun CommandSenderOnMessage<*>.getNextImage(): Image? = runBlocking(coroutineContext) {

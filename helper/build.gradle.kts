@@ -36,11 +36,11 @@ dependencies {
     }
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
     compileOnly("net.mamoe:mirai-core-jvm:2.9.2")
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.2")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
 
     testImplementation(kotlin("test", "1.5.31"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.2")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
 }
 
 kotlin {
