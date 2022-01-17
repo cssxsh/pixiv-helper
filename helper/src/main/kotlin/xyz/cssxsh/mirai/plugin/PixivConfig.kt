@@ -151,7 +151,8 @@ internal fun initConfiguration(scope: CoroutineScope) {
         }
     }
 
-    scope.launch {
+    scope.launch(Dispatchers.IO) {
+        PixivHibernateLoader.init()
         val count = ArtWorkInfo.count()
         if (count < EroChunk) {
             logger.warning { "缓存数 $count < ${EroChunk}，建议使用指令( /cache recommended )进行缓存" }

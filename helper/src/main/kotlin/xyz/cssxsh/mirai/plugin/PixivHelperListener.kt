@@ -20,10 +20,6 @@ object PixivHelperListener {
 
     private val listeners = mutableMapOf<String, Listener<*>>()
 
-    internal val images = mutableMapOf<List<Int>, Image>()
-
-    internal val current = mutableMapOf<Long, List<Int>>()
-
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
         listeners.put(this, listener)?.cancel()
     }
@@ -55,17 +51,6 @@ object PixivHelperListener {
             URL_FANBOX_ID_REGEX finding { result ->
                 logger.info { "匹配FANBOX(${result.value})" }
                 toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(uid = result.value.toLong())
-            }
-        }
-        "SearchImage" with subscribeMessages {
-            always {
-                (message.findIsInstance<Image>() ?: message.findIsInstance<FlashImage>()?.image)?.let { image ->
-                    synchronized(images) {
-                        val key = source.key()
-                        images[key] = image
-                        current[subject.id] = key
-                    }
-                }
             }
         }
         "InitHelper" with subscribeAlways<BotOnlineEvent> {

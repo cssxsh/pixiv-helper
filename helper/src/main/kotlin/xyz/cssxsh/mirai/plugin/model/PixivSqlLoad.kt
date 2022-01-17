@@ -2,149 +2,15 @@ package xyz.cssxsh.mirai.plugin.model
 
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
-import org.hibernate.boot.registry.*
-import org.hibernate.cfg.*
-import org.hibernate.dialect.function.*
-import org.hibernate.query.criteria.internal.*
-import org.hibernate.query.criteria.internal.expression.function.*
-import org.hibernate.type.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.fanbox.*
-import java.io.*
 import java.sql.*
-import javax.persistence.*
 import javax.persistence.criteria.*
 import kotlin.reflect.full.*
-import kotlin.streams.*
 
 // region SqlConfiguration
-
-private val PixivEntities = PixivEntity::class.sealedSubclasses.map { it.java }
-
-private val PluginClassLoader: ClassLoader get() = PixivHelperPlugin::class.java.classLoader
-
-object HelperSqlConfiguration :
-    Configuration(BootstrapServiceRegistryBuilder().applyClassLoader(PluginClassLoader).build()) {
-
-    private val DefaultProperties = """
-                hibernate.connection.url=jdbc:sqlite:pixiv.sqlite
-                hibernate.connection.driver_class=org.sqlite.JDBC
-                hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
-                hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvider
-                hibernate.connection.isolation=${Connection.TRANSACTION_READ_UNCOMMITTED}
-                hibernate.hbm2ddl.auto=none
-                hibernate-connection-autocommit=${true}
-                hibernate.connection.show_sql=${false}
-                hibernate.autoReconnect=${true}
-            """.trimIndent()
-
-    init {
-        PixivEntities.forEach(::addAnnotatedClass)
-        setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
-        setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
-    }
-
-    fun load(hibernate: File = PixivHelperPlugin.configFolder.resolve("hibernate.properties")) {
-        hibernate.apply { if (exists().not()) writeText(DefaultProperties) }.reader().use(properties::load)
-        val url = getProperty("hibernate.connection.url").orEmpty()
-        when {
-            url.startsWith("jdbc:sqlite") -> {
-                // SQLite 是单文件数据库，最好只有一个连接
-                setProperty("hibernate.c3p0.min_size", "${1}")
-                setProperty("hibernate.c3p0.max_size", "${1}")
-                // 设置 rand 别名
-                addSqlFunction("rand", NoArgSQLFunction("random", StandardBasicTypes.LONG))
-            }
-            url.startsWith("jdbc:mysql") -> {
-                addAnnotatedClass(MySqlVariable::class.java)
-            }
-        }
-    }
-}
-
-private val factory: SessionFactory by lazy { HelperSqlConfiguration.buildSessionFactory().apply { init() } }
-
-private fun SessionFactory.init(): Unit = openSession().use { session ->
-    // 创建表
-    session.transaction.begin()
-    try {
-        val meta = session.doReturningWork { it.metaData }
-        val name = meta.databaseProductName
-        val sql = when {
-            name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
-            name.contains(other = "MariaDB", ignoreCase = true) ||
-                name.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
-            name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
-            else -> "create.default.sql"
-        }
-        logger.info { "Create Table by $sql with $name" }
-        requireNotNull(PluginClassLoader.getResourceAsStream("xyz/cssxsh/mirai/plugin/model/${sql}")) { "Read Create Sql 失败" }
-            .use { it.reader().readText() }
-            .split(';').filter { it.isNotBlank() }
-            .forEach { session.createNativeQuery(it).executeUpdate() }
-        session.transaction.commit()
-        logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
-    } catch (cause: Throwable) {
-        session.transaction.rollback()
-        logger.error({ "数据库初始化失败" }, cause)
-        throw cause
-    }
-
-    var count = 0
-    while (true) {
-        System.gc()
-
-        val olds: List<TagBaseInfo> = session.withCriteria<TagBaseInfo> { criteria ->
-            val tag = criteria.from(TagBaseInfo::class.java)
-            criteria.select(tag)
-        }.setMaxResults(8196).list().orEmpty()
-
-        if (olds.isEmpty()) break
-
-        logger.info { "TAG 数据迁移中 ${count}，请稍候" }
-
-        count += olds.size
-
-        session.transaction.begin()
-        val set = HashSet<String>()
-        try {
-            for (old in olds) {
-                if (set.add(old.name)) {
-                    val tag = TagRecord(name = old.name, translated = old.translated)
-                    session.replicate(tag, ReplicationMode.IGNORE)
-                }
-            }
-            session.transaction.commit()
-        } catch (cause: Throwable) {
-            session.transaction.rollback()
-            throw cause
-        }
-
-        session.transaction.begin()
-        try {
-            for (old in olds) {
-                val record0 = session.get(TagRecord::class.java, old.name)
-                val record = if (record0.tid != 0L) {
-                    record0
-                } else {
-                    session.detach(record0)
-                    session.get(TagRecord::class.java, old.name)
-                }
-                session.replicate(ArtworkTag(pid = old.pid, tag = record), ReplicationMode.IGNORE)
-                session.delete(old)
-            }
-            session.transaction.commit()
-        } catch (cause: Throwable) {
-            session.transaction.rollback()
-            throw cause
-        }
-    }
-    if (count > 0) {
-        logger.info { "TAG 数据迁移完成 ${count}." }
-    }
-}
 
 /**
  * @see [Throwable.cause]
@@ -164,10 +30,10 @@ internal fun Throwable.findSQLException() = findIsInstance<SQLException>()
 
 internal fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): R {
     return if (lock == null) {
-        factory.openSession().use(block)
+        PixivHibernateLoader.factory.openSession().use(block)
     } else {
         synchronized(lock) {
-            factory.openSession().use(block)
+            PixivHibernateLoader.factory.openSession().use(block)
         }
     }
 }
@@ -180,55 +46,6 @@ internal fun DatabaseMetaData(): DatabaseMetaData = useSession { session -> sess
 internal fun variables(): List<MySqlVariable> = useSession { session ->
     session.createNativeQuery<MySqlVariable>("""SHOW VARIABLES""", MySqlVariable::class.java).list()
 }
-
-internal fun reload(path: String, mode: ReplicationMode, chunk: Int, callback: (Result<Pair<Table, Long>>) -> Unit) {
-    val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
-    val config = Configuration().apply { PixivEntities.forEach(::addAnnotatedClass) }
-    config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.absolutePath}")
-    config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
-    config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
-    config.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
-    config.setProperty("hibernate.c3p0.min_size", "${1}")
-    config.setProperty("hibernate.c3p0.max_size", "${1}")
-    val new = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
-    useSession { session ->
-        for (clazz in PixivEntities) {
-            val annotation = clazz.getAnnotation(Table::class.java)
-            var count = 0L
-            new.withCriteria<PixivEntity> { it.select(it.from(clazz)) }
-                .setReadOnly(true)
-                .setCacheable(false)
-                .stream()
-                .asSequence()
-                .chunked(chunk)
-                .forEach { list ->
-                    session.transaction.begin()
-                    session.runCatching {
-                        for (item in list) replicate(item, mode)
-                        count += list.size
-                        annotation to count
-                    }.onSuccess {
-                        session.transaction.commit()
-                    }.onFailure {
-                        session.transaction.rollback()
-                    }.let(callback)
-                    session.clear()
-                    System.gc()
-                }
-        }
-    }
-}
-
-internal class RandomFunction(criteriaBuilder: CriteriaBuilderImpl) :
-    BasicFunctionExpression<Double>(criteriaBuilder, Double::class.java, "rand"), Serializable
-
-internal fun CriteriaBuilder.rand() = RandomFunction(this as CriteriaBuilderImpl)
-
-internal inline fun <reified T> Session.withCriteria(block: CriteriaBuilder.(criteria: CriteriaQuery<T>) -> Unit) =
-    createQuery(with(criteriaBuilder) { createQuery(T::class.java).also { block(it) } })
-
-internal inline fun <reified T> Session.withCriteriaUpdate(block: CriteriaBuilder.(criteria: CriteriaUpdate<T>) -> Unit) =
-    createQuery(with(criteriaBuilder) { createCriteriaUpdate(T::class.java).also { block(it) } })
 
 internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERWRITE) {
     val entity = this

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.8.2"
+version = "1.8.3"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -26,12 +26,6 @@ repositories {
 
 dependencies {
     implementation(jsoup(Versions.jsoup))
-    implementation(hibernate("hibernate-core", Versions.hibernate))
-    implementation(hibernate("hibernate-c3p0", Versions.hibernate))
-    implementation("com.github.gwenn:sqlite-dialect:0.1.2") {
-        exclude(group = "org.hibernate")
-    }
-    implementation(xerial("sqlite-jdbc", Versions.sqlite))
     implementation(project(":client")) {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
@@ -42,11 +36,11 @@ dependencies {
     }
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
     compileOnly("net.mamoe:mirai-core-jvm:2.9.2")
-    compileOnly("mysql:mysql-connector-java:8.0.26")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
 
     testImplementation(kotlin("test", "1.5.31"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
-    testImplementation("mysql:mysql-connector-java:8.0.26")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
 }
 
 kotlin {
