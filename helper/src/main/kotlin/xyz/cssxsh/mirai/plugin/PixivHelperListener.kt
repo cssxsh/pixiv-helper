@@ -43,10 +43,9 @@ object PixivHelperListener {
                 toCommandSender().takeIf { permission.testPermission(it) }?.sendArticle(aid = result.value.toLong())
             }
             URL_FANBOX_CREATOR_REGEX finding { result ->
-                val creatorId = result.groupValues.last()
-                if (creatorId == "api" || creatorId == "www") return@finding
-                logger.info { "匹配FANBOX(${creatorId})" }
-                toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(id = creatorId)
+                if (result.value == "api" || result.value == "www") return@finding
+                logger.info { "匹配FANBOX(${result.value})" }
+                toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(id = result.value)
             }
             URL_FANBOX_ID_REGEX finding { result ->
                 logger.info { "匹配FANBOX(${result.value})" }
