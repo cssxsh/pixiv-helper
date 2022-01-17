@@ -32,7 +32,7 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 * 发送大量违规链接，或者触发关键词
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
-[Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
+![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
 [![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-yellow)](https://mirai.mamoe.net/topic/289)
 
 ## 指令
