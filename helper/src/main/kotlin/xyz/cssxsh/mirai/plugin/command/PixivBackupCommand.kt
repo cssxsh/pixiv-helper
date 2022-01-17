@@ -122,7 +122,7 @@ object PixivBackupCommand : CompositeCommand(
     @SubCommand
     @Description("从 sqlite 备份中导入数据")
     suspend fun CommandSender.reload(path: String, mode: ReplicationMode, chunk: Int = 8196) {
-        reload(path, mode, chunk) { result ->
+        PixivHibernateLoader.reload(path, mode, chunk) { result ->
             result.onSuccess { (table, count) ->
                 logger.info { "${table.name}已导入${count}条数据" }
             }.onFailure {

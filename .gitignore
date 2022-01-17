@@ -16,3 +16,4 @@
 /temp/
 
 *.sqlite
+hibernate.properties
