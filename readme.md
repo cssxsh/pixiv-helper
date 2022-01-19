@@ -12,7 +12,7 @@ R18图会按照Pixiv所给信息过滤
 
 Gif图片需要由机器人自己合成，如果设备性能不足，请调整相关参数
 
-自 `1.8.3` 起将数据库部分功能拆分  
+自 `1.9.0` 起将数据库部分功能拆分  
 需要 [Mirai Hibernate Plugin](https://github.com/cssxsh/mirai-hibernate-plugin) 做前置插件  
 这是**必要**的  
 MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel stable --type plugin`
