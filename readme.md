@@ -6,10 +6,9 @@
 
 **使用前应该查阅的相关文档或项目**
 
-* Mirai 用户手册 [UserManual](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)
-*
-权限指令 [Permission Command](https://github.com/mamoe/mirai/blob/dev/mirai-console/docs/BuiltInCommands.md#permissioncommand)
-* 在聊天环境执行指令 [Chat Command](https://github.com/project-mirai/chat-command)
+* [User Manual](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)
+* [Permission Command](https://github.com/mamoe/mirai/blob/dev/mirai-console/docs/BuiltInCommands.md#permissioncommand)
+* [Chat Command](https://github.com/project-mirai/chat-command)
 
 目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  
