@@ -50,7 +50,6 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 
 | 指令                                     | 描述                                       |
 |:-----------------------------------------|:-------------------------------------------|
-| `/<pixiv> <login> [username] [password]` | APP 不再支持 账号 密码 直接登录，指令做废  |
 | `/<pixiv> <sina>`                        | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
 | `/<pixiv> <cookie>`                      | 从文件 读取 Web Cookie，登录PIXIV          |
 | `/<pixiv> <refresh> [token]`             | 登录 通过 refresh token                    |
