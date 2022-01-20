@@ -4,6 +4,13 @@
 
 基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
+**使用前应该查阅的相关文档或项目**
+
+* Mirai 用户手册 [UserManual](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)
+*
+权限指令 [Permission Command](https://github.com/mamoe/mirai/blob/dev/mirai-console/docs/BuiltInCommands.md#permissioncommand)
+* 在聊天环境执行指令 [Chat Command](https://github.com/project-mirai/chat-command)
+
 目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/pixiv` 指令登陆账号  
@@ -43,8 +50,8 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 `[...]`表示参数，当`[...]`后面带`?`时表示参数可选  
 `{...}`表示连续的多个参数
 
-`bookmark` 参数指收藏数过滤
-`fuzzy` 参数指模糊搜索
+本插件指令权限ID 格式为 `xyz.cssxsh.mirai.plugin.pixiv-helper:command.*`, `*` 是指令的第一指令名  
+例如 `/pixiv sina` 的权限ID为 `xyz.cssxsh.mirai.plugin.pixiv-helper:command.pixiv`
 
 ### Pixiv相关操作指令
 
@@ -88,7 +95,9 @@ EditThisCookie 安装地址
 tag指令检索结果过少时，会自动触发缓存  
 tag指令可以尝试按照格式`角色名(作品名)`检索角色, 举例 `红(明日方舟)`  
 tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连接起来，不要使用空格，举例 `明日方舟+巨乳`  
-`[image]?`为空时会从`回复消息`，`最近图片`获取
+`[image]?`为空时会从`回复消息`，`最近图片`获取  
+`bookmark` 参数指收藏数过滤  
+`fuzzy` 参数指模糊搜索
 
 画师别名的`uid`为0时表示删除指定别名
 
