@@ -34,7 +34,7 @@ object ConfigDelegate : ReadWriteProperty<PixivHelper, PixivConfig> {
 
 object AuthResultDelegate : ReadWriteProperty<PixivHelper, AuthResult?> {
 
-    private val UserAuthInfos: MutableMap<Long, AuthResult?> = mutableMapOf()
+    private val UserAuthInfos: MutableMap<Long, AuthResult?> = HashMap()
 
     private var DefaultAuthInfo: AuthResult? = null
 
@@ -57,7 +57,7 @@ object AuthResultDelegate : ReadWriteProperty<PixivHelper, AuthResult?> {
 
 object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
 
-    private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = mutableMapOf()
+    private val UserExpiresTimes: MutableMap<Long, OffsetDateTime> = HashMap()
 
     private var DefaultExpiresTime: OffsetDateTime = OffsetDateTime.MIN
 
@@ -80,7 +80,7 @@ object ExpiresTimeDelegate : ReadWriteProperty<PixivHelper, OffsetDateTime> {
 
 object MutexDelegate : ReadOnlyProperty<PixivHelper, Mutex> {
 
-    private val UserMutexes: MutableMap<Long, Mutex> = mutableMapOf()
+    private val UserMutexes: MutableMap<Long, Mutex> = HashMap()
 
     private val DefaultMutex: Mutex = Mutex()
 
@@ -154,7 +154,7 @@ object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
     }
 }
 
-private val helpers = mutableMapOf<Contact, PixivHelper>()
+private val helpers = HashMap<Contact, PixivHelper>()
 
 private var iterator = emptyList<PixivAuthClient>().iterator()
     get() {
@@ -187,7 +187,7 @@ internal val UserCommandSender.helper get() = subject.helper
 
 class PixivHelperDelegate<T>(private val default: (Contact) -> T) : ReadWriteProperty<PixivHelper, T> {
 
-    private val map: MutableMap<Contact, T> = mutableMapOf()
+    private val map: MutableMap<Contact, T> = HashMap()
 
     override fun setValue(thisRef: PixivHelper, property: KProperty<*>, value: T) {
         map[thisRef.contact] = value
