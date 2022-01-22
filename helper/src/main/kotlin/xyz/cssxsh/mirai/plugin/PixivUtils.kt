@@ -675,9 +675,4 @@ internal suspend fun PixivHelper.redirect(account: String): Long {
     return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
 }
 
-/**
- * XXX: [MessageSource.equals]
- */
-internal fun MessageSource.key() = ids.asList() + time
-
 // endregion

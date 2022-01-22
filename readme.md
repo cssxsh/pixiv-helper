@@ -4,6 +4,10 @@
 
 基于 Kotlin Pixiv库 [PixivClient](https://github.com/cssxsh/pixiv-client) ，通过清除ServerHostName 绕过SNI审查，免代理
 
+[![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
+![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
+[![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-yellow)](https://mirai.mamoe.net/topic/289)
+
 **使用前应该查阅的相关文档或项目**
 
 * [User Manual](https://github.com/mamoe/mirai/blob/dev/docs/UserManual.md)
@@ -36,10 +40,6 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 * Bot挂在服务器上，但是服务器IP被腾讯列为风险IP(腾讯通过IP确定 登录地区)
 * Bot被高频使用，(另外，`高频发图再高频撤销`属于不打自招，正常用户有这个手速吗？)
 * 发送大量违规链接，或者触发关键词
-
-[![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
-![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
-[![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-yellow)](https://mirai.mamoe.net/topic/289)
 
 ## 指令
 
@@ -127,20 +127,7 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 
 `[uid]?` 会自动填充当前用户
 
-RankMode
-
-```
-MONTH
-
-WEEK
-WEEK_ORIGINAL
-WEEK_ROOKIE
-
-DAY
-DAY_MALE
-DAY_FEMALE
-DAY_MANGA
-```
+`mode` 可选值: `MONTH`, `WEEK`, `WEEK_ORIGINAL`, `WEEK_ROOKIE`, `DAY`, `DAY_MALE`, `DAY_FEMALE`, `DAY_MANGA`
 
 ### 任务指令
 
@@ -193,7 +180,7 @@ duration 单位分钟，默认3小时
 | `/<backup> <reload> [path] [mode] [chunk]?` | 从 sqlite 备份中导入数据   |
 
 reload 的 mode 可选 有以下几种 `EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
-reload 的 chunk 为分段提交数量的大小, 默认8196  
+reload 的 chunk 为分段提交数量的大小, 默认 `8196`   
 使用百度云服务需要的准备详见配置
 
 ### 统计信息指令
