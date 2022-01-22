@@ -246,7 +246,7 @@ internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStr
     override fun generateSummary(forward: RawForwardMessage): String = "查看${user.name}的作品"
 }
 
-internal fun SearchResult.getContent(contact: Contact) = buildMessageChain {
+internal suspend fun SearchResult.getContent(contact: Contact) = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
@@ -260,11 +260,9 @@ internal fun SearchResult.getContent(contact: Contact) = buildMessageChain {
                 val info = ArtWorkInfo[pid]
                 if (info != null && info.age == AgeLimit.ALL.ordinal) {
                     with(contact.helper) {
-                        runBlocking(coroutineContext) {
-                            withTimeout(30_000L) {
-                                getIllustInfo(pid = info.pid, flush = false)
-                                    .useImageResources { _, resource -> add(resource.uploadAsImage(contact)) }
-                            }
+                        withTimeout(30_000L) {
+                            getIllustInfo(pid = info.pid, flush = false)
+                                .useImageResources { _, resource -> add(resource.uploadAsImage(contact)) }
                         }
                     }
                 }
@@ -273,7 +271,7 @@ internal fun SearchResult.getContent(contact: Contact) = buildMessageChain {
             }
         }
         is TwitterSearchResult -> {
-            val screen = tweet.substringAfter("twitter.com/", "").substringBefore('/')
+            val screen = URL_TWITTER_SCREEN.find(tweet)?.value.orEmpty()
             Twitter[screen]?.let { (_, uid) ->
                 appendLine("PIXIV_UID: $uid")
             }
@@ -286,7 +284,7 @@ internal fun SearchResult.getContent(contact: Contact) = buildMessageChain {
     }
 }
 
-internal fun List<SearchResult>.getContent(sender: User): Message {
+internal suspend fun List<SearchResult>.getContent(sender: User): Message {
     if (isEmpty()) return "结果为空".toPlainText()
     val contact = (sender as? Member)?.group ?: sender
 

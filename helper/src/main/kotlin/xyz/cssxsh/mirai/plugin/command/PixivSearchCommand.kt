@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin.command
 
-import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
@@ -31,28 +30,32 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
-        return MiraiHibernateRecorder.get(contact = fromEvent.subject, start = 600, end = fromEvent.time)
+        return MiraiHibernateRecorder
+            .get(contact = fromEvent.subject, start = ImageSearchConfig.wait.toInt(), end = fromEvent.time)
             .reversed()
             .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
 
-    private fun CommandSenderOnMessage<*>.getNextImage(): Image? = runBlocking(coroutineContext) {
+    private suspend fun CommandSenderOnMessage<*>.getNextImage(): Image? {
         sendMessage("${ImageSearchConfig.wait}s内，请发送图片")
-        fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) { Image in it.message }?.firstIsInstance()
+        val next = fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) {
+            Image in it.message || FlashImage in it.message
+        } ?: return null
+        return next.findIsInstance<FlashImage>()?.image ?: next.findIsInstance<Image>()
     }
 
-    private suspend fun saucenao(image: Image) = with(ImageSearcher) {
-        try {
-            if (key.isBlank()) html(url = image.queryUrl()) else json(url = image.queryUrl())
+    private suspend fun saucenao(image: Image): List<SearchResult> {
+        return try {
+            ImageSearcher.saucenao(url = image.queryUrl())
         } catch (e: Throwable) {
             logger.warning({ "saucenao 搜索 $image 失败" }, e)
             emptyList()
         }
     }
 
-    private suspend fun ascii2d(image: Image) = with(ImageSearcher) {
-        try {
-            ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
+    private suspend fun ascii2d(image: Image): List<SearchResult> {
+        return try {
+            ImageSearcher.ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
         } catch (e: Throwable) {
             logger.warning({ "ascii2d 搜索 $image 失败" }, e)
             emptyList()

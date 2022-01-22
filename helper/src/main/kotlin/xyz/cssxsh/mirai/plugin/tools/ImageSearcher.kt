@@ -93,7 +93,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun html(url: String): List<SearchResult> = html(other) {
+    internal suspend fun html(url: String): List<SearchResult> = html(other) {
         url(API)
         method = HttpMethod.Get
         parameter("url", url)
@@ -145,7 +145,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun json(url: String): List<SearchResult> = http { client ->
+    internal suspend fun json(url: String): List<SearchResult> = http { client ->
         client.get<JsonSearchResults>(API) {
             parameter("url", url)
             parameter("output_type", 2)
@@ -157,6 +157,10 @@ object ImageSearcher : HtmlParser(name = "Search") {
             // parameter("numres", )
             // parameter("dedupe", )
         }.decode()
+    }
+
+    suspend fun saucenao(url: String): List<SearchResult> {
+        return if (key.isBlank()) html(url = url) else json(url = url)
     }
 
     private val thumbnail = { hash: String ->

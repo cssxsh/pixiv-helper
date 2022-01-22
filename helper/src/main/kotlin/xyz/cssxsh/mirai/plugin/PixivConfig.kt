@@ -200,6 +200,11 @@ internal val URL_FANBOX_ID_REGEX = """(?<=pixiv\.net/fanbox/creator/)\d+""".toRe
  */
 internal val URL_PIXIVISION_ARTICLE = """(?<=pixivision\.net/[\w-]{2,5}/a/)\d+""".toRegex()
 
+/**
+ * * `https://twitter.com/twitter`
+ */
+internal val URL_TWITTER_SCREEN = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
+
 internal const val PixivMirrorHost = "i.pixiv.cat"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)

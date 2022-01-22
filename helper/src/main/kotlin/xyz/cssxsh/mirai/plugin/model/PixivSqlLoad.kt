@@ -411,15 +411,13 @@ internal fun UserBaseInfo.SQL.like(name: String): UserBaseInfo? = useSession { s
     }.list().singleOrNull()
 }
 
-private val ScreenRegex = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
-
 private val ScreenError = listOf("", "https", "http")
 
 internal fun UserDetail.twitter(): String? {
     user.toUserBaseInfo().replicate()
     val screen = profile.twitterAccount?.takeUnless { it in ScreenError }
         ?: listOfNotNull(profile.twitterUrl, profile.webpage, user.comment)
-            .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
+            .firstNotNullOfOrNull { URL_TWITTER_SCREEN.find(it) }?.value
         ?: return null
 
     Twitter(screen, user.id).replicate()
@@ -429,7 +427,7 @@ internal fun UserDetail.twitter(): String? {
 
 internal fun CreatorDetail.twitter(): String? {
     val screen = (profileLinks + description)
-        .firstNotNullOfOrNull { ScreenRegex.find(it) }?.value
+        .firstNotNullOfOrNull { URL_TWITTER_SCREEN.find(it) }?.value
         ?: return null
 
     Twitter(screen, user.userId).replicate()
