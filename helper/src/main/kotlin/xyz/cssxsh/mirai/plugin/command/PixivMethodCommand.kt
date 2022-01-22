@@ -9,6 +9,7 @@ import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.pixiv.*
+import xyz.cssxsh.selenium.*
 import java.io.*
 
 object PixivMethodCommand : CompositeCommand(
@@ -44,6 +45,31 @@ object PixivMethodCommand : CompositeCommand(
         val result = cookie {
             @OptIn(ExperimentalSerializationApi::class)
             PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).map { it.toCookie() }
+        }
+
+        "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
+    }
+
+    @SubCommand
+    @Description("登录 通过 浏览器登录")
+    suspend fun UserCommandSender.selenium() = withHelper {
+        val driver = if (ProxyApi.isNotBlank()) {
+            sendMessage("发现 插件配置的代理 ，将会配置给浏览器")
+            RemoteWebDriver(config = object : RemoteWebDriverConfig {
+                override val headless: Boolean = false
+                override val proxy: String = ProxyApi
+            })
+        } else {
+            sendMessage("浏览器使用系统代理，或者你可以自己更改配置")
+            RemoteWebDriver(config = object : RemoteWebDriverConfig {
+                override val headless: Boolean = false
+            })
+        }
+
+        val result = try {
+            selenium(driver = driver)
+        } finally {
+            driver.quit()
         }
 
         "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
