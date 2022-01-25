@@ -13,7 +13,7 @@ object ImageSearchConfig : ReadOnlyPluginConfig("ImageSearchConfig"), PixivHelpe
     val bovw by value(true)
 
     @ValueDescription("图片等待时间，单位秒")
-    val wait by value(300L)
+    val wait by value(300)
 
     @ValueDescription("转发方式发送搜索结果")
     val forward by value(false)

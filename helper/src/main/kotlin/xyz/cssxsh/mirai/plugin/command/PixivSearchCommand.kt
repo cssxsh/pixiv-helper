@@ -31,7 +31,7 @@ object PixivSearchCommand : SimpleCommand(
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
         return MiraiHibernateRecorder
-            .get(contact = fromEvent.subject, start = ImageSearchConfig.wait.toInt(), end = fromEvent.time)
+            .get(contact = fromEvent.subject, start = fromEvent.time - ImageSearchConfig.wait, end = fromEvent.time)
             .reversed()
             .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
