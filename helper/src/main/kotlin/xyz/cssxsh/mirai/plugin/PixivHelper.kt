@@ -4,8 +4,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.*
-import net.mamoe.mirai.console.util.*
-import net.mamoe.mirai.console.util.CoroutineScopeUtils.childScopeContext
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -21,7 +19,6 @@ import kotlin.coroutines.*
  */
 class PixivHelper(val contact: Contact) : PixivAuthClient(), PixivWebClient {
 
-    @OptIn(ConsoleExperimentalApi::class)
     override val coroutineContext: CoroutineContext by lazy {
         contact.childScopeContext("PixivHelper:${contact}")
     }

@@ -2,11 +2,11 @@
 
 pluginManagement {
     plugins {
-        kotlin("jvm") version "1.5.31"
-        kotlin("plugin.serialization") version "1.5.31"
-        kotlin("plugin.jpa") version "1.5.31"
+        kotlin("jvm") version "1.6.0"
+        kotlin("plugin.serialization") version "1.6.0"
+        kotlin("plugin.jpa") version "1.6.0"
 
-        id("net.mamoe.mirai-console") version "2.9.2"
+        id("net.mamoe.mirai-console") version "2.10.0-RC2"
     }
     repositories {
         mavenLocal()
