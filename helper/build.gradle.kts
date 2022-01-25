@@ -25,24 +25,27 @@ repositories {
 }
 
 dependencies {
-    implementation(jsoup(Versions.jsoup))
+    implementation("org.jsoup:jsoup:1.14.3")
     implementation(project(":client")) {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
         exclude(group = "io.ktor", module = "ktor-client-core")
+        exclude(group = "io.ktor", module = "ktor-client-core-jvm")
         exclude(group = "io.ktor", module = "ktor-client-okhttp")
+        exclude(group = "io.ktor", module = "ktor-network")
         exclude(group = "com.squareup.okhttp3", module = "okhttp")
     }
+    compileOnly(mirai("core", mirai.coreVersion))
+    compileOnly(mirai("core-utils", mirai.coreVersion))
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
-    compileOnly("net.mamoe:mirai-core-jvm:2.9.2")
     compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4-RC2")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 
-    testImplementation(kotlin("test", "1.5.31"))
+    testImplementation(kotlin("test", kotlin.coreLibrariesVersion))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4-RC2")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 }
 
 kotlin {

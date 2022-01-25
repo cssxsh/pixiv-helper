@@ -70,7 +70,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
                         similarity = content.similarity(),
                         pid = result.findAll(ID).first().value.toLong(),
                         title = result.text().substringBeforeLast("Pixiv ID:", "").trim(),
-                        uid = links.last().href().let(::Url).parameters["id"]?.toLongOrNull() ?: 0,
+                        uid = links.last()!!.href().let(::Url).parameters["id"]?.toLongOrNull() ?: 0,
                         name = result.text().substringAfterLast("Member:", "").trim()
                     )
                 }
@@ -78,7 +78,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
                     val (image, md5) = content.select(".resulttableimage").html().let(image)
                     TwitterSearchResult(
                         similarity = content.similarity(),
-                        tweet = links.first().href(),
+                        tweet = links.first()!!.href(),
                         image = image,
                         md5 = md5
                     )

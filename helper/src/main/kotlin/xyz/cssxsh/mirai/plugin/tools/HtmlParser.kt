@@ -55,6 +55,6 @@ abstract class HtmlParser(var ignore: Ignore) {
     }
 
     suspend fun <T> html(transform: (Document) -> T, block: HttpRequestBuilder.() -> Unit): T = http {
-        transform(Jsoup.parse(it.request<String>(block)))
+        transform(Jsoup.parse(it.request(block)))
     }
 }
