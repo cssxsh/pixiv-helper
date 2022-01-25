@@ -53,23 +53,21 @@ object PixivMethodCommand : CompositeCommand(
     @SubCommand
     @Description("登录 通过 浏览器登录")
     suspend fun UserCommandSender.selenium() = withHelper {
-        val driver = if (ProxyApi.isNotBlank()) {
-            sendMessage("发现 插件配置的代理 ，将会配置给浏览器")
-            RemoteWebDriver(config = object : RemoteWebDriverConfig {
+        val config = if (ProxyApi.isNotBlank()) {
+            sendMessage("发现 pixiv-helper 配置的代理 ，将会配置给浏览器")
+            object : RemoteWebDriverConfig {
                 override val headless: Boolean = false
                 override val proxy: String = ProxyApi
-            })
+            }
         } else {
-            sendMessage("浏览器使用系统代理，或者你可以自己更改配置")
-            RemoteWebDriver(config = object : RemoteWebDriverConfig {
+            sendMessage("浏览器将使用默认的代理配置，或者你可以在浏览器启动后更改配置")
+            object : RemoteWebDriverConfig {
                 override val headless: Boolean = false
-            })
+            }
         }
 
-        val result = try {
+        val result = useRemoteWebDriver(config) { driver ->
             selenium(driver = driver)
-        } finally {
-            driver.quit()
         }
 
         "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
