@@ -30,18 +30,20 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     private fun CommandSenderOnMessage<*>.getCurrentImage(): Image? {
+        val current = fromEvent.message.findIsInstance<Image>()
+        if (current != null) return current
         return MiraiHibernateRecorder
             .get(contact = fromEvent.subject, start = fromEvent.time - ImageSearchConfig.wait, end = fromEvent.time)
-            .reversed()
+            .sortedByDescending { it.time }
             .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
 
-    private suspend fun CommandSenderOnMessage<*>.getNextImage(): Image? {
+    private suspend fun CommandSenderOnMessage<*>.getNextImage(): Image {
         sendMessage("${ImageSearchConfig.wait}s内，请发送图片")
-        val next = fromEvent.nextMessageOrNull(ImageSearchConfig.wait * 1000L) {
+        val next = fromEvent.nextMessage(ImageSearchConfig.wait * 1000L) {
             Image in it.message || FlashImage in it.message
-        } ?: return null
-        return next.findIsInstance<FlashImage>()?.image ?: next.findIsInstance<Image>()
+        }
+        return next.findIsInstance<Image>() ?: next.firstIsInstance<FlashImage>().image
     }
 
     private suspend fun saucenao(image: Image): List<SearchResult> {
@@ -91,8 +93,8 @@ object PixivSearchCommand : SimpleCommand(
 
     @Handler
     @OptIn(ConsoleExperimentalApi::class)
-    suspend fun CommandSenderOnMessage<*>.search(image: Image? = null) = withHelper {
-        val origin = image ?: getQuoteImage() ?: getCurrentImage() ?: getNextImage() ?: return@withHelper "等待超时"
+    suspend fun CommandSenderOnMessage<*>.search() = withHelper {
+        val origin = getQuoteImage() ?: getCurrentImage() ?: getNextImage()
         logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }
         val hash = origin.md5.toByteString().hex()
 

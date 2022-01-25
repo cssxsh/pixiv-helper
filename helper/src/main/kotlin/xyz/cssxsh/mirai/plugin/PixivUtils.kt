@@ -70,6 +70,9 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
                 }
                 quoteReply("RestrictException, ${cause.illust}")
             }
+            cause is TimeoutCancellationException -> {
+                quoteReply(cause.message!!)
+            }
             SendLimit in cause.message.orEmpty() -> {
                 delay(60 * 1000L)
                 quoteReply(SendLimit.find(cause.message!!)!!.value)
