@@ -84,14 +84,13 @@ object PixivSearchCommand : SimpleCommand(
     private fun List<SearchResult>.translate(hash: String) = mapIndexedNotNull { index, result ->
         if (index >= ImageSearchConfig.limit) return@mapIndexedNotNull null
         when (result) {
-            is PixivSearchResult -> result.apply { result.md5 = hash }
+            is PixivSearchResult -> result.apply { md5 = hash }
             is TwitterSearchResult -> record(result.md5)?.apply { md5 = hash } ?: result
             is OtherSearchResult -> result
         }
     }
 
     @Handler
-    @OptIn(ConsoleExperimentalApi::class)
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
         val origin = getQuoteImage() ?: getCurrentImage() ?: getNextImage()
         logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }

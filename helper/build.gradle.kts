@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.9.0-RC2"
+version = "1.9.0"
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
@@ -39,7 +39,7 @@ dependencies {
     compileOnly(mirai("core", mirai.coreVersion))
     compileOnly(mirai("core-utils", mirai.coreVersion))
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0-RC1")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0")
     compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 
     testImplementation(kotlin("test", kotlin.coreLibrariesVersion))
