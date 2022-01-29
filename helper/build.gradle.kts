@@ -36,15 +36,15 @@ dependencies {
         exclude(group = "io.ktor", module = "ktor-network")
         exclude(group = "com.squareup.okhttp3", module = "okhttp")
     }
-    compileOnly(mirai("core", mirai.coreVersion))
-    compileOnly(mirai("core-utils", mirai.coreVersion))
+    compileOnly("net.mamoe:mirai-core:${mirai.coreVersion}")
+    compileOnly("net.mamoe:mirai-core-utils:${mirai.coreVersion}")
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
     compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0")
     compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 
     testImplementation(kotlin("test", kotlin.coreLibrariesVersion))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0")
     testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 }
 
