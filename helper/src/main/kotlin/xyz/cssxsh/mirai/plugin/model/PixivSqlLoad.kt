@@ -2,6 +2,7 @@ package xyz.cssxsh.mirai.plugin.model
 
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
+import xyz.cssxsh.hibernate.*
 import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
@@ -38,13 +39,10 @@ internal fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): 
     }
 }
 
-internal fun DatabaseMetaData(): DatabaseMetaData = useSession { session -> session.doReturningWork { it.metaData } }
-
-/**
- * Only with MySql
- */
-internal fun variables(): List<MySqlVariable> = useSession { session ->
-    session.createNativeQuery<MySqlVariable>("""SHOW VARIABLES""", MySqlVariable::class.java).list()
+internal fun sqlite(): String {
+    return useSession { session ->
+        session.getDatabaseMetaData().url.substringAfter("jdbc:sqlite:", "")
+    }
 }
 
 internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERWRITE) {

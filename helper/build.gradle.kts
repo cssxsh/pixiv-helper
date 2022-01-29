@@ -39,7 +39,7 @@ dependencies {
     compileOnly(mirai("core", mirai.coreVersion))
     compileOnly(mirai("core-utils", mirai.coreVersion))
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:1.0.4")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0-RC1")
     compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
 
     testImplementation(kotlin("test", kotlin.coreLibrariesVersion))

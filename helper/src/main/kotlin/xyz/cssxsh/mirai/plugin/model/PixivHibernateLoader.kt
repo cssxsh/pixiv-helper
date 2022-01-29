@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.plugin.model
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
 import org.hibernate.cfg.*
+import xyz.cssxsh.hibernate.*
 import xyz.cssxsh.mirai.plugin.*
 import java.io.*
 import java.sql.*

@@ -34,7 +34,6 @@ object PixivSearchCommand : SimpleCommand(
         if (current != null) return current
         return MiraiHibernateRecorder
             .get(contact = fromEvent.subject, start = fromEvent.time - ImageSearchConfig.wait, end = fromEvent.time)
-            .sortedByDescending { it.time }
             .firstNotNullOfOrNull { it.toMessageSource().originalMessage.findIsInstance<Image>() }
     }
 

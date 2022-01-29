@@ -656,13 +656,9 @@ internal fun backups(): Map<String, File> {
     if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
         map["CONFIG"] = PixivHelperPlugin.configFolder
     }
-    val path: String = try {
-        DatabaseMetaData().url.substringAfter("jdbc:sqlite:", "")
-    } catch (_: Throwable) {
-        ""
-    }
-    if (path.isNotBlank()) {
-        map["DATABASE"] = File(path)
+    val sqlite: String = sqlite()
+    if (sqlite.isNotBlank()) {
+        map["DATABASE"] = File(sqlite)
     }
 
     return map
