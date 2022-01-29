@@ -27,7 +27,10 @@ Gif图片需要由机器人自己合成，如果设备性能不足，请调整�
 这是**必要**的  
 MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel stable --type plugin`
 
-百度云上传功能需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
+**打开浏览器，登录PIXIV** 需要 [Mirai Selenium Plugin](https://github.com/cssxsh/mirai-selenium-plugin) 做前置插件
+并且需要代理配置（可以打开浏览器后，在浏览器中配置）
+
+**百度云上传功能** 需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
 但**不必要**，如果不使用上传功能请忽略
 
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
@@ -54,17 +57,17 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 
 ### Pixiv相关操作指令
 
-| 指令                                     | 描述                                       |
-|:-----------------------------------------|:-------------------------------------------|
-| `/<pixiv> <sina>`                        | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
-| `/<pixiv> <cookie>`                      | 从文件 读取 Web Cookie，登录PIXIV          |
-| `/<pixiv> <refresh> [token]`             | 登录 通过 refresh token                    |
-| `/<follow> <user> {uid}`                 | 为当前助手关注指定用户                     |
-| `/<follow> <copy> [uid]`                 | 关注指定用户的关注                         |
-| `/<mark bookmark> <add> [uid] {words}?`  | 添加指定作品收藏                           |
-| `/<mark bookmark> <delete> [pid]`        | 删除指定作品收藏                           |
-| `/<mark bookmark> <random> [tag]?`       | 随机发送一个收藏的作品                     |
-| `/<mark bookmark> <list>`                | 显示收藏列表                               |
+| 指令                                      | 描述                         |
+|:----------------------------------------|:---------------------------|
+| `/<pixiv> <sina>`                       | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <selenium>`                   | 打开浏览器，登录PIXIV              |
+| `/<pixiv> <refresh> [token]`            | 登录 通过 refresh token        |
+| `/<follow> <user> {uid}`                | 为当前助手关注指定用户                |
+| `/<follow> <copy> [uid]`                | 关注指定用户的关注                  |
+| `/<mark bookmark> <add> [uid] {words}?` | 添加指定作品收藏                   |
+| `/<mark bookmark> <delete> [pid]`       | 删除指定作品收藏                   |
+| `/<mark bookmark> <random> [tag]?`      | 随机发送一个收藏的作品                |
+| `/<mark bookmark> <list>`               | 显示收藏列表                     |
 
 cookie 文件为工作目录下的 `cookie.json`  
 内容 为 浏览器插件 [EditThisCookie](http://www.editthiscookie.com/) 导出的Json  
@@ -75,19 +78,19 @@ EditThisCookie 安装地址
 
 ### 色图相关指令
 
-| 指令                                                  | 描述                                  |
-|:------------------------------------------------------|:--------------------------------------|
-| `(/)<ero 色图 涩图>`                                  | 缓存中随机一张色图                    |
-| `(/)<get 搞快点 gkd> [pid] [flush]?`                  | 获取指定ID图片                        |
-| `(/)<tag 标签> [word] [bookmark]? [fuzzy]?`           | 随机指定TAG图片                       |
-| `(/)<boom 射爆 社保> [limit]? [word]?`                | 随机一组色号图，默认30张              |
-| `(/)<illustrator 画师> <uid id user 用户> [uid]`      | 根据画师UID随机发送画师作品           |
-| `(/)<illustrator 画师> <name 名称 名字 推特> [name]`  | 根据画师name或者alias随机发送画师作品 |
-| `(/)<illustrator 画师> <alias 别名> [name] [uid]`     | 设置画师alias                         |
-| `(/)<illustrator 画师> <list 列表>`                   | 显示别名列表                          |
-| `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                          |
-| `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                              |
-| `(/)<search 搜索 搜图> [image]?`                      | saucenao、ascii2d 搜索图片            |
+| 指令                                                | 描述                      |
+|:--------------------------------------------------|:------------------------|
+| `(/)<ero 色图 涩图>`                                  | 缓存中随机一张色图               |
+| `(/)<get 搞快点 gkd> [pid] [flush]?`                 | 获取指定ID图片                |
+| `(/)<tag 标签> [word] [bookmark]? [fuzzy]?`         | 随机指定TAG图片               |
+| `(/)<boom 射爆 社保> [limit]? [word]?`                | 随机一组色号图，默认30张           |
+| `(/)<illustrator 画师> <uid id user 用户> [uid]`      | 根据画师UID随机发送画师作品         |
+| `(/)<illustrator 画师> <name 名称 名字 推特> [name]`      | 根据画师name或者alias随机发送画师作品 |
+| `(/)<illustrator 画师> <alias 别名> [name] [uid]`     | 设置画师alias               |
+| `(/)<illustrator 画师> <list 列表>`                   | 显示别名列表                  |
+| `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                  |
+| `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                    |
+| `(/)<search 搜索 搜图> [image]?`                      | saucenao、ascii2d 搜索图片   |
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
@@ -111,19 +114,19 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 
 ### 缓存指令
 
-| 指令                                    | 描述                           |
-|:----------------------------------------|:-------------------------------|
-| `/<cache> <follow>`                     | 缓存关注推送                   |
-| `/<cache> <rank> [mode] [date]?`        | 缓存指定排行榜信息             |
-| `/<cache> <recommended>`                | 缓存推荐作品，ERO过滤          |
-| `/<cache> <bookmarks> [uid]?`           | 缓存用户的收藏中缓存色图作品   |
-| `/<cache> <following> [fluhsh]? [uid]?` | 缓存关注画师作品               |
-| `/<cache> <fms> [jump]? [uid]?`         | 缓存关注画师收藏的作品         |
-| `/<cache> <user> [uid]`                 | 缓存指定画师作品               |
+| 指令                                      | 描述                 |
+|:----------------------------------------|:-------------------|
+| `/<cache> <follow>`                     | 缓存关注推送             |
+| `/<cache> <rank> [mode] [date]?`        | 缓存指定排行榜信息          |
+| `/<cache> <recommended>`                | 缓存推荐作品，ERO过滤       |
+| `/<cache> <bookmarks> [uid]?`           | 缓存用户的收藏中缓存色图作品     |
+| `/<cache> <following> [fluhsh]? [uid]?` | 缓存关注画师作品           |
+| `/<cache> <fms> [jump]? [uid]?`         | 缓存关注画师收藏的作品        |
+| `/<cache> <user> [uid]`                 | 缓存指定画师作品           |
 | `/<cache> <tag> [tag]`                  | 缓存搜索tag得到的作品，ERO过滤 |
-| `/<cache> <search>`                     | 缓存搜索记录                   |
-| `/<cache> <stop>`                       | 停止当前助手缓存任务           |
-| `/<cache> <reply> [open]?`              | 是否回复缓存细节，默认为否     |
+| `/<cache> <search>`                     | 缓存搜索记录             |
+| `/<cache> <stop>`                       | 停止当前助手缓存任务         |
+| `/<cache> <reply> [open]?`              | 是否回复缓存细节，默认为否      |
 
 `[uid]?` 会自动填充当前用户
 
@@ -131,18 +134,18 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 
 ### 任务指令
 
-| 指令                                         | 描述                |
-|:---------------------------------------------|:--------------------|
-| `/<task> <user> [uid] [duration]?`           | 推送用户新作品      |
+| 指令                                           | 描述          |
+|:---------------------------------------------|:------------|
+| `/<task> <user> [uid] [duration]?`           | 推送用户新作品     |
 | `/<task> <rank> [mode]`                      | 推送排行榜新作品    |
 | `/<task> <follow> [duration]?`               | 推送关注用户作品    |
-| `/<task> <recommended> [duration]?`          | 推送推荐作品        |
-| `/<task> <backup> [duration]?`               | 数据自动备份        |
-| `/<task> <cache> {args}`                     | 数据自动缓存        |
+| `/<task> <recommended> [duration]?`          | 推送推荐作品      |
+| `/<task> <backup> [duration]?`               | 数据自动备份      |
+| `/<task> <cache> {args}`                     | 数据自动缓存      |
 | `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
-| `/<task> <trending> [duration]? [times]?`    | 推送热门标签        |
-| `/<task> <detail>`                           | 查看任务详情        |
-| `/<task> <delete> [name]`                    | 删除任务            |
+| `/<task> <trending> [duration]? [times]?`    | 推送热门标签      |
+| `/<task> <detail>`                           | 查看任务详情      |
+| `/<task> <delete> [name]`                    | 删除任务        |
 
 备份文件优先推送到群文件，其次百度云  
 duration 单位分钟，默认3小时  
@@ -150,16 +153,16 @@ duration 单位分钟，默认3小时
 
 ### 设置指令
 
-| 指令                              | 描述                           |
-|:----------------------------------|:-------------------------------|
-| `/<setting> <interval> [sec]`     | 设置连续发送间隔时间, 单位秒   |
-| `/<setting> <forward>`            | 设置Task发送模式               |
+| 指令                                | 描述                   |
+|:----------------------------------|:---------------------|
+| `/<setting> <interval> [sec]`     | 设置连续发送间隔时间, 单位秒      |
+| `/<setting> <forward>`            | 设置Task发送模式           |
 | `/<setting> <link>`               | 设置是否显示Pixiv Cat 原图链接 |
-| `/<setting> <tag>`                | 设置是否显示TAG INFO           |
+| `/<setting> <tag>`                | 设置是否显示TAG INFO       |
 | `/<setting> <attr>`               | 设置是否显示作品属性           |
-| `/<setting> <cooling>`            | 设置cooling置零                |
-| `/<setting> <max> [num]`          | 设置显示最大图片数             |
-| `/<setting> <model> [type] [ms]?` | 设置发送模式                   |
+| `/<setting> <cooling>`            | 设置cooling置零          |
+| `/<setting> <max> [num]`          | 设置显示最大图片数            |
+| `/<setting> <model> [type] [ms]?` | 设置发送模式               |
 
 发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒  
 注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险  
@@ -167,17 +170,17 @@ duration 单位分钟，默认3小时
 
 ### 备份指令
 
-| 指令                                        | 描述                       |
-|:--------------------------------------------|:---------------------------|
-| `/<backup> <user> [uid]`                    | 备份指定用户的作品         |
-| `/<backup> <alias> [mode] [date]?`          | 备份已设定别名用户的作品   |
-| `/<backup> <tag> [tag] [marks]? [fuzzy]?`   | 备份指定标签的作品         |
-| `/<backup> <data>`                          | 备份插件数据               |
-| `/<backup> <list>`                          | 列出备份目录               |
-| `/<backup> <get> [filename]`                | 获取备份文件，发送文件消息 |
-| `/<backup> <upload> [filename]`             | 上传文件到百度云           |
-| `/<backup> <auth>`                          | 百度云用户认证             |
-| `/<backup> <reload> [path] [mode] [chunk]?` | 从 sqlite 备份中导入数据   |
+| 指令                                          | 描述               |
+|:--------------------------------------------|:-----------------|
+| `/<backup> <user> [uid]`                    | 备份指定用户的作品        |
+| `/<backup> <alias> [mode] [date]?`          | 备份已设定别名用户的作品     |
+| `/<backup> <tag> [tag] [marks]? [fuzzy]?`   | 备份指定标签的作品        |
+| `/<backup> <data>`                          | 备份插件数据           |
+| `/<backup> <list>`                          | 列出备份目录           |
+| `/<backup> <get> [filename]`                | 获取备份文件，发送文件消息    |
+| `/<backup> <upload> [filename]`             | 上传文件到百度云         |
+| `/<backup> <auth>`                          | 百度云用户认证          |
+| `/<backup> <reload> [path] [mode] [chunk]?` | 从 sqlite 备份中导入数据 |
 
 reload 的 mode 可选 有以下几种 `EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
 reload 的 chunk 为分段提交数量的大小, 默认 `8196`   
@@ -185,40 +188,40 @@ reload 的 chunk 为分段提交数量的大小, 默认 `8196`
 
 ### 统计信息指令
 
-| 指令                         | 描述                |
-|:-----------------------------|:--------------------|
-| `/<info> <helper> [target]?` | 获取助手信息        |
-| `/<info> <user> [target]?`   | 获取用户信息        |
-| `/<info> <group> [target]?`  | 获取群组信息        |
+| 指令                           | 描述          |
+|:-----------------------------|:------------|
+| `/<info> <helper> [target]?` | 获取助手信息      |
+| `/<info> <user> [target]?`   | 获取用户信息      |
+| `/<info> <group> [target]?`  | 获取群组信息      |
 | `/<info> <top> [limit]?`     | 获取TAG指令统计信息 |
-| `/<info> <cache>`            | 获取缓存信息        |
+| `/<info> <cache>`            | 获取缓存信息      |
 
 ### 播放指令
 
-| 指令                                             | 描述                    |
-|:-------------------------------------------------|:------------------------|
-| `(/)<play 播放> <interval 间隔>`                 | 设置间隔                |
-| `(/)<play 播放> <ranking 排行榜> [mode] [date]?` | 播放官方排行榜          |
-| `(/)<play 播放> <rank 排行> {words}`             | 根据 words 播放NaviRank |
-| `(/)<play 播放> <recommended 推荐>`              | 根据 系统推荐 播放图集  |
-| `(/)<play 播放> <mark 收藏> [tag]?`              | 播放收藏                |
-| `(/)<play 播放> <article 特辑> [aid]`            | 播放特辑                |
-| `(/)<article 特辑>`                              | 随机播放特辑            |
-| `(/)<rank 排行> <year 年 年榜> {words}`          | 随机播放NaviRank 年榜   |
-| `(/)<rank 排行> <month 月 月榜> {words}`         | 随机播放NaviRank 月榜   |
-| `(/)<rank 排行> <tag标签> {words}`               | 随机播放NaviRank 标签榜 |
-| `(/)<play 播放> <stop 停止>`                     | 停止播放当前列表        |
+| 指令                                          | 描述                  |
+|:--------------------------------------------|:--------------------|
+| `(/)<play 播放> <interval 间隔>`                | 设置间隔                |
+| `(/)<play 播放> <ranking 排行榜> [mode] [date]?` | 播放官方排行榜             |
+| `(/)<play 播放> <rank 排行> {words}`            | 根据 words 播放NaviRank |
+| `(/)<play 播放> <recommended 推荐>`             | 根据 系统推荐 播放图集        |
+| `(/)<play 播放> <mark 收藏> [tag]?`             | 播放收藏                |
+| `(/)<play 播放> <article 特辑> [aid]`           | 播放特辑                |
+| `(/)<article 特辑>`                           | 随机播放特辑              |
+| `(/)<rank 排行> <year 年 年榜> {words}`          | 随机播放NaviRank 年榜     |
+| `(/)<rank 排行> <month 月 月榜> {words}`         | 随机播放NaviRank 月榜     |
+| `(/)<rank 排行> <tag标签> {words}`              | 随机播放NaviRank 标签榜    |
+| `(/)<play 播放> <stop 停止>`                    | 停止播放当前列表            |
 
 ### 删除指令
 
-| 指令                                    | 描述                   |
-|:----------------------------------------|:-----------------------|
-| `/<delete> <artwork> [pid] [record]?`   | 删除指定作品           |
-| `/<delete> <user> [uid] [record]?`      | 删除指定用户作品       |
+| 指令                                      | 描述          |
+|:----------------------------------------|:------------|
+| `/<delete> <artwork> [pid] [record]?`   | 删除指定作品      |
+| `/<delete> <user> [uid] [record]?`      | 删除指定用户作品    |
 | `/<delete> <bookmarks> [max] [record]?` | 删除小于指定收藏数作品 |
-| `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品   |
-| `/<delete> <manga> [record]?`           | 删除漫画作品           |
-| `/<delete> <record>`                    | 删除已记录作品         |
+| `/<delete> <page> [min] [record]?`      | 删除大于指定页数作品  |
+| `/<delete> <manga> [record]?`           | 删除漫画作品      |
+| `/<delete> <record>`                    | 删除已记录作品     |
 
 第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 
