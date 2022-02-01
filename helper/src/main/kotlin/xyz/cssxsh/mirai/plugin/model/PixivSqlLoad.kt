@@ -250,7 +250,7 @@ internal fun ArtWorkInfo.SQL.random(
     }.setMaxResults(limit).list().orEmpty()
 }
 
-internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession { session ->
+internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession(ArtWorkInfo) { session ->
     session.transaction.begin()
     try {
         val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
@@ -269,7 +269,7 @@ internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSessio
     }
 }
 
-internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSession { session ->
+internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSession(ArtWorkInfo) { session ->
     session.transaction.begin()
     try {
         val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
@@ -322,11 +322,6 @@ internal fun IllustInfo.saveTagRecords() {
 
 internal fun IllustInfo.replicate() {
     if (pid == 0L) return
-//    try {
-//        user.twitter()
-//    } catch (e: Throwable) {
-//        logger.warning({ "Save twitter" }, e)
-//    }
     saveTagRecords()
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
@@ -346,13 +341,6 @@ internal fun IllustInfo.replicate() {
 
 internal fun Collection<IllustInfo>.replicate() {
     if (isEmpty()) return
-//    try {
-//        for (info in this) {
-//            info.user.twitter()
-//        }
-//    } catch (e: Throwable) {
-//        logger.warning({ "Save twitter" }, e)
-//    }
     for (info in this) {
         info.saveTagRecords()
     }
@@ -577,11 +565,11 @@ internal operator fun AliasSetting.SQL.get(name: String): AliasSetting? = useSes
     session.find(AliasSetting::class.java, name)
 }
 
-internal fun PixivSearchResult.associate(): Unit = useSession { session ->
+internal fun PixivSearchResult.associate(): Unit = useSession(PixivSearchResult) { session ->
     session.transaction.begin()
     try {
-        if (uid == 0L && pid in ArtWorkInfo) {
-            val info = session.find(ArtWorkInfo::class.java, pid)
+        val info = session.find(ArtWorkInfo::class.java, pid)
+        if (uid == 0L && info != null) {
             title = info.title
             uid = info.author.uid
             name = info.author.name
