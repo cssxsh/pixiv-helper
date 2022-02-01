@@ -407,7 +407,9 @@ internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) =
     }
 }
 
-internal fun IllustInfo.getMirrorUrls() = getOriginImageUrls().map { it.copy(host = PixivMirrorHost) }
+internal fun IllustInfo.getMirrorUrls(): List<Url> {
+    return getOriginImageUrls().map { it.copy(host = ProxyMirror.ifBlank { PixivMirrorHost }) }
+}
 
 private fun IllustInfo.bookmarks(min: Long): Boolean = (totalBookmarks ?: 0) > min
 

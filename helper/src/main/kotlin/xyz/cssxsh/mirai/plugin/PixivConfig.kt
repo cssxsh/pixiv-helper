@@ -205,7 +205,7 @@ internal val URL_PIXIVISION_ARTICLE = """(?<=pixivision\.net/[\w-]{2,5}/a/)\d+""
  */
 internal val URL_TWITTER_SCREEN = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 
-internal const val PixivMirrorHost = "i.pixiv.cat"
+internal const val PixivMirrorHost = "i.pixiv.re"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
 
