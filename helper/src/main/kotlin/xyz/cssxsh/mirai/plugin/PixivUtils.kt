@@ -651,7 +651,7 @@ internal val bytes: (Long) -> String = {
  * 备份文件
  */
 internal fun backups(): Map<String, File> {
-    val map = mutableMapOf<String, File>()
+    val map = hashMapOf<String, File>()
     if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
         map["DATA"] = PixivHelperPlugin.dataFolder
     }

@@ -18,7 +18,7 @@ object PixivEroCommand : SimpleCommand(
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
 
-    private val caches: MutableMap<Long, ArtWorkInfo> = mutableMapOf()
+    private val caches: MutableMap<Long, ArtWorkInfo> = HashMap()
 
     private data class History(
         var last: Long = System.currentTimeMillis(),
@@ -26,7 +26,7 @@ object PixivEroCommand : SimpleCommand(
         var minBookmarks: Long = 0
     )
 
-    private val histories: MutableMap<Contact, History> = mutableMapOf()
+    private val histories: MutableMap<Contact, History> = HashMap()
 
     private fun good(sanity: Int, marks: Long) = caches.values.filter { it.sanity >= sanity && it.bookmarks > marks }
 

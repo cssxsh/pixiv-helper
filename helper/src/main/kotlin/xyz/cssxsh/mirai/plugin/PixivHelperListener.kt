@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.plugin
 
-import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.permission.*
@@ -18,7 +17,7 @@ import xyz.cssxsh.pixiv.fanbox.*
 
 object PixivHelperListener {
 
-    private val listeners = mutableMapOf<String, Listener<*>>()
+    private val listeners: MutableMap<String, Listener<*>> = HashMap()
 
     private infix fun String.with(listener: Listener<*>) = synchronized(listeners) {
         listeners.put(this, listener)?.cancel()

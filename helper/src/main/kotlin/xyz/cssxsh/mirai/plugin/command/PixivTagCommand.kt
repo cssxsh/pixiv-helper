@@ -29,9 +29,9 @@ object PixivTagCommand : SimpleCommand(
         ).replicate()
     }
 
-    private val jobs = mutableSetOf<String>()
+    private val jobs: MutableSet<String> = HashSet()
 
-    internal val cooling = mutableMapOf<Long, Long>().withDefault { 0 }
+    internal val cooling: MutableMap<Long, Long> = HashMap<Long, Long>().withDefault { 0 }
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.tag(word: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {

@@ -10,7 +10,7 @@ object PixivHelperScheduler : CoroutineScope {
 
     private val tasks by PixivTaskData::tasks
 
-    private val jobs: MutableMap<String, Job> = mutableMapOf()
+    private val jobs: MutableMap<String, Job> = HashMap()
 
     private const val CHECK_DELAY = 30 * 60 * 1000L
 
