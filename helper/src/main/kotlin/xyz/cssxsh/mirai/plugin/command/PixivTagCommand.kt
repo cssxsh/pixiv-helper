@@ -65,7 +65,8 @@ object PixivTagCommand : SimpleCommand(
         }
 
         record(tag = word, pid = artwork?.pid)
-        requireNotNull(artwork) {
+
+        artwork ?: run {
             cooling[contact.id] = System.currentTimeMillis() + TagCooling
             if (fuzzy) {
                 "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"

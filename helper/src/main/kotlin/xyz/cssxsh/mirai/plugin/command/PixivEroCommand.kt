@@ -68,9 +68,8 @@ object PixivEroCommand : SimpleCommand(
                 minBookmarks = 0
             }
 
-            val info = requireNotNull(randomEroArtWorkInfos(minSanityLevel, minBookmarks).randomOrNull()) {
-                "sanity >= ${minSanityLevel}, bookmarks >= ${minBookmarks}, 随机失败，请刷慢一点哦"
-            }
+            val info = randomEroArtWorkInfos(minSanityLevel, minBookmarks).randomOrNull()
+                ?: return@with "sanity >= ${minSanityLevel}, bookmarks >= ${minBookmarks}, 随机失败，请刷慢一点哦"
 
             synchronized(caches) {
                 caches.remove(info.pid)
