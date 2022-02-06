@@ -291,6 +291,8 @@ internal suspend fun TimerTask.run(name: String) {
                 val result = PixivCacheCommand.execute(sender = sender, arguments = arguments, checkPermission = false)
                 if (result.isFailure()) {
                     logger.warning { "Task Cache 执行错误 $result" }
+                } else {
+                    delay(3_000)
                 }
             } catch (cause: Throwable) {
                 logger.warning { "Task Cache 执行错误 $cause" }
