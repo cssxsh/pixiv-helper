@@ -4,7 +4,7 @@ import io.github.gnuf0rce.mirai.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.contact.FileSupported
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
@@ -28,7 +28,7 @@ object PixivBackupCommand : CompositeCommand(
             if (BackupUpload) {
                 sendMessage("${file.name} ${bytes(file.length())} 压缩完毕，开始上传到百度云")
                 val message = try {
-                    val code = file.getRapidUploadInfo().format()
+                    val code = RapidUploadInfo.calculate(file).format()
                     NetDisk.uploadFile(file)
                     logger.info { "[${file.name}]上传成功，百度云标准码: $code " }
                     "[${file.name}]上传成功，百度云标准码: $code"
@@ -104,7 +104,7 @@ object PixivBackupCommand : CompositeCommand(
     suspend fun CommandSender.upload(filename: String) {
         val file = requireNotNull(PixivZipper.find(name = filename)) { "文件不存在" }
         val message = try {
-            val code = file.getRapidUploadInfo().format()
+            val code = RapidUploadInfo.calculate(file).format()
             val info = NetDisk.uploadFile(file = file)
             logger.info { "$code 上传成功: $info" }
             "$code 上传成功: $info"

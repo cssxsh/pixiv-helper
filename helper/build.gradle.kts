@@ -9,7 +9,6 @@ group = "xyz.cssxsh.mirai.plugin"
 version = "1.9.0"
 
 mirai {
-    jvmTarget = JavaVersion.VERSION_11
     configureShadow {
         archiveBaseName.set(rootProject.name)
         exclude("module-info.class")
@@ -18,9 +17,7 @@ mirai {
 
 repositories {
     mavenLocal()
-    maven(url = "https://maven.aliyun.com/repository/central")
     mavenCentral()
-    maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
     gradlePluginPortal()
 }
 
@@ -31,21 +28,20 @@ dependencies {
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
         exclude(group = "io.ktor", module = "ktor-client-core")
-        exclude(group = "io.ktor", module = "ktor-client-core-jvm")
         exclude(group = "io.ktor", module = "ktor-client-okhttp")
         exclude(group = "io.ktor", module = "ktor-network")
         exclude(group = "com.squareup.okhttp3", module = "okhttp")
     }
-    compileOnly("net.mamoe:mirai-core:${mirai.coreVersion}")
-    compileOnly("net.mamoe:mirai-core-utils:${mirai.coreVersion}")
-    compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.1")
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
+    compileOnly("net.mamoe:mirai-core:2.10.0")
+    compileOnly("net.mamoe:mirai-core-utils:2.10.0")
+    compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.3")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.3")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.7")
 
-    testImplementation(kotlin("test", kotlin.coreLibrariesVersion))
+    testImplementation(kotlin("test", "1.6.0"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.4")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.3")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.7")
 }
 
 kotlin {
