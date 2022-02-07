@@ -110,6 +110,8 @@ tag指令多keyword时，请使用 `_`，`|`，`,`, `+` 等符号将keyword连�
 ![从最近图片中获取](image/search_3.png)  
 ![从输入等待中获取](image/search_4.png)
 
+`1.9.1` 开始，添加 通过At来搜索头像的功能
+
 当 saucenao 的 搜索结果不足时，会自动补充 ascii2d 的搜索结果
 
 ### 缓存指令
