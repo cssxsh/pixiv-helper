@@ -1,9 +1,14 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.request.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.console.util.ContactUtils.render
+import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.contact.Contact.Companion.uploadImage
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.message.*
@@ -13,6 +18,7 @@ import xyz.cssxsh.mirai.plugin.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.mirai.plugin.tools.*
+import java.io.*
 
 object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
@@ -22,6 +28,27 @@ object PixivSearchCommand : SimpleCommand(
 
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     override val prefixOptional: Boolean = true
+
+    private suspend fun CommandSenderOnMessage<*>.getAvatar(): Image? {
+        val at = fromEvent.message.findIsInstance<At>() ?: return null
+        val user = when (val contact = subject) {
+            is Group -> contact[at.target]
+            is Friend -> if (contact.id == at.target) contact else null
+            else -> null
+        } ?: return null
+        val original = "https://q.qlogo.cn/g?b=qq&nk=${user.id}&s=0"
+        val largest = "https://q.qlogo.cn/g?b=qq&nk=${user.id}&s=640"
+
+        return HttpClient(OkHttp).use { http ->
+            try {
+                http.get<InputStream>(original)
+            } catch (_: IOException) {
+                http.get<InputStream>(largest)
+            }.use {
+                user.uploadImage(it)
+            }
+        }
+    }
 
     private fun CommandSenderOnMessage<*>.getQuoteImage(): Image? {
         val quote = fromEvent.message.findIsInstance<QuoteReply>() ?: return null
@@ -92,7 +119,7 @@ object PixivSearchCommand : SimpleCommand(
 
     @Handler
     suspend fun CommandSenderOnMessage<*>.search() = withHelper {
-        val origin = getQuoteImage() ?: getCurrentImage() ?: getNextImage()
+        val origin = getQuoteImage() ?: getCurrentImage() ?: getAvatar() ?: getNextImage()
         logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }
         val hash = origin.md5.toByteString().hex()
 
