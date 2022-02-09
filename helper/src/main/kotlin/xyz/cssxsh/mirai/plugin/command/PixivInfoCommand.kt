@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
@@ -19,7 +18,6 @@ object PixivInfoCommand : CompositeCommand(
     @Description("获取助手信息")
     suspend fun UserCommandSender.helper(target: Contact = subject) = withHelper {
         buildMessageChain {
-            @OptIn(ConsoleExperimentalApi::class)
             appendLine(target.render())
             val info = target.helper.info()
             appendLine("User: ${info.user.uid}")

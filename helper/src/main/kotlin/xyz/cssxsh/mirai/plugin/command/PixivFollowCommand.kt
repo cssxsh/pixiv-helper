@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.plugin.*
@@ -35,7 +34,6 @@ object PixivFollowCommand : CompositeCommand(
         null
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun PixivHelper.getFollowed(uid: Long) = buildSet {
         getUserFollowingPreview(detail = userDetail(uid = uid)).collect { preview ->
             addAll(preview.map { it.user.id })

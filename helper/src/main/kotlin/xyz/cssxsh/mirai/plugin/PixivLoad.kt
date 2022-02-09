@@ -286,7 +286,6 @@ internal suspend fun PixivHelper.getRelated(pid: Long, limit: Long = RELATED_LIM
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 private fun months(year: Year?) = buildList {
     var temp = year?.atMonth(1) ?: NaviRank.START
     val limit = minOf(year?.atMonth(12) ?: YearMonth.now(), YearMonth.now())
