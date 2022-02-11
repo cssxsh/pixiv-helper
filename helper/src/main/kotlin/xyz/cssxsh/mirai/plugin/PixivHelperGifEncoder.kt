@@ -13,10 +13,17 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
 
     public override val cache: File get() = UgoiraImagesFolder
 
-    override suspend fun download(url: Url, filename: String) = cache.resolve(filename).apply {
-        if (exists().not()) {
-            writeBytes(downloader.download(url))
-            logger.info { "$filename 下载完成" }
+    override suspend fun download(url: Url, filename: String): File {
+        val pid = filename.substringBefore('_').toLong()
+        return images(pid).resolve(filename).apply {
+            if (exists().not()) {
+                if (cache.resolve(filename).exists()) {
+                    cache.resolve(filename).renameTo(this)
+                } else {
+                    writeBytes(downloader.download(url))
+                    logger.info { "$filename 下载完成" }
+                }
+            }
         }
     }
 
