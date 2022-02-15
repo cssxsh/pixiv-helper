@@ -315,7 +315,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 配置 文件
 
 ```
-hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv?serverTimezone=Aisa/Shanghai
+hibernate.connection.url=jdbc:mysql://localhost:3306/pixiv?autoReconnect=true
 hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
 hibernate.connection.CharSet=utf8mb4
 hibernate.connection.useUnicode=true
