@@ -36,7 +36,7 @@ object PixivPlayCommand : CompositeCommand(
         "设置间隔 $duration"
     }
 
-    private suspend fun UserCommandSender.play(illusts: List<IllustInfo>) = launch {
+    private fun UserCommandSender.play(illusts: List<IllustInfo>) = launch {
         for (illust in illusts) {
             if (isActive.not()) break
             delay(helper.duration)
@@ -44,7 +44,7 @@ object PixivPlayCommand : CompositeCommand(
             try {
                 sendIllust(illust)
             } catch (e: Throwable) {
-                logger.warning { "播放错误 $e" }
+                logger.warning({ "播放错误" }, e)
             }
         }
     }
@@ -54,34 +54,27 @@ object PixivPlayCommand : CompositeCommand(
 
         contact.sendMessage("开始将${illusts.size}个作品合成转发消息，请稍后...")
 
-        val list = mutableListOf<ForwardMessage.Node>()
-
-        for (illust in illusts) {
-            if (isActive.not()) break
-
+        val list = illusts.map { illust ->
             val sender = (contact as? User) ?: (contact as Group).members.random()
-
-            try {
-                list.add(
+            async {
+                try {
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
                         message = buildMessageByIllust(illust = illust)
                     )
-                )
-            } catch (e: Throwable) {
-                list.add(
+                } catch (e: Throwable) {
+                    logger.warning({ "播放错误" }, e)
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
                         message = "[${illust.pid}]构建失败 ${e.message.orEmpty()}".toPlainText()
                     )
-                )
-                logger.warning { "播放错误 $e" }
+                }
             }
-        }
+        }.awaitAll()
 
         logger.info { "play list 合成完毕" }
         return RawForwardMessage(list).render {
@@ -120,34 +113,35 @@ object PixivPlayCommand : CompositeCommand(
                     try {
                         sendIllust(getIllustInfo(pid = info.pid, flush = false))
                     } catch (e: Throwable) {
-                        logger.warning { "播放错误 $e" }
+                        logger.warning({ "播放错误" }, e)
                     }
                 }
             }
             "开始播放NaviRank[${rank.title}]，共${rank.records.size}个作品，间隔 $duration"
         } else {
             if (rank.records.isEmpty()) return@withHelper "列表为空"
-            val list = mutableListOf<ForwardMessage.Node>()
-
-            for (info in rank.records) {
-                if (isActive.not()) break
-
-                try {
-                    val illust = getIllustInfo(pid = info.pid, flush = false)
-                    val sender = (subject as? User) ?: (subject as Group).members.random()
-
-                    list.add(
+            val list = rank.records.map { info ->
+                val sender = (subject as? User) ?: (subject as Group).members.random()
+                async {
+                    try {
+                        val illust = getIllustInfo(pid = info.pid, flush = false)
                         ForwardMessage.Node(
                             senderId = sender.id,
                             senderName = sender.nameCardOrNick,
                             time = illust.createAt.toEpochSecond().toInt(),
                             message = buildMessageByIllust(illust)
                         )
-                    )
-                } catch (e: Throwable) {
-                    logger.warning { "播放错误 $e" }
+                    } catch (e: Throwable) {
+                        logger.warning({ "播放错误" }, e)
+                        ForwardMessage.Node(
+                            senderId = sender.id,
+                            senderName = sender.nameCardOrNick,
+                            time = info.date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond().toInt(),
+                            message = "[${info.pid}]构建失败 ${e.message.orEmpty()}".toPlainText()
+                        )
+                    }
                 }
-            }
+            }.awaitAll()
 
             RawForwardMessage(list).render {
                 title = "NaviRank[${rank.title}]"

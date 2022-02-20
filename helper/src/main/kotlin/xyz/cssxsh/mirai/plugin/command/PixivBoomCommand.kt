@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
@@ -51,36 +52,33 @@ object PixivBoomCommand : SimpleCommand(
 
         PixivEroCommand += artworks
 
-        val list = mutableListOf<ForwardMessage.Node>()
         val current = System.currentTimeMillis()
 
         sendMessage("开始将${artworks.size}个作品合成转发消息，请稍后...")
 
-        for (artwork in artworks.sortedBy { it.pid }) {
+        val list = artworks.sortedBy { it.pid }.map { artwork ->
             val sender = (subject as? User) ?: (subject as Group).members.random()
 
-            try {
-                val illust = getIllustInfo(pid = artwork.pid, flush = false)
-                list.add(
+            async {
+                try {
+                    val illust = getIllustInfo(pid = artwork.pid, flush = false)
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
                         message = buildMessageByIllust(illust)
                     )
-                )
-            } catch (e: Throwable) {
-                list.add(
+                } catch (e: Throwable) {
+                    logger.warning({ "BOOM BUILD 错误" }, e)
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = artwork.created.toInt(),
                         message = "[${artwork.pid}]构建失败 ${e.message}".toPlainText()
                     )
-                )
-                logger.warning { "BOOM BUILD 错误 $e" }
+                }
             }
-        }
+        }.awaitAll()
 
         val millis = System.currentTimeMillis() - current
 

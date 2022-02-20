@@ -12,6 +12,7 @@ import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
+import org.hibernate.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
@@ -572,29 +573,30 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
         return listOf(getUgoira().toExternalResource().use { block(0, it) })
     }
 
-    val images = ArrayList<T>()
     val folder = images(pid).apply { mkdirs() }
-    if (pid !in ArtWorkInfo) toArtWorkInfo().replicate()
-    for ((index, url) in getOriginImageUrls().withIndex()) {
-        val file = folder.resolve(url.filename).apply {
-            if (exists().not()) {
-                val bytes = PixivHelperDownloader.download(url)
-                val info = FileInfo(
-                    pid = pid,
-                    index = index,
-                    md5 = bytes.toByteString().md5().hex(),
-                    url = url.toString(),
-                    size = bytes.size
-                )
-                info.replicate()
-                folder.resolve(url.filename).writeBytes(bytes)
+    toArtWorkInfo().replicate(mode = ReplicationMode.OVERWRITE)
+    return supervisorScope {
+        getOriginImageUrls().mapIndexed { index, url ->
+            async {
+                val file = folder.resolve(url.filename).apply {
+                    if (exists().not()) {
+                        val bytes = PixivHelperDownloader.download(url)
+                        val info = FileInfo(
+                            pid = pid,
+                            index = index,
+                            md5 = bytes.toByteString().md5().hex(),
+                            url = url.toString(),
+                            size = bytes.size
+                        )
+                        info.replicate()
+                        folder.resolve(url.filename).writeBytes(bytes)
+                    }
+                }
+
+                file.toExternalResource().use { resource -> block(index, resource) }
             }
         }
-
-        images.add(file.toExternalResource().use { resource -> block(index, resource) })
-    }
-
-    return images
+    }.awaitAll()
 }
 
 internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
