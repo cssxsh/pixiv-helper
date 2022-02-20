@@ -6,7 +6,7 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
 import java.net.*
 
-object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = 32) {
+object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
 
     override val ignore: Ignore get() = PixivDownloadIgnore
 

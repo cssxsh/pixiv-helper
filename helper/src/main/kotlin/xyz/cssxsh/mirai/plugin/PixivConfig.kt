@@ -27,7 +27,9 @@ internal val PIXIV_SKETCH_SOFTBANK = listOf("210.140.175.130", "210.140.174.37",
 
 internal val SAUCENAO_ORIGIN = listOf("45.32.0.237", "chr1.saucenao.com")
 
-internal const val PIXIV_RATE_LIMIT_DELAY = 3 * 60 * 1000L
+internal val PIXIV_RATE_LIMIT_DELAY: Long by lazy {
+    System.getProperty("pixiv.rate.limit.delay")?.toLong() ?: (3 * 60 * 1000L)
+}
 
 internal fun Ignore(client: PixivAuthClient): Ignore = { throwable ->
     when (throwable) {
@@ -61,6 +63,10 @@ internal fun Ignore(client: PixivAuthClient): Ignore = { throwable ->
         }
         else -> false
     }
+}
+
+internal val PIXIV_DOWNLOAD_ASYNC: Int by lazy {
+    System.getProperty("pixiv.download.async")?.toInt() ?: 32
 }
 
 private var PixivDownloadDelayCount = 0
