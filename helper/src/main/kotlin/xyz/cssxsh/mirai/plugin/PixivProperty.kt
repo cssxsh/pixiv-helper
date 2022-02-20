@@ -124,15 +124,6 @@ internal val EroStandard by lazy {
 }
 
 /**
- * Tag指令冷却时间
- * 1. [TAG_COOLING_PROPERTY]
- * 2. [PixivHelperSettings.tagCooling]
- */
-internal val TagCooling by lazy {
-    System.getProperty(TAG_COOLING_PROPERTY)?.toInt() ?: PixivHelperSettings.tagCooling
-}
-
-/**
  * TAG 年龄限制
  * 1. [TAG_SFW_PROPERTY]
  * 2. [PixivHelperSettings.tagSFW]

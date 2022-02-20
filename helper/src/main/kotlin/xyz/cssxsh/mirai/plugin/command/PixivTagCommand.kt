@@ -31,14 +31,9 @@ object PixivTagCommand : SimpleCommand(
 
     private val jobs: MutableSet<String> = HashSet()
 
-    internal val cooling: MutableMap<Long, Long> = HashMap<Long, Long>().withDefault { 0 }
-
     @Handler
     suspend fun CommandSenderOnMessage<*>.tag(word: String, bookmark: Long = 0, fuzzy: Boolean = false) = withHelper {
-        if (cooling.getValue(contact.id) > System.currentTimeMillis()) {
-            val wait = (cooling.getValue(contact.id) - System.currentTimeMillis()) / 1_000
-            return@withHelper "TAG指令冷却中, ${wait}s"
-        }
+        if (word in jobs) return@withHelper "TAG指令缓存中"
         val list = ArtWorkInfo.tag(word = word, marks = bookmark, fuzzy = fuzzy, age = TagAgeLimit, limit = EroChunk)
         logger.verbose { "根据TAG: $word 在缓存中找到${list.size}个作品" }
         val artwork = list.randomOrNull()
@@ -67,7 +62,6 @@ object PixivTagCommand : SimpleCommand(
         record(tag = word, pid = artwork?.pid)
 
         artwork ?: run {
-            cooling[contact.id] = System.currentTimeMillis() + TagCooling
             if (fuzzy) {
                 "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
             } else {

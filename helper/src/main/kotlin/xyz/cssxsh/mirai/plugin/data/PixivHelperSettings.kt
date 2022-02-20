@@ -77,10 +77,6 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
     @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载")
     val blockSize: Int by value(512 * HTTP_KILO)
 
-    @ValueName("tag_cooling")
-    @ValueDescription("tag 指令冷却时间，检索失败时触发，单位毫秒")
-    val tagCooling: Int by value(600_000)
-
     @ValueName("tag_sfw")
     @ValueDescription("tag 是否过滤r18 依旧不会放出图片")
     val tagSFW: Boolean by value(false)
