@@ -41,8 +41,10 @@ object PixivInfoCommand : CompositeCommand(
                 appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}")
                 with(StatisticTagInfo.user(target.id)) {
                     appendLine("使用标签指令次数: $size")
-                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
-                        appendLine("检索最多的是 $tag ${list.size} 次")
+                    val total = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
+                    appendLine("检索前三的是")
+                    for ((tag, list) in total.takeLast(3)) {
+                        appendLine("$tag ${list.size} 次")
                     }
                 }
             }
@@ -57,21 +59,24 @@ object PixivInfoCommand : CompositeCommand(
                 appendLine("群组: ${target.name}")
                 with(StatisticEroInfo.group(target.id)) {
                     appendLine("使用色图指令次数: $size")
+                    appendLine("使用前三的是")
                     groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                        add("使用最多的是 ")
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
                 }
                 with(StatisticTagInfo.group(target.id)) {
                     appendLine("使用标签指令次数: $size")
-                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
-                        add("使用最多的是 ")
+                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }
+                    appendLine("使用前三的是")
+                    for ((id, list) in senders.takeLast(3)) {
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
-                    groupBy { it.tag }.maxByOrNull { it.value.size }?.let { (tag, list) ->
-                        appendLine("检索最多的是 $tag ${list.size} 次")
+                    val tags = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
+                    appendLine("检索前三的是")
+                    for ((tag, list) in tags.takeLast(3)) {
+                        appendLine("$tag ${list.size} 次")
                     }
                 }
             }
