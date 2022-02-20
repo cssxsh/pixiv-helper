@@ -574,24 +574,24 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
 
     val images = ArrayList<T>()
     val folder = images(pid).apply { mkdirs() }
-    val infos = FileInfo[pid]
     if (pid !in ArtWorkInfo) toArtWorkInfo().replicate()
     for ((index, url) in getOriginImageUrls().withIndex()) {
-        val info = infos.find { it.index == index } ?: kotlin.run {
-            val bytes = PixivHelperDownloader.download(url)
-            val info = FileInfo(
-                pid = pid,
-                index = index,
-                md5 = bytes.toByteString().md5().hex(),
-                url = url.toString(),
-                size = bytes.size
-            )
-            info.replicate()
-            folder.resolve(url.filename).writeBytes(bytes)
-            info
+        val file = folder.resolve(url.filename).apply {
+            if (exists().not()) {
+                val bytes = PixivHelperDownloader.download(url)
+                val info = FileInfo(
+                    pid = pid,
+                    index = index,
+                    md5 = bytes.toByteString().md5().hex(),
+                    url = url.toString(),
+                    size = bytes.size
+                )
+                info.replicate()
+                folder.resolve(url.filename).writeBytes(bytes)
+            }
         }
 
-        images.add(PixivImageResource(info).use { resource -> block(index, resource) })
+        images.add(file.toExternalResource().use { resource -> block(index, resource) })
     }
 
     return images
