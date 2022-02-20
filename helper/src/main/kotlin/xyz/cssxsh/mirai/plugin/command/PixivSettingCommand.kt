@@ -47,13 +47,6 @@ object PixivSettingCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("设置cooling置零")
-    suspend fun UserCommandSender.cooling() = withHelper {
-        PixivTagCommand.cooling[contact.id] = 0
-        "当前用户已置零"
-    }
-
-    @SubCommand
     @Description("设置是否显示最大图片数")
     suspend fun UserCommandSender.max(num: Int) = withHelper {
         val old = max

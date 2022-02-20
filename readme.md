@@ -166,7 +166,7 @@ duration 单位分钟，默认3小时
 | `/<setting> <link>`               | 设置是否显示Pixiv Cat 原图链接 |
 | `/<setting> <tag>`                | 设置是否显示TAG INFO       |
 | `/<setting> <attr>`               | 设置是否显示作品属性           |
-| `/<setting> <cooling>`            | 设置cooling置零          |
+| `/<setting> <cooling>`            | ~~设置cooling置零~~ 废除   |
 | `/<setting> <max> [num]`          | 设置显示最大图片数            |
 | `/<setting> <model> [type] [ms]?` | 设置发送模式               |
 
