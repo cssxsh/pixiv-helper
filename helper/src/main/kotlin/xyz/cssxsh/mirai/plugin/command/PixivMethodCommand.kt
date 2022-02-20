@@ -27,7 +27,7 @@ object PixivMethodCommand : CompositeCommand(
                 try {
                     useHttpClient { it.get<InputStream>(url) }.use { it.uploadAsImage(contact) }
                 } catch (e: Throwable) {
-                    logger.warning { "微博二维码下载失败 $e" }
+                    logger.warning({ "微博二维码下载失败" }, e)
                     url.toString().toPlainText()
                 } + " 请扫码登录关联了Pixiv的微博".toPlainText()
             )
