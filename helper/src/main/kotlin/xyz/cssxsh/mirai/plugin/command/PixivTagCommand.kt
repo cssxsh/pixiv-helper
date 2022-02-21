@@ -39,29 +39,26 @@ object PixivTagCommand : SimpleCommand(
         val artwork = list.randomOrNull()
 
         PixivEroCommand += list
-        val tag = "TAG[${word}]"
-        if (list.size < EroChunk && jobs.add(tag)) {
-            addCacheJob(name = tag, reply = false) {
+        if (list.size < EroChunk && jobs.add(word)) {
+            addCacheJob(name = "TAG[${word}]", reply = false) {
                 getSearchTag(tag = word).eros().onCompletion {
-                    jobs.remove(tag)
-                }
-            }
-        }
-
-        if (artwork != null) {
-            val related = "RELATED(${artwork.pid})"
-            if (list.size < EroChunk && jobs.add(related)) {
-                addCacheJob(name = related, reply = false) {
-                    getRelated(pid = artwork.pid).eros().onCompletion {
-                        jobs.remove(related)
-                    }
+                    jobs.remove(word)
                 }
             }
         }
 
         record(tag = word, pid = artwork?.pid)
 
-        artwork ?: run {
+        if (artwork != null) {
+            if (list.size < EroChunk && jobs.add(artwork.pid.toString())) {
+                addCacheJob(name = "RELATED(${artwork.pid})", reply = false) {
+                    getRelated(pid = artwork.pid).eros().onCompletion {
+                        jobs.remove(artwork.pid.toString())
+                    }
+                }
+            }
+            artwork
+        } else {
             if (fuzzy) {
                 "$subject 读取Tag[${word}]色图失败, 标签为PIXIV用户添加的标签, 请尝试日文或英文"
             } else {
