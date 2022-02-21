@@ -13,7 +13,7 @@ import xyz.cssxsh.mirai.plugin.model.*
 
 @MiraiHibernate(loader = PixivHibernateLoader::class)
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.9.2") {
+    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.9.3") {
         name("pixiv-helper")
         author("cssxsh")
 
