@@ -43,7 +43,7 @@ object PixivInfoCommand : CompositeCommand(
                     appendLine("使用标签指令次数: $size")
                     val total = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
                     appendLine("检索前三的是")
-                    for ((tag, list) in total.takeLast(3)) {
+                    for ((tag, list) in total.take(3)) {
                         appendLine("$tag ${list.size} 次")
                     }
                 }
@@ -59,8 +59,9 @@ object PixivInfoCommand : CompositeCommand(
                 appendLine("群组: ${target.name}")
                 with(StatisticEroInfo.group(target.id)) {
                     appendLine("使用色图指令次数: $size")
+                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }
                     appendLine("使用前三的是")
-                    groupBy { it.sender }.maxByOrNull { it.value.size }?.let { (id, list) ->
+                    for ((id, list) in senders.take(3)) {
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
@@ -68,14 +69,14 @@ object PixivInfoCommand : CompositeCommand(
                 with(StatisticTagInfo.group(target.id)) {
                     appendLine("使用标签指令次数: $size")
                     val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }
-                    appendLine("使用前三的是")
-                    for ((id, list) in senders.takeLast(3)) {
+                    appendLine("使用前三的用户是")
+                    for ((id, list) in senders.take(3)) {
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
                     val tags = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
-                    appendLine("检索前三的是")
-                    for ((tag, list) in tags.takeLast(3)) {
+                    appendLine("检索前三的标签是")
+                    for ((tag, list) in tags.take(3)) {
                         appendLine("$tag ${list.size} 次")
                     }
                 }
