@@ -129,7 +129,7 @@ object PixivPlayCommand : CompositeCommand(
                             senderId = sender.id,
                             senderName = sender.nameCardOrNick,
                             time = illust.createAt.toEpochSecond().toInt(),
-                            message = buildMessageByIllust(illust)
+                            message = buildMessageByIllust(illust = illust)
                         )
                     } catch (e: Throwable) {
                         logger.warning({ "播放错误" }, e)
