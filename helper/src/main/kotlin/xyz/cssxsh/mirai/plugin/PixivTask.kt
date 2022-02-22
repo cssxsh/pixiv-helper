@@ -134,10 +134,12 @@ sealed class TimerTask {
 }
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-    val flow = block(name).eros(mark = false).notHistory(task = name)
+    val flow = block(name)
     addCacheJob(name = "TimerTask(${name})", reply = false) { flow }
-    val list = flow.toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
+    val list = flow.eros(mark = false).notHistory(task = name)
+        .toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     if (isActive.not() || list.isEmpty()) return
+    delay(TaskSendInterval * 1000L)
     val nodes = mutableListOf<ForwardMessage.Node>()
     val type = name.substringBefore('(')
 
@@ -187,6 +189,7 @@ private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
         it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo
     }
     if (isActive.not() || list.isEmpty()) return
+    delay(TaskSendInterval * 1000L)
     val nodes = mutableListOf<ForwardMessage.Node>()
     val type = name.substringBefore('(').substringBefore('[')
 
