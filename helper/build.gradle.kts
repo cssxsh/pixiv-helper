@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.9.3"
+version = "1.9.4"
 
 mirai {
     configureShadow {
