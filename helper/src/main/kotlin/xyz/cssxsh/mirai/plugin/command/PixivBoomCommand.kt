@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.plugin.command
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
@@ -31,14 +30,16 @@ object PixivBoomCommand : SimpleCommand(
                 val mode = RankMode.valueOf(word.uppercase())
                 val flow = getRank(mode = mode)
                 addCacheJob(name = "RANK[${mode.name}](new)", reply = false) { flow }
+                val result = ArrayList<ArtWorkInfo>(limit)
 
-                flow.fold(ArrayList(limit)) { result, list ->
+                flow.collect { list ->
                     for (illust in list) {
                         if (result.size >= limit) break
                         result.add(illust.toArtWorkInfo())
                     }
-                    result
                 }
+
+                result
             }
             word.toLongOrNull() != null -> {
                 ArtWorkInfo.user(uid = word.toLong()).shuffled().take(limit)
@@ -66,7 +67,7 @@ object PixivBoomCommand : SimpleCommand(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = illust.createAt.toEpochSecond().toInt(),
-                        message = buildMessageByIllust(illust)
+                        message = buildMessageByIllust(illust = illust)
                     )
                 } catch (e: Throwable) {
                     logger.warning({ "BOOM BUILD 错误" }, e)
