@@ -12,7 +12,6 @@ import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okio.ByteString.Companion.toByteString
-import org.hibernate.*
 import xyz.cssxsh.mirai.plugin.data.*
 import xyz.cssxsh.mirai.plugin.model.*
 import xyz.cssxsh.pixiv.*
@@ -574,7 +573,6 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
     }
 
     val folder = images(pid).apply { mkdirs() }
-    toArtWorkInfo().replicate(mode = ReplicationMode.OVERWRITE)
     return supervisorScope {
         getOriginImageUrls().mapIndexed { index, url ->
             async {
