@@ -32,7 +32,7 @@ internal fun List<NaviRankRecord>.cached() = ArtWorkInfo.list(map { it.pid })
 
 internal fun UserPreview.isLoaded(): Boolean = illusts.all { it.pid in ArtWorkInfo }
 
-internal suspend fun getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
+internal fun getRank(mode: RankMode, date: LocalDate? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         PixivAuthClient().runCatching {
@@ -47,7 +47,7 @@ internal suspend fun getRank(mode: RankMode, date: LocalDate? = null, limit: Lon
     }
 }
 
-internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = flow {
+internal fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
@@ -62,7 +62,7 @@ internal suspend fun PixivHelper.getFollowIllusts(limit: Long = FOLLOW_LIMIT) = 
     }
 }
 
-internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
+internal fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
@@ -77,7 +77,7 @@ internal suspend fun PixivHelper.getRecommended(limit: Long = RECOMMENDED_LIMIT)
     }
 }
 
-internal suspend fun getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
+internal fun getBookmarks(uid: Long, tag: String? = null, limit: Long = LOAD_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).fold<Long, String?>(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
         if (active().not() || url == null) return@flow
         PixivAuthClient().runCatching {
@@ -98,7 +98,7 @@ internal suspend fun getBookmarksRandom(detail: UserDetail, tag: String? = null)
     }
 }
 
-internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
+internal fun getUserIllusts(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalArtwork) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         PixivAuthClient().runCatching {
@@ -112,7 +112,7 @@ internal suspend fun getUserIllusts(detail: UserDetail, limit: Long? = null) = f
     }
 }
 
-internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
+internal fun getUserFollowingPreview(detail: UserDetail, limit: Long? = null) = flow {
     (0 until (limit ?: detail.profile.totalFollowUsers) step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         PixivAuthClient().runCatching {
@@ -126,10 +126,10 @@ internal suspend fun getUserFollowingPreview(detail: UserDetail, limit: Long? = 
     }
 }
 
-internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<List<IllustInfo>> {
+internal fun getUserFollowing(detail: UserDetail, flush: Boolean) = flow {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师需要缓存" }
     var index = 0
-    return getUserFollowingPreview(detail = detail).transform { list ->
+    getUserFollowingPreview(detail = detail).collect { list ->
         for (preview in list) {
             index++
             if (active().not()) break
@@ -153,10 +153,10 @@ internal suspend fun getUserFollowing(detail: UserDetail, flush: Boolean): Flow<
     }
 }
 
-internal suspend fun getUserFollowingMark(detail: UserDetail, jump: Int = 0): Flow<List<IllustInfo>> {
+internal fun getUserFollowingMark(detail: UserDetail, jump: Int = 0) = flow {
     logger.verbose { "关注中共${detail.profile.totalFollowUsers}个画师收藏需要缓存" }
     var index = 0
-    return getUserFollowingPreview(detail = detail).transform { previews ->
+    getUserFollowingPreview(detail = detail).collect { previews ->
         for (preview in previews) {
             index++
             if (active().not()) break
@@ -176,7 +176,7 @@ internal suspend fun getUserFollowingMark(detail: UserDetail, jump: Int = 0): Fl
     }
 }
 
-internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_LIMIT) = flow {
+internal fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
@@ -193,7 +193,7 @@ internal suspend fun PixivHelper.getBookmarkTagInfos(limit: Long = BOOKMARK_TAG_
 
 internal val DELETE_REGEX = """該当作品は削除されたか|作品已删除或者被限制|该作品已被删除，或作品ID不存在。""".toRegex()
 
-internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
+internal fun getListIllusts(set: Set<Long>, flush: Boolean = false) = flow {
     val list = mutableListOf<IllustInfo>()
     for (pid in set) {
         if (active().not()) break
@@ -214,7 +214,7 @@ internal suspend fun getListIllusts(set: Set<Long>, flush: Boolean = false) = fl
     if (list.isNotEmpty()) emit(list)
 }
 
-internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
+internal fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: Boolean = true) = flow {
     val list = mutableListOf<IllustInfo>()
     for (item in info) {
         if (active().not()) break
@@ -237,7 +237,7 @@ internal suspend fun getListIllusts(info: Collection<SimpleArtworkInfo>, check: 
     if (list.isNotEmpty()) emit(list)
 }
 
-internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
+internal fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow {
     val records = HashSet<Long>()
     for ((alias, uid) in list) {
         if (active().not()) break
@@ -255,7 +255,7 @@ internal suspend fun getAliasUserIllusts(list: Collection<AliasSetting>) = flow 
     }
 }
 
-internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
+internal fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_LIMIT) = flow {
     val word = tag.split(delimiters = TAG_DELIMITERS).joinToString(" ")
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
@@ -271,7 +271,7 @@ internal suspend fun PixivHelper.getSearchTag(tag: String, limit: Long = SEARCH_
     }
 }
 
-internal suspend fun PixivHelper.getRelated(pid: Long, limit: Long = RELATED_LIMIT) = flow {
+internal fun PixivHelper.getRelated(pid: Long, limit: Long = RELATED_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
@@ -295,7 +295,7 @@ private fun months(year: Year?) = buildList {
     }
 }
 
-internal suspend fun getNaviRank(list: List<YearMonth>) = flow {
+internal fun getNaviRank(list: List<YearMonth>) = flow {
     for (month in list) {
         if (active().not()) break
         NaviRank.runCatching {
@@ -310,7 +310,7 @@ internal suspend fun getNaviRank(list: List<YearMonth>) = flow {
     }
 }
 
-internal suspend fun getNaviRank(year: Year?) = getNaviRank(list = months(year = year))
+internal fun getNaviRank(year: Year?) = getNaviRank(list = months(year = year))
 
 internal suspend fun getArticle(article: SpotlightArticle) = getListIllusts(
     info = Pixivision.getArticle(aid = article.aid).illusts
@@ -323,7 +323,7 @@ internal suspend fun PixivHelper.randomArticles(limit: Long = ARTICLE_LIMIT): Li
     }
 }
 
-internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
+internal fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
     for (page in 0 until times) {
         if (active().not()) break
         runCatching {
@@ -337,7 +337,7 @@ internal suspend fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
     }
 }
 
-internal suspend fun PixivHelper.getSearchUser(name: String, limit: Long = SEARCH_LIMIT) = flow {
+internal fun PixivHelper.getSearchUser(name: String, limit: Long = SEARCH_LIMIT) = flow {
     (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
         if (active().not()) return@flow
         runCatching {
@@ -357,7 +357,7 @@ internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
     return result.mapTo(HashSet()) { it.value.toLong() }
 }
 
-internal suspend fun PixivHelper.getTrending(times: Int = 1) = flow {
+internal fun PixivHelper.getTrending(times: Int = 1) = flow {
     for (page in 0 until times) {
         if (active().not()) break
         runCatching {
@@ -371,7 +371,7 @@ internal suspend fun PixivHelper.getTrending(times: Int = 1) = flow {
     }
 }
 
-internal suspend fun getCacheUser(records: List<StatisticUserInfo>) = flow {
+internal fun getCacheUser(records: List<StatisticUserInfo>) = flow {
     logger.info { "CacheUser有${records.size}个用户尝试缓存" }
 
     for ((index, record) in records.withIndex()) {
