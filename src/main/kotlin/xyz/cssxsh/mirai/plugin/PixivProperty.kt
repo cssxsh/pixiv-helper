@@ -7,7 +7,7 @@ import java.io.*
 
 // region PROPERTY
 
-internal const val LOGGER_PROPERTY = "xyz.cssxsh.mirai.plugin.logger"
+internal const val LOGGER_PROPERTY = "getLogger"
 
 internal const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
 
