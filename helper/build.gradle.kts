@@ -1,8 +1,9 @@
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.serialization")
-    kotlin("plugin.jpa")
-    id("net.mamoe.mirai-console")
+    kotlin("jvm") version "1.6.0"
+    kotlin("plugin.serialization") version "1.6.0"
+    kotlin("plugin.jpa") version "1.6.0"
+
+    id("net.mamoe.mirai-console") version "2.10.0"
 }
 
 group = "xyz.cssxsh.mirai.plugin"
@@ -23,7 +24,7 @@ repositories {
 
 dependencies {
     implementation("org.jsoup:jsoup:1.14.3")
-    implementation(project(":client")) {
+    implementation("xyz.cssxsh.pixiv:pixiv-client:1.0.0") {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
