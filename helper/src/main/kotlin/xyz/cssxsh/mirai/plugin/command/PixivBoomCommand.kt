@@ -29,10 +29,10 @@ object PixivBoomCommand : SimpleCommand(
             RankMode.values().any { it.name == word.uppercase() } -> {
                 val mode = RankMode.valueOf(word.uppercase())
                 val flow = getRank(mode = mode)
-                addCacheJob(name = "RANK[${mode.name}](new)", reply = false) { flow }
                 val result = ArrayList<ArtWorkInfo>(limit)
 
                 flow.collect { list ->
+                    list.write().replicate()
                     for (illust in list) {
                         if (result.size >= limit) break
                         result.add(illust.toArtWorkInfo())

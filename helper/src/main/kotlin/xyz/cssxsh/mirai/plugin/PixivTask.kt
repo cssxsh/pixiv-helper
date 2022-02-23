@@ -135,8 +135,7 @@ sealed class TimerTask {
 
 private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
     val flow = block(name)
-    addCacheJob(name = "TimerTask(${name})", reply = false, write = true) { flow }
-    val list = flow.eros(mark = false).notHistory(task = name).onEach { it.replicate() }
+    val list = flow.eros(mark = false).notHistory(task = name).onEach { it.write().replicate() }
         .toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
     if (isActive.not() || list.isEmpty()) return
     delay(TaskSendInterval * 1000L)
@@ -185,7 +184,7 @@ private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
 private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
     val flow = getTrending(times)
     addCacheJob(name = "TimerTask(${name})", reply = false, write = true) { flow.map { it.map(TrendIllust::illust) } }
-    val list = flow.onEach { it.map(TrendIllust::illust).replicate() }.toList().flatten().filter {
+    val list = flow.onEach { it.map(TrendIllust::illust).write().replicate() }.toList().flatten().filter {
         it.illust.isEro(false) && (name to it.illust.pid) !in StatisticTaskInfo
     }
     if (isActive.not() || list.isEmpty()) return
