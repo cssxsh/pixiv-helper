@@ -120,7 +120,10 @@ object ImageSearcher : HtmlParser(name = "Search") {
                 "i.pximg.net" in source || "www.pixiv.net" in source -> {
                     PixivSearchResult(
                         similarity = it.info.similarity / 100,
-                        pid = source.substringAfterLast("/").substringAfterLast("=").toLong(),
+                        pid = source.substringAfterLast("/")
+                            .substringAfterLast("=")
+                            .substringBeforeLast('_')
+                            .toLong(),
                         title = it.info.indexName,
                         uid = 0,
                         name = ""
