@@ -6,7 +6,7 @@
 
 [![Release](https://img.shields.io/github/v/release/cssxsh/pixiv-helper)](https://github.com/cssxsh/pixiv-helper/releases)
 ![Downloads](https://img.shields.io/github/downloads/cssxsh/pixiv-helper/total)
-[![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-yellow)](https://mirai.mamoe.net/topic/289)
+[![MiraiForum](https://img.shields.io/badge/post-on%20MiraiForum-ff69b4)](https://mirai.mamoe.net/topic/289)
 
 **使用前应该查阅的相关文档或项目**
 
