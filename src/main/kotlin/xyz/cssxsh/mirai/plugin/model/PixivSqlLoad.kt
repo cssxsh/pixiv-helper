@@ -349,9 +349,10 @@ internal fun Collection<IllustInfo>.replicate() {
         session.transaction.begin()
         try {
             val users = HashMap<Long, UserBaseInfo>()
+            val record = HashSet<Long>()
 
             for (info in this@replicate) {
-                if (info.pid == 0L) continue
+                if (info.pid == 0L || info.pid in record) continue
                 val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
                 val artwork = info.toArtWorkInfo(author)
                 artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
@@ -361,7 +362,11 @@ internal fun Collection<IllustInfo>.replicate() {
             logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
         } catch (cause: Throwable) {
             session.transaction.rollback()
-            logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, cause)
+            if (size <= PAGE_SIZE) {
+                logger.warning({ "作品{${joinToString()}[${size}]信息记录失败" }, cause)
+            } else {
+                logger.warning({ "作品{${first().pid..last().pid}}[${size}]信息记录失败" }, cause)
+            }
             throw cause
         }
     }
