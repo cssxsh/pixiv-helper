@@ -132,7 +132,7 @@ object PixivCacheCommand : CompositeCommand(
         val detail = userDetail(uid = uid ?: info().user.uid)
 
         addCacheJob(name = "FOLLOW_MARKS(${detail.user.id})", write = false, reply = reply) { name ->
-            getUserFollowingMark(detail = detail, jump = jump).eros().sendOnCompletion { total ->
+            getUserFollowingMark(detail = detail, jump = jump).sendOnCompletion { total ->
                 "${name}处理完成, 共${total}"
             }
         }
@@ -256,6 +256,20 @@ object PixivCacheCommand : CompositeCommand(
             }
         }
         "开始加载${records.size}个缓存用户"
+    }
+
+    @SubCommand("cms")
+    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
+    suspend fun UserCommandSender.countWithMarks(range: LongRange = PAGE_SIZE..Int.MAX_VALUE) = withHelper {
+        val records = StatisticUserInfo.list(range = range)
+
+        addCacheJob(name = "USER_ERO_COUNT_MARKS", write = false, reply = reply) { name ->
+            getCacheUserMarks(records = records).sendOnCompletion { total ->
+                "${name}处理完成, 共${total}"
+            }
+        }
+
+        "开始加载${records.size}个缓存用户的收藏"
     }
 
     @SubCommand

@@ -372,8 +372,6 @@ internal fun PixivHelper.getTrending(times: Int = 1) = flow {
 }
 
 internal fun getCacheUser(records: List<StatisticUserInfo>) = flow {
-    logger.info { "CacheUser有${records.size}个用户尝试缓存" }
-
     for ((index, record) in records.withIndex()) {
         if (active().not()) break
         try {
@@ -383,6 +381,21 @@ internal fun getCacheUser(records: List<StatisticUserInfo>) = flow {
                 logger.info { "${index}.USER(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
                 emitAll(getUserIllusts(detail = author))
             }
+        } catch (cause: Throwable) {
+            logger.warning({ "${index}.${record}加载失败" }, cause)
+        }
+    }
+}
+
+internal fun getCacheUserMarks(records: List<StatisticUserInfo>) = flow {
+    for ((index, record) in records.withIndex()) {
+        if (active().not()) break
+        try {
+            val author = PixivAuthClient().userDetail(uid = record.uid).apply { twitter() }
+            val total = author.profile.totalIllustBookmarksPublic
+            logger.info { "${index}.USER_MARKS(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
+            emitAll(getBookmarks(uid = author.user.id))
+            delay(total.coerceAtLeast(15_000))
         } catch (cause: Throwable) {
             logger.warning({ "${index}.${record}加载失败" }, cause)
         }
