@@ -62,11 +62,10 @@ class PixivHelper(val contact: Contact) : PixivAuthClient(), PixivWebClient {
                 supervisorScope {
                     cacheChannel.consumeAsFlow().save().download(CacheJump).await(CacheCapacity)
                 }
+            } catch (_: CancellationException) {
+                //
             } catch (cause: Throwable) {
-                if ("Job was cancelled" !in cause.message.orEmpty()) {
-                    // ...
-                    logger.warning { "PixivHelper:${contact}#CacheTask $cause" }
-                }
+                logger.warning({ "PixivHelper:${contact}#CacheTask" }, cause)
             }
             cacheChannel = Channel(Channel.BUFFERED)
         }
