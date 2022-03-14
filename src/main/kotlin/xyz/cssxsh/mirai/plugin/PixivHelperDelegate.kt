@@ -156,11 +156,7 @@ object ModelDelegate : ReadWriteProperty<PixivHelper, SendModel> {
 
 private val helpers = HashMap<Contact, PixivHelper>()
 
-private var iterator = emptyList<PixivAuthClient>().iterator()
-    get() {
-        if (!field.hasNext()) field = abilities.iterator()
-        return field
-    }
+private val iterator: Iterator<PixivAuthClient> = iterator { while (abilities.isNotEmpty()) yieldAll(abilities) }
 
 internal val abilities get() = helpers.values.distinctBy { it.uid }.filter { it.uid != null }
 
