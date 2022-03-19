@@ -85,6 +85,8 @@ class PixivHelper(val contact: Contact) : PixivAuthClient(), PixivWebClient {
                         val downloads = failure.write().filter { it.isEro() }.sortedBy { it.pid }
                         this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
                     }
+                } catch (_: javax.persistence.PersistenceException) {
+                    //
                 } catch (e: Throwable) {
                     logger.warning({ "预加载任务<${name}>失败" }, e)
                 }
