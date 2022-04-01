@@ -93,7 +93,8 @@ object PixivTaskCommand : CompositeCommand(
 
     @SubCommand
     @Description("定时任务，删除")
-    suspend fun CommandSender.delete(name: String) {
+    suspend fun CommandSender.delete(vararg args: String) {
+        val name = args.joinToString(separator = " ")
         val message = try {
             PixivHelperScheduler.removeTimerTask(name)
             "定时任务${name}已删除"
