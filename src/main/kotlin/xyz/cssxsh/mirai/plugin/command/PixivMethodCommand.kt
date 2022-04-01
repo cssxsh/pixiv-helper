@@ -67,7 +67,7 @@ object PixivMethodCommand : CompositeCommand(
         }
 
         val result = useRemoteWebDriver(config) { driver ->
-            selenium(driver = driver)
+            selenium(driver = driver, timeout = 900_000)
         }
 
         "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"

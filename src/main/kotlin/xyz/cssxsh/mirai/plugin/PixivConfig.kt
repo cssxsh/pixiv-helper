@@ -143,15 +143,16 @@ internal fun initConfiguration(scope: CoroutineScope) {
     ImageSearcher.key = ImageSearchConfig.key
 
     with(PixivGifConfig) {
-        if (quantizer !in QUANTIZER_LIST) {
-            logger.warning { "PixivGifConfig.quantizer 非原生" }
-        } else {
-            if ("com.squareup.gifencoder.OctTreeQuantizer" != quantizer) {
+        when {
+            quantizer !in QUANTIZER_LIST -> {
+                logger.warning { "PixivGifConfig.quantizer 非原生" }
+            }
+            "com.squareup.gifencoder.OctTreeQuantizer" != quantizer -> {
                 logger.info { "目前GIF合成只有靠CPU算力，推荐使用 OctTreeQuantizer " }
-            } else if ("xyz.cssxsh.pixiv.tool.OpenCVQuantizer" == quantizer) {
-                System.setProperty(OpenCVQuantizer.MAX_COUNT, "$maxCount")
             }
         }
+        @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+        System.setProperty(OpenCVQuantizer.MAX_COUNT, maxCount.toString())
         if (ditherer !in DITHERER_LIST) {
             logger.warning { "PixivGifConfig.ditherer 非原生" }
         }
