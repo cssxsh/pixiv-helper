@@ -1,12 +1,18 @@
 package xyz.cssxsh.mirai.plugin.model
 
+import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*
 import xyz.cssxsh.hibernate.*
 import xyz.cssxsh.mirai.plugin.*
 import java.io.*
 import java.sql.*
 
-object PixivHibernateConfiguration : Configuration() {
+object PixivHibernateConfiguration :
+    Configuration(
+        BootstrapServiceRegistryBuilder()
+            .applyClassLoader(PixivHelperPlugin::class.java.classLoader)
+            .build()
+    ) {
 
     init {
         setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
