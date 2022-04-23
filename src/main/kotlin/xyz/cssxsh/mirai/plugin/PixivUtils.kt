@@ -601,7 +601,11 @@ internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
     val json = ugoira(pid)
     val metadata = json.takeIf { it.exists() }?.readUgoiraMetadata()
         ?: PixivAuthClient().ugoiraMetadata(pid).ugoira.also { it.write(json) }
-    return PixivHelperGifEncoder.build(illust = this, metadata = metadata, flush = flush)
+    return try {
+        PixivSkikoGifEncoder.build(illust = this, metadata = metadata, flush = flush)
+    } catch (cause: Throwable) {
+        PixivHelperGifEncoder.build(illust = this, metadata = metadata, flush = flush)
+    }
 }
 
 internal suspend fun SpotlightArticle.getThumbnailImage(): File {

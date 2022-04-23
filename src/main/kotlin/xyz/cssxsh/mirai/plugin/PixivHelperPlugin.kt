@@ -20,6 +20,7 @@ object PixivHelperPlugin : KotlinPlugin(
         dependsOn("io.github.gnuf0rce.file-sync", true)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", false)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-selenium-plugin", true)
+        dependsOn("xyz.cssxsh.mirai.plugin.mirai-skia-plugin", true)
     }
 ) {
 

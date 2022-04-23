@@ -12,6 +12,7 @@ version = "1.9.5"
 repositories {
     mavenLocal()
     mavenCentral()
+    maven(url = "https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
@@ -30,11 +31,13 @@ dependencies {
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.6")
     compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.7")
     compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.8")
+    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.0.4-M1")
 
     testImplementation(kotlin("test", "1.6.0"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.0.7")
     testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.8")
+    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.0.4-M1")
 }
 
 kotlin {
