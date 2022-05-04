@@ -15,7 +15,7 @@ data class EditThisCookie(
     @SerialName("httpOnly")
     val httpOnly: Boolean,
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
     @SerialName("name")
     val name: String,
     @SerialName("path")

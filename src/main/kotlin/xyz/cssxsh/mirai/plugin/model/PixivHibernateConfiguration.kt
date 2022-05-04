@@ -15,7 +15,7 @@ object PixivHibernateConfiguration :
     ) {
 
     init {
-        setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
+        setProperty("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider")
         setProperty("hibernate.connection.isolation", "${Connection.TRANSACTION_READ_UNCOMMITTED}")
         load()
     }
@@ -34,7 +34,7 @@ object PixivHibernateConfiguration :
                 hibernate.connection.url=jdbc:sqlite:${PixivHelperPlugin.resolveDataPath("hibernate.sqlite").toUri()}
                 hibernate.connection.driver_class=org.sqlite.JDBC
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
-                hibernate.connection.provider_class=org.hibernate.connection.C3P0ConnectionProvider
+                hibernate.connection.provider_class=org.hibernate.hikaricp.internal.HikariCPConnectionProvider
                 hibernate.connection.isolation=${Connection.TRANSACTION_READ_UNCOMMITTED}
                 hibernate.hbm2ddl.auto=update
                 hibernate-connection-autocommit=${true}
@@ -52,6 +52,10 @@ object PixivHibernateConfiguration :
                 // SQLite 是单文件数据库，最好只有一个连接
                 setProperty("hibernate.c3p0.min_size", "${1}")
                 setProperty("hibernate.c3p0.max_size", "${1}")
+                setProperty("hibernate.c3p0.timeout", "${30000}")
+                setProperty("hibernate.hikari.minimumIdle", "${1}")
+                setProperty("hibernate.hikari.maximumPoolSize", "${1}")
+                setProperty("hibernate.hikari.connectionTimeout", "${30000}")
                 // 设置 rand 别名
                 addRandFunction()
             }
