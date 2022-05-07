@@ -61,6 +61,7 @@ object PixivHibernateConfiguration :
                     "hibernate.hikari.connectionTimeout",
                     System.getProperty("hibernate.hikari.connectionTimeout", "${60_000}")
                 )
+                setProperty("hibernate.hbm2ddl.auto", "none")
                 // 设置 rand 别名
                 addRandFunction()
             }
