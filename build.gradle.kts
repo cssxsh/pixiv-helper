@@ -30,13 +30,13 @@ dependencies {
     compileOnly("net.mamoe:mirai-core-utils:2.10.2")
     compileOnly("io.github.gnuf0rce:netdisk-filesync-plugin:1.2.6")
     compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.1.0")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.8")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.9")
     compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.0.4-M2")
 
     testImplementation(kotlin("test", "1.6.0"))
     testImplementation("net.mamoe.yamlkt:yamlkt:0.10.2")
     testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.1.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.8")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.0.9")
     testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.0.4-M2")
 }
 
