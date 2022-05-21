@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.plugin.model
 
+import kotlinx.serialization.builtins.*
+import kotlinx.serialization.json.*
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
 import org.hibernate.cfg.*
@@ -486,7 +488,7 @@ internal fun Collection<IllustInfo>.replicate() {
             val record = HashSet<Long>()
 
             for (info in this@replicate) {
-                if (info.user.id == 0L || !record.add(info.pid)) continue
+                if (info.user.account.isEmpty() || !record.add(info.pid)) continue
                 val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
                 val artwork = info.toArtWorkInfo(author)
                 artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
@@ -497,6 +499,12 @@ internal fun Collection<IllustInfo>.replicate() {
         } catch (cause: Throwable) {
             session.transaction.rollback()
             logger.warning({ "作品{${map { it.pid }}[${size}]信息记录失败" }, cause)
+            try {
+                File("replicate.error.${System.currentTimeMillis()}.json")
+                    .writeText(Json.encodeToString(ListSerializer(IllustInfo.serializer()), toList()))
+            } catch (_: Throwable) {
+                //
+            }
             throw cause
         }
     }
