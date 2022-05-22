@@ -3,6 +3,7 @@ package xyz.cssxsh.mirai.pixiv.command
 import io.ktor.client.request.*
 import kotlinx.serialization.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.*
@@ -47,7 +48,12 @@ object PixivMethodCommand : CompositeCommand(
             PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).map { it.toCookie() }
         }
 
-        "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
+        if (contact is Group) {
+            user.sendMessage("登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}")
+            "登陆成功"
+        } else {
+            "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
+        }
     }
 
     @SubCommand
@@ -69,8 +75,12 @@ object PixivMethodCommand : CompositeCommand(
         val result = useRemoteWebDriver(config) { driver ->
             selenium(driver = driver, timeout = 900_000)
         }
-
-        "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
+        if (contact is Group) {
+            user.sendMessage("登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}")
+            "登陆成功"
+        } else {
+            "登陆成功，请妥善保管 RefreshToken: ${result.refreshToken}"
+        }
     }
 
     @SubCommand
