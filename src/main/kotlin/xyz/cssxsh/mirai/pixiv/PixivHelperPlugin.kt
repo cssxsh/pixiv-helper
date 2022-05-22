@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.pixiv
 
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
@@ -11,12 +11,12 @@ import xyz.cssxsh.mirai.pixiv.command.*
 import xyz.cssxsh.mirai.pixiv.data.*
 
 object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.9.7") {
+    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.10.0-M1") {
         name("pixiv-helper")
         author("cssxsh")
 
-        dependsOn("io.github.gnuf0rce.file-sync", true)
-        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", false)
+        dependsOn("io.github.gnuf0rce.file-sync", ">= 1.3.0", true)
+        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.2.0", false)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-selenium-plugin", true)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-skia-plugin", true)
     }

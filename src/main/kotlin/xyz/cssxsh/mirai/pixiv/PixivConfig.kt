@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
-import io.github.gnuf0rce.mirai.*
+import io.github.gnuf0rce.mirai.netdisk.*
 import io.ktor.client.features.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
