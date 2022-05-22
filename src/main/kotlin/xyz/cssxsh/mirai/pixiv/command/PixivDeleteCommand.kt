@@ -17,16 +17,10 @@ object PixivDeleteCommand : CompositeCommand(
 
     private fun delete(artwork: ArtWorkInfo): Boolean {
         if (artwork.type == WorkContentType.UGOIRA.ordinal) {
-            for (name in listOf("${artwork.pid}.gif", "${artwork.pid}_ugoira1920x1080.zip")) {
-                val source = UgoiraImagesFolder.resolve(name)
-                if (source.exists()) {
-                    val dest = OtherImagesFolder.resolve(name)
-                    source.renameTo(dest)
-                }
-            }
+            UgoiraImagesFolder.resolve("${artwork.pid}.gif").delete()
         }
         return images(artwork.pid)
-            .listFiles { file -> file.isFile && file.extension != "json" }
+            .listFiles { file -> file.isFile }
             ?.all { it.delete() } ?: false
     }
 
