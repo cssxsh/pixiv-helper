@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "1.10.0-M1"
+version = "1.10.0-M2"
 
 repositories {
     mavenLocal()
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     implementation("org.jsoup:jsoup:1.14.3")
-    implementation("xyz.cssxsh.pixiv:pixiv-client:1.0.2") {
+    implementation("xyz.cssxsh.pixiv:pixiv-client:1.1.0") {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")

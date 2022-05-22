@@ -1,4 +1,4 @@
-package xyz.cssxsh.mirai.plugin
+package xyz.cssxsh.mirai.pixiv
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
@@ -50,6 +50,7 @@ sealed class TimerTask {
     open val user: Long get() = 12345
 
     @Serializable
+    @SerialName("User")
     data class User(
         @SerialName("interval")
         @Contextual
@@ -61,6 +62,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Rank")
     data class Rank(
         @SerialName("mode")
         val mode: RankMode,
@@ -72,6 +74,7 @@ sealed class TimerTask {
     }
 
     @Serializable
+    @SerialName("Follow")
     data class Follow(
         @SerialName("interval")
         override val interval: Long,
@@ -80,6 +83,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Recommended")
     data class Recommended(
         @SerialName("interval")
         override val interval: Long,
@@ -88,6 +92,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Backup")
     data class Backup(
         @SerialName("interval")
         override val interval: Long,
@@ -98,6 +103,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Web")
     data class Web(
         @SerialName("interval")
         override val interval: Long,
@@ -110,6 +116,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Trending")
     data class Trending(
         @SerialName("interval")
         override val interval: Long,
@@ -120,6 +127,7 @@ sealed class TimerTask {
     ) : TimerTask()
 
     @Serializable
+    @SerialName("Cache")
     data class Cache(
         @SerialName("delegate")
         override val subject: Long,
