@@ -338,4 +338,4 @@ hibernate.connection.show_sql=false
 hibernate.autoReconnect=true
 ```
 
-关于表的自动创建可以查看 [model](helper/src/main/resources/xyz/cssxsh/mirai/plugin/model)  
+关于表的自动创建可以查看 [model](/src/main/resources/xyz/cssxsh/mirai/pixiv/model)  
