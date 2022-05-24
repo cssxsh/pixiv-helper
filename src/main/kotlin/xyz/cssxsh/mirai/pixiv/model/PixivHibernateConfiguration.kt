@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import net.mamoe.mirai.utils.*
 import org.hibernate.boot.registry.*
 import org.hibernate.cfg.*
 import xyz.cssxsh.hibernate.*
@@ -46,6 +47,13 @@ object PixivHibernateConfiguration :
         PixivEntity::class.sealedSubclasses.forEach { addAnnotatedClass(it.java) }
         configuration.apply { if (exists().not()) writeText(default) }.reader().use(properties::load)
         val url = requireNotNull(getProperty("hibernate.connection.url")) { "hibernate.connection.url cannot is null" }
+        if (getProperty("hibernate.connection.url") == "org.hibernate.connection.C3P0ConnectionProvider") {
+            setProperty(
+                "hibernate.connection.provider_class",
+                "org.hibernate.hikaricp.internal.HikariCPConnectionProvider"
+            )
+            logger.warning { "已经自动将 C3P0ConnectionProvider 替换为 HikariCPConnectionProvider" }
+        }
         when {
             url.startsWith("jdbc:sqlite") -> {
                 // SQLite 是单文件数据库，最好只有一个连接
