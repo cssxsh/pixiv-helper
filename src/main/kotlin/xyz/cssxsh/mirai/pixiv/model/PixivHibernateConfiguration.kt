@@ -47,7 +47,7 @@ object PixivHibernateConfiguration :
         PixivEntity::class.sealedSubclasses.forEach { addAnnotatedClass(it.java) }
         configuration.apply { if (exists().not()) writeText(default) }.reader().use(properties::load)
         val url = requireNotNull(getProperty("hibernate.connection.url")) { "hibernate.connection.url cannot is null" }
-        if (getProperty("hibernate.connection.url") == "org.hibernate.connection.C3P0ConnectionProvider") {
+        if (getProperty("hibernate.connection.provider_class") == "org.hibernate.connection.C3P0ConnectionProvider") {
             setProperty(
                 "hibernate.connection.provider_class",
                 "org.hibernate.hikaricp.internal.HikariCPConnectionProvider"
