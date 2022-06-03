@@ -1,8 +1,7 @@
 package xyz.cssxsh.mirai.pixiv.data
 
+import kotlinx.serialization.modules.*
 import net.mamoe.mirai.console.data.*
-import net.mamoe.mirai.console.data.SerializableValue.Companion.serializableValueWith
-import net.mamoe.mirai.console.internal.data.*
 import net.mamoe.mirai.console.plugin.jvm.*
 import net.mamoe.mirai.console.util.*
 import xyz.cssxsh.mirai.pixiv.*
@@ -10,6 +9,11 @@ import xyz.cssxsh.pixiv.*
 import java.io.File
 
 object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivHelperConfig, EroStandardConfig {
+    override val serializersModule: SerializersModule = SerializersModule {
+        contextual(RegexSerializer)
+        contextual(WorkContentType)
+    }
+
     @ValueName("cache_path")
     @ValueDescription("缓存目录")
     private val cachePath: String by value(System.getenv("PIXIV_CACHE").orEmpty())
@@ -32,10 +36,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
-    private val types0: Set<String> by value(setOf(WorkContentType.ILLUST.name))
-    override val types: Set<WorkContentType> by lazy {
-        types0.mapTo(HashSet()) { WorkContentType.valueOf(it.uppercase()) }
-    }
+    override val types: Set<WorkContentType> by value(setOf(WorkContentType.ILLUST))
 
     @ValueName("ero_bookmarks")
     @ValueDescription("涩图标准 收藏")
@@ -47,10 +48,7 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
 
     @ValueName("ero_tag_exclude")
     @ValueDescription("涩图标准 排除的正则表达式")
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-    override val tagExclude: Regex by LazyReferenceValueImpl<Regex>()
-        .serializableValueWith(Regex.serializer())
-        .apply { value = ERO_TAG_EXCLUDE }
+    override val tagExclude: Regex by value(ERO_TAG_EXCLUDE)
 
     @ValueName("ero_user_exclude")
     @ValueDescription("涩图标准 排除的UID")
