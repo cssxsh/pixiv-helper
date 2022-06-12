@@ -7,8 +7,6 @@ import java.io.*
 
 // region PROPERTY
 
-internal const val LOGGER_PROPERTY = "getLogger"
-
 internal const val CACHE_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache"
 
 internal const val BACKUP_FOLDER_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.backup"
@@ -48,12 +46,14 @@ internal const val UPLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.upload"
 // endregion
 
 /**
- * 1. [LOGGER_PROPERTY]
- * 2. [PixivHelperPlugin.logger]
+ * 1. [PixivHelperPlugin.logger]
  */
 internal val logger by lazy {
-    val open = System.getProperty(LOGGER_PROPERTY, "${true}").toBoolean()
-    if (open) PixivHelperPlugin.logger else SilentLogger
+    try {
+        PixivHelperPlugin.logger
+    } catch (_: Throwable) {
+        MiraiLogger.Factory.create(SimplePixivClient::class)
+    }
 }
 
 /**
