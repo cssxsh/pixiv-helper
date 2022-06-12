@@ -5,26 +5,26 @@ import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.encoding.*
 
 @Serializable(SendModel.Companion::class)
-sealed class SendModel {
+public sealed class SendModel {
     override fun toString(): String = this::class.simpleName!!
 
-    object Normal : SendModel()
-    object Flash : SendModel()
-    data class Recall(val ms: Long) : SendModel()
-    object Forward : SendModel()
+    public object Normal : SendModel()
+    public object Flash : SendModel()
+    public data class Recall(val ms: Long) : SendModel()
+    public object Forward : SendModel()
 
     @Serializable
-    data class Info(
+    public data class Info(
         val type: String,
         val ms: Long = 60_000L
     )
 
-    companion object : KSerializer<SendModel> {
+    public companion object : KSerializer<SendModel> {
         @OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
         override val descriptor: SerialDescriptor =
             buildSerialDescriptor(SendModel::class.qualifiedName!!, StructureKind.OBJECT)
 
-        operator fun invoke(type: String, ms: Long = 60_000L): SendModel {
+        public operator fun invoke(type: String, ms: Long = 60_000L): SendModel {
             return when (type.uppercase()) {
                 "NORMAL" -> Normal
                 "FLASH" -> Flash

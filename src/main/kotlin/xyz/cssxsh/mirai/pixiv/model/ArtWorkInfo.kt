@@ -5,7 +5,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "artworks")
-data class ArtWorkInfo(
+public data class ArtWorkInfo(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
@@ -53,7 +53,7 @@ data class ArtWorkInfo(
     @JoinColumn(name = "pid", insertable = false, updatable = false)
     var files: List<FileInfo> = emptyList()
 
-    companion object SQL
+    public companion object SQL
 }
 
 

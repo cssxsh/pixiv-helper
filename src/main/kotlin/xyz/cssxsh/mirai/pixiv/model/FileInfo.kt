@@ -4,7 +4,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "files")
-data class FileInfo(
+public data class FileInfo(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
@@ -18,5 +18,5 @@ data class FileInfo(
     @Column(name = "size", nullable = false)
     val size: Int = 0
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

@@ -3,7 +3,7 @@ package xyz.cssxsh.mirai.pixiv.model
 import kotlinx.serialization.*
 
 @Serializable
-data class PixivArticle(
+public data class PixivArticle(
     @SerialName("title")
     val title: String,
     @SerialName("description")
@@ -12,7 +12,7 @@ data class PixivArticle(
     val illusts: List<Illust>,
 ) {
     @Serializable
-    data class Illust(
+    public data class Illust(
         @SerialName("pid")
         override val pid: Long,
         @SerialName("title")

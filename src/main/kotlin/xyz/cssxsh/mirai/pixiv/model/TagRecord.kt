@@ -4,7 +4,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "tag")
-data class TagRecord(
+public data class TagRecord(
     @Id
     @Column(name = "name", nullable = false, length = 30, updatable = false)
     val name: String = "",
@@ -14,5 +14,5 @@ data class TagRecord(
     @Column(name = "tid", nullable = false, updatable = false, insertable = false)
     val tid: Long = 0
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

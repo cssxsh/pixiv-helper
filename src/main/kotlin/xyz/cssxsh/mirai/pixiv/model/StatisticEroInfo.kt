@@ -4,7 +4,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "statistic_ero")
-data class StatisticEroInfo(
+public data class StatisticEroInfo(
     @Id
     @Column(name = "sender", nullable = false)
     val sender: Long = 0,
@@ -16,5 +16,5 @@ data class StatisticEroInfo(
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long = 0
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

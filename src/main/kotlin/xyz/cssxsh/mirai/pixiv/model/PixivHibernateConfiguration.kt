@@ -8,7 +8,7 @@ import xyz.cssxsh.mirai.pixiv.*
 import java.io.*
 import java.sql.*
 
-object PixivHibernateConfiguration :
+public object PixivHibernateConfiguration :
     Configuration(
         BootstrapServiceRegistryBuilder()
             .applyClassLoader(PixivHelperPlugin::class.java.classLoader)

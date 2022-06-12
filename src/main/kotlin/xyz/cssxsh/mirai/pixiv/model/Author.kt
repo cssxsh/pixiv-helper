@@ -1,5 +1,5 @@
 package xyz.cssxsh.mirai.pixiv.model
 
-interface Author {
-    val uid: Long
+public interface Author {
+    public val uid: Long
 }

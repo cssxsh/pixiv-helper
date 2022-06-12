@@ -4,7 +4,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "tags")
-data class TagBaseInfo(
+public data class TagBaseInfo(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long = 0,
