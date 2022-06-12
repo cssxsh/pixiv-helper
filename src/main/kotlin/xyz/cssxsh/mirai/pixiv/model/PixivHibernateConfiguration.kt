@@ -32,7 +32,7 @@ object PixivHibernateConfiguration :
 
     private val default: String
         get() = """
-                hibernate.connection.url=jdbc:sqlite:${PixivHelperPlugin.resolveDataPath("pixiv.sqlite").toUri()}
+                hibernate.connection.url=jdbc:sqlite:file:./data/xyz.cssxsh.mirai.plugin.pixiv-helper/pixiv.sqlite
                 hibernate.connection.driver_class=org.sqlite.JDBC
                 hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
                 hibernate.connection.provider_class=org.hibernate.hikaricp.internal.HikariCPConnectionProvider
