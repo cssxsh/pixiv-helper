@@ -8,7 +8,7 @@ import org.jsoup.safety.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import java.util.*
 
-object Pixivision : HtmlParser(name = "Pixivision") {
+public object Pixivision : HtmlParser(name = "Pixivision") {
 
     private const val API = "https://www.pixivision.net/"
 
@@ -37,8 +37,11 @@ object Pixivision : HtmlParser(name = "Pixivision") {
         )
     }
 
-    suspend fun getArticle(aid: Long, locale: Locale = Locale.CHINA) = html(article) {
-        url(Url(API).copy(encodedPath = "/${locale.language}/a/${aid}"))
+    public suspend fun getArticle(aid: Long, locale: Locale = Locale.CHINA): PixivArticle = html(article) {
+        url {
+            takeFrom(API)
+            encodedPath = "/${locale.language}/a/${aid}"
+        }
         method = HttpMethod.Get
         header(HttpHeaders.AcceptLanguage, locale.language)
         header(HttpHeaders.Referrer, url)
