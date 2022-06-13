@@ -3,8 +3,8 @@ package xyz.cssxsh.mirai.pixiv.data
 import net.mamoe.mirai.console.data.*
 import net.mamoe.mirai.console.util.*
 
-sealed interface PixivHelperConfig : PluginConfig {
-    companion object : Collection<PluginConfig> {
+public sealed interface PixivHelperConfig : PluginConfig {
+    public companion object : Collection<PluginConfig> {
         private val configs by lazy {
             PixivHelperConfig::class.sealedSubclasses.mapNotNull { kClass -> kClass.objectInstance }
         }
@@ -20,6 +20,6 @@ sealed interface PixivHelperConfig : PluginConfig {
         override fun iterator(): Iterator<PluginConfig> = configs.iterator()
 
         @OptIn(ConsoleExperimentalApi::class)
-        operator fun get(name: String): PluginConfig = configs.first { it.saveName.equals(name, true) }
+        public operator fun get(name: String): PluginConfig = configs.first { it.saveName.equals(name, true) }
     }
 }

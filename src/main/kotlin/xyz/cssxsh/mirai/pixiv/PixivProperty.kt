@@ -52,7 +52,7 @@ internal val logger by lazy {
     try {
         PixivHelperPlugin.logger
     } catch (_: Throwable) {
-        MiraiLogger.Factory.create(SimplePixivClient::class)
+        MiraiLogger.Factory.create(PixivHelper::class)
     }
 }
 

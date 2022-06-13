@@ -8,7 +8,7 @@ import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.pixiv.*
 
-object PixivInfoCommand : CompositeCommand(
+public object PixivInfoCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "info",
     description = "PIXIV信息指令"
@@ -16,87 +16,93 @@ object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取助手信息")
-    suspend fun CommandSender.helper(target: Contact = requireNotNull(subject) { "未指定联系人" }) {
-        sendMessage(
-            message = buildMessageChain {
+    public suspend fun CommandSender.helper(target: Contact? = subject) {
+        val message = if (target == null) {
+            "未指定联系人".toPlainText()
+        } else {
+            buildMessageChain {
                 appendLine(target.render())
-                val info = target.helper.info()
-                appendLine("User: ${info.user.uid}")
-                appendLine("Name: ${info.user.name}")
-                appendLine("Account: ${info.user.account}")
-                appendLine("Premium: ${info.user.isPremium}")
-                appendLine("AccessToken: ${info.accessToken}")
-                appendLine("ExpiresTime: ${target.helper.expires}")
-                appendLine("RefreshToken: ${info.refreshToken}")
+                val auth = target.helper.client.info()
+                appendLine("User: ${auth.user.uid}")
+                appendLine("Name: ${auth.user.name}")
+                appendLine("Account: ${auth.user.account}")
+                appendLine("Premium: ${auth.user.isPremium}")
+                appendLine("AccessToken: ${auth.accessToken}")
+                appendLine("RefreshToken: ${auth.refreshToken}")
             }
         )
     }
 
     @SubCommand
     @Description("获取用户信息")
-    suspend fun CommandSender.user(target: User = requireNotNull(user) { "未指定用户" }) {
-        sendMessage(
-            message = buildMessageChain {
+    public suspend fun CommandSender.user(target: User? = user) {
+        val message = if (target == null) {
+            "未指定用户".toPlainText()
+        } else {
+            buildMessageChain {
                 appendLine("用户: ${target.nameCardOrNick}")
                 appendLine("使用色图指令次数: ${StatisticEroInfo.user(target.id).size}")
                 with(StatisticTagInfo.user(target.id)) {
                     appendLine("使用标签指令次数: $size")
-                    val total = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
+                    val total = groupBy { it.tag }.entries.sortedByDescending { it.value.size }.take(3)
                     appendLine("检索前三的是")
-                    for ((tag, list) in total.take(3)) {
+                    for ((tag, list) in total) {
                         appendLine("$tag ${list.size} 次")
                     }
                 }
             }
-        )
+        }
+        sendMessage(message = message)
     }
 
     @SubCommand
     @Description("获取群组信息")
-    suspend fun CommandSender.group(target: Group = requireNotNull(subject as? Group) { "未指定联系人" }) {
-        sendMessage(
-            message = buildMessageChain {
+    public suspend fun CommandSender.group(target: Group? = subject as? Group) {
+        val message = if (target == null) {
+            "未指定群".toPlainText()
+        } else {
+            buildMessageChain {
                 appendLine("群组: ${target.name}")
                 with(StatisticEroInfo.group(target.id)) {
                     appendLine("使用色图指令次数: $size")
-                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }
+                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }.take(3)
                     appendLine("使用前三的是")
-                    for ((id, list) in senders.take(3)) {
+                    for ((id, list) in senders) {
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
                 }
                 with(StatisticTagInfo.group(target.id)) {
                     appendLine("使用标签指令次数: $size")
-                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }
+                    val senders = groupBy { it.sender }.entries.sortedByDescending { it.value.size }.take(3)
                     appendLine("使用前三的用户是")
-                    for ((id, list) in senders.take(3)) {
+                    for ((id, list) in senders) {
                         add(At(id))
                         appendLine(" ${list.size} 次")
                     }
-                    val tags = groupBy { it.tag }.entries.sortedByDescending { it.value.size }
+                    val tags = groupBy { it.tag }.entries.sortedByDescending { it.value.size }.take(3)
                     appendLine("检索前三的标签是")
-                    for ((tag, list) in tags.take(3)) {
+                    for ((tag, list) in tags) {
                         appendLine("$tag ${list.size} 次")
                     }
                 }
             }
-        )
+        }
+        sendMessage(message = message)
     }
 
     @SubCommand
     @Description("获取TAG指令统计信息")
-    suspend fun CommandSender.top(limit: Int = TAG_TOP_LIMIT) {
-        sendMessage(
-            message = buildMessageChain {
-                appendLine("# TAG指令关键词排行")
-                appendLine("| index | name | count |")
-                appendLine("| --- | --- | --- |")
-                StatisticTagInfo.top(limit).forEachIndexed { index, (name, count) ->
-                    appendLine("| ${index + 1} | $name | $count |")
-                }
+    public suspend fun CommandSender.top(limit: Int = TAG_TOP_LIMIT) {
+        val message = buildMessageChain {
+            appendLine("# TAG指令关键词排行")
+            appendLine("| index | name | count |")
+            appendLine("| --- | --- | --- |")
+            StatisticTagInfo.top(limit).forEachIndexed { index, (name, count) ->
+                appendLine("| ${index + 1} | $name | $count |")
             }
-        )
+        }
+        sendMessage(message = message)
     }
 
     @SubCommand

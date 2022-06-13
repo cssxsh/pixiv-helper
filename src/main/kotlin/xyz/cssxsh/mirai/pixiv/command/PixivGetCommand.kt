@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
 import xyz.cssxsh.mirai.pixiv.*
 
-object PixivGetCommand : SimpleCommand(
+public object PixivGetCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "get", "搞快点", "GKD", "[勾引]", "pid",
     description = "PIXIV获取指令"
@@ -15,7 +15,7 @@ object PixivGetCommand : SimpleCommand(
     override val prefixOptional: Boolean = true
 
     @Handler
-    suspend fun UserCommandSender.get(pid: Long, flush: Boolean = false) = withHelper {
-        getIllustInfo(pid = pid, flush = flush)
+    public suspend fun UserCommandSender.get(pid: Long, flush: Boolean = false): Unit = withHelper {
+        client.getIllustInfo(pid = pid, flush = flush)
     }
 }

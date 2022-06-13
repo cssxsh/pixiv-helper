@@ -8,11 +8,10 @@ import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.pixiv.*
 import java.time.*
 
-object PixivDeleteCommand : CompositeCommand(
+public object PixivDeleteCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "delete",
-    description = "PIXIV删除指令",
-    overrideContext = PixivCommandArgumentContext
+    description = "PIXIV删除指令"
 ), PixivHelperCommand {
 
     private fun delete(artwork: ArtWorkInfo): Boolean {
@@ -26,7 +25,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除指定作品")
-    suspend fun CommandSender.artwork(pid: Long, record: Boolean = false) {
+    public suspend fun CommandSender.artwork(pid: Long, record: Boolean = false) {
         logger.info { "作品(${pid})信息将从缓存移除" }
         if (record) ArtWorkInfo.delete(pid = pid, comment = "command delete artwork in ${OffsetDateTime.now()}")
         val artwork = ArtWorkInfo[pid]
@@ -39,7 +38,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除指定用户作品")
-    suspend fun CommandSender.user(uid: Long, record: Boolean = false) {
+    public suspend fun CommandSender.user(uid: Long, record: Boolean = false) {
         val artworks = ArtWorkInfo.user(uid)
         if (record) ArtWorkInfo.deleteUser(uid = uid, comment = "command delete artwork in ${OffsetDateTime.now()}")
         sendMessage("USER(${uid})共${artworks.size}个作品需要删除")
@@ -52,7 +51,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除小于指定收藏数作品")
-    suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) = supervisorScope {
+    public suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
@@ -73,7 +72,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除大于指定页数作品（用于处理漫画作品）")
-    suspend fun CommandSender.page(max: Int, record: Boolean = false) = supervisorScope {
+    public suspend fun CommandSender.page(max: Int, record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
@@ -94,7 +93,7 @@ object PixivDeleteCommand : CompositeCommand(
 
     @SubCommand
     @Description("删除 漫画")
-    suspend fun CommandSender.manga(record: Boolean = false) = supervisorScope {
+    public suspend fun CommandSender.manga(record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }
@@ -114,8 +113,8 @@ object PixivDeleteCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("删除 已记录作品")
-    suspend fun CommandSender.record() = supervisorScope {
+    @Description("删除 已被记录删除作品")
+    public suspend fun CommandSender.record() {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
             logger.verbose { "开始检查[$range]" }

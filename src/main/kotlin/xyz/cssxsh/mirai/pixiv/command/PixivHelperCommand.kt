@@ -2,9 +2,9 @@ package xyz.cssxsh.mirai.pixiv.command
 
 import net.mamoe.mirai.console.command.*
 
-sealed interface PixivHelperCommand : Command {
+public sealed interface PixivHelperCommand : Command {
 
-    companion object : Collection<PixivHelperCommand> {
+    public companion object : Collection<PixivHelperCommand> {
         private val commands by lazy {
             PixivHelperCommand::class.sealedSubclasses.mapNotNull { kClass -> kClass.objectInstance }
         }
@@ -19,6 +19,6 @@ sealed interface PixivHelperCommand : Command {
 
         override fun iterator(): Iterator<PixivHelperCommand> = commands.iterator()
 
-        operator fun get(name: String): PixivHelperCommand = commands.first { it.primaryName.equals(name, true) }
+        public operator fun get(name: String): PixivHelperCommand = commands.first { it.primaryName.equals(name, true) }
     }
 }

@@ -9,7 +9,7 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.tool.*
 import java.io.*
 
-object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
+public object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
 
     public override val cache: File get() = UgoiraImagesFolder
 
@@ -36,7 +36,7 @@ object PixivHelperGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloade
     // 考虑到GIF编码需要较高性能
     private val single = Mutex()
 
-    suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
+    public suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
         metadata.download()
         val gif = cache.resolve("${illust.pid}.gif")
         return if (flush || gif.exists().not()) {

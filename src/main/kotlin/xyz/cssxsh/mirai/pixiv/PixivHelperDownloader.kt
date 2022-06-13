@@ -6,7 +6,7 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
 import java.net.*
 
-object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
+public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
 
     override val ignore: Ignore get() = PixivDownloadIgnore
 
@@ -28,7 +28,15 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_
         block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
     ): List<R> {
         val downloads = if (ProxyMirror.isNotBlank()) {
-            urls.map { if (it.host == "i.pximg.net") it.copy(host = ProxyMirror) else it }
+            urls.map { url ->
+                if (url.host == "i.pximg.net") {
+                    URLBuilder(url).apply {
+                        host = ProxyMirror
+                    }.build()
+                } else {
+                    url
+                }
+            }
         } else {
             urls
         }
