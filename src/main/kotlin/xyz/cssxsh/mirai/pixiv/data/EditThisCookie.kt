@@ -5,7 +5,7 @@ import io.ktor.util.date.*
 import kotlinx.serialization.*
 
 @Serializable
-data class EditThisCookie(
+public data class EditThisCookie(
     @SerialName("domain")
     val domain: String,
     @SerialName("expirationDate")
@@ -32,7 +32,7 @@ data class EditThisCookie(
     val value: String
 )
 
-fun EditThisCookie.toCookie() = Cookie(
+public fun EditThisCookie.toCookie(): Cookie = Cookie(
     name = name,
     value = value,
     encoding = CookieEncoding.DQUOTES,

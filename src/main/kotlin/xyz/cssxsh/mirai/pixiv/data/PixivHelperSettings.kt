@@ -8,7 +8,7 @@ import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
 
-object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivHelperConfig, EroStandardConfig {
+public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivHelperConfig, EroStandardConfig {
     override val serializersModule: SerializersModule = SerializersModule {
         contextual(RegexSerializer)
         contextual(WorkContentType)
@@ -28,11 +28,11 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
 
     @ValueName("ero_chunk")
     @ValueDescription("色图分块大小")
-    val eroChunk: Int by value(ERO_CHUNK)
+    public val eroChunk: Int by value(ERO_CHUNK)
 
     @ValueName("ero_up_expire")
     @ValueDescription("色图自动触发更高收藏数的最大时间，单位毫秒")
-    val eroUpExpire: Long by value(ERO_UP_EXPIRE)
+    public val eroUpExpire: Long by value(ERO_UP_EXPIRE)
 
     @ValueName("ero_work_types")
     @ValueDescription("涩图标准 内容类型 ILLUST, UGOIRA, MANGA, 为空则全部符合")
@@ -56,47 +56,47 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
 
     @ValueName("pximg")
     @ValueDescription("i.pximg.net 反向代理，若非特殊情况不要修改这个配置，保持留空，可以使用 $PixivMirrorHost")
-    val pximg: String by value("")
+    public val pximg: String by value("")
 
     @ValueName("proxy")
     @ValueDescription("API代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
-    val proxyApi: String by value("")
+    public val proxyApi: String by value("")
 
     @ValueName("proxy_download")
     @ValueDescription("DOWNLOAD代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
-    val proxyDownload: String by value("")
+    public val proxyDownload: String by value("")
 
     @ValueName("timeout_api")
     @ValueDescription("API超时时间, 单位ms")
-    val timeoutApi: Long by value(15_000L)
+    public val timeoutApi: Long by value(15_000L)
 
     @ValueName("timeout_download")
     @ValueDescription("DOWNLOAD超时时间, 单位ms")
-    val timeoutDownload: Long by value(30_000L)
+    public val timeoutDownload: Long by value(30_000L)
 
     @ValueName("block_size")
     @ValueDescription("DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载")
-    val blockSize: Int by value(512 * HTTP_KILO)
+    public val blockSize: Int by value(512 * HTTP_KILO)
 
     @ValueName("tag_sfw")
     @ValueDescription("tag 是否过滤r18 依旧不会放出图片")
-    val tagSFW: Boolean by value(false)
+    public val tagSFW: Boolean by value(false)
 
     @ValueName("ero_sfw")
     @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
-    val eroSFW: Boolean by value(true)
+    public val eroSFW: Boolean by value(true)
 
     @ValueName("cache_capacity")
     @ValueDescription("下载缓存容量，同时下载的图片上限")
-    val cacheCapacity: Int by value(3)
+    public val cacheCapacity: Int by value(3)
 
     @ValueName("cache_jump")
     @ValueDescription("缓存是否跳过下载")
-    val cacheJump: Boolean by value(false)
+    public val cacheJump: Boolean by value(false)
 
     @ValueName("upload")
     @ValueDescription("压缩完成后是否上传百度云，不上传百度云则会尝试发送文件")
-    val upload: Boolean by value(false)
+    public val upload: Boolean by value(false)
 
     private lateinit var plugin: AbstractJvmPlugin
 
@@ -110,15 +110,15 @@ object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivH
     /**
      * 压缩文件保存目录
      */
-    val backupFolder: File get() = dir(path = backupPath, default = "backup")
+    public val backupFolder: File get() = dir(path = backupPath, default = "backup")
 
     /**
      * 图片缓存保存目录
      */
-    val cacheFolder: File get() = dir(path = cachePath, default = "cache")
+    public val cacheFolder: File get() = dir(path = cachePath, default = "cache")
 
     /**
      * 临时文件保存目录
      */
-    val tempFolder: File get() = dir(path = tempPath, default = "temp")
+    public val tempFolder: File get() = dir(path = tempPath, default = "temp")
 }

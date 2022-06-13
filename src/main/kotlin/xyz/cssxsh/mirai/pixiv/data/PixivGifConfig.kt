@@ -3,8 +3,8 @@ package xyz.cssxsh.mirai.pixiv.data
 import com.squareup.gifencoder.*
 import net.mamoe.mirai.console.data.*
 
-object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig"), PixivHelperConfig {
-    val QUANTIZER_LIST = listOf(
+public object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig"), PixivHelperConfig {
+    public val QUANTIZER_LIST: List<String> = listOf(
         "com.squareup.gifencoder.UniformQuantizer",
         "com.squareup.gifencoder.MedianCutQuantizer",
         "com.squareup.gifencoder.OctTreeQuantizer",
@@ -12,7 +12,7 @@ object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig"), PixivHelperConfi
         "xyz.cssxsh.pixiv.tool.OpenCVQuantizer"
     )
 
-    val DITHERER_LIST = listOf(
+    public val DITHERER_LIST: List<String> = listOf(
         "com.squareup.gifencoder.FloydSteinbergDitherer",
         "com.squareup.gifencoder.NearestColorDitherer",
         "xyz.cssxsh.pixiv.tool.AtkinsonDitherer",
@@ -23,17 +23,17 @@ object PixivGifConfig : ReadOnlyPluginConfig("PixivGifConfig"), PixivHelperConfi
 
     @ValueName("quantizer")
     @ValueDescription("编码器")
-    val quantizer by value("com.squareup.gifencoder.OctTreeQuantizer")
+    public val quantizer: String by value("com.squareup.gifencoder.OctTreeQuantizer")
 
     @ValueName("ditherer")
     @ValueDescription("抖动器")
-    val ditherer by value("xyz.cssxsh.pixiv.tool.AtkinsonDitherer")
+    public val ditherer: String by value("xyz.cssxsh.pixiv.tool.AtkinsonDitherer")
 
     @ValueName("disposal")
     @ValueDescription("切换方法")
-    val disposal by value(DisposalMethod.UNSPECIFIED)
+    public val disposal: DisposalMethod by value(DisposalMethod.UNSPECIFIED)
 
     @ValueName("max_count")
     @ValueDescription("OpenCVQuantizer 最大迭代数")
-    val maxCount by value(32)
+    public val maxCount: Int by value(32)
 }
