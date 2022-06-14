@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.command.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.mirai.pixiv.data.*
 
-object PixivSettingCommand : CompositeCommand(
+public object PixivSettingCommand : CompositeCommand(
     owner = PixivHelperPlugin,
     "setting",
     description = "PIXIV设置"
@@ -12,43 +12,43 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置Task连续发送间隔时间, 单位秒")
-    suspend fun UserCommandSender.interval(sec: Int) = withHelper {
+    public suspend fun CommandSender.interval(sec: Int) {
         val old = PixivConfigData.interval
         PixivConfigData.interval = sec
-        "$old -> ${sec}s"
+        sendMessage(message = "$old -> ${sec}s")
     }
 
     @SubCommand
     @Description("设置Task通过转发发送")
-    suspend fun UserCommandSender.forward() = withHelper {
+    public suspend fun CommandSender.forward() {
         PixivConfigData.forward = !TaskForward
-        TaskForward
+        sendMessage(message = "$TaskForward")
     }
 
     @SubCommand
     @Description("设置是否显示Pixiv Cat 原图链接")
-    suspend fun UserCommandSender.link() = withHelper {
+    public suspend fun UserCommandSender.link(): Unit = withHelper {
         link = !link
         link
     }
 
     @SubCommand
     @Description("设置是否显示TAG INFO")
-    suspend fun UserCommandSender.tag() = withHelper {
+    public suspend fun UserCommandSender.tag(): Unit = withHelper {
         tag = !tag
         tag
     }
 
     @SubCommand
     @Description("设置是否显示作品属性")
-    suspend fun UserCommandSender.attr() = withHelper {
+    public suspend fun UserCommandSender.attr(): Unit = withHelper {
         attr = !attr
         attr
     }
 
     @SubCommand
     @Description("设置是否显示最大图片数")
-    suspend fun UserCommandSender.max(num: Int) = withHelper {
+    public suspend fun UserCommandSender.max(num: Int): Unit = withHelper {
         val old = max
         max = num
         "$old -> $num"
@@ -56,7 +56,7 @@ object PixivSettingCommand : CompositeCommand(
 
     @SubCommand
     @Description("设置发送模式, type: NORMAL, FLASH, RECALL, FORWARD")
-    suspend fun UserCommandSender.model(type: String, ms: Long = 60_000L) = withHelper {
+    public suspend fun UserCommandSender.model(type: String, ms: Long = 60_000L): Unit = withHelper {
         val new = SendModel(type, ms)
         val old = model
         model = new

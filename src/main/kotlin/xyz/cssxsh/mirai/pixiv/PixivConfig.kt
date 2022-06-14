@@ -1,8 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
 import io.github.gnuf0rce.mirai.netdisk.*
-import io.ktor.client.features.*
-import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
@@ -17,8 +15,6 @@ import xyz.cssxsh.pixiv.tool.*
 import java.io.*
 import kotlin.math.*
 
-typealias Ignore = suspend (Throwable) -> Boolean
-
 internal val PIXIV_IMAGE_SOFTBANK = (134..147).map { "210.140.92.${it}" }
 
 internal val PIXIV_API_SOFTBANK = ((199..223) + (224..229)).map { "210.140.131.${it}" }
@@ -29,40 +25,6 @@ internal val SAUCENAO_ORIGIN = listOf("45.32.0.237", "chr1.saucenao.com")
 
 internal val PIXIV_RATE_LIMIT_DELAY: Long by lazy {
     System.getProperty("pixiv.rate.limit.delay")?.toLong() ?: (3 * 60 * 1000L)
-}
-
-internal fun Ignore(client: PixivAuthClient): Ignore = { throwable ->
-    when (throwable) {
-        is IOException,
-        is HttpRequestTimeoutException,
-        -> {
-            logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
-            true
-        }
-        is AppApiException -> {
-            val url = throwable.response.request.url
-            val request = throwable.response.request.headers.toMap()
-            val response = throwable.response.headers.toMap()
-            when {
-                "Please check your Access Token to fix this." in throwable.message -> {
-                    logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
-                    try {
-                        client.refresh()
-                    } catch (cause: Throwable) {
-                        logger.warning { "刷新 Token 失败 $cause" }
-                    }
-                    true
-                }
-                "Rate Limit" in throwable.message -> {
-                    logger.warning { "PIXIV API限流, 将延时: ${PIXIV_RATE_LIMIT_DELAY}ms $url with $response" }
-                    delay(PIXIV_RATE_LIMIT_DELAY)
-                    true
-                }
-                else -> false
-            }
-        }
-        else -> false
-    }
 }
 
 internal val PIXIV_DOWNLOAD_ASYNC: Int by lazy {

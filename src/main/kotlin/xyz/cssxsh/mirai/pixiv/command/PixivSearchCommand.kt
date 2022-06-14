@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.pixiv.command
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
 import net.mamoe.mirai.console.command.*
@@ -8,12 +9,11 @@ import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.contact.Contact.Companion.uploadImage
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import net.mamoe.mirai.message.*
 import net.mamoe.mirai.utils.*
-import okio.ByteString.Companion.toByteString
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import xyz.cssxsh.mirai.hibernate.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.mirai.pixiv.data.*
@@ -21,7 +21,7 @@ import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.tools.*
 import java.io.*
 
-object PixivSearchCommand : SimpleCommand(
+public object PixivSearchCommand : SimpleCommand(
     owner = PixivHelperPlugin,
     "search", "搜索", "搜图",
     description = "PIXIV搜索指令，通过 https://saucenao.com/ https://ascii2d.net/"
@@ -42,11 +42,11 @@ object PixivSearchCommand : SimpleCommand(
 
         return HttpClient(OkHttp).use { http ->
             try {
-                http.get<InputStream>(original)
+                http.get(original).body<ByteArray>().toExternalResource()
             } catch (_: IOException) {
-                http.get<InputStream>(largest)
+                http.get(largest).body<ByteArray>().toExternalResource()
             }.use {
-                user.uploadImage(it)
+                fromEvent.subject.uploadImage(it)
             }
         }
     }
@@ -73,20 +73,20 @@ object PixivSearchCommand : SimpleCommand(
         return next.findIsInstance<Image>() ?: next.firstIsInstance<FlashImage>().image
     }
 
-    private suspend fun saucenao(image: Image): List<SearchResult> {
+    private suspend fun saucenao(url: String): List<SearchResult> {
         return try {
-            ImageSearcher.saucenao(url = image.queryUrl())
+            ImageSearcher.saucenao(url = url)
         } catch (e: Throwable) {
-            logger.warning({ "saucenao 搜索 $image 失败" }, e)
+            logger.warning({ "saucenao 搜索 $url 失败" }, e)
             emptyList()
         }
     }
 
-    private suspend fun ascii2d(image: Image): List<SearchResult> {
+    private suspend fun ascii2d(url: String): List<SearchResult> {
         return try {
-            ImageSearcher.ascii2d(url = image.queryUrl(), bovw = ImageSearchConfig.bovw)
+            ImageSearcher.ascii2d(url = url, bovw = ImageSearchConfig.bovw)
         } catch (e: Throwable) {
-            logger.warning({ "ascii2d 搜索 $image 失败" }, e)
+            logger.warning({ "ascii2d 搜索 $url 失败" }, e)
             emptyList()
         }
     }
@@ -119,22 +119,23 @@ object PixivSearchCommand : SimpleCommand(
     }
 
     @Handler
-    suspend fun CommandSenderOnMessage<*>.search() = withHelper {
+    public suspend fun CommandSenderOnMessage<*>.search(): Unit = withHelper {
         val origin = getQuoteImage() ?: getCurrentImage() ?: getAvatar() ?: getNextImage()
-        logger.info { "${fromEvent.sender.render()} 搜索 ${origin.queryUrl()}" }
-        val hash = origin.md5.toByteString().hex()
+        val url = origin.queryUrl()
+        logger.info { "${fromEvent.sender.render()} 搜索 $url" }
+        val hash = origin.md5.toUHexString("")
 
         val record = record(hash)
-        if (record != null) return@withHelper record.getContent(fromEvent.subject)
+        if (record != null) return@withHelper record.getContent(contact = fromEvent.subject)
 
-        val saucenao = saucenao(origin).similarity(MIN_SIMILARITY).translate(hash)
+        val saucenao = saucenao(url).similarity(MIN_SIMILARITY).translate(hash)
 
-        val result = if (saucenao.none { it.similarity > MIN_SIMILARITY }) {
-            saucenao + ascii2d(origin).translate(hash)
+        val records = if (saucenao.none { it.similarity > MIN_SIMILARITY }) {
+            saucenao + ascii2d(url).translate(hash)
         } else {
             saucenao
         }
 
-        result.getContent(fromEvent.sender)
+        records.getContent(sender = fromEvent.sender)
     }
 }

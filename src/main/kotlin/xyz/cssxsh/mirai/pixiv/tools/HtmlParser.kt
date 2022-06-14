@@ -7,17 +7,28 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import net.mamoe.mirai.utils.*
 import org.jsoup.*
 import org.jsoup.nodes.*
 import org.jsoup.select.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
+import java.io.IOException
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-public abstract class HtmlParser(internal var ignore: Ignore) {
+public abstract class HtmlParser(public val name: String) {
+    protected val logger: MiraiLogger by lazy { MiraiLogger.Factory.create(this::class, identity = name) }
 
-    public constructor(name: String) : this(ignore = Ignore(name))
+    protected fun ignore(throwable: Throwable): Boolean {
+        return when (throwable) {
+            is IOException -> {
+                logger.warning { "$name Api 错误, 已忽略: ${throwable.message}" }
+                true
+            }
+            else -> false
+        }
+    }
 
     protected open val client: HttpClient = HttpClient(OkHttp) {
         BrowserUserAgent()

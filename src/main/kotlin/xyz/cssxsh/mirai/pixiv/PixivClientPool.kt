@@ -1,10 +1,14 @@
 package xyz.cssxsh.mirai.pixiv
 
+import io.ktor.client.statement.*
+import io.ktor.util.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
+import xyz.cssxsh.pixiv.exception.*
+import java.io.IOException
 import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.properties.*
@@ -51,12 +55,44 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
     // Free, Temp, Save
 
+    private val handle: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
+        when (throwable) {
+            is IOException -> {
+                logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
+                true
+            }
+            is AppApiException -> {
+                val url = throwable.response.request.url
+                val request = throwable.response.request.headers.toMap()
+                val response = throwable.response.headers.toMap()
+                when {
+                    "Please check your Access Token to fix this." in throwable.message -> {
+                        logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
+                        try {
+                            refresh()
+                        } catch (cause: Throwable) {
+                            logger.warning { "刷新 Token 失败 $cause" }
+                        }
+                        true
+                    }
+                    "Rate Limit" in throwable.message -> {
+                        logger.warning { "PIXIV API限流, 将延时: ${PIXIV_RATE_LIMIT_DELAY}ms $url with $response" }
+                        delay(PIXIV_RATE_LIMIT_DELAY)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            else -> false
+        }
+    }
+
     public class TempClient : PixivAuthClient() {
         override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy(proxy = ProxyApi)
 
         override val coroutineContext: CoroutineContext = childScopeContext(name = "temp-client")
 
-        override val ignore: suspend (Throwable) -> Boolean = Ignore(client = this)
+        override val ignore: suspend (Throwable) -> Boolean get() = { handle(it) }
 
         public override var auth: AuthResult? = null
     }
@@ -69,6 +105,6 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
         override val coroutineContext: CoroutineContext = childScopeContext(name = "auth-client-$uid")
 
-        override val ignore: suspend (Throwable) -> Boolean = Ignore(client = this)
+        override val ignore: suspend (Throwable) -> Boolean = { handle(it) }
     }
 }

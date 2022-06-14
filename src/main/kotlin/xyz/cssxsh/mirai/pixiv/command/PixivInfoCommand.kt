@@ -30,7 +30,8 @@ public object PixivInfoCommand : CompositeCommand(
                 appendLine("AccessToken: ${auth.accessToken}")
                 appendLine("RefreshToken: ${auth.refreshToken}")
             }
-        )
+        }
+        sendMessage(message = message)
     }
 
     @SubCommand
@@ -107,28 +108,28 @@ public object PixivInfoCommand : CompositeCommand(
 
     @SubCommand
     @Description("获取缓存信息")
-    suspend fun CommandSender.cache() {
-        sendMessage(
-            message = buildMessageChain {
-                appendLine("缓存数: ${ArtWorkInfo.count()}")
-                appendLine("> ---------")
-                appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")
-                appendLine("R18色图数: ${ArtWorkInfo.eros(AgeLimit.R18)}")
-                appendLine("R18G色图数: ${ArtWorkInfo.eros(AgeLimit.R18G)}")
-                appendLine("> ---------")
-                appendLine("插画色图数: ${ArtWorkInfo.eros(WorkContentType.ILLUST)}")
-                appendLine("动画色图数: ${ArtWorkInfo.eros(WorkContentType.UGOIRA)}")
-                appendLine("漫画色图数: ${ArtWorkInfo.eros(WorkContentType.MANGA)}")
-                appendLine("> ---------")
-                appendLine("Sanity(0)色图数: ${ArtWorkInfo.eros(SanityLevel.UNCHECKED)}")
-                appendLine("Sanity(1)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP1)}")
-                appendLine("Sanity(2)色图数: ${ArtWorkInfo.eros(SanityLevel.WHITE)}")
-                appendLine("Sanity(3)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP3)}")
-                appendLine("Sanity(4)色图数: ${ArtWorkInfo.eros(SanityLevel.SEMI_BLACK)}")
-                appendLine("Sanity(5)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP5)}")
-                appendLine("Sanity(6)色图数: ${ArtWorkInfo.eros(SanityLevel.BLACK)}")
-                appendLine("Sanity(7)色图数: ${ArtWorkInfo.eros(SanityLevel.NONE)}")
-            }
-        )
+    public suspend fun CommandSender.cache() {
+        // TODO:
+        val message = buildMessageChain {
+            appendLine("缓存数: ${ArtWorkInfo.count()}")
+            appendLine("> ---------")
+            appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")
+            appendLine("R18色图数: ${ArtWorkInfo.eros(AgeLimit.R18)}")
+            appendLine("R18G色图数: ${ArtWorkInfo.eros(AgeLimit.R18G)}")
+            appendLine("> ---------")
+            appendLine("插画色图数: ${ArtWorkInfo.eros(WorkContentType.ILLUST)}")
+            appendLine("动画色图数: ${ArtWorkInfo.eros(WorkContentType.UGOIRA)}")
+            appendLine("漫画色图数: ${ArtWorkInfo.eros(WorkContentType.MANGA)}")
+            appendLine("> ---------")
+            appendLine("Sanity(0)色图数: ${ArtWorkInfo.eros(SanityLevel.UNCHECKED)}")
+            appendLine("Sanity(1)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP1)}")
+            appendLine("Sanity(2)色图数: ${ArtWorkInfo.eros(SanityLevel.WHITE)}")
+            appendLine("Sanity(3)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP3)}")
+            appendLine("Sanity(4)色图数: ${ArtWorkInfo.eros(SanityLevel.SEMI_BLACK)}")
+            appendLine("Sanity(5)色图数: ${ArtWorkInfo.eros(SanityLevel.TEMP5)}")
+            appendLine("Sanity(6)色图数: ${ArtWorkInfo.eros(SanityLevel.BLACK)}")
+            appendLine("Sanity(7)色图数: ${ArtWorkInfo.eros(SanityLevel.NONE)}")
+        }
+        sendMessage(message = message)
     }
 }
