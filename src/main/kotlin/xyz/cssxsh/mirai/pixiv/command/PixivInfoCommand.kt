@@ -109,9 +109,8 @@ public object PixivInfoCommand : CompositeCommand(
     @SubCommand
     @Description("获取缓存信息")
     public suspend fun CommandSender.cache() {
-        // TODO:
         val message = buildMessageChain {
-            appendLine("缓存数: ${ArtWorkInfo.count()}")
+            appendLine("记录数: ${ArtWorkInfo.count()}")
             appendLine("> ---------")
             appendLine("全年龄色图数: ${ArtWorkInfo.eros(AgeLimit.ALL)}")
             appendLine("R18色图数: ${ArtWorkInfo.eros(AgeLimit.R18)}")

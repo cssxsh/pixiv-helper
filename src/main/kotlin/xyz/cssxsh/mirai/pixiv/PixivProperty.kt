@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.pixiv
 
+import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.pixiv.*
@@ -273,3 +275,7 @@ internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")
  * 动图 JSON
  */
 internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
+
+public val Contact.helper: PixivHelper by PixivHelperPool
+
+public val CommandSender.helper: PixivHelper get() = subject?.helper ?: throw NoSuchFieldException("$this No Helper")

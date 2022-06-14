@@ -53,8 +53,6 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
         }
     }
 
-    // Free, Temp, Save
-
     private val handle: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
         when (throwable) {
             is IOException -> {
@@ -88,7 +86,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
     }
 
     public class TempClient : PixivAuthClient() {
-        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy(proxy = ProxyApi)
+        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG
 
         override val coroutineContext: CoroutineContext = childScopeContext(name = "temp-client")
 
@@ -99,7 +97,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
     public class AuthClient(public val uid: Long) : PixivAuthClient() {
 
-        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy(proxy = ProxyApi)
+        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG
 
         override var auth: AuthResult? by PixivAuthData
 
