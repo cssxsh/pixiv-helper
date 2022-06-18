@@ -2,7 +2,7 @@ package xyz.cssxsh.mirai.pixiv.data
 
 import net.mamoe.mirai.console.data.*
 
-public object PixivConfigData : AutoSavePluginConfig("PixivConfig"), PixivHelperConfig {
+public object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
 
     @ValueName("link")
     @ValueDescription("是否显示原图链接")
@@ -31,4 +31,10 @@ public object PixivConfigData : AutoSavePluginConfig("PixivConfig"), PixivHelper
     @ValueName("forward")
     @ValueDescription("task通过转发发送")
     public var forward: Boolean by value(true)
+
+    @ValueName("bind")
+    public val binded: MutableMap<Long, Long> by value()
+
+    @ValueName("default")
+    public val default: Long by value()
 }

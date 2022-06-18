@@ -2,7 +2,7 @@ package xyz.cssxsh.mirai.pixiv.data
 
 import net.mamoe.mirai.console.data.*
 
-public object ImageSearchConfig : ReadOnlyPluginConfig("ImageSearchConfig"), PixivHelperConfig {
+public object ImageSearchConfig : ReadOnlyPluginConfig("ImageSearchConfig") {
     @ValueDescription("请到 https://saucenao.com/user.php 获取")
     public val key: String by value("")
 
