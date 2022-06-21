@@ -1,7 +1,7 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import jakarta.persistence.*
 import xyz.cssxsh.pixiv.*
-import javax.persistence.*
 
 @Entity
 @Table(name = "artworks")

@@ -337,7 +337,7 @@ internal fun ArtWorkInfo.SQL.tag(
     age: AgeLimit,
     limit: Int
 ): List<ArtWorkInfo> = useSession { session ->
-    val names = word.split(delimiters = TAG_DELIMITERS).filter { it.isNotBlank() }
+    val names = word.split(delimiters = TAG_DELIMITERS.toCharArray()).filter { it.isNotBlank() }
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
         val tag = { name: String ->

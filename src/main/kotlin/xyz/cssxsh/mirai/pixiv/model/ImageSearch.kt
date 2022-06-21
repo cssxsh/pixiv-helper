@@ -1,8 +1,8 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import jakarta.persistence.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import javax.persistence.*
 
 public sealed interface SearchResult {
     public val md5: String
