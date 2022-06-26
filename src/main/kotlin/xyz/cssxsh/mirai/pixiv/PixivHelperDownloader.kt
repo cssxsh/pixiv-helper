@@ -14,8 +14,7 @@ public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async =
 
     override val ignore: suspend (Throwable) -> Boolean = { throwable ->
         when (throwable) {
-            is IOException
-            -> {
+            is IOException -> {
                 logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
                 delay(++erros * 1000L)
                 erros--

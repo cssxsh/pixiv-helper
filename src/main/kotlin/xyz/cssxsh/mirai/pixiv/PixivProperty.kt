@@ -1,6 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
-import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
@@ -278,4 +278,9 @@ internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
 
 public val Contact.helper: PixivHelper by PixivHelperPool
 
-public val CommandSender.helper: PixivHelper get() = subject?.helper ?: throw NoSuchFieldException("$this No Helper")
+public fun CommandSender.client(): PixivClientPool.AuthClient {
+    return when {
+        isUser() -> PixivClientPool.get(id = subject.id)
+        else -> PixivClientPool.console()
+    } ?: throw IllegalArgumentException("未绑定 PIXIV 账号")
+}

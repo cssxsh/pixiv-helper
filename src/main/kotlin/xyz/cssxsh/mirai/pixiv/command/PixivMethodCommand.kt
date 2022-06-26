@@ -38,16 +38,16 @@ public object PixivMethodCommand : CompositeCommand(
                     sendMessage(message = qrcode + " 请扫码登录关联了Pixiv的微博".toPlainText())
                 }
 
-                sendMessage("账户 ${auth.user.name} 登陆成功，")
+                sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功")
 
-                logger.info { "账户 ${auth.user.name} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
+                logger.info { "账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
             }
             is ConsoleCommandSender -> {
                 val auth = pixiv.sina { url ->
                     sendMessage(message = "$url  请扫码登录关联了Pixiv的微博")
                 }
 
-                sendMessage("账户 ${auth.user.name} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
+                sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
             }
         }
     }
@@ -63,10 +63,10 @@ public object PixivMethodCommand : CompositeCommand(
         }
 
         if (subject is Group) {
-            sendMessage("登陆成功")
-            logger.info { "账户 ${auth.user.name} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
+            sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功")
+            logger.info { "账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
         } else {
-            sendMessage("登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
+            sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
         }
     }
 
@@ -91,10 +91,10 @@ public object PixivMethodCommand : CompositeCommand(
         }
 
         if (subject is Group) {
-            sendMessage("登陆成功")
-            logger.info { "账户 ${auth.user.name} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
+            sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功")
+            logger.info { "账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}" }
         } else {
-            sendMessage("登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
+            sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功，请妥善保管 RefreshToken: ${auth.refreshToken}")
         }
     }
 
@@ -104,7 +104,7 @@ public object PixivMethodCommand : CompositeCommand(
         pixiv.config { refreshToken = token }
         val auth = pixiv.refresh()
 
-        sendMessage("账户 ${auth.user.name} 登陆成功")
+        sendMessage("账户 ${auth.user.name}#${auth.user.uid} 登陆成功")
     }
 
     @SubCommand
@@ -116,5 +116,30 @@ public object PixivMethodCommand : CompositeCommand(
         }
         PixivClientPool.bind(uid = uid, subject = contact.id)
         sendMessage("绑定已添加")
+    }
+
+    @SubCommand
+    @Description("账户池详情")
+    public suspend fun CommandSender.pool() {
+        val message = buildMessageChain {
+            appendLine("clients")
+            for ((_, client) in PixivClientPool.clients) {
+                val auth = client.auth ?: continue
+                appendLine("User: ${auth.user.uid}")
+                appendLine("Name: ${auth.user.name}")
+                appendLine("Account: ${auth.user.account}")
+                appendLine("Premium: ${auth.user.isPremium}")
+                appendLine("AccessToken: ${auth.accessToken}")
+                appendLine("RefreshToken: ${auth.refreshToken}")
+            }
+            appendLine("binded")
+            for ((user, pixiv) in PixivClientPool.binded) {
+                appendLine("$user - $pixiv")
+            }
+            appendLine("console")
+            appendLine("${PixivClientPool.default}")
+        }
+
+        sendMessage(message = message)
     }
 }

@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
-import io.github.gnuf0rce.mirai.netdisk.*
-import io.ktor.util.*
+// import io.github.gnuf0rce.mirai.netdisk.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
@@ -9,10 +8,8 @@ import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.tools.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
-import xyz.cssxsh.pixiv.exception.*
 import xyz.cssxsh.pixiv.fanbox.*
 import xyz.cssxsh.pixiv.tool.*
-import java.io.*
 import kotlin.math.*
 
 internal val PIXIV_IMAGE_SOFTBANK = (134..147).map { "210.140.92.${it}" }
@@ -31,34 +28,6 @@ internal val PIXIV_DOWNLOAD_ASYNC: Int by lazy {
     System.getProperty("pixiv.download.async")?.toInt() ?: 32
 }
 
-private var PixivDownloadDelayCount = 0
-
-internal val PixivDownloadIgnore: Ignore = { throwable ->
-    when (throwable) {
-        is HttpRequestTimeoutException -> true
-        is IOException
-        -> {
-            logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
-            delay(++PixivDownloadDelayCount * 1000L)
-            PixivDownloadDelayCount--
-            true
-        }
-        else -> false
-    }
-}
-
-internal fun Ignore(name: String): Ignore = { throwable ->
-    when (throwable) {
-        is IOException,
-        is HttpRequestTimeoutException,
-        -> {
-            logger.warning { "$name Api 错误, 已忽略: ${throwable.message}" }
-            true
-        }
-        else -> false
-    }
-}
-
 internal val PIXIV_HOST = mapOf(
     "*.pximg.net" to PIXIV_IMAGE_SOFTBANK,
     "*.pixiv.net" to PIXIV_API_SOFTBANK,
@@ -66,9 +35,11 @@ internal val PIXIV_HOST = mapOf(
     "*.saucenao.com" to SAUCENAO_ORIGIN
 )
 
-internal val DEFAULT_PIXIV_CONFIG = PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST)
+internal val DEFAULT_PIXIV_CONFIG: PixivConfig by lazy {
+    PixivConfig(host = DEFAULT_PIXIV_HOST + PIXIV_HOST, proxy = ProxyApi)
+}
 
-internal fun initConfiguration(scope: CoroutineScope) {
+internal fun initConfiguration() {
     CacheFolder.mkdirs()
     BackupFolder.mkdirs()
     TempFolder.mkdirs()
@@ -94,13 +65,13 @@ internal fun initConfiguration(scope: CoroutineScope) {
     } else if (BlockSize < HTTP_KILO) {
         logger.warning { "下载分块过小" }
     }
-    if (BackupUpload) {
-        try {
-            NetDisk
-        } catch (exception: NoClassDefFoundError) {
-            logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
-        }
-    }
+//    if (BackupUpload) {
+//        try {
+//            NetDisk
+//        } catch (exception: NoClassDefFoundError) {
+//            logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
+//        }
+//    }
 
     ImageSearcher.key = ImageSearchConfig.key
 
@@ -175,6 +146,9 @@ internal val URL_PIXIVISION_ARTICLE = """(?<=pixivision\.net/[\w-]{2,5}/a/)\d+""
  */
 internal val URL_TWITTER_SCREEN = """(?<=twitter\.com/(#!/)?)\w{4,15}""".toRegex()
 
+
+internal val DELETE_REGEX = """該当作品は削除されたか|作品已删除或者被限制|该作品已被删除，或作品ID不存在。""".toRegex()
+
 internal const val PixivMirrorHost = "i.pixiv.re"
 
 internal val MIN_SIMILARITY = sqrt(5.0).minus(1).div(2)
@@ -195,8 +169,7 @@ internal const val TASK_LOAD = PAGE_SIZE * 3
 
 internal const val TAG_TOP_LIMIT = 10
 
-@OptIn(InternalAPI::class)
-internal val TAG_DELIMITERS = """_-&+|/\,()，、—（）""".toCharArray()
+internal const val TAG_DELIMITERS = """_-&+|/\,()，、—（）"""
 
 internal val CompletedJob: Job = Job().apply { complete() }
 

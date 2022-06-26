@@ -25,22 +25,38 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
             logger.warning({ "$throwable in $context" }, throwable)
         }
 
-    private val clients: MutableMap<Long, PixivAuthClient> = ConcurrentHashMap()
+    internal val clients: MutableMap<Long, AuthClient> = ConcurrentHashMap()
 
-    private val binded: MutableMap<Long, Long> = ConcurrentHashMap()
+    internal val binded: MutableMap<Long, Long> get() = PixivAuthData.binded
+
+    private val authed: Set<Long> get() = PixivAuthData.results.keys
+
+    internal val default: Long get() = PixivAuthData.default
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): PixivAuthClient {
-        return client(uid = binded[thisRef.id] ?: return free())
+        return get(id = thisRef.id) ?: free()
     }
 
-    public fun free(): PixivAuthClient = TODO()
+    public fun free(): PixivAuthClient {
+        val uid = authed.randomOrNull() ?: throw IllegalStateException("账号池为空，请登录 Pixiv 账号")
+        return FreeClient(delegate = user(uid = uid))
+    }
 
-    public fun client(uid: Long): PixivAuthClient {
-        return clients.getOrPut(key = uid) { AuthClient(uid = uid) }
+    public fun console(): AuthClient? = clients[default]
+
+    public fun user(uid: Long): AuthClient {
+        return clients.getOrPut(key = uid) {
+            check(uid in authed) { "$uid 此账户未登录" }
+            AuthClient(uid = uid)
+        }
+    }
+
+    public operator fun get(id: Long): AuthClient? {
+        return user(uid = binded[id] ?: return null)
     }
 
     public fun bind(uid: Long, subject: Long) {
-        binded[uid] = subject
+        binded[subject] = uid
     }
 
     public suspend fun auth(block: suspend (PixivAuthClient) -> Unit) {
@@ -86,22 +102,33 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
     }
 
     public class TempClient : PixivAuthClient() {
-        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG
-
-        override val coroutineContext: CoroutineContext = childScopeContext(name = "temp-client")
-
-        override val ignore: suspend (Throwable) -> Boolean get() = { handle(it) }
+        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy()
 
         public override var auth: AuthResult? = null
+
+        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "temp-client")
+
+        override val ignore: suspend (Throwable) -> Boolean get() = { handle(it) }
     }
 
     public class AuthClient(public val uid: Long) : PixivAuthClient() {
 
-        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG
+        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy()
 
-        override var auth: AuthResult? by PixivAuthData
+        public override var auth: AuthResult? by PixivAuthData
 
-        override val coroutineContext: CoroutineContext = childScopeContext(name = "auth-client-$uid")
+        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "auth-client-$uid")
+
+        override val ignore: suspend (Throwable) -> Boolean = { handle(it) }
+    }
+
+    public class FreeClient(private val delegate: AuthClient) : PixivAuthClient() {
+
+        override val config: PixivConfig = DEFAULT_PIXIV_CONFIG.copy()
+
+        override var auth: AuthResult? by delegate::auth
+
+        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "free-client")
 
         override val ignore: suspend (Throwable) -> Boolean = { handle(it) }
     }

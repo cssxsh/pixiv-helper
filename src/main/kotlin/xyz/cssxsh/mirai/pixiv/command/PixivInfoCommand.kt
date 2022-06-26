@@ -15,26 +15,6 @@ public object PixivInfoCommand : CompositeCommand(
 ), PixivHelperCommand {
 
     @SubCommand
-    @Description("获取助手信息")
-    public suspend fun CommandSender.helper(target: Contact? = subject) {
-        val message = if (target == null) {
-            "未指定联系人".toPlainText()
-        } else {
-            buildMessageChain {
-                appendLine(target.render())
-                val auth = target.helper.client.info()
-                appendLine("User: ${auth.user.uid}")
-                appendLine("Name: ${auth.user.name}")
-                appendLine("Account: ${auth.user.account}")
-                appendLine("Premium: ${auth.user.isPremium}")
-                appendLine("AccessToken: ${auth.accessToken}")
-                appendLine("RefreshToken: ${auth.refreshToken}")
-            }
-        }
-        sendMessage(message = message)
-    }
-
-    @SubCommand
     @Description("获取用户信息")
     public suspend fun CommandSender.user(target: User? = user) {
         val message = if (target == null) {

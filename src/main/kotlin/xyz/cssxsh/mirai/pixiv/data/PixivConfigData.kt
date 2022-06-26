@@ -31,10 +31,4 @@ public object PixivConfigData : AutoSavePluginConfig("PixivConfig") {
     @ValueName("forward")
     @ValueDescription("task通过转发发送")
     public var forward: Boolean by value(true)
-
-    @ValueName("bind")
-    public val binded: MutableMap<Long, Long> by value()
-
-    @ValueName("default")
-    public val default: Long by value()
 }
