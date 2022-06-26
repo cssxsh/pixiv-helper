@@ -69,6 +69,20 @@ internal fun PixivEntity.persist() {
     }
 }
 
+internal fun PixivEntity.merge() {
+    val entity = this
+    useSession(entity::class.companionObjectInstance) { session ->
+        session.transaction.begin()
+        try {
+            session.merge(entity)
+            session.transaction.commit()
+        } catch (cause: Throwable) {
+            session.transaction.rollback()
+            throw cause
+        }
+    }
+}
+
 internal fun create(session: Session) {
     // 创建表
     session.transaction.begin()
@@ -462,7 +476,7 @@ internal fun IllustInfo.mergeTagRecords() {
 
 internal fun IllustInfo.merge() {
     if (pid == 0L) return
-    saveTagRecords()
+    mergeTagRecords()
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
         try {
@@ -482,7 +496,7 @@ internal fun IllustInfo.merge() {
 internal fun Collection<IllustInfo>.merge() {
     if (isEmpty()) return
     for (info in this) {
-        info.saveTagRecords()
+        info.mergeTagRecords()
     }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
     useSession(ArtWorkInfo) { session ->
