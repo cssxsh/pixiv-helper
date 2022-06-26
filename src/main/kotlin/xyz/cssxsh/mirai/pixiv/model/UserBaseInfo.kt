@@ -7,11 +7,11 @@ import jakarta.persistence.*
 public data class UserBaseInfo(
     @Id
     @Column(name = "uid", nullable = false, updatable = false)
-    override val uid: Long = 0,
+    override val uid: Long,
     @Column(name = "name", nullable = false, length = 15)
-    val name: String = "",
+    val name: String,
     @Column(name = "account", nullable = true, length = 32)
-    val account: String? = null
+    val account: String?
 ) : PixivEntity, Author {
     public companion object SQL
 }

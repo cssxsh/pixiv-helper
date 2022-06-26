@@ -39,6 +39,11 @@ dependencies {
     testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.0.4")
 }
 
+noArg {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.Embeddable")
+}
+
 kotlin {
     sourceSets {
         all {

@@ -7,12 +7,12 @@ import jakarta.persistence.*
 public data class StatisticTaskInfo(
     @Id
     @Column(name = "task", nullable = false)
-    val task: String = "",
+    val task: String,
     @Id
     @Column(name = "pid", nullable = false)
-    val pid: Long = 0,
+    val pid: Long,
     @Column(name = "timestamp", nullable = false)
-    val timestamp: Long = 0
+    val timestamp: Long
 ) : PixivEntity {
     public companion object SQL
 }

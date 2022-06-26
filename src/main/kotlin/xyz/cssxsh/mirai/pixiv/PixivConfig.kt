@@ -120,17 +120,15 @@ internal fun initConfiguration(scope: CoroutineScope) {
         }
     }
 
-    scope.launch(Dispatchers.IO) {
-        factory.openSession().use { session ->
-            create(session)
-            tag(session)
-        }
-        val count = ArtWorkInfo.count()
-        if (count < EroChunk) {
-            logger.warning { "缓存数 $count < ${EroChunk}，建议使用指令( /cache recommended )进行缓存" }
-        } else {
-            logger.info { "缓存数 $count " }
-        }
+    factory.openSession().use { session ->
+        create(session)
+        tag(session)
+    }
+    val count = ArtWorkInfo.count()
+    if (count < EroChunk) {
+        logger.warning { "缓存数 $count < ${EroChunk}，建议使用指令( /cache recommended )进行缓存" }
+    } else {
+        logger.info { "缓存数 $count " }
     }
 }
 

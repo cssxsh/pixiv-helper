@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import jakarta.persistence.*
+import jakarta.persistence.criteria.*
 import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.*
 import net.mamoe.mirai.utils.*
@@ -12,8 +14,6 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.fanbox.*
 import java.io.*
 import java.sql.*
-import javax.persistence.*
-import javax.persistence.criteria.*
 import kotlin.reflect.full.*
 import kotlin.streams.*
 
@@ -55,12 +55,12 @@ internal fun sqlite(): String {
     }
 }
 
-internal fun PixivEntity.replicate(mode: ReplicationMode = ReplicationMode.OVERWRITE) {
+internal fun PixivEntity.persist() {
     val entity = this
     useSession(entity::class.companionObjectInstance) { session ->
         session.transaction.begin()
         try {
-            session.replicate(entity, mode)
+            session.persist(entity)
             session.transaction.commit()
         } catch (cause: Throwable) {
             session.transaction.rollback()
@@ -86,7 +86,7 @@ internal fun create(session: Session) {
         requireNotNull(PixivEntity::class.java.getResourceAsStream(sql)) { "Read Create Sql 失败" }
             .use { it.reader().readText() }
             .split(';').filter { it.isNotBlank() }
-            .forEach { session.createNativeQuery(it).executeUpdate() }
+            .forEach { session.createNativeQuery(it, Any::class.java).executeUpdate() }
         session.transaction.commit()
         logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
     } catch (cause: Throwable) {
@@ -117,8 +117,7 @@ internal fun tag(session: Session) {
         try {
             for (old in olds) {
                 if (set.add(old.name)) {
-                    val tag = TagRecord(name = old.name, translated = old.translated)
-                    session.replicate(tag, ReplicationMode.IGNORE)
+                    session.merge(TagRecord(name = old.name, translated = old.translated))
                 }
             }
             session.transaction.commit()
@@ -135,11 +134,11 @@ internal fun tag(session: Session) {
                 val record = if (record0.tid != 0L) {
                     record0
                 } else {
-                    session.detach(record0)
+                    session.remove(record0)
                     session.get(TagRecord::class.java, old.name)
                 }
-                session.replicate(ArtworkTag(pid = old.pid, tag = record), ReplicationMode.IGNORE)
-                session.delete(old)
+                session.merge(ArtworkTag(pid = old.pid, tag = record))
+                session.remove(old)
             }
             session.transaction.commit()
         } catch (cause: Throwable) {
@@ -153,7 +152,7 @@ internal fun tag(session: Session) {
     }
 }
 
-internal fun load(path: String, mode: ReplicationMode, chunk: Int) {
+internal fun load(path: String, chunk: Int) {
     val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
     val entities = PixivEntity::class.sealedSubclasses.map { it.java }
     val config = Configuration().apply { entities.forEach(::addAnnotatedClass) }
@@ -177,7 +176,7 @@ internal fun load(path: String, mode: ReplicationMode, chunk: Int) {
                 useSession(entity::class.companionObjectInstance) { session ->
                     session.transaction.begin()
                     session.runCatching {
-                        for (item in list) replicate(item, mode)
+                        for (item in list) merge(item)
                         count += list.size
                         count
                     }.onSuccess { count ->
@@ -307,7 +306,7 @@ internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useS
         val artwork = criteria.from(ArtWorkInfo::class.java)
         val files = with(criteria.subquery(FileInfo::class.java)) {
             val file = from(FileInfo::class.java)
-            select(file).where(equal(artwork.get<Long>("pid"), file.get<Long>("pid")))
+            select(file).where(equal(artwork.get<Long>("pid"), file.get<FileIndex>("id").get<Long>("pid")))
         }
         criteria.select(artwork)
             .where(
@@ -428,7 +427,7 @@ internal fun SimpleArtworkInfo.toArtWorkInfo(caption: String = "") = ArtWorkInfo
     pid = pid,
     title = title,
     caption = caption,
-    author = UserBaseInfo(uid, name)
+    author = UserBaseInfo(uid = uid, name = name, account = null)
 )
 
 internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo()) = ArtWorkInfo(
@@ -450,21 +449,26 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
     author = author
 )
 
-internal fun IllustInfo.saveTagRecords() {
-    for (tag in tags) {
-        TagRecord(name = tag.name, translated = tag.translatedName).replicate(ReplicationMode.IGNORE)
+internal fun IllustInfo.mergeTagRecords() {
+//    for (tag in tags) {
+//        TagRecord(name = tag.name, translated = tag.translatedName).merge()
+//    }
+    useSession(TagRecord) { session ->
+        for (tag in tags) {
+            session.merge(TagRecord(name = tag.name, translated = tag.translatedName))
+        }
     }
 }
 
-internal fun IllustInfo.replicate() {
+internal fun IllustInfo.merge() {
     if (pid == 0L) return
     saveTagRecords()
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
         try {
             val artwork = toArtWorkInfo()
-            artwork.tags = tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
-            session.replicate(artwork, ReplicationMode.OVERWRITE)
+            tags.mapNotNullTo(artwork.tags) { session.get(TagRecord::class.java, it.name) }
+            session.merge(artwork)
             session.transaction.commit()
             logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
         } catch (cause: Throwable) {
@@ -475,7 +479,7 @@ internal fun IllustInfo.replicate() {
     }
 }
 
-internal fun Collection<IllustInfo>.replicate() {
+internal fun Collection<IllustInfo>.merge() {
     if (isEmpty()) return
     for (info in this) {
         info.saveTagRecords()
@@ -487,12 +491,12 @@ internal fun Collection<IllustInfo>.replicate() {
             val users = HashMap<Long, UserBaseInfo>()
             val record = HashSet<Long>()
 
-            for (info in this@replicate) {
+            for (info in this@merge) {
                 if (info.user.account.isEmpty() || !record.add(info.pid)) continue
                 val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
                 val artwork = info.toArtWorkInfo(author)
-                artwork.tags = info.tags.mapNotNull { session.get(TagRecord::class.java, it.name) }
-                session.replicate(artwork, ReplicationMode.OVERWRITE)
+                info.tags.mapNotNullTo(artwork.tags) { session.get(TagRecord::class.java, it.name) }
+                session.merge(artwork)
             }
             session.transaction.commit()
             logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
@@ -514,7 +518,7 @@ internal fun Collection<IllustInfo>.replicate() {
 
 // region UserInfo
 
-internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(id, name, account)
+internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, account = account.takeIf { it.length > 0 })
 
 internal fun UserInfo.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
@@ -543,13 +547,13 @@ internal fun UserBaseInfo.SQL.like(name: String): UserBaseInfo? = useSession { s
 private val ScreenError = listOf("", "https", "http")
 
 internal fun UserDetail.twitter(): String? {
-    user.toUserBaseInfo().replicate()
+    user.toUserBaseInfo().merge()
     val screen = profile.twitterAccount?.takeUnless { it in ScreenError }
         ?: listOfNotNull(profile.twitterUrl, profile.webpage, user.comment)
             .firstNotNullOfOrNull { URL_TWITTER_SCREEN.find(it) }?.value
         ?: return null
 
-    Twitter(screen, user.id).replicate()
+    Twitter(screen, user.id).merge()
 
     return screen
 }
@@ -559,7 +563,7 @@ internal fun CreatorDetail.twitter(): String? {
         .firstNotNullOfOrNull { URL_TWITTER_SCREEN.find(it) }?.value
         ?: return null
 
-    Twitter(screen, user.userId).replicate()
+    Twitter(screen, user.userId).merge()
 
     return screen
 }
@@ -592,14 +596,14 @@ internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession {
     session.withCriteria<FileInfo> { criteria ->
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
-            .where(equal(file.get<Long>("pid"), pid))
+            .where(equal(file.get<FileIndex>("id").get<Long>("pid"), pid))
     }.list().orEmpty()
 }
 
-internal fun List<FileInfo>.replicate(): Unit = useSession(FileInfo) { session ->
+internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     try {
-        for (item in this) session.replicate(item, ReplicationMode.OVERWRITE)
+        for (item in this) session.merge(item)
         session.transaction.commit()
     } catch (cause: Throwable) {
         session.transaction.rollback()
@@ -690,7 +694,7 @@ internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSett
     val record = session.get(AliasSetting::class.java, alias) ?: return@useSession
     session.transaction.begin()
     try {
-        session.delete(record)
+        session.remove(record)
         session.transaction.commit()
     } catch (cause: Throwable) {
         session.transaction.rollback()
@@ -716,10 +720,8 @@ internal fun PixivSearchResult.associate(): Unit = useSession(PixivSearchResult)
             title = info.title
             uid = info.author.uid
             name = info.author.name
-            session.replicate(this@associate, ReplicationMode.OVERWRITE)
-        } else {
-            session.replicate(this@associate, ReplicationMode.IGNORE)
         }
+        session.merge(this@associate)
         session.transaction.commit()
     } catch (cause: Throwable) {
         session.transaction.rollback()

@@ -9,7 +9,6 @@ import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.mirai.pixiv.model.*
-import java.awt.SystemColor.info
 import java.util.concurrent.*
 
 public object PixivEroCommand : SimpleCommand(
@@ -37,7 +36,7 @@ public object PixivEroCommand : SimpleCommand(
             group = (event.subject as? Group)?.id,
             pid = pid,
             timestamp = event.time.toLong()
-        ).replicate()
+        ).persist()
     }
 
     @Handler

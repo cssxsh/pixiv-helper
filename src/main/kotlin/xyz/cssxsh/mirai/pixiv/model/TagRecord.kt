@@ -7,9 +7,9 @@ import jakarta.persistence.*
 public data class TagRecord(
     @Id
     @Column(name = "name", nullable = false, length = 30, updatable = false)
-    val name: String = "",
+    val name: String,
     @Column(name = "translated_name", nullable = true)
-    val translated: String? = null,
+    val translated: String?,
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tid", nullable = false, updatable = false, insertable = false)
     val tid: Long = 0

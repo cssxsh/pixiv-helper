@@ -7,7 +7,7 @@ import jakarta.persistence.*
 public data class Twitter(
     @Id
     @Column(name = "screen", nullable = false, length = 50)
-    val screen: String = "",
+    val screen: String,
     @Column(name = "uid", nullable = false, updatable = false)
     override val uid: Long,
 ) : PixivEntity, Author {

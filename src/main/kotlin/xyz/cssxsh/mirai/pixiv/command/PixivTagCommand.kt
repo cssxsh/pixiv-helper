@@ -25,7 +25,7 @@ public object PixivTagCommand : SimpleCommand(
             pid = pid,
             tag = tag,
             timestamp = event.time.toLong()
-        ).replicate()
+        ).persist()
     }
 
     @Handler
