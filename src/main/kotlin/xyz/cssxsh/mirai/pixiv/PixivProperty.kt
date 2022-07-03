@@ -98,6 +98,11 @@ internal val TaskSendInterval by PixivConfigData::interval
 internal val TaskForward by PixivConfigData::forward
 
 /**
+ * TODO TaskConut by PixivConfigData
+ */
+internal val TaskConut = 10
+
+/**
  * 涩图防重复间隔
  * 1. [ERO_CHUNK_PROPERTY]
  * 2. [PixivHelperSettings.eroChunk]

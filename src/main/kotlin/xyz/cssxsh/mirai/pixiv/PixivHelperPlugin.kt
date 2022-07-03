@@ -26,6 +26,12 @@ object PixivHelperPlugin : KotlinPlugin(
         return PermissionService.INSTANCE.register(permissionId(name), description, parentPermission)
     }
 
+    override fun PluginComponentStorage.onLoad() {
+        runAfterStartup {
+            PixivScheduler.start()
+        }
+    }
+
     override fun onEnable() {
 
         for (config in PixivHelperConfig) {

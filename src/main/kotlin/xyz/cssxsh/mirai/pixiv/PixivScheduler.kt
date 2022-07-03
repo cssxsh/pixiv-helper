@@ -1,11 +1,21 @@
 package xyz.cssxsh.mirai.pixiv
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.withLock
+import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
+import net.mamoe.mirai.console.command.descriptor.*
+import net.mamoe.mirai.console.util.*
 import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
+import xyz.cssxsh.mirai.pixiv.command.*
 import xyz.cssxsh.mirai.pixiv.data.*
+import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.task.*
+import xyz.cssxsh.pixiv.AgeLimit
+import xyz.cssxsh.pixiv.apps.*
 import java.time.*
 import kotlin.coroutines.*
 
@@ -24,12 +34,30 @@ public object PixivScheduler : CoroutineScope {
     /**
      * 运行任务
      */
-    private fun run(task: PixivTimerTask): Job = launch {
-        when (task) {
-            is PixivTimerTask.Cache -> {
-                if (task.subject != null) {
-                    task.withHelper {
-
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
+    private fun run(task: PixivTimerTask) {
+        launch {
+            task.subscribe {
+                when (task) {
+                    is PixivTimerTask.Cache -> {
+                        val result = PixivCacheCommand.execute(
+                            sender = this,
+                            arguments = task.arguments,
+                            checkPermission = false
+                        )
+                        if (result.isFailure()) {
+                            logger.warning { "Task Cache 执行错误 $result" }
+                        }
+                    }
+                    is PixivTimerTask.Follow -> {
+                        push(id = task.id, name = "Follow", list = task.take(TaskConut))
+                    }
+                    is PixivTimerTask.Rank -> {
+                        push(id = task.id, name = "Rank", list = task.take(TaskConut))
+                    }
+                    is PixivTimerTask.Recommended -> {
+                        push(id = task.id, name = "Recommended", list = task.take(TaskConut))
                     }
                 } else {
                     TODO()
@@ -46,22 +74,28 @@ public object PixivScheduler : CoroutineScope {
     /**
      * 设置任务
      */
-    public operator fun set(id: String, task: PixivTimerTask) {
-        if (id in tasks) throw IllegalArgumentException("$id already exists")
-        tasks[id] = task
-        jobs[id] = launch {
+    public operator fun plusAssign(task: PixivTimerTask) {
+        if (task.id in tasks) throw IllegalArgumentException("${task.id} already exists")
+        tasks[task.id] = task
+        jobs[task.id] = launch {
             while (isActive) {
+                prepare(task = task)
                 val millis = task.cron.toExecutionTime()
                     .timeToNextExecution(ZonedDateTime.now())
                     .orElse(Duration.ZERO)
                     .toMillis()
-                if (millis <= 0) {
-                    logger.info { "任务 ${task} 结束" }
-                    break
-                }
+                delay(millis)
                 run(task = task)
+                delay(TaskSendInterval * 1000L)
             }
         }
+    }
+
+    /**
+     * 移除任务
+     */
+    public operator fun get(id: String): PixivTimerTask? {
+        return tasks[id]
     }
 
     /**
@@ -74,92 +108,48 @@ public object PixivScheduler : CoroutineScope {
         return task
     }
 
-    private suspend fun PixivTimerTask.withHelper(block: suspend PixivHelper.() -> Any?) {
-        val contact = findContact(subject!!) ?: throw NoSuchElementException("$subject")
+    private suspend fun PixivTimerTask.subscribe(block: suspend UserCommandSender.() -> Unit) {
+        val contact = findContact(subject) ?: throw NoSuchElementException("$subject")
         val sender = when (contact) {
             is User -> contact.asCommandSender(false)
-            is Group -> contact.getOrFail(id = user!!).asCommandSender(false)
-            else -> throw IllegalArgumentException("sender")
+            is Group -> contact.getOrFail(id = user ?: contact.bot.id).asCommandSender(false)
+            else -> throw IllegalArgumentException("$contact")
         }
 
-        sender.withHelper(block)
+        sender.block()
+    }
+
+    public fun detail(): String {
+        return tasks.entries.joinToString("\n") { (id, task) ->
+            """$id | "${task.cron}" | ${task.illusts.size}"""
+        }
+    }
+
+    public fun start() {
+        for ((id, task) in tasks) {
+            if (jobs[id]?.isActive == true) continue
+            jobs[id] = launch {
+                while (isActive) {
+                    prepare(task = task)
+                    val millis = task.cron.toExecutionTime()
+                        .timeToNextExecution(ZonedDateTime.now())
+                        .orElse(Duration.ZERO)
+                        .toMillis()
+                    delay(millis)
+                    run(task = task)
+                    delay(TaskSendInterval * 1000L)
+                }
+            }
+        }
+    }
+
+    public fun stop() {
+        jobs.forEach { (_, job) ->
+            job.cancel()
+        }
     }
 }
 
-//internal data class CacheTask(
-//    val name: String,
-//    val write: Boolean,
-//    val reply: Boolean,
-//    val block: LoadTask,
-//)
-//
-//internal data class DownloadTask(
-//    val name: String,
-//    val list: List<IllustInfo>,
-//    val reply: Boolean,
-//)
-//
-//internal val TimerTask.helper
-//    get() = requireNotNull(findContact(subject)) { "找不到联系人 $subject" }.helper
-//
-//internal val TimerTask.sender
-//    get() = when (val contact = requireNotNull(findContact(subject)) { "找不到联系人 $subject" }) {
-//        is Group -> (contact[user] ?: contact.owner).asMemberCommandSender()
-//        is User -> contact.asCommandSender(false)
-//        else -> throw IllegalArgumentException("TimerTask Sender $this")
-//    }
-//
-//typealias BuildTask = suspend PixivHelper.() -> Pair<String, TimerTask>
-//
-
-//
-//private suspend fun PixivHelper.subscribe(name: String, block: LoadTask) {
-//    val flow = block(name)
-//    val list = flow.eros(mark = false).notHistory(task = name).onEach { it.write().replicate() }
-//        .toList().flatten().filter { it.age == AgeLimit.ALL }.distinctBy { it.pid }
-//    if (isActive.not() || list.isEmpty()) return
-//    delay(TaskSendInterval * 1000L)
-//    val nodes = mutableListOf<ForwardMessage.Node>()
-//    val type = name.substringBefore('(')
-//
-//    for ((index, illust) in list.sortedBy { it.pid }.withIndex()) {
-//        if (isActive.not()) break
-//
-//        val message = buildMessageByIllust(illust = illust)
-//
-//        if (TaskForward) {
-//            val sender = (contact as? User) ?: (contact as Group).members.random()
-//            nodes.add(
-//                ForwardMessage.Node(
-//                    senderId = sender.id,
-//                    senderName = sender.nameCardOrNick,
-//                    time = illust.createAt.toEpochSecond().toInt(),
-//                    message = message
-//                )
-//            )
-//        } else {
-//            delay(TaskSendInterval * 1000L)
-//            send {
-//                "Task: $type (${index + 1}/${list.size})\n".toPlainText() + message
-//            }
-//        }
-//
-//        StatisticTaskInfo(
-//            task = name,
-//            pid = illust.pid,
-//            timestamp = OffsetDateTime.now().toEpochSecond()
-//        ).replicate()
-//    }
-//
-//    if (TaskForward) {
-//        send {
-//            RawForwardMessage(nodes).render {
-//                title = type
-//                summary = "查看推送的${nodes.size}个作品"
-//            }
-//        }
-//    }
-//}
 //
 //private suspend fun PixivHelper.trending(name: String, times: Int = 1) {
 //    val flow = getTrending(times)
@@ -204,79 +194,6 @@ public object PixivScheduler : CoroutineScope {
 //            RawForwardMessage(nodes).render {
 //                title = type
 //                summary = "查看推送的${nodes.size}个作品"
-//            }
-//        }
-//    }
-//}
-//
-//private const val RANK_HOUR = 12
-//
-//internal fun OffsetDateTime.toNextRank(): OffsetDateTime =
-//    (if (hour < RANK_HOUR) this else plusDays(1)).withHour(RANK_HOUR).withMinute(0).withSecond(0)
-//
-//internal fun OffsetDateTime.goto(next: OffsetDateTime) = next.toEpochSecond() - toEpochSecond()
-//
-//private val RandomMinute get() = (3..10).random() * 60 * 1000L
-//
-//internal fun TimerTask.pre(): Long {
-//    return when (this) {
-//        is TimerTask.User -> RandomMinute
-//        is TimerTask.Rank -> RandomMinute
-//        is TimerTask.Follow -> RandomMinute
-//        is TimerTask.Recommended -> interval
-//        is TimerTask.Backup -> interval
-//        is TimerTask.Web -> RandomMinute
-//        is TimerTask.Trending -> interval
-//        is TimerTask.Cache -> interval
-//    }
-//}
-//
-//internal suspend fun TimerTask.run(name: String) {
-//    when (this) {
-//        is TimerTask.User -> {
-//            helper.subscribe(name) {
-//                getUserIllusts(detail = userDetail(uid = this@run.uid), limit = PAGE_SIZE).isToday()
-//            }
-//        }
-//        is TimerTask.Rank -> {
-//            helper.subscribe(name) {
-//                getRank(mode = mode).eros()
-//            }
-//        }
-//        is TimerTask.Follow -> {
-//            helper.subscribe(name) {
-//                getFollowIllusts(limit = TASK_LOAD).isToday()
-//            }
-//        }
-//        is TimerTask.Recommended -> {
-//            helper.subscribe(name) {
-//                getRecommended(limit = PAGE_SIZE).eros()
-//            }
-//        }
-//        is TimerTask.Backup -> {
-//            with(PixivBackupCommand) {
-//                sender.data()
-//            }
-//        }
-//        is TimerTask.Web -> {
-//            helper.subscribe(name) {
-//                getListIllusts(set = loadWeb(url = Url(url), regex = pattern.toRegex()))
-//            }
-//        }
-//        is TimerTask.Trending -> {
-//            helper.trending(name = name, times = times)
-//        }
-//        is TimerTask.Cache -> {
-//            @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
-//            try {
-//                val result = PixivCacheCommand.execute(sender = sender, arguments = arguments, checkPermission = false)
-//                if (result.isFailure()) {
-//                    logger.warning { "Task Cache 执行错误 $result" }
-//                } else {
-//                    delay(3_000)
-//                }
-//            } catch (cause: Throwable) {
-//                logger.warning { "Task Cache 执行错误 $cause" }
 //            }
 //        }
 //    }
