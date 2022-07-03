@@ -31,6 +31,128 @@ public object PixivScheduler : CoroutineScope {
 
     private val jobs: MutableMap<String, Job> = HashMap()
 
+    private fun record(id: String, illust: IllustInfo) {
+        StatisticTaskInfo(
+            task = id,
+            pid = illust.pid,
+            timestamp = OffsetDateTime.now().toEpochSecond()
+        ).persist()
+    }
+
+    private suspend fun UserCommandSender.push(id: String, name: String, list: IllustPage) {
+        if (list.isEmpty()) return
+        val nodes = mutableListOf<ForwardMessage.Node>()
+
+        for ((index, illust) in list.withIndex()) {
+
+            val message = buildIllustMessage(illust = illust, contact = subject)
+
+            if (TaskForward) {
+                val sender = (subject as? User) ?: (subject as Group).members.random()
+                nodes.add(
+                    ForwardMessage.Node(
+                        senderId = sender.id,
+                        senderName = sender.nameCardOrNick,
+                        time = illust.createAt.toEpochSecond().toInt(),
+                        message = message
+                    )
+                )
+            } else {
+                delay(TaskSendInterval * 1000L)
+                sendMessage("Task: $name (${index + 1}/${list.size})\n".toPlainText() + message)
+            }
+
+            launch(SupervisorJob()) {
+                record(id, illust)
+            }
+        }
+
+        if (TaskForward) {
+            sendMessage(RawForwardMessage(nodes).render {
+                title = name
+                summary = "查看推送的${nodes.size}个作品"
+            })
+        }
+    }
+
+    private fun PixivTimerTask.take(count: Int): List<IllustInfo> {
+        return buildList {
+            while (this.size < count) {
+                val illust = illusts.removeFirstOrNull() ?: break
+                if (illust.age != AgeLimit.ALL) continue
+                if ((id to illust.pid) in StatisticTaskInfo) continue
+
+                add(illust)
+            }
+        }
+    }
+
+    /**
+     * 准备任务
+     */
+    private fun prepare(task: PixivTimerTask) {
+        launch {
+            task.subscribe {
+                when (task) {
+                    is PixivTimerTask.Cache -> {}
+                    is PixivTimerTask.Follow -> {
+                        if (task.illusts.isEmpty() && task.mutex.tryLock()) {
+                            val client = client()
+                            task.mutex.withLock {
+                                PixivCacheLoader.cache(task = buildPixivCacheTask {
+                                    name = task.id
+                                    flow = client.follow().onEach { task.illusts.addAll(it) }
+                                }) { _, _ ->
+                                    task.mutex.unlock()
+                                }
+                            }
+                        }
+                    }
+                    is PixivTimerTask.Rank -> {
+                        if (task.illusts.isEmpty() && task.mutex.tryLock()) {
+                            val client = client()
+                            PixivCacheLoader.cache(task = buildPixivCacheTask {
+                                name = task.id
+                                flow = client.rank(task.mode).onEach { task.illusts.addAll(it) }
+                            }) { _, _ ->
+                                task.mutex.unlock()
+                            }
+                        }
+                    }
+                    is PixivTimerTask.Recommended -> {
+                        if (task.illusts.isEmpty() && task.mutex.tryLock()) {
+                            val client = client()
+                            PixivCacheLoader.cache(task = buildPixivCacheTask {
+                                name = task.id
+                                flow = client.recommended().onEach { task.illusts.addAll(it) }
+                            }) { _, _ ->
+                                task.mutex.unlock()
+                            }
+                        }
+                    }
+                    is PixivTimerTask.Trending -> { /* TODO */
+                    }
+                    is PixivTimerTask.User -> {
+                        if (task.illusts.isEmpty() && task.mutex.tryLock()) {
+                            val client = client()
+                            val detail = client.userDetail(uid = task.uid)
+                            PixivCacheLoader.cache(task = buildPixivCacheTask {
+                                name = task.id
+                                flow = client.user(detail).onEach { task.illusts.addAll(it) }
+                            }) { _, _ ->
+                                task.mutex.unlock()
+                            }
+                        }
+                    }
+                }
+            }
+        }.invokeOnCompletion { cause ->
+            if (cause != null) {
+                logger.warning({ "${task.id} prepare fail" }, cause)
+            }
+        }
+    }
+
     /**
      * 运行任务
      */
@@ -59,15 +181,17 @@ public object PixivScheduler : CoroutineScope {
                     is PixivTimerTask.Recommended -> {
                         push(id = task.id, name = "Recommended", list = task.take(TaskConut))
                     }
-                } else {
-                    TODO()
+                    is PixivTimerTask.Trending -> { /* TODO */
+                    }
+                    is PixivTimerTask.User -> {
+                        push(id = task.id, name = "User", list = task.take(TaskConut))
+                    }
                 }
             }
-            is PixivTimerTask.Follow -> task.withHelper { /* TODO */ }
-            is PixivTimerTask.Rank -> task.withHelper { /* TODO */ }
-            is PixivTimerTask.Recommended -> task.withHelper { /* TODO */ }
-            is PixivTimerTask.Trending -> task.withHelper { /* TODO */ }
-            is PixivTimerTask.User -> task.withHelper { /* TODO */ }
+        }.invokeOnCompletion { cause ->
+            if (cause != null) {
+                logger.warning({ "${task.id} run fail" }, cause)
+            }
         }
     }
 

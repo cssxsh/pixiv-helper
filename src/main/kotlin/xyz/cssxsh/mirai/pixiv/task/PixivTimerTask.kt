@@ -9,7 +9,14 @@ import xyz.cssxsh.pixiv.apps.*
 public sealed class PixivTimerTask {
     public abstract var cron: DataCron
     public abstract val user: Long?
-    public abstract val subject: Long?
+    public abstract val subject: Long
+    public abstract val id: String
+
+    @Transient
+    public val illusts: MutableList<IllustInfo> = ArrayList()
+
+    @Transient
+    public val mutex: Mutex = Mutex()
 
     @Serializable
     @SerialName("User")

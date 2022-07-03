@@ -226,17 +226,13 @@ public object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("缓存搜索记录")
-    suspend fun UserCommandSender.search() = withHelper {
-        val list = PixivSearchResult.noCached()
-
-        addCacheJob(name = "SEARCH", reply = reply) { name ->
-            getListIllusts(info = list, check = false).sendOnCompletion { total ->
-                for (item in list) item.associate()
-                "${name}处理完成, 共${total}"
-            }
+    public suspend fun CommandSender.search(): Unit = cache {
+        val records = runInterruptible(Dispatchers.IO) {
+            PixivSearchResult.noCached()
         }
-
-        "搜索结果有${list.size}个作品需要缓存"
+        name = "SEARCH"
+        flow = PixivClientPool.free().illusts(targets = records.mapTo(HashSet()) { it.pid })
+        //  "搜索结果有${list.size}个作品需要缓存"
     }
 
     @SubCommand
