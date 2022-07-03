@@ -11,33 +11,33 @@ import net.mamoe.mirai.message.data.MessageSource.Key.quote
 import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
-import okio.ByteString.Companion.toByteString
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.exception.*
 import xyz.cssxsh.pixiv.fanbox.*
-import xyz.cssxsh.pixiv.web.*
 import java.io.*
 
 // region Send Message
 
-val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
+internal val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
 
-suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Contact>? {
+internal suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Contact>? {
     return if (this is CommandSenderOnMessage<*>) {
-        sendMessage(fromEvent.message.quote() + message)
+        sendMessage(message = fromEvent.message.quote() + message)
     } else {
-        sendMessage(At(user) + message)
+        sendMessage(message = At(user) + message)
     }
 }
 
-suspend fun UserCommandSender.quoteReply(message: String) = quoteReply(message.toPlainText())
+internal suspend fun UserCommandSender.quoteReply(message: String): MessageReceipt<Contact>? {
+    return quoteReply(message = message.toPlainText())
+}
 
-internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
-    return try {
-        when (val message = helper.block()) {
+internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() -> Any?) {
+    try {
+        when (val message = subject.helper.block()) {
             null, Unit -> Unit
             is ForwardMessage -> {
                 check(message.nodeList.size <= 200) {
@@ -46,8 +46,12 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
                         "ForwardMessage allows up to 200 nodes, but found ${message.nodeList.size}"
                     )
                 }
-                @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-                sendMessage(message + net.mamoe.mirai.internal.message.IgnoreLengthCheck)
+                try {
+                    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+                    sendMessage(message + net.mamoe.mirai.internal.message.flags.IgnoreLengthCheck)
+                } catch (_: Throwable) {
+                    sendMessage(message)
+                }
             }
             is Message -> quoteReply(message)
             is String -> quoteReply(message)
@@ -55,7 +59,6 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
             is ArtWorkInfo -> sendArtwork(message)
             else -> quoteReply(message.toString())
         }
-        true
     } catch (cause: Throwable) {
         logger.warning({ "消息回复失败" }, cause)
         when {
@@ -63,10 +66,12 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
                 quoteReply("ApiException, ${cause.json}")
             }
             cause is RestrictException -> {
-                if (cause.illust.pid in ArtWorkInfo) {
-                    ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
-                } else {
-                    cause.illust.toArtWorkInfo().copy(caption = cause.message).replicate()
+                launch(SupervisorJob()) {
+                    if (cause.illust.pid in ArtWorkInfo) {
+                        ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
+                    } else {
+                        cause.illust.toArtWorkInfo().copy(caption = cause.message).merge()
+                    }
                 }
                 quoteReply("RestrictException, ${cause.illust}")
             }
@@ -81,95 +86,54 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
                 quoteReply(cause.toString())
             }
         }
-        false
     }
 }
 
-internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?): Boolean {
-    return (this as UserCommandSender).withHelper(block)
+internal suspend fun CommandSenderOnMessage<*>.withHelper(block: suspend PixivHelper.() -> Any?) {
+    (this as UserCommandSender).withHelper(block)
 }
 
-internal suspend fun UserCommandSender.sendIllust(illust: IllustInfo): Boolean {
-    return try {
-        val message = helper.buildMessageByIllust(illust = illust)
-        withTimeout(3 * 60 * 1000L) {
-            when (val model = helper.model) {
-                is SendModel.Normal -> quoteReply(message)
-                is SendModel.Flash -> {
-                    val images = message.filterIsInstance<Image>()
-                    quoteReply(message.firstIsInstance<PlainText>())
-                    for (image in images) quoteReply(image.flash())
-                }
-                is SendModel.Recall -> {
-                    quoteReply(message)?.recallIn(model.ms)
-                }
-                is SendModel.Forward -> {
-                    sendMessage(
-                        message.toForwardMessage(
-                            sender = user,
-                            displayStrategy = illust.toDisplayStrategy()
-                        )
+internal suspend fun UserCommandSender.sendIllust(illust: IllustInfo) {
+    val message: MessageChain = buildIllustMessage(illust = illust, contact = subject)
+    withTimeout(3 * 60 * 1000L) {
+        when (val model = subject.helper.model) {
+            is SendModel.Normal -> quoteReply(message)
+            is SendModel.Flash -> {
+                val images = message.filterIsInstance<Image>()
+                quoteReply(message.firstIsInstance<PlainText>())
+                for (image in images) quoteReply(image.flash())
+            }
+            is SendModel.Recall -> {
+                quoteReply(message)?.recallIn(model.ms)
+            }
+            is SendModel.Forward -> {
+                sendMessage(
+                    message.toForwardMessage(
+                        sender = user,
+                        displayStrategy = illust.toDisplayStrategy()
                     )
-                }
+                )
             }
         }
-        true
-    } catch (cause: Throwable) {
-        logger.warning({ "消息作品失败" }, cause)
-        when {
-            cause is AppApiException -> {
-                quoteReply("ApiException, ${cause.json}")
-            }
-            cause is RestrictException -> {
-                if (cause.illust.pid in ArtWorkInfo) {
-                    ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
-                } else {
-                    cause.illust.toArtWorkInfo().copy(caption = cause.message).replicate()
-                }
-                quoteReply("RestrictException, ${cause.illust}")
-            }
-            SendLimit in cause.message.orEmpty() -> {
-                delay(60 * 1000L)
-                quoteReply(SendLimit.find(cause.message!!)!!.value)
-            }
-            else -> {
-                logger.warning({ "读取色图失败" }, cause)
-                quoteReply("读取色图失败, ${cause.message}")
-            }
-        }
-        false
     }
 }
 
-internal suspend fun UserCommandSender.sendArtwork(info: ArtWorkInfo): Boolean {
-    return sendIllust(illust = helper.getIllustInfo(pid = info.pid, flush = false))
+internal suspend fun UserCommandSender.sendArtwork(info: ArtWorkInfo) {
+    sendIllust(illust = loadIllustInfo(pid = info.pid, client = subject.helper.client))
 }
-
-/**
- * 通过正负号区分群和用户
- */
-val Contact.delegate get() = if (this is Group) id * -1 else id
 
 /**
  * 查找Contact
  */
-fun findContact(delegate: Long): Contact? {
-    for (bot in Bot.instances) {
-        if (delegate < 0) {
-            for (group in bot.groups) {
-                if (group.id == delegate * -1) return group
-            }
-        } else {
-            for (friend in bot.friends) {
-                if (friend.id == delegate) return friend
-            }
-            for (stranger in bot.strangers) {
-                if (stranger.id == delegate) return stranger
-            }
-            for (group in bot.groups) {
-                for (member in group.members) {
-                    if (member.id == delegate) return member
-                }
+internal fun findContact(delegate: Long): Contact? {
+    for (bot in Bot.instances.shuffled()) {
+        for (friend in bot.friends) {
+            if (friend.id == delegate) return friend
+        }
+        for (group in bot.groups) {
+            if (group.id == delegate) return group
+            for (member in group.members) {
+                if (member.id == delegate) return member
             }
         }
     }
@@ -210,10 +174,6 @@ internal fun RawForwardMessage.render(display: DisplayStrategyBuilder.() -> Unit
     return render(DisplayStrategyBuilder().apply(display).build())
 }
 
-internal operator fun <V> Map<Boolean, V>.component1(): V? = get(true)
-
-internal operator fun <V> Map<Boolean, V>.component2(): V? = get(false)
-
 internal val Url.filename get() = encodedPath.substringAfterLast('/')
 
 internal fun IllustInfo.getContent(link: Boolean, tag: Boolean, attr: Boolean) = buildMessageChain {
@@ -249,7 +209,7 @@ internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStr
     override fun generateSummary(forward: RawForwardMessage): String = "查看${user.name}的作品"
 }
 
-internal suspend fun SearchResult.getContent(contact: Contact) = buildMessageChain {
+public suspend fun SearchResult.getContent(contact: Contact): MessageChain = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
     when (this@getContent) {
         is PixivSearchResult -> {
@@ -259,18 +219,15 @@ internal suspend fun SearchResult.getContent(contact: Contact) = buildMessageCha
             appendLine("标题: $title ")
             appendLine("PID: $pid ")
 
-            try {
-                val info = ArtWorkInfo[pid]
-                if (info != null && info.age == AgeLimit.ALL.ordinal) {
-                    with(contact.helper) {
-                        withTimeout(30_000L) {
-                            getIllustInfo(pid = info.pid, flush = false)
-                                .useImageResources { _, resource -> add(resource.uploadAsImage(contact)) }
-                        }
-                    }
+            contact.launch {
+                try {
+                    val illust = loadIllustInfo(pid = pid, client = contact.helper.client)
+                    if (illust.age > AgeLimit.ALL || illust.pageCount > 3) return@launch
+                    val message = buildIllustMessage(illust = illust, contact = contact)
+                    contact.sendMessage(message)
+                } catch (_: Throwable) {
+                    // ignore
                 }
-            } catch (_: Throwable) {
-                // ignore
             }
         }
         is TwitterSearchResult -> {
@@ -287,7 +244,7 @@ internal suspend fun SearchResult.getContent(contact: Contact) = buildMessageCha
     }
 }
 
-internal suspend fun List<SearchResult>.getContent(sender: User): Message {
+public suspend fun List<SearchResult>.getContent(sender: User): Message {
     if (isEmpty()) return "结果为空".toPlainText()
     val contact = (sender as? Member)?.group ?: sender
 
@@ -308,34 +265,40 @@ internal suspend fun List<SearchResult>.getContent(sender: User): Message {
     }
 }
 
-internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
-    appendLine("AID: $aid")
-    appendLine("标题: $title")
-    appendLine("发布: $publish")
-    appendLine("类别: $category")
-    appendLine("类型: $type")
-    appendLine("链接: $url")
-    append(getThumbnailImage().uploadAsImage(contact))
-}
+//internal suspend fun SpotlightArticle.getContent(contact: Contact) = buildMessageChain {
+//    appendLine("AID: $aid")
+//    appendLine("标题: $title")
+//    appendLine("发布: $publish")
+//    appendLine("类别: $category")
+//    appendLine("类型: $type")
+//    appendLine("链接: $url")
+//    append(getThumbnailImage().uploadAsImage(contact))
+//}
+//
+//internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightArticle>) = buildMessageChain {
+//    appendLine("共 ${articles.size} 个特辑")
+//    for (article in articles) {
+//        appendLine("================")
+//        append(article.getContent(contact))
+//    }
+//}
 
-internal suspend fun PixivHelper.buildMessageByArticle(articles: List<SpotlightArticle>) = buildMessageChain {
-    appendLine("共 ${articles.size} 个特辑")
-    for (article in articles) {
-        appendLine("================")
-        append(article.getContent(contact))
-    }
-}
 
-internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buildMessageChain {
-    add(illust.getContent(link, tag, attr))
-    if (illust.age == AgeLimit.ALL) {
+public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): MessageChain {
+    val helper = contact.helper
+    return buildMessageChain {
+        add(illust.getContent(helper.link, helper.tag, helper.attr))
+        if (illust.age != AgeLimit.ALL) {
+            add("R18禁止！".toPlainText())
+            return@buildMessageChain
+        }
         illust.useImageResources { index, resource ->
             when {
-                index == max -> {
+                index == helper.max -> {
                     logger.warning { "[${illust.pid}](${illust.pageCount})图片过多" }
                     add("部分图片省略\n".toPlainText())
                 }
-                index < max -> {
+                index < helper.max -> {
                     add(
                         try {
                             resource.uploadAsImage(contact)
@@ -347,84 +310,79 @@ internal suspend fun PixivHelper.buildMessageByIllust(illust: IllustInfo) = buil
                 else -> Unit
             }
         }
-    } else {
-        add("R18禁止！".toPlainText())
     }
 }
 
-internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buildMessageChain {
-    appendLine("NAME: ${preview.user.name}")
-    appendLine("UID: ${preview.user.id}")
-    appendLine("ACCOUNT: ${preview.user.account}")
-    appendLine("FOLLOWED: ${preview.user.isFollowed}")
-    appendLine("TWITTER: ${Twitter[preview.user.id].joinToString { it.screen }}")
-    try {
-        append(preview.user.getProfileImage().uploadAsImage(contact))
-    } catch (e: Throwable) {
-        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, e)
-    }
-    for (illust in preview.illusts.apply { replicate() }.write()) {
-        if (illust.isEro().not()) continue
-        try {
-            if (illust.age == AgeLimit.ALL) {
-                illust.useImageResources { index, resource ->
-                    if (index < 1) add(resource.uploadAsImage(contact))
-                }
-            }
-        } catch (e: Throwable) {
-            logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
-        }
-    }
-}
-
-internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildMessageChain {
-    appendLine("NAME: ${detail.user.name}")
-    appendLine("UID: ${detail.user.id}")
-    appendLine("ACCOUNT: ${detail.user.account}")
-    appendLine("FOLLOWED: ${detail.user.isFollowed}")
-    appendLine("TOTAL: ${detail.profile.totalArtwork}")
-    appendLine("TWITTER: ${detail.twitter()}")
-    try {
-        append(detail.user.getProfileImage().uploadAsImage(contact))
-    } catch (e: Throwable) {
-        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, e)
-    }
-}
-
-internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
-
-internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) = buildMessageChain {
-    appendLine("NAME: ${creator.user.name}")
-    appendLine("UID: ${creator.user.userId}")
-    appendLine("CREATOR_ID: ${creator.creatorId}")
-    appendLine("HAS_ADULT_CONTENT: ${creator.hasAdultContent}")
-    appendLine("TWITTER: ${creator.twitter()}")
-    appendLine(creator.description)
-    try {
-        append(creator.getCoverImage()?.uploadAsImage(contact) ?: "".toPlainText())
-    } catch (e: Throwable) {
-        logger.warning({ "Creator(${creator.creatorId}) CoverImage 下载失败" }, e)
-    }
-}
+//
+//internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buildMessageChain {
+//    appendLine("NAME: ${preview.user.name}")
+//    appendLine("UID: ${preview.user.id}")
+//    appendLine("ACCOUNT: ${preview.user.account}")
+//    appendLine("FOLLOWED: ${preview.user.isFollowed}")
+//    appendLine("TWITTER: ${Twitter[preview.user.id].joinToString { it.screen }}")
+//    try {
+//        append(preview.user.getProfileImage().uploadAsImage(contact))
+//    } catch (e: Throwable) {
+//        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, e)
+//    }
+//    for (illust in preview.illusts.apply { replicate() }.write()) {
+//        if (illust.isEro().not()) continue
+//        try {
+//            if (illust.age == AgeLimit.ALL) {
+//                illust.useImageResources { index, resource ->
+//                    if (index < 1) add(resource.uploadAsImage(contact))
+//                }
+//            }
+//        } catch (e: Throwable) {
+//            logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
+//        }
+//    }
+//}
+//
+//internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildMessageChain {
+//    appendLine("NAME: ${detail.user.name}")
+//    appendLine("UID: ${detail.user.id}")
+//    appendLine("ACCOUNT: ${detail.user.account}")
+//    appendLine("FOLLOWED: ${detail.user.isFollowed}")
+//    appendLine("TOTAL: ${detail.profile.totalArtwork}")
+//    appendLine("TWITTER: ${detail.twitter()}")
+//    try {
+//        append(detail.user.getProfileImage().uploadAsImage(contact))
+//    } catch (e: Throwable) {
+//        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, e)
+//    }
+//}
+//
+//internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
+//
+//internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) = buildMessageChain {
+//    appendLine("NAME: ${creator.user.name}")
+//    appendLine("UID: ${creator.user.userId}")
+//    appendLine("CREATOR_ID: ${creator.creatorId}")
+//    appendLine("HAS_ADULT_CONTENT: ${creator.hasAdultContent}")
+//    appendLine("TWITTER: ${creator.twitter()}")
+//    appendLine(creator.description)
+//    try {
+//        append(creator.getCoverImage()?.uploadAsImage(contact) ?: "".toPlainText())
+//    } catch (e: Throwable) {
+//        logger.warning({ "Creator(${creator.creatorId}) CoverImage 下载失败" }, e)
+//    }
+//}
 
 internal fun IllustInfo.getMirrorUrls(): List<Url> {
-    return getOriginImageUrls().map { it.copy(host = ProxyMirror.ifBlank { PixivMirrorHost }) }
+    return getOriginImageUrls().map { url ->
+        URLBuilder(url).apply {
+            host = ProxyMirror.ifBlank { PixivMirrorHost }
+        }.build()
+    }
 }
-
-private fun IllustInfo.bookmarks(min: Long): Boolean = (totalBookmarks ?: 0) > min
-
-private fun IllustInfo.pages(max: Int): Boolean = pageCount < max
-
-private fun IllustInfo.match(tag: Regex): Boolean = tags.any { tag in it.name || tag in it.translatedName.orEmpty() }
-
-private fun IllustInfo.user(ids: Set<Long>): Boolean = user.id in ids
 
 internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(EroStandard) {
     (types.isEmpty() || type in types) &&
-        (mark.not() || bookmarks(marks)) &&
-        (pages(pages)) &&
-        (match(tagExclude).not()) &&
-        (user(userExclude).not())
+        (mark.not() || (totalBookmarks ?: 0) > marks) &&
+        (pageCount < pages) &&
+        (tags.none { tagExclude in it.name || tagExclude in it.translatedName.orEmpty() }) &&
+        (user.id !in userExclude)
 }
 
 // endregion
@@ -445,19 +403,19 @@ internal fun UgoiraMetadata.write(file: File) {
     file.writeText(PixivJson.encodeToString(UgoiraMetadata.serializer(), this))
 }
 
-internal fun Collection<IllustInfo>.write() = onEach { it.write() }
-
-private val FlushIllustInfo: suspend PixivAppClient.(Long) -> IllustInfo = { pid ->
-    val illust = illustDetail(pid).illust
+private val FlushIllustInfo: suspend PixivAppClient.(Long, File) -> IllustInfo = { pid, file ->
+    val illust = illustDetail(pid = pid).illust
     if (illust.user.id == 0L) throw RestrictException(illust = illust)
-    illust.replicate()
+    illust.merge()
+    illust.write(file = file)
     illust
 }
 
-internal suspend fun PixivAppClient.getIllustInfo(
+public suspend fun loadIllustInfo(
     pid: Long,
-    flush: Boolean,
-    block: suspend PixivAppClient.(Long) -> IllustInfo = FlushIllustInfo,
+    flush: Boolean = false,
+    client: PixivAppClient = PixivClientPool.free(),
+    load: suspend PixivAppClient.(Long, File) -> IllustInfo = FlushIllustInfo,
 ): IllustInfo {
     val file = illust(pid)
     return if (!flush && file.exists()) {
@@ -468,7 +426,7 @@ internal suspend fun PixivAppClient.getIllustInfo(
             throw e
         }
     } else {
-        block(pid).apply { write(file = file) }
+        client.load(pid, file)
     }
 }
 
@@ -486,87 +444,6 @@ internal suspend fun UserInfo.getProfileImage(): File {
     }
 }
 
-internal suspend fun IllustInfo.getImages(): List<File> {
-    val folder = images(pid).apply { mkdirs() }
-
-    /**
-     * 全部Url
-     */
-    val urls = getOriginImageUrls().filter { "$pid" in it.encodedPath }
-
-    /**
-     * 需要下载的 Url
-     */
-    val downloads = mutableListOf<Url>()
-
-    /**
-     * 过滤Url
-     */
-    val files = urls.map { url ->
-        folder.resolve(url.filename).apply {
-            if (exists().not()) {
-                downloads.add(url)
-            }
-        }
-    }
-
-    if (downloads.isNotEmpty()) {
-
-        fun FileInfo(url: Url, bytes: ByteArray) = FileInfo(
-            pid = pid,
-            index = with(url.encodedPath) {
-                val end = lastIndexOf('.')
-                val start = lastIndexOf('p', end) + 1
-                substring(start, end)
-                    .toIntOrNull() ?: throw NoSuchElementException(url.encodedPath)
-            },
-            md5 = bytes.toByteString().md5().hex(),
-            url = url.toString(),
-            size = bytes.size
-        )
-
-        val results = mutableListOf<FileInfo>()
-        var size = 0L
-
-        downloads.removeIf { url ->
-            val file = TempFolder.resolve(url.filename)
-            val exists = file.exists()
-            if (exists) {
-                logger.info { "从[${file}]移动文件" }
-                results.add(FileInfo(url = url, bytes = file.readBytes()))
-                file.renameTo(folder.resolve(url.filename))
-            } else {
-                false
-            }
-        }
-
-        PixivHelperDownloader.downloadImageUrls(urls = downloads) { url, deferred ->
-            try {
-                val bytes = deferred.await()
-                TempFolder.resolve(url.filename).writeBytes(bytes)
-                size += bytes.size
-                results += FileInfo(url = url, bytes = bytes)
-            } catch (e: Throwable) {
-                logger.warning({ "[$url]下载失败" }, e)
-            }
-        }
-
-        if (pid !in ArtWorkInfo) this.replicate()
-        results.replicate()
-
-        logger.info {
-            "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${bytes(size)}]{${totalBookmarks}}下载完成"
-        }
-
-        for (url in downloads) {
-            TempFolder.resolve(url.filename).apply {
-                if (exists()) renameTo(folder.resolve(url.filename))
-            }
-        }
-    }
-    return files
-}
-
 internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, ExternalResource) -> T): List<T> {
     if (type == WorkContentType.UGOIRA) {
         return listOf(getUgoira().toExternalResource().use { block(0, it) })
@@ -582,28 +459,28 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
                         val info = FileInfo(
                             pid = pid,
                             index = index,
-                            md5 = bytes.toByteString().md5().hex(),
+                            md5 = bytes.md5().toUHexString(""),
                             url = url.toString(),
                             size = bytes.size
                         )
-                        info.replicate()
+                        info.merge()
                         folder.resolve(url.filename).writeBytes(bytes)
                     }
                 }
 
                 file.toExternalResource().use { resource -> block(index, resource) }
             }
-        }
-    }.awaitAll()
+        }.awaitAll()
+    }
 }
 
 internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
     val json = ugoira(pid)
     val metadata = json.takeIf { it.exists() }?.readUgoiraMetadata()
-        ?: PixivAuthClient().ugoiraMetadata(pid).ugoira.also { it.write(json) }
+        ?: PixivClientPool.free().ugoiraMetadata(pid).ugoira.also { it.write(json) }
     return try {
         PixivSkikoGifEncoder.build(illust = this, metadata = metadata, flush = flush)
-    } catch (cause: Throwable) {
+    } catch (_: NoClassDefFoundError) {
         PixivHelperGifEncoder.build(illust = this, metadata = metadata, flush = flush)
     }
 }
@@ -673,11 +550,11 @@ internal fun backups(): Map<String, File> {
 /**
  * pixiv.me 跳转
  */
-internal suspend fun PixivHelper.redirect(account: String): Long {
-    UserBaseInfo[account]?.let { return@redirect it.uid }
-    val url = Url("https://pixiv.me/$account")
-    val location = location(url = url)
-    return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
-}
+//internal suspend fun PixivHelper.redirect(account: String): Long {
+//    UserBaseInfo[account]?.let { return@redirect it.uid }
+//    val url = Url("https://pixiv.me/$account")
+//    val location = location(url = url)
+//    return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
+//}
 
 // endregion
