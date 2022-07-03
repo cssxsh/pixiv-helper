@@ -11,7 +11,7 @@ import xyz.cssxsh.pixiv.tool.*
 import java.io.*
 import java.util.zip.*
 
-object PixivSkikoGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
+public object PixivSkikoGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader) {
 
     public override val cache: File get() = UgoiraImagesFolder
 
@@ -33,7 +33,7 @@ object PixivSkikoGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader
         val file = metadata.download()
         val gif = cache.resolve("${illust.pid}.gif")
         val temp = cache.resolve("${illust.pid}.temp")
-        withContext(Dispatchers.IO) {
+        runInterruptible(Dispatchers.IO) {
             val zip = ZipFile(file)
             val first =
                 Image.makeFromEncoded(zip.getInputStream(zip.getEntry(metadata.frames.first().file)).readBytes())
@@ -59,7 +59,7 @@ object PixivSkikoGifEncoder : PixivGifEncoder(downloader = PixivHelperDownloader
 
     private val single = Mutex()
 
-    suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
+    public suspend fun build(illust: IllustInfo, metadata: UgoiraMetadata, flush: Boolean): File {
         metadata.download()
         val gif = cache.resolve("${illust.pid}.gif")
         Library.staticLoad()

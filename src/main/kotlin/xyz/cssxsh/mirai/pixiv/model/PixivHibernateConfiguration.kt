@@ -8,7 +8,7 @@ import xyz.cssxsh.mirai.pixiv.*
 import java.io.*
 import java.sql.*
 
-object PixivHibernateConfiguration :
+public object PixivHibernateConfiguration :
     Configuration(
         BootstrapServiceRegistryBuilder()
             .applyClassLoader(PixivHelperPlugin::class.java.classLoader)
@@ -34,7 +34,7 @@ object PixivHibernateConfiguration :
         get() = """
                 hibernate.connection.url=jdbc:sqlite:file:./data/xyz.cssxsh.mirai.plugin.pixiv-helper/pixiv.sqlite
                 hibernate.connection.driver_class=org.sqlite.JDBC
-                hibernate.dialect=org.sqlite.hibernate.dialect.SQLiteDialect
+                hibernate.dialect=org.hibernate.community.dialect.SQLiteDialect
                 hibernate.connection.provider_class=org.hibernate.hikaricp.internal.HikariCPConnectionProvider
                 hibernate.connection.isolation=${Connection.TRANSACTION_READ_UNCOMMITTED}
                 hibernate-connection-autocommit=${true}
@@ -53,6 +53,13 @@ object PixivHibernateConfiguration :
                 "org.hibernate.hikaricp.internal.HikariCPConnectionProvider"
             )
             logger.warning { "已经自动将 C3P0ConnectionProvider 替换为 HikariCPConnectionProvider" }
+        }
+        if (getProperty("hibernate.dialect") == "org.sqlite.hibernate.dialect.SQLiteDialect") {
+            setProperty(
+                "hibernate.dialect",
+                "org.hibernate.community.dialect.SQLiteDialect"
+            )
+            logger.warning { "已经自动将 org.sqlite.hibernate.dialect.SQLiteDialect 替换为 org.hibernate.community.dialect.SQLiteDialect" }
         }
         when {
             url.startsWith("jdbc:sqlite") -> {

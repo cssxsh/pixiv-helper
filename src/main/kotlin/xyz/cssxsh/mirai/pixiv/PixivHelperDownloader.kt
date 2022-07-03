@@ -2,13 +2,27 @@ package xyz.cssxsh.mirai.pixiv
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
+import java.io.IOException
 import java.net.*
 
-object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
+public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
 
-    override val ignore: Ignore get() = PixivDownloadIgnore
+    private var erros = 0
+
+    override val ignore: suspend (Throwable) -> Boolean = { throwable ->
+        when (throwable) {
+            is IOException -> {
+                logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
+                delay(++erros * 1000L)
+                erros--
+                true
+            }
+            else -> false
+        }
+    }
 
     override val timeout: Long get() = TimeoutDownload
 
@@ -28,7 +42,13 @@ object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_
         block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
     ): List<R> {
         val downloads = if (ProxyMirror.isNotBlank()) {
-            urls.map { if (it.host == "i.pximg.net") it.copy(host = ProxyMirror) else it }
+            urls.map { url ->
+                if (url.host == "i.pximg.net") {
+                    URLBuilder(url).apply { host = ProxyMirror }.build()
+                } else {
+                    url
+                }
+            }
         } else {
             urls
         }

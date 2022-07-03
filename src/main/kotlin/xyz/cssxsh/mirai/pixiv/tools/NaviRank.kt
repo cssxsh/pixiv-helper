@@ -1,6 +1,5 @@
 package xyz.cssxsh.mirai.pixiv.tools
 
-import io.ktor.client.request.*
 import io.ktor.http.*
 import org.jsoup.nodes.*
 import xyz.cssxsh.mirai.pixiv.model.*
@@ -8,7 +7,7 @@ import xyz.cssxsh.pixiv.*
 import java.time.*
 import java.time.format.*
 
-object NaviRank : HtmlParser(name = "NaviRank") {
+public object NaviRank : HtmlParser(name = "NaviRank") {
 
     private const val API = "http://pixiv.navirank.com/"
 
@@ -53,43 +52,54 @@ object NaviRank : HtmlParser(name = "NaviRank") {
         )
     }
 
-    val START: YearMonth = YearMonth.of(2008, 5)
+    public val START: YearMonth = YearMonth.of(2008, 5)
 
     private fun Year.path() = format(DateTimeFormatter.ofPattern("yyyy"))
 
     private fun YearMonth.path() = format(DateTimeFormatter.ofPattern("yyyy/MM"))
 
-    private suspend fun getAllRank(path: String) = html(all) {
-        url(Url(API).copy(encodedPath = "/all/${path}"))
+    private suspend fun all(path: String) = html(all) {
+        url {
+            takeFrom(API)
+            encodedPath = "/all/${path}"
+        }
         method = HttpMethod.Get
     }
 
-    suspend fun getAllRank() = getAllRank(path = "")
+    public suspend fun getAllRank(): NaviRankAllTime = all(path = "")
 
-    suspend fun getAllRank(year: Year) = getAllRank(path = year.path())
+    public suspend fun getAllRank(year: Year): NaviRankAllTime = all(path = year.path())
 
-    suspend fun getAllRank(month: YearMonth) = getAllRank(path = month.path())
+    public suspend fun getAllRank(month: YearMonth): NaviRankAllTime = all(path = month.path())
 
-    private suspend fun getOverRank(path: String) = html(over) {
-        url(Url(API).copy(encodedPath = "/over/${path}"))
+    private suspend fun over(path: String) = html(over) {
+        url {
+            takeFrom(API)
+            encodedPath = "/over/${path}"
+        }
         method = HttpMethod.Get
     }
 
-    suspend fun getOverRank() = getOverRank(path = "")
+    public suspend fun getOverRank(): NaviRankOverTime = over(path = "")
 
-    suspend fun getOverRank(year: Year) = getOverRank(path = year.path())
+    public suspend fun getOverRank(year: Year): NaviRankOverTime = over(path = year.path())
 
-    suspend fun getOverRank(month: YearMonth) = getOverRank(path = month.path())
+    public suspend fun getOverRank(month: YearMonth): NaviRankOverTime = over(path = month.path())
 
-    private suspend fun getTagRank(path: String, vararg words: String) = html(all) {
+    private suspend fun tag(path: String, vararg words: String) = html(all) {
         check(words.isNotEmpty()) { "关键词不能为空" }
-        url(Url(API).copy(encodedPath = "/tag/${words.joinToString("%0A")}/${path}"))
+        url {
+            takeFrom(API)
+            encodedPath = "/tag/${words.joinToString("%0A")}/${path}"
+        }
         method = HttpMethod.Get
     }
 
-    suspend fun getTagRank(vararg words: String) = getTagRank(path = "", words = words)
+    public suspend fun getTagRank(vararg words: String): NaviRankAllTime = tag(path = "", words = words)
 
-    suspend fun getTagRank(year: Year, vararg words: String) = getTagRank(path = year.path(), words = words)
+    public suspend fun getTagRank(year: Year, vararg words: String): NaviRankAllTime =
+        tag(path = year.path(), words = words)
 
-    suspend fun getTagRank(month: YearMonth, vararg words: String) = getTagRank(path = month.path(), words = words)
+    public suspend fun getTagRank(month: YearMonth, vararg words: String): NaviRankAllTime =
+        tag(path = month.path(), words = words)
 }

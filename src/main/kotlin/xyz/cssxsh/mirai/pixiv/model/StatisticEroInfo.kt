@@ -1,20 +1,20 @@
 package xyz.cssxsh.mirai.pixiv.model
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "statistic_ero")
-data class StatisticEroInfo(
+public data class StatisticEroInfo(
     @Id
     @Column(name = "sender", nullable = false)
-    val sender: Long = 0,
+    val sender: Long,
     @Column(name = "`group`", nullable = true)
-    val group: Long? = null,
+    val group: Long?,
     @Column(name = "pid", nullable = false)
-    val pid: Long = 0,
+    val pid: Long,
     @Id
     @Column(name = "timestamp", nullable = false)
-    val timestamp: Long = 0
+    val timestamp: Long
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

@@ -1,10 +1,10 @@
 package xyz.cssxsh.mirai.pixiv.model
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "artwork_tag")
-data class ArtworkTag(
+public data class ArtworkTag(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
     val pid: Long,
@@ -13,5 +13,5 @@ data class ArtworkTag(
     @JoinColumn(name = "tid", referencedColumnName = "tid", nullable = false, updatable = false)
     val tag: TagRecord,
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

@@ -1,14 +1,14 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import jakarta.persistence.*
 import xyz.cssxsh.pixiv.*
-import javax.persistence.*
 
 @Entity
 @Table(name = "artworks")
-data class ArtWorkInfo(
+public data class ArtWorkInfo(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
-    val pid: Long = 0,
+    val pid: Long,
     @Column(name = "title", nullable = false, length = 32)
     val title: String = "",
     @Column(name = "caption", nullable = false)
@@ -37,23 +37,19 @@ data class ArtWorkInfo(
     val ero: Boolean = false,
     @Column(name = "deleted", nullable = false, updatable = false)
     val deleted: Boolean = true,
-    @ManyToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
     @JoinColumn(name = "uid", nullable = false, updatable = false)
-    val author: UserBaseInfo = UserBaseInfo()
+    val author: UserBaseInfo = UserBaseInfo(uid = 0, name = "", account = null)
 ) : PixivEntity {
-    @ManyToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @ManyToMany(cascade = [CascadeType.MERGE], fetch = FetchType.LAZY)
     @JoinTable(
         name = "artwork_tag",
         joinColumns = [JoinColumn(name = "pid", referencedColumnName = "pid")],
         inverseJoinColumns = [JoinColumn(name = "tid", referencedColumnName = "tid")]
     )
-    var tags: List<TagRecord> = emptyList()
+    val tags: MutableList<TagRecord> = ArrayList()
 
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinColumn(name = "pid", insertable = false, updatable = false)
-    var files: List<FileInfo> = emptyList()
-
-    companion object SQL
+    public companion object SQL
 }
 
 

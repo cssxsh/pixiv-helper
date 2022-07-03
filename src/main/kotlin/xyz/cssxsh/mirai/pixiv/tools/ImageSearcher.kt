@@ -1,19 +1,20 @@
 package xyz.cssxsh.mirai.pixiv.tools
 
+import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.features.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.*
 import org.jsoup.*
 import org.jsoup.nodes.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.pixiv.*
 
-object ImageSearcher : HtmlParser(name = "Search") {
+public object ImageSearcher : HtmlParser(name = "Search") {
 
     init {
         if (System.getProperty("xyz.cssxsh.mirai.plugin.tools.saucenao", "${true}").toBoolean()) {
@@ -25,13 +26,14 @@ object ImageSearcher : HtmlParser(name = "Search") {
 
     private const val ALL_INDEX = 999
 
-    var key: String = ""
+    internal var key: String = ""
 
-    override val client = super.client.config {
-        Json {
-            serializer = KotlinxSerializer(PixivJson)
+    override val client: HttpClient = super.client.config {
+        install(ContentNegotiation) {
+            json(json = PixivJson)
         }
         defaultRequest {
+            url("https://saucenao.com")
             header(HttpHeaders.Accept, ContentType.Text.Html)
         }
     }
@@ -150,7 +152,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
     }
 
     internal suspend fun json(url: String): List<SearchResult> = http { client ->
-        client.get<JsonSearchResults>(API) {
+        client.get(API) {
             parameter("url", url)
             parameter("output_type", 2)
             parameter("api_key", key)
@@ -160,10 +162,10 @@ object ImageSearcher : HtmlParser(name = "Search") {
             parameter("db", ALL_INDEX)
             // parameter("numres", )
             // parameter("dedupe", )
-        }.decode()
+        }.body<JsonSearchResults>().decode()
     }
 
-    suspend fun saucenao(url: String): List<SearchResult> {
+    public suspend fun saucenao(url: String): List<SearchResult> {
         return if (key.isBlank()) html(url = url) else json(url = url)
     }
 
@@ -199,7 +201,7 @@ object ImageSearcher : HtmlParser(name = "Search") {
         }
     }
 
-    suspend fun ascii2d(url: String, bovw: Boolean): List<SearchResult> {
+    public suspend fun ascii2d(url: String, bovw: Boolean): List<SearchResult> {
         val response: HttpResponse = http { client ->
             client.get("https://ascii2d.net/search/url/${url}")
         }
@@ -208,9 +210,9 @@ object ImageSearcher : HtmlParser(name = "Search") {
             http { client ->
                 // https://ascii2d.net/search/color -> https://ascii2d.net/search/bovw
                 client.get(response.request.url.toString().replace("color", "bovw"))
-            }
+            }.body()
         } else {
-            response.receive()
+            response.body()
         }
 
         return ascii2d(Jsoup.parse(html))

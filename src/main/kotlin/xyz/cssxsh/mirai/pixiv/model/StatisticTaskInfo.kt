@@ -1,18 +1,18 @@
 package xyz.cssxsh.mirai.pixiv.model
 
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "statistic_task")
-data class StatisticTaskInfo(
+public data class StatisticTaskInfo(
     @Id
     @Column(name = "task", nullable = false)
-    val task: String = "",
+    val task: String,
     @Id
     @Column(name = "pid", nullable = false)
-    val pid: Long = 0,
+    val pid: Long,
     @Column(name = "timestamp", nullable = false)
-    val timestamp: Long = 0
+    val timestamp: Long
 ) : PixivEntity {
-    companion object SQL
+    public companion object SQL
 }

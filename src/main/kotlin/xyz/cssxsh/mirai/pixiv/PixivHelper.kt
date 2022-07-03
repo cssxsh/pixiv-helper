@@ -1,178 +1,93 @@
 package xyz.cssxsh.mirai.pixiv
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.*
-import net.mamoe.mirai.contact.*
-import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.event.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
+import xyz.cssxsh.mirai.pixiv.event.*
 import xyz.cssxsh.mirai.pixiv.model.*
+import xyz.cssxsh.mirai.pixiv.task.*
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.auth.*
-import java.time.*
+import java.util.concurrent.*
 import kotlin.coroutines.*
 
 /**
- * 助手实例
+ * Pixiv 助手
+ * @see PixivHelperPool.helper
  */
-class PixivHelper(val contact: Contact) : PixivAuthClient(), PixivWebClient {
+public class PixivHelper internal constructor(public val id: Long, parentCoroutineContext: CoroutineContext) :
+    CoroutineScope {
 
-    override val coroutineContext: CoroutineContext by lazy {
-        contact.childScopeContext("PixivHelper:${contact}")
+    private val logger by lazy { MiraiLogger.Factory.create(this::class, identity = "pixiv-helper-${id}") }
+
+    override val coroutineContext: CoroutineContext = parentCoroutineContext.childScopeContext("pixiv-helper-${id}")
+
+    public val client: PixivAuthClient by PixivClientPool
+
+    public val uid: Long? get() = (client as? PixivClientPool.AuthClient)?.uid
+
+    public var link: Boolean by LinkDelegate
+
+    public var tag: Boolean by TagDelegate
+
+    public var attr: Boolean by AttrDelegate
+
+    public var max: Int by MaxDelegate
+
+    public var model: SendModel by ModelDelegate
+
+    private val eros: MutableMap<Long, ArtWorkInfo> = ConcurrentHashMap()
+
+    /**'
+     * 随机一份色图
+     */
+    public suspend fun ero(sanity: Int, bookmarks: Long): ArtWorkInfo? {
+        val event = PixivEvent.EroPost(helper = this, sanity = sanity, bookmarks = bookmarks).broadcast()
+        if (event.isCancelled) {
+            logger.info { "色图获取被终止" }
+            return null
+        }
+        fun good(sanity: Int, bookmarks: Long): List<ArtWorkInfo> {
+            return eros.values.filter { it.sanity >= sanity && it.bookmarks > bookmarks }
+        }
+
+        fun random(sanity: Int, bookmarks: Long): ArtWorkInfo? {
+            if (good(sanity, bookmarks).isEmpty()) {
+                for (info in ArtWorkInfo.random(sanity, bookmarks, EroAgeLimit, EroChunk)) {
+                    eros[info.pid] = info
+                }
+            }
+            return good(sanity, bookmarks).randomOrNull()
+        }
+
+        return random(sanity = sanity, bookmarks = bookmarks)
     }
 
-    override var config: PixivConfig by ConfigDelegate
+    /**
+     * 根据标签获取色图
+     */
+    public suspend fun tag(word: String, bookmarks: Long, fuzzy: Boolean): ArtWorkInfo? {
+        val event = PixivEvent.TagPost(helper = this, word = word, bookmarks = bookmarks, fuzzy = fuzzy).broadcast()
+        if (event.isCancelled) {
+            logger.info { "标签获取被终止" }
+            return null
+        }
+        val list = ArtWorkInfo.tag(word = word, marks = bookmarks, fuzzy = fuzzy, age = TagAgeLimit, limit = EroChunk)
 
-    override fun config(block: PixivConfig.() -> Unit): PixivConfig {
-        val new = super<PixivAuthClient>.config(block)
-        config = new
-        return config
-    }
-
-    override var authInfo: AuthResult? by AuthResultDelegate
-
-    internal val uid get() = authInfo?.user?.uid
-
-    public override var expires: OffsetDateTime by ExpiresTimeDelegate
-
-    public override val mutex: Mutex by MutexDelegate
-
-    override val ignore: Ignore = Ignore(client = this)
-
-    override val timeout: Long get() = TimeoutApi
-
-    internal var link: Boolean by LinkDelegate
-
-    internal var tag: Boolean by TagDelegate
-
-    internal var attr: Boolean by AttrDelegate
-
-    internal var max: Int by MaxDelegate
-
-    internal var model: SendModel by ModelDelegate
-
-    private var cacheChannel = Channel<CacheTask>(Channel.BUFFERED)
-
-    private val cacheJob = launch(CoroutineName(name = "PixivHelper:${contact}#CacheTask")) {
-        while (isActive) {
+        for (artwork in list) {
+            if (!artwork.ero) continue
+            eros[artwork.pid] = artwork
+        }
+        if (list.size < EroChunk) {
             try {
-                logger.info { "PixivHelper:${contact}#CacheTask start" }
-                supervisorScope {
-                    cacheChannel.consumeAsFlow().save().download(CacheJump).await(CacheCapacity)
-                }
-            } catch (_: CancellationException) {
+                PixivCacheLoader.cache(task = buildPixivCacheTask {
+                    name = "TAG[${word}]"
+                    flow = client.search(tag = word)
+                })
+            } catch (_: Throwable) {
                 //
-            } catch (cause: Throwable) {
-                logger.warning({ "PixivHelper:${contact}#CacheTask" }, cause)
-            }
-            cacheChannel = Channel(Channel.BUFFERED)
-        }
-    }
-
-    private suspend fun Flow<CacheTask>.save() = transform { (name, write, reply, block) ->
-        try {
-            this@PixivHelper.block(name).collect { list ->
-                if (list.isEmpty()) return@collect
-                try {
-                    val (success, failure) = list.groupBy { it.pid in ArtWorkInfo }
-                    list.replicate()
-                    if (success != null && write) {
-                        success.write()
-                    }
-                    if (failure != null) {
-                        val downloads = failure.write().filter { it.isEro() }.sortedBy { it.pid }
-                        this@transform.emit(DownloadTask(name = name, list = downloads, reply = reply))
-                    }
-                } catch (_: javax.persistence.PersistenceException) {
-                    //
-                } catch (e: Throwable) {
-                    logger.warning({ "预加载任务<${name}>失败" }, e)
-                }
-            }
-        } catch (e: Throwable) {
-            logger.warning({ "预加载任务<${name}>失败" }, e)
-            if (reply) send {
-                "预加载任务<${name}>失败"
             }
         }
-    }
-
-    private suspend fun Flow<DownloadTask>.download(jump: Boolean = false) = transform { (name, list, reply) ->
-        if (jump) return@transform
-        if (list.isEmpty()) return@transform
-        logger.verbose {
-            "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个作品信息将会被尝试缓存"
-        }
-        if (reply) send {
-            "任务<${name}>有{${list.first().pid..list.last().pid}}共${list.size}个新作品等待缓存"
-        }
-        emit(list.map { illust ->
-            async {
-                try {
-                    when (illust.type) {
-                        WorkContentType.ILLUST -> illust.getImages()
-                        WorkContentType.UGOIRA -> illust.getUgoira()
-                        WorkContentType.MANGA -> Unit
-                    }
-                } catch (_: CancellationException) {
-                    return@async
-                } catch (e: Throwable) {
-                    logger.warning({
-                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误"
-                    }, e)
-                    if (reply) send {
-                        "任务<${name}>获取作品(${illust.pid})[${illust.title}]{${illust.pageCount}}错误, ${e.message}"
-                    }
-                }
-            }
-        })
-    }
-
-    private suspend fun Flow<List<Deferred<*>>>.await(capacity: Int = 3) = buffer(capacity).collect { it.awaitAll() }
-
-    suspend fun addCacheJob(name: String, write: Boolean = true, reply: Boolean = true, block: LoadTask) {
-        cacheChannel.send(CacheTask(name = name, write = write, reply = reply, block = block))
-    }
-
-    fun cacheStop(message: String) {
-        cacheJob.cancelChildren(CancellationException(message))
-    }
-
-    suspend fun send(block: suspend () -> Any?): Boolean = supervisorScope {
-        isActive && try {
-            when (val message = block()) {
-                null, Unit -> Unit
-                is ForwardMessage -> {
-                    check(message.nodeList.size <= 200) {
-                        throw MessageTooLargeException(
-                            contact, message, message,
-                            "ForwardMessage allows up to 200 nodes, but found ${message.nodeList.size}"
-                        )
-                    }
-                    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-                    contact.sendMessage(message + net.mamoe.mirai.internal.message.IgnoreLengthCheck)
-                }
-                is Message -> contact.sendMessage(message)
-                is String -> contact.sendMessage(message)
-                else -> contact.sendMessage(message.toString())
-            }
-            true
-        } catch (e: Throwable) {
-            logger.warning({ "回复${contact}失败" }, e)
-            false
-        }
-    }
-
-    internal fun <T> Flow<Collection<T>>.sendOnCompletion(block: suspend (Int) -> Any?): Flow<Collection<T>> {
-        var count = 0
-        return onEach { list ->
-            count += list.size
-        }.onCompletion {
-            send {
-                block(count)
-            }
-        }
+        return list.randomOrNull()
     }
 }

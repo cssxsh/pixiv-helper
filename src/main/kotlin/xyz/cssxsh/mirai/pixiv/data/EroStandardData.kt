@@ -4,7 +4,7 @@ import kotlinx.serialization.*
 import xyz.cssxsh.pixiv.*
 
 @Serializable
-data class EroStandardData(
+public data class EroStandardData(
     @SerialName("ero_work_types")
     override val types: Set<WorkContentType>,
     @SerialName("ero_bookmarks")

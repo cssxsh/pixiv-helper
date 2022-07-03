@@ -3,17 +3,17 @@ package xyz.cssxsh.mirai.pixiv.model
 import xyz.cssxsh.pixiv.*
 import java.time.*
 
-data class NaviRankAllTime(
+public data class NaviRankAllTime(
     val title: String,
     val records: List<NaviRankRecord>
 )
 
-data class NaviRankOverTime(
+public data class NaviRankOverTime(
     val title: String,
     val records: Map<String, List<NaviRankRecord>>
 )
 
-data class NaviRankRecord(
+public data class NaviRankRecord(
     override val pid: Long,
     override val title: String,
     val type: WorkContentType,

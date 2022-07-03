@@ -1,18 +1,18 @@
 package xyz.cssxsh.mirai.pixiv.model
 
+import jakarta.persistence.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import javax.persistence.*
 
-sealed interface SearchResult {
-    val md5: String
-    val similarity: Double
+public sealed interface SearchResult {
+    public val md5: String
+    public val similarity: Double
 }
 
 @Serializable
 @Entity
 @Table(name = "statistic_search")
-data class PixivSearchResult(
+public data class PixivSearchResult(
     @Id
     @Column(name = "md5", nullable = false, updatable = false)
     @SerialName("md5")
@@ -39,31 +39,31 @@ data class PixivSearchResult(
     @kotlinx.serialization.Transient
     val artwork: ArtWorkInfo? = null
 
-    companion object SQL
+    public companion object SQL
 }
 
-data class TwitterSearchResult(
+public data class TwitterSearchResult(
     override val md5: String = "",
     override val similarity: Double = 0.0,
     val tweet: String = "",
     val image: String = "",
 ) : SearchResult
 
-data class OtherSearchResult(
+public data class OtherSearchResult(
     override val md5: String = "",
     override val similarity: Double = 0.0,
     val text: String = "",
 ) : SearchResult
 
 @Serializable
-data class JsonSearchResults(
+public data class JsonSearchResults(
     @SerialName("header")
     val info: Info,
     @SerialName("results")
     val results: List<JsonSearchResult>? = null
 ) {
     @Serializable
-    data class Info(
+    public data class Info(
         @SerialName("account_type")
         val accountType: Int,
         @SerialName("index")
@@ -94,7 +94,7 @@ data class JsonSearchResults(
         val userId: String
     ) {
         @Serializable
-        data class MapValue(
+        public data class MapValue(
             @SerialName("id")
             val id: Int,
             @SerialName("parent_id")
@@ -108,14 +108,14 @@ data class JsonSearchResults(
 }
 
 @Serializable
-data class JsonSearchResult(
+public data class JsonSearchResult(
     @SerialName("data")
     val `data`: JsonObject,
     @SerialName("header")
     val info: Info
 ) {
     @Serializable
-    data class Info(
+    public data class Info(
         @SerialName("dupes")
         val dupes: Int,
         @SerialName("index_id")

@@ -14,6 +14,9 @@
 * [Permission Command](https://github.com/mamoe/mirai/blob/dev/mirai-console/docs/BuiltInCommands.md#permissioncommand)
 * [Chat Command](https://github.com/project-mirai/chat-command)
 
+**Pixiv Helper 2 重构进行中，部分功能还不可用**
+**Pixiv Helper 2 重构进行中，需要重新登录Pixiv 账号，你可以使用之前登录得到的 Token**
+
 目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  
 群聊模式使用默认账号，私聊模式Pixiv账号和QQ号关联，初次使用请先 `/pixiv` 指令登陆账号  
@@ -28,10 +31,10 @@ Gif图片需要由机器人自己合成，如果设备性能不足，请调整�
 MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel stable --type plugin`
 
 **打开浏览器，登录PIXIV** 需要 [Mirai Selenium Plugin](https://github.com/cssxsh/mirai-selenium-plugin) 做前置插件
-并且需要代理配置（可以打开浏览器后，在浏览器中配置）
+并且需要代理配置（可以打开浏览器后，在浏览器中配置），浏览器登录只是其中一种登录方法，不必要安装 Selenium 插件
 
 **百度云上传功能** 需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
-但**不必要**，如果不使用上传功能请忽略
+但**不必要**，如果不使用上传功能请忽略，上传功能 在 Pixiv Helper 2 重构计划中，暂时不可用
 
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
 
@@ -60,14 +63,19 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 | 指令                                      | 描述                         |
 |:----------------------------------------|:---------------------------|
 | `/<pixiv> <sina>`                       | 扫码登录关联了PIXIV的微博账号，以登录PIXIV |
+| `/<pixiv> <cookie>`                     | 通过Cookie，登录PIXIV           |
 | `/<pixiv> <selenium>`                   | 打开浏览器，登录PIXIV              |
 | `/<pixiv> <refresh> [token]`            | 登录 通过 refresh token        |
+| `/<pixiv> <bind> [uid] [contact]?`      | 绑定 Pixiv 账户                |
 | `/<follow> <user> {uid}`                | 为当前助手关注指定用户                |
 | `/<follow> <copy> [uid]`                | 关注指定用户的关注                  |
 | `/<mark bookmark> <add> [uid] {words}?` | 添加指定作品收藏                   |
 | `/<mark bookmark> <delete> [pid]`       | 删除指定作品收藏                   |
 | `/<mark bookmark> <random> [tag]?`      | 随机发送一个收藏的作品                |
 | `/<mark bookmark> <list>`               | 显示收藏列表                     |
+
+**Pixiv helper 2 重构中，follow 和 mark 暂不可用**  
+Pixiv helper 2 中 新加入 `/pixiv bind` 指令，此指令用于为一个联系人（群/用户）绑定一个 pixiv 账号（已登录）
 
 cookie 文件为工作目录下的 `cookie.json`  
 内容 为 浏览器插件 [EditThisCookie](http://www.editthiscookie.com/) 导出的Json  
@@ -91,6 +99,8 @@ EditThisCookie 安装地址
 | `(/)<illustrator 画师> <info 信息> [uid]`             | 获取画师信息                  |
 | `(/)<illustrator 画师> <search 搜索> [name] [limit]?` | 搜索画师                    |
 | `(/)<search 搜索 搜图> [image]?`                      | saucenao、ascii2d 搜索图片   |
+
+**Pixiv helper 2 重构中，illustrator 暂不可用**
 
 色图指令基于缓存信息，使用前请先缓存一定量的作品，推荐使用 `/cache recommended` 指令  
 使用色图指令时 指令后附带 `更好`, 可以使收藏数比前一张更高, 如果两次色图指令间隔小于触发时间(默认时间10s)也会触发这个效果  
@@ -134,6 +144,8 @@ boom指令使用时
 | `/<cache> <stop>`                       | 停止当前助手缓存任务         |
 | `/<cache> <reply> [open]?`              | 是否回复缓存细节，默认为否      |
 
+**Pixiv helper 2 重构中，部分缓存指令 暂不可用**
+
 `[uid]?` 会自动填充当前用户
 
 `mode` 可选值: `MONTH`, `WEEK`, `WEEK_ORIGINAL`, `WEEK_ROOKIE`, `DAY`, `DAY_MALE`, `DAY_FEMALE`, `DAY_MANGA`
@@ -153,6 +165,8 @@ boom指令使用时
 | `/<task> <detail>`                           | 查看任务详情      |
 | `/<task> <delete> [name]`                    | 删除任务        |
 
+**Pixiv helper 2 重构中，部分任务指令 暂不可用**
+
 备份文件优先推送到群文件，其次百度云  
 duration 单位分钟，默认3小时  
 `/task cache {args}` 是 task 和 cache 指令的组合，举例，`/task cache recommended`
@@ -169,6 +183,8 @@ duration 单位分钟，默认3小时
 | `/<setting> <cooling>`            | ~~设置cooling置零~~ 废除   |
 | `/<setting> <max> [num]`          | 设置显示最大图片数            |
 | `/<setting> <model> [type] [ms]?` | 设置发送模式               |
+
+**Pixiv helper 2 重构中，部分设置指令 暂不可用**
 
 发送模式 有三种 `NORMAL, FLASH, RECALL`, `ms` 是Recall的延迟时间，单位毫秒  
 注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险  
@@ -187,6 +203,8 @@ duration 单位分钟，默认3小时
 | `/<backup> <upload> [filename]`             | 上传文件到百度云         |
 | `/<backup> <auth>`                          | 百度云用户认证          |
 | `/<backup> <reload> [path] [mode] [chunk]?` | 从 sqlite 备份中导入数据 |
+
+**Pixiv helper 2 重构中，备份指令 暂不可用**
 
 reload 的 mode 可选 有以下几种 `EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
 reload 的 chunk 为分段提交数量的大小, 默认 `8196`   
@@ -218,6 +236,8 @@ reload 的 chunk 为分段提交数量的大小, 默认 `8196`
 | `(/)<rank 排行> <tag标签> {words}`              | 随机播放NaviRank 标签榜    |
 | `(/)<play 播放> <stop 停止>`                    | 停止播放当前列表            |
 
+**Pixiv helper 2 重构中，播放指令 暂不可用**
+
 ### 删除指令
 
 | 指令                                      | 描述          |
@@ -232,6 +252,8 @@ reload 的 chunk 为分段提交数量的大小, 默认 `8196`
 第二参数 record 表明是否写入数据库，默认为否，只删除图片文件
 
 ## URL 自动解析
+
+**Pixiv helper 2 重构中，部分自动解析 暂不可用**
 
 权限 id: `xyz.cssxsh.mirai.plugin.pixiv-helper:url`  
 匹配一下正则表达式的URL将会被解析

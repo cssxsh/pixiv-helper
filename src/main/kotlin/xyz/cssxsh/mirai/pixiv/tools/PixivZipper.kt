@@ -9,7 +9,7 @@ import java.time.*
 import java.util.zip.*
 import kotlin.collections.*
 
-object PixivZipper {
+public object PixivZipper {
 
     /**
      * 64MB
@@ -37,11 +37,12 @@ object PixivZipper {
         createNewFile()
     }
 
-    fun list() = BackupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
+    public fun list(): Array<out File> =
+        BackupFolder.listFiles { file -> file.isFile && file.extension == "zip" }.orEmpty()
 
-    fun find(name: String) = list().firstOrNull { file -> file.name.startsWith(name) }
+    public fun find(name: String): File? = list().firstOrNull { file -> file.name.startsWith(name) }
 
-    fun artworks(list: List<ArtWorkInfo>, basename: String): File = zip(basename).also { zip ->
+    public fun artworks(list: List<ArtWorkInfo>, basename: String): File = zip(basename).also { zip ->
         logger.verbose { "共${list.size}个作品将写入文件${zip.absolutePath}" }
         ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->
             stream.setLevel(Deflater.BEST_COMPRESSION)
@@ -81,7 +82,7 @@ object PixivZipper {
         }
     }
 
-    fun files(list: Map<String, File>): List<File> = list.map { (basename, source) ->
+    public fun files(list: Map<String, File>): List<File> = list.map { (basename, source) ->
         zip(basename).also { zip ->
             logger.verbose { "将备份数据目录${source.absolutePath}到${zip.absolutePath}" }
             ZipOutputStream(zip.outputStream().buffered(BUFFER_SIZE)).use { stream ->

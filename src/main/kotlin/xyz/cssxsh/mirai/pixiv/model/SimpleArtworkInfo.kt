@@ -1,9 +1,9 @@
 package xyz.cssxsh.mirai.pixiv.model
 
 
-interface SimpleArtworkInfo {
-    val pid: Long
-    val title: String
-    val uid: Long
-    val name: String
+public interface SimpleArtworkInfo {
+    public val pid: Long
+    public val title: String
+    public val uid: Long
+    public val name: String
 }

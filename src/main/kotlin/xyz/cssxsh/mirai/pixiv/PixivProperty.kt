@@ -1,5 +1,7 @@
 package xyz.cssxsh.mirai.pixiv
 
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.pixiv.*
@@ -52,7 +54,7 @@ internal val logger by lazy {
     try {
         PixivHelperPlugin.logger
     } catch (_: Throwable) {
-        MiraiLogger.Factory.create(SimplePixivClient::class)
+        MiraiLogger.Factory.create(PixivHelper::class)
     }
 }
 
@@ -94,6 +96,11 @@ internal val TaskSendInterval by PixivConfigData::interval
  * 1. [PixivConfigData.interval]
  */
 internal val TaskForward by PixivConfigData::forward
+
+/**
+ * TODO TaskConut by PixivConfigData
+ */
+internal val TaskConut = 10
 
 /**
  * 涩图防重复间隔
@@ -273,3 +280,12 @@ internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")
  * 动图 JSON
  */
 internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
+
+public val Contact.helper: PixivHelper by PixivHelperPool
+
+public fun CommandSender.client(): PixivClientPool.AuthClient {
+    return when {
+        isUser() -> PixivClientPool.get(id = subject.id)
+        else -> PixivClientPool.console()
+    } ?: throw IllegalArgumentException("未绑定 PIXIV 账号")
+}
