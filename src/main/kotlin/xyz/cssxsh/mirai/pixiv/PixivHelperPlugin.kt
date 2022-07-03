@@ -2,21 +2,19 @@ package xyz.cssxsh.mirai.pixiv
 
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
-import net.mamoe.mirai.console.data.*
+import net.mamoe.mirai.console.extension.*
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.plugin.jvm.*
-import net.mamoe.mirai.utils.*
 import net.mamoe.mirai.event.*
 import xyz.cssxsh.mirai.pixiv.command.*
 import xyz.cssxsh.mirai.pixiv.data.*
 
-object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "1.10.0-M3") {
+public object PixivHelperPlugin : KotlinPlugin(
+    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "2.0.0-M1") {
         name("pixiv-helper")
         author("cssxsh")
 
-        dependsOn("io.github.gnuf0rce.file-sync", ">= 1.3.0", true)
-        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.2.0", false)
+        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.3.0", false)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-selenium-plugin", true)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-skia-plugin", true)
     }
@@ -33,21 +31,22 @@ object PixivHelperPlugin : KotlinPlugin(
     }
 
     override fun onEnable() {
+        PixivHelperSettings.reload()
+        PixivConfigData.reload()
+        PixivGifConfig.reload()
+        PixivAuthData.reload()
+        PixivTaskData.reload()
+        ImageSearchConfig.reload()
 
-        for (config in PixivHelperConfig) {
-            config.reload()
-            if (config is ReadOnlyPluginConfig) config.save()
-        }
         // Command
         for (command in PixivHelperCommand) {
             command.register()
         }
 
-        initConfiguration(childScope())
+        initConfiguration()
 
-        PixivHelperListener.subscribe(globalEventChannel(), registerPermission("url", "PIXIV URL 解析"))
-
-        PixivHelperScheduler.start(childScopeContext("PixivHelperScheduler"))
+        PixivEventListener.paserPermission = registerPermission("url", "PIXIV URL 解析")
+        PixivEventListener.registerTo(globalEventChannel())
     }
 
     override fun onDisable() {
@@ -55,8 +54,8 @@ object PixivHelperPlugin : KotlinPlugin(
             command.unregister()
         }
 
-        PixivHelperListener.stop()
+        PixivEventListener.cancelAll()
 
-        PixivHelperScheduler.stop()
+        PixivScheduler.stop()
     }
 }

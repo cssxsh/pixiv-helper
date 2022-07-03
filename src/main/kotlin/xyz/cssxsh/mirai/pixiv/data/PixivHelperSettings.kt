@@ -8,7 +8,7 @@ import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.pixiv.*
 import java.io.File
 
-public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), PixivHelperConfig, EroStandardConfig {
+public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"), EroStandardConfig {
     override val serializersModule: SerializersModule = SerializersModule {
         contextual(RegexSerializer)
         contextual(WorkContentType)

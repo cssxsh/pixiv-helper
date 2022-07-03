@@ -17,3 +17,4 @@
 
 *.sqlite
 hibernate.properties
+/debug-sandbox
