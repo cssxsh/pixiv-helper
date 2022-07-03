@@ -1,19 +1,56 @@
 package xyz.cssxsh.mirai.pixiv
 
+import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
+import net.mamoe.mirai.console.command.UserCommandSender
+import net.mamoe.mirai.console.permission.*
+import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.event.*
 import net.mamoe.mirai.event.events.*
+import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.event.*
 
 public object PixivEventListener : SimpleListenerHost() {
+    private val logger by lazy { MiraiLogger.Factory.create(this::class, identity = "pixiv-event-listener") }
 
     @EventHandler
     public fun PixivEvent.handle() {
-        TODO()
+        helper
+        // TODO()
     }
 
+    public var paserPermission: Permission = Permission.getRootPermission()
+
     @EventHandler
-    public fun MessageEvent.handle() {
-        TODO("url")
+    public suspend fun MessageEvent.handle() {
+        val context = toCommandSender()
+        context as UserCommandSender
+        if (paserPermission.testPermission(context).not()) return
+        val content = message.contentToString()
+        URL_ARTWORK_REGEX.find(content)?.let { match ->
+            logger.info { "匹配ARTWORK(${match.value})" }
+            val pid = match.value.toLong()
+            context.sendIllust(illust = loadIllustInfo(pid = pid))
+        }
+        URL_USER_REGEX.find(content)?.let { match ->
+            logger.info { "匹配USER(${match.value})" }
+            // TODO("paser URL_USER_REGEX")
+        }
+        URL_PIXIV_ME_REGEX.find(content)?.let { match ->
+            logger.info { "匹配USER(${match.value})" }
+            // TODO("paser URL_PIXIV_ME_REGEX")
+        }
+        URL_PIXIVISION_ARTICLE.find(content)?.let { match ->
+            logger.info { "匹配ARTICLE(${match.value})" }
+            // TODO("paser URL_PIXIVISION_ARTICLE")
+        }
+        URL_FANBOX_CREATOR_REGEX.find(content)?.let { match ->
+            logger.info { "匹配FANBOX(${match.value})" }
+            // TODO("paser URL_FANBOX_CREATOR_REGEX")
+        }
+        URL_FANBOX_ID_REGEX.find(content)?.let { match ->
+            logger.info { "匹配FANBOX(${match.value})" }
+            // TODO("paser URL_FANBOX_ID_REGEX")
+        }
     }
 }
 
@@ -65,7 +102,6 @@ public object PixivEventListener : SimpleListenerHost() {
 //                    logger.warning { "init $id $e" }
 //                }
 //            }
-//            TODO()
 //            // logger.info { "abilities: ${abilities.mapNotNull { it.uid }}" }
 //        }
 //    }
@@ -96,7 +132,6 @@ public object PixivEventListener : SimpleListenerHost() {
 //    }
 //
 //    /**
-//     * XXX: send by forward
 //     */
 //    private suspend fun CommandSenderOnMessage<*>.sendArticle(aid: Long) = withHelper {
 //        val article = Pixivision.getArticle(aid = aid)
