@@ -10,11 +10,11 @@ import xyz.cssxsh.mirai.pixiv.command.*
 import xyz.cssxsh.mirai.pixiv.data.*
 
 public object PixivHelperPlugin : KotlinPlugin(
-    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "2.0.0-M1") {
+    JvmPluginDescription(id = "xyz.cssxsh.mirai.plugin.pixiv-helper", version = "2.0.0-M2") {
         name("pixiv-helper")
         author("cssxsh")
 
-        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.3.0", false)
+        dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.3.3", false)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-selenium-plugin", true)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-skia-plugin", true)
     }
