@@ -20,6 +20,7 @@ public object PixivCacheCommand : CompositeCommand(
 ), PixivHelperCommand {
 
     private suspend fun CommandSender.cache(block: suspend PixivTaskBuilder.() -> Unit) {
+        (this as? UserCommandSender)?.subject?.helper?.shake()
         try {
             val task = PixivTaskBuilder().apply { block() }.build()
             val scope = this

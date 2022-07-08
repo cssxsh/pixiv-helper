@@ -22,7 +22,10 @@ public object PixivHelperPool : ReadOnlyProperty<Contact, PixivHelper>, Coroutin
         return helper(contact = thisRef)
     }
 
+    @Synchronized
     public fun helper(contact: Contact): PixivHelper {
-        return helpers.getOrPut(contact.id) { PixivHelper(id = contact.id, parentCoroutineContext = coroutineContext) }
+        return helpers.getOrPut(contact.id) {
+            PixivHelper(id = contact.id, parentCoroutineContext = coroutineContext)
+        }
     }
 }

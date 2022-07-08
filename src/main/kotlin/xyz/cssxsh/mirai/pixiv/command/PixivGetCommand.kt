@@ -16,6 +16,7 @@ public object PixivGetCommand : SimpleCommand(
 
     @Handler
     public suspend fun UserCommandSender.get(pid: Long, flush: Boolean = false): Unit = withHelper {
+        if (shake()) return@withHelper null
         loadIllustInfo(pid = pid, flush = flush, client = client)
     }
 }

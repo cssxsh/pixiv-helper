@@ -120,6 +120,7 @@ public object PixivSearchCommand : SimpleCommand(
 
     @Handler
     public suspend fun CommandSenderOnMessage<*>.search(): Unit = withHelper {
+        if (shake()) return@withHelper null
         val origin = getQuoteImage() ?: getCurrentImage() ?: getAvatar() ?: getNextImage()
         val url = origin.queryUrl()
         logger.info { "${fromEvent.sender.render()} 搜索 $url" }

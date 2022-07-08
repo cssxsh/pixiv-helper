@@ -1,6 +1,7 @@
 package xyz.cssxsh.mirai.pixiv
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.event.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
@@ -35,6 +36,22 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
     public var max: Int by MaxDelegate
 
     public var model: SendModel by ModelDelegate
+
+    public val mutex: Mutex = Mutex()
+
+    private var record: Long = 0
+
+    public suspend fun shake(): Boolean {
+        return mutex.withLock {
+            val current = System.currentTimeMillis()
+            if (record + 1000 < current) {
+                record = current
+                true
+            } else {
+                false
+            }
+        }
+    }
 
     private val eros: MutableMap<Long, ArtWorkInfo> = ConcurrentHashMap()
 

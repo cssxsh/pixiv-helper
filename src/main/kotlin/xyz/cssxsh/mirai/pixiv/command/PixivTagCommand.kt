@@ -30,6 +30,7 @@ public object PixivTagCommand : SimpleCommand(
 
     @Handler
     public suspend fun CommandSenderOnMessage<*>.handle(word: String, bookmarks: Long = 0): Unit = withHelper {
+        if (shake()) return@withHelper null
         val artwork = tag(word = word, bookmarks = bookmarks, fuzzy = false)
             ?: tag(word = word, bookmarks = bookmarks, fuzzy = true)
 

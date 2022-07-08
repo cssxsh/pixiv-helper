@@ -41,6 +41,7 @@ public object PixivEroCommand : SimpleCommand(
 
     @Handler
     public suspend fun CommandSenderOnMessage<*>.handle(): Unit = withHelper {
+        if (shake()) return@withHelper null
         val history = histories.getOrPut(fromEvent.subject.id) { History() }
         if ("更色" in fromEvent.message.content) {
             history.sanity++
