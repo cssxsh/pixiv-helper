@@ -221,12 +221,12 @@ public suspend fun SearchResult.getContent(contact: Contact): MessageChain = bui
 
             contact.launch {
                 try {
-                    val illust = loadIllustInfo(pid = pid, client = contact.helper.client)
-                    if (illust.age > AgeLimit.ALL || illust.pageCount > 3) return@launch
+                    val illust = loadIllustInfo(pid = pid, flush = true, client = contact.helper.client)
+                    if (illust.age > AgeLimit.ALL || illust.pageCount > 3 || illust.type == WorkContentType.MANGA) return@launch
                     val message = buildIllustMessage(illust = illust, contact = contact)
                     contact.sendMessage(message)
-                } catch (_: Throwable) {
-                    // ignore
+                } catch (cause: Throwable) {
+                    logger.warning({ "搜索结果自动发送失败" }, cause)
                 }
             }
         }

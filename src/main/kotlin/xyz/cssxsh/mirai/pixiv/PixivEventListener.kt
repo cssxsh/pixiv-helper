@@ -22,14 +22,14 @@ public object PixivEventListener : SimpleListenerHost() {
 
     @EventHandler
     public suspend fun MessageEvent.handle() {
-        val context = toCommandSender()
-        context as UserCommandSender
+        val context = toCommandSender() as UserCommandSender
         if (paserPermission.testPermission(context).not()) return
         val content = message.contentToString()
         URL_ARTWORK_REGEX.find(content)?.let { match ->
             logger.info { "匹配ARTWORK(${match.value})" }
-            val pid = match.value.toLong()
-            context.sendIllust(illust = loadIllustInfo(pid = pid))
+            context.withHelper {
+                loadIllustInfo(pid = match.value.toLong(), client = client)
+            }
         }
         URL_USER_REGEX.find(content)?.let { match ->
             logger.info { "匹配USER(${match.value})" }

@@ -71,7 +71,7 @@ public object PixivBoomCommand : SimpleCommand(
 
             async {
                 try {
-                    val illust = loadIllustInfo(pid = artwork.pid, flush = false)
+                    val illust = loadIllustInfo(pid = artwork.pid, flush = false, client = client)
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,

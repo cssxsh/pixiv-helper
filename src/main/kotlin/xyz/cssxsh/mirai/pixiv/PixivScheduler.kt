@@ -45,7 +45,13 @@ public object PixivScheduler : CoroutineScope {
 
         for ((index, illust) in list.withIndex()) {
 
-            val message = buildIllustMessage(illust = illust, contact = subject)
+            val message = try {
+                buildIllustMessage(illust = illust, contact = subject)
+            } catch (cause: CancellationException) {
+                break
+            } catch (cause: Throwable) {
+                continue
+            }
 
             if (TaskForward) {
                 val sender = (subject as? User) ?: (subject as Group).members.random()
