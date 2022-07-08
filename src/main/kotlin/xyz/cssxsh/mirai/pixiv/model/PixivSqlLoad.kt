@@ -367,16 +367,20 @@ internal fun ArtWorkInfo.SQL.tag(
                     )
             }
         }
+        val max = criteria.subquery<Long>().apply {
+            select(max(from<ArtWorkInfo>().get("pid")))
+        }
 
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                *names.map { name -> exists(tag(name)) }.toTypedArray()
+                le(artwork.get<Long>("pid"), dice(max)),
+                *names.mapTo(ArrayList(names.size)) { name -> exists(tag(name)) }.toTypedArray()
             )
-            .orderBy(asc(rand()))
-    }.setMaxResults(limit).list().orEmpty()
+            .orderBy(desc(artwork.get<Long>("pid")))
+    }.setMaxResults(limit).list()
 }
 
 internal fun ArtWorkInfo.SQL.random(
@@ -387,16 +391,21 @@ internal fun ArtWorkInfo.SQL.random(
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from(ArtWorkInfo::class.java)
+        val max = criteria.subquery<Long>().apply {
+            select(max(from<ArtWorkInfo>().get("pid")))
+        }
+
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 isTrue(artwork.get("ero")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Int>("sanity"), level),
-                gt(artwork.get<Long>("bookmarks"), marks)
+                gt(artwork.get<Long>("bookmarks"), marks),
+                le(artwork.get<Long>("pid"), dice(max))
             )
-            .orderBy(asc(rand()))
-    }.setMaxResults(limit).list().orEmpty()
+            .orderBy(desc(artwork.get<Long>("pid")))
+    }.setMaxResults(limit).list()
 }
 
 internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSession(ArtWorkInfo) { session ->
@@ -464,9 +473,6 @@ internal fun IllustInfo.toArtWorkInfo(author: UserBaseInfo = user.toUserBaseInfo
 )
 
 internal fun IllustInfo.mergeTagRecords() {
-//    for (tag in tags) {
-//        TagRecord(name = tag.name, translated = tag.translatedName).merge()
-//    }
     useSession(TagRecord) { session ->
         for (tag in tags) {
             session.merge(TagRecord(name = tag.name, translated = tag.translatedName))
@@ -591,7 +597,7 @@ internal operator fun Twitter.SQL.get(uid: Long): List<Twitter> = useSession { s
         val twitter = criteria.from(Twitter::class.java)
         criteria.select(twitter)
             .where(equal(twitter.get<Long>("uid"), uid))
-    }.list().orEmpty()
+    }.list()
 }
 
 // endregion
@@ -603,7 +609,7 @@ internal operator fun FileInfo.SQL.get(hash: String): List<FileInfo> = useSessio
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
             .where(like(file.get("md5"), hash))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession { session ->
@@ -611,7 +617,7 @@ internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession {
         val file = criteria.from(FileInfo::class.java)
         criteria.select(file)
             .where(equal(file.get<FileIndex>("id").get<Long>("pid"), pid))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
@@ -655,7 +661,7 @@ internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSe
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
             .where(equal(tag.get<Long>("sender"), id))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useSession { session ->
@@ -663,7 +669,7 @@ internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useS
         val tag = criteria.from(StatisticTagInfo::class.java)
         criteria.select(tag)
             .where(equal(tag.get<Long>("group"), id))
-    }.list().orEmpty()
+    }.list()
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -673,7 +679,7 @@ internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = use
         criteria.select(construct(Pair::class.java, tag.get<String>("tag"), count(tag)))
             .groupBy(tag.get<String>("tag"))
             .orderBy(desc(count(tag)))
-    }.setMaxResults(limit).list().orEmpty() as List<Pair<String, Int>>
+    }.setMaxResults(limit).list() as List<Pair<String, Int>>
 }
 
 internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSession { session ->
@@ -681,7 +687,7 @@ internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSe
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
             .where(equal(ero.get<Long>("sender"), id))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useSession { session ->
@@ -689,7 +695,7 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
         val ero = criteria.from(StatisticEroInfo::class.java)
         criteria.select(ero)
             .where(equal(ero.get<Long>("group"), id))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInfo> = useSession { session ->
@@ -719,7 +725,7 @@ internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session -
     session.withCriteria<AliasSetting> { criteria ->
         val alias = criteria.from(AliasSetting::class.java)
         criteria.select(alias)
-    }.list().orEmpty()
+    }.list()
 }
 
 internal operator fun AliasSetting.SQL.get(name: String): AliasSetting? = useSession { session ->
@@ -753,7 +759,7 @@ internal fun PixivSearchResult.SQL.noCached(): List<PixivSearchResult> = useSess
         val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)
         criteria.select(search)
             .where(artwork.isNull)
-    }.list().orEmpty()
+    }.list()
 }
 
 // endregion

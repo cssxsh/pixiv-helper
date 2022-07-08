@@ -61,24 +61,18 @@ public object PixivHibernateConfiguration :
             )
             logger.warning { "已经自动将 org.sqlite.hibernate.dialect.SQLiteDialect 替换为 org.hibernate.community.dialect.SQLiteDialect" }
         }
+        // 设置 rand 别名
+        addRandFunction()
+        // 设置 dice 宏
+        addDiceFunction()
+        setProperty("hibernate.hbm2ddl.auto", "none")
         when {
             url.startsWith("jdbc:sqlite") -> {
                 // SQLite 是单文件数据库，最好只有一个连接
-                setProperty("hibernate.c3p0.min_size", "${1}")
-                setProperty("hibernate.c3p0.max_size", "${1}")
-                setProperty(
-                    "hibernate.c3p0.timeout",
-                    System.getProperty("hibernate.c3p0.timeout", "${60_000}")
-                )
-                setProperty("hibernate.hikari.minimumIdle", "${1}")
-                setProperty("hibernate.hikari.maximumPoolSize", "${1}")
-                setProperty(
-                    "hibernate.hikari.connectionTimeout",
-                    System.getProperty("hibernate.hikari.connectionTimeout", "${60_000}")
-                )
-                setProperty("hibernate.hbm2ddl.auto", "none")
-                // 设置 rand 别名
-                addRandFunction()
+                setProperty("hibernate.c3p0.min_size", "1")
+                setProperty("hibernate.c3p0.max_size", "1")
+                setProperty("hibernate.hikari.minimumIdle", "1")
+                setProperty("hibernate.hikari.maximumPoolSize", "1")
             }
             url.startsWith("jdbc:mysql") -> {
                 //
