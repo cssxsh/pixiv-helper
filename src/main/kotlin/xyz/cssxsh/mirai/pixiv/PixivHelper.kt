@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.*
 import net.mamoe.mirai.event.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
@@ -37,19 +36,19 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
 
     public var model: SendModel by ModelDelegate
 
-    public val mutex: Mutex = Mutex()
-
     private var record: Long = 0
 
-    public suspend fun shake(): Boolean {
-        return mutex.withLock {
-            val current = System.currentTimeMillis()
-            if (record + 1000 < current) {
-                record = current
-                true
-            } else {
-                false
-            }
+    /**
+     * @return 返回 true 时取消指令执行
+     */
+    @Synchronized
+    public fun shake(): Boolean {
+        val current = System.currentTimeMillis()
+        return if (record + 1000 < current) {
+            record = current
+            false
+        } else {
+            true
         }
     }
 
@@ -64,20 +63,24 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
             logger.info { "色图获取被终止" }
             return null
         }
-        fun good(sanity: Int, bookmarks: Long): List<ArtWorkInfo> {
-            return eros.values.filter { it.sanity >= sanity && it.bookmarks > bookmarks }
-        }
 
-        fun random(sanity: Int, bookmarks: Long): ArtWorkInfo? {
-            if (good(sanity, bookmarks).isEmpty()) {
-                for (info in ArtWorkInfo.random(sanity, bookmarks, EroAgeLimit, EroChunk)) {
-                    eros[info.pid] = info
-                }
+        for ((pid, arkwotk) in eros) {
+            if (arkwotk.sanity >= sanity && arkwotk.bookmarks > bookmarks) {
+                eros.remove(pid)
+                return arkwotk
             }
-            return good(sanity, bookmarks).randomOrNull()
+        }
+        for (info in ArtWorkInfo.random(sanity, bookmarks, EroAgeLimit, EroChunk)) {
+            eros[info.pid] = info
+        }
+        for ((pid, arkwotk) in eros) {
+            if (arkwotk.sanity >= sanity && arkwotk.bookmarks > bookmarks) {
+                eros.remove(pid)
+                return arkwotk
+            }
         }
 
-        return random(sanity = sanity, bookmarks = bookmarks)
+        return null
     }
 
     /**
