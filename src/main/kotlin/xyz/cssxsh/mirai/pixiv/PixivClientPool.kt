@@ -1,5 +1,6 @@
 package xyz.cssxsh.mirai.pixiv
 
+import io.ktor.client.network.sockets.*
 import io.ktor.client.statement.*
 import io.ktor.util.*
 import kotlinx.coroutines.*
@@ -71,8 +72,13 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
     private val handle: suspend PixivAuthClient.(Throwable) -> Boolean = { throwable ->
         when (throwable) {
+            is SocketTimeoutException,
+            is ConnectTimeoutException -> {
+                logger.warning { "Api 超时, 已忽略: ${throwable.message}" }
+                true
+            }
             is IOException -> {
-                logger.warning { "Pixiv Api 错误, 已忽略: $throwable" }
+                logger.warning { "Api 错误, 已忽略: $throwable" }
                 true
             }
             is AppApiException -> {

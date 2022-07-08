@@ -14,8 +14,7 @@
 * [Permission Command](https://github.com/mamoe/mirai/blob/dev/mirai-console/docs/BuiltInCommands.md#permissioncommand)
 * [Chat Command](https://github.com/project-mirai/chat-command)
 
-**Pixiv Helper 2 重构进行中，部分功能还不可用**
-**Pixiv Helper 2 重构进行中，需要重新登录Pixiv 账号，你可以使用之前登录得到的 Token**
+**Pixiv Helper 2 重构进行中，部分功能还不可用. 需要重新登录Pixiv 账号，你可以使用之前登录得到的 Token**
 
 目前没有自动缓存清理，请使用 [#删除指令](#删除指令) 手动清理  
 R18图会按照Pixiv所给信息过滤  

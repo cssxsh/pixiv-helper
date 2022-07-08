@@ -1,12 +1,13 @@
 package xyz.cssxsh.mirai.pixiv
 
+import io.ktor.client.network.sockets.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.tool.*
 import java.io.IOException
-import java.net.*
+import java.net.Proxy
 
 public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async = PIXIV_DOWNLOAD_ASYNC) {
 
@@ -14,8 +15,13 @@ public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async =
 
     override val ignore: suspend (Throwable) -> Boolean = { throwable ->
         when (throwable) {
+            is SocketTimeoutException,
+            is ConnectTimeoutException -> {
+                logger.warning { "Download 超时, 已忽略: ${throwable.message}" }
+                true
+            }
             is IOException -> {
-                logger.warning { "Pixiv Download 错误, 已忽略: $throwable" }
+                logger.warning { "Download 错误, 已忽略: $throwable" }
                 delay(++erros * 1000L)
                 erros--
                 true
