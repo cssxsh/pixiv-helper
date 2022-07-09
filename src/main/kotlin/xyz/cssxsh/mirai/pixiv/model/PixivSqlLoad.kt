@@ -118,7 +118,7 @@ internal fun tag(session: Session) {
         val olds: List<TagBaseInfo> = session.withCriteria<TagBaseInfo> { criteria ->
             val tag = criteria.from(TagBaseInfo::class.java)
             criteria.select(tag)
-        }.setMaxResults(8196).list().orEmpty()
+        }.setMaxResults(40960).list().orEmpty()
 
         if (olds.isEmpty()) break
 
@@ -144,14 +144,8 @@ internal fun tag(session: Session) {
         session.transaction.begin()
         try {
             for (old in olds) {
-                val record0 = session.get(TagRecord::class.java, old.name)
-                val record = if (record0.tid != 0L) {
-                    record0
-                } else {
-                    session.remove(record0)
-                    session.get(TagRecord::class.java, old.name)
-                }
-                session.merge(ArtworkTag(pid = old.pid, tag = record))
+                val record = session.get(TagRecord::class.java, old.name)
+                session.persist(ArtworkTag(pid = old.pid, tag = record))
                 session.remove(old)
             }
             session.transaction.commit()
@@ -623,7 +617,15 @@ internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession {
 internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     try {
-        for (item in this) session.merge(item)
+        for (item in this) session.remove(item)
+        session.transaction.commit()
+    } catch (cause: Throwable) {
+        session.transaction.rollback()
+        throw cause
+    }
+    session.transaction.begin()
+    try {
+        for (item in this) session.persist(item)
         session.transaction.commit()
     } catch (cause: Throwable) {
         session.transaction.rollback()

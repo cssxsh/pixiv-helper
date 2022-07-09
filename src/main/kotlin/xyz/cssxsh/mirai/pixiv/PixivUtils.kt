@@ -463,7 +463,18 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
                             url = url.toString(),
                             size = bytes.size
                         )
-                        info.merge()
+                        try {
+                            info.merge()
+                        } catch (cause: RuntimeException) {
+                            useSession { session ->
+                                session.transaction.begin()
+                                session.remove(info)
+                                session.transaction.commit()
+                                session.transaction.begin()
+                                session.persist(info)
+                                session.transaction.commit()
+                            }
+                        }
                         folder.resolve(url.filename).writeBytes(bytes)
                     }
                 }
