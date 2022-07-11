@@ -1,7 +1,6 @@
 package xyz.cssxsh.mirai.pixiv.command
 
 import net.mamoe.mirai.console.command.*
-import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.pixiv.*
