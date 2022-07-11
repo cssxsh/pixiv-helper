@@ -1,12 +1,10 @@
 package xyz.cssxsh.mirai.pixiv.model
 
-import jakarta.persistence.*
 import jakarta.persistence.criteria.*
 import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.*
 import net.mamoe.mirai.utils.*
 import org.hibernate.*
-import org.hibernate.cfg.*
 import xyz.cssxsh.hibernate.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.pixiv.*
@@ -15,7 +13,6 @@ import xyz.cssxsh.pixiv.fanbox.*
 import java.io.*
 import java.sql.*
 import kotlin.reflect.full.*
-import kotlin.streams.*
 
 // region SqlConfiguration
 
@@ -110,112 +107,20 @@ internal fun create(session: Session) {
     }
 }
 
-internal fun tag(session: Session) {
-    var count = 0
-    while (true) {
-        System.gc()
-
-        val olds: List<TagBaseInfo> = session.withCriteria<TagBaseInfo> { criteria ->
-            val tag = criteria.from(TagBaseInfo::class.java)
-            criteria.select(tag)
-        }.setMaxResults(40960).list().orEmpty()
-
-        if (olds.isEmpty()) break
-
-        logger.info { "TAG 数据迁移中 ${count}，请稍候" }
-
-        count += olds.size
-
-        session.transaction.begin()
-        val set = HashSet<String>()
-        try {
-            for (old in olds) {
-                if (set.add(old.name)) {
-                    session.merge(TagRecord(name = old.name, translated = old.translated))
-                }
-            }
-            session.transaction.commit()
-        } catch (cause: Throwable) {
-            session.transaction.rollback()
-            logger.warning({ "TAG data move failure." }, cause.findSQLException() ?: cause)
-            throw cause
-        }
-
-        session.transaction.begin()
-        try {
-            for (old in olds) {
-                val record = session.get(TagRecord::class.java, old.name)
-                session.persist(ArtworkTag(pid = old.pid, tag = record))
-                session.remove(old)
-            }
-            session.transaction.commit()
-        } catch (cause: Throwable) {
-            session.transaction.rollback()
-            logger.warning({ "TAG data move failure." }, cause.findSQLException() ?: cause)
-            throw cause
-        }
-    }
-    if (count > 0) {
-        logger.info { "TAG 数据迁移完成 ${count}." }
-    }
-}
-
-internal fun load(path: String, chunk: Int) {
-    val sqlite = File(path).apply { check(exists()) { "文件不存在" } }
-    val entities = PixivEntity::class.sealedSubclasses.map { it.java }
-    val config = Configuration().apply { entities.forEach(::addAnnotatedClass) }
-    config.setProperty("hibernate.connection.url", "jdbc:sqlite:${sqlite.toURI().toASCIIString()}")
-    config.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC")
-    config.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect")
-    config.setProperty("hibernate.connection.provider_class", "org.hibernate.connection.C3P0ConnectionProvider")
-    config.setProperty("hibernate.c3p0.min_size", "${1}")
-    config.setProperty("hibernate.c3p0.max_size", "${1}")
-    val other = config.buildSessionFactory().openSession().apply { isDefaultReadOnly = true }
-    for (entity in entities) {
-        val annotation = entity.getAnnotation(Table::class.java)
-        var count = 0L
-        other.withCriteria<PixivEntity> { it.select(it.from(entity)) }
-            .setReadOnly(true)
-            .setCacheable(false)
-            .stream()
-            .asSequence()
-            .chunked(chunk)
-            .forEach { list ->
-                useSession(entity::class.companionObjectInstance) { session ->
-                    session.transaction.begin()
-                    session.runCatching {
-                        for (item in list) merge(item)
-                        count += list.size
-                        count
-                    }.onSuccess { count ->
-                        session.transaction.commit()
-                        logger.info { "${annotation.name}已导入${count}条数据" }
-                    }.onFailure {
-                        session.transaction.rollback()
-                        logger.warning({ "${annotation.name}导入失败" }, it)
-                    }
-                    session.clear()
-                }
-                System.gc()
-            }
-    }
-    other.close()
-}
-
 // endregion
 
 // region ArtWorkInfo
 
 internal fun ArtWorkInfo.SQL.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
     }.uniqueResult()
 }
 
 internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
             .where(
                 isFalse(artwork.get("deleted")),
@@ -227,7 +132,7 @@ internal fun ArtWorkInfo.SQL.eros(age: AgeLimit): Long = useSession { session ->
 
 internal fun ArtWorkInfo.SQL.eros(type: WorkContentType): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
             .where(
                 isFalse(artwork.get("deleted")),
@@ -239,7 +144,7 @@ internal fun ArtWorkInfo.SQL.eros(type: WorkContentType): Long = useSession { se
 
 internal fun ArtWorkInfo.SQL.eros(sanity: SanityLevel): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
             .where(
                 isFalse(artwork.get("deleted")),
@@ -251,7 +156,7 @@ internal fun ArtWorkInfo.SQL.eros(sanity: SanityLevel): Long = useSession { sess
 
 internal operator fun ArtWorkInfo.SQL.contains(pid: Long): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
             .where(equal(artwork.get<Long>("pid"), pid))
     }.uniqueResult() > 0
@@ -263,7 +168,7 @@ internal operator fun ArtWorkInfo.SQL.get(id: Long): ArtWorkInfo? = useSession {
 
 internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(artwork.get<Long>("pid").`in`(ids))
     }.list().orEmpty()
@@ -275,7 +180,7 @@ internal fun ArtWorkInfo.SQL.interval(
     pages: Int
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
@@ -288,7 +193,7 @@ internal fun ArtWorkInfo.SQL.interval(
 
 internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(
                 isTrue(artwork.get("deleted")),
@@ -299,7 +204,7 @@ internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useS
 
 internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
@@ -311,10 +216,13 @@ internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List
 
 internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
-        val files = with(criteria.subquery(FileInfo::class.java)) {
-            val file = from(FileInfo::class.java)
-            select(file).where(equal(artwork.get<Long>("pid"), file.get<FileIndex>("id").get<Long>("pid")))
+        val artwork = criteria.from<ArtWorkInfo>()
+        val files = criteria.subquery<FileInfo>().also { sub ->
+            val file = sub.from<FileInfo>()
+            sub.select(file)
+                .where(
+                    equal(artwork.get<Long>("pid"), file.get<FileIndex>("id").get<Long>("pid"))
+                )
         }
         criteria.select(artwork)
             .where(
@@ -328,7 +236,7 @@ internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useS
 
 internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
@@ -346,23 +254,10 @@ internal fun ArtWorkInfo.SQL.tag(
 ): List<ArtWorkInfo> = useSession { session ->
     val names = word.split(delimiters = TAG_DELIMITERS.toCharArray()).filter { it.isNotBlank() }
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
-        val tag = { name: String ->
-            criteria.subquery(Long::class.java).also { sub ->
-                val info = sub.from(ArtWorkInfo::class.java)
-                val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
-                sub.select(records.get("tid"))
-                    .where(
-                        equal(info.get<Long>("pid"), artwork.get<Long>("pid")),
-                        or(
-                            like(records.get("name"), if (fuzzy) "%$name%" else name),
-                            like(records.get("translated"), if (fuzzy) "%$name%" else name)
-                        )
-                    )
-            }
-        }
-        val max = criteria.subquery<Long>().apply {
-            select(max(from<ArtWorkInfo>().get("pid")))
+        val artwork = criteria.from<ArtWorkInfo>()
+        val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
+        val max = criteria.subquery<Long>().also { sub ->
+            sub.select(max(sub.from<ArtWorkInfo>().get("pid")))
         }
 
         criteria.select(artwork)
@@ -371,8 +266,17 @@ internal fun ArtWorkInfo.SQL.tag(
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
                 le(artwork.get<Long>("pid"), dice(max)),
-                *names.mapTo(ArrayList(names.size)) { name -> exists(tag(name)) }.toTypedArray()
+                or(
+                    *buildList(names.size * 2) {
+                        for (name in names) {
+                            val pattern = if (fuzzy) "%$name%" else name
+                            add(like(records.get("name"), pattern))
+                            add(like(records.get("translated"), pattern))
+                        }
+                    }.toTypedArray()
+                )
             )
+            .distinct(true)
             .orderBy(desc(artwork.get<Long>("pid")))
     }.setMaxResults(limit).list()
 }
@@ -384,9 +288,9 @@ internal fun ArtWorkInfo.SQL.random(
     limit: Int
 ): List<ArtWorkInfo> = useSession { session ->
     session.withCriteria<ArtWorkInfo> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
-        val max = criteria.subquery<Long>().apply {
-            select(max(from<ArtWorkInfo>().get("pid")))
+        val artwork = criteria.from<ArtWorkInfo>()
+        val max = criteria.subquery<Long>().also { sub ->
+            sub.select(max(sub.from<ArtWorkInfo>().get("pid")))
         }
 
         criteria.select(artwork)
@@ -406,7 +310,7 @@ internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSessio
     session.transaction.begin()
     try {
         val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
-            val artwork = criteria.from(ArtWorkInfo::class.java)
+            val artwork = criteria.from()
             criteria.set("caption", comment).set("deleted", true)
                 .where(
                     isFalse(artwork.get("deleted")),
@@ -425,7 +329,7 @@ internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSe
     session.transaction.begin()
     try {
         val total = session.withCriteriaUpdate<ArtWorkInfo> { criteria ->
-            val artwork = criteria.from(ArtWorkInfo::class.java)
+            val artwork = criteria.from()
             criteria.set("caption", comment).set("deleted", true)
                 .where(
                     isFalse(artwork.get("deleted")),
@@ -536,7 +440,7 @@ internal fun UserInfo.toUserBaseInfo() = UserBaseInfo(uid = id, name = name, acc
 
 internal fun UserInfo.count(): Long = useSession { session ->
     session.withCriteria<Long> { criteria ->
-        val artwork = criteria.from(ArtWorkInfo::class.java)
+        val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(count(artwork))
             .where(equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), id))
     }.uniqueResult()
@@ -544,7 +448,7 @@ internal fun UserInfo.count(): Long = useSession { session ->
 
 internal operator fun UserBaseInfo.SQL.get(account: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
-        val user = criteria.from(UserBaseInfo::class.java)
+        val user = criteria.from<UserBaseInfo>()
         criteria.select(user)
             .where(equal(user.get<String?>("account"), account))
     }.uniqueResult()
@@ -552,7 +456,7 @@ internal operator fun UserBaseInfo.SQL.get(account: String): UserBaseInfo? = use
 
 internal fun UserBaseInfo.SQL.like(name: String): UserBaseInfo? = useSession { session ->
     session.withCriteria<UserBaseInfo> { criteria ->
-        val user = criteria.from(UserBaseInfo::class.java)
+        val user = criteria.from<UserBaseInfo>()
         criteria.select(user)
             .where(like(user.get("name"), name))
     }.list().singleOrNull()
@@ -588,7 +492,7 @@ internal operator fun Twitter.SQL.get(screen: String): Twitter? = useSession { s
 
 internal operator fun Twitter.SQL.get(uid: Long): List<Twitter> = useSession { session ->
     session.withCriteria<Twitter> { criteria ->
-        val twitter = criteria.from(Twitter::class.java)
+        val twitter = criteria.from<Twitter>()
         criteria.select(twitter)
             .where(equal(twitter.get<Long>("uid"), uid))
     }.list()
@@ -600,7 +504,7 @@ internal operator fun Twitter.SQL.get(uid: Long): List<Twitter> = useSession { s
 
 internal operator fun FileInfo.SQL.get(hash: String): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
-        val file = criteria.from(FileInfo::class.java)
+        val file = criteria.from<FileInfo>()
         criteria.select(file)
             .where(like(file.get("md5"), hash))
     }.list()
@@ -608,7 +512,7 @@ internal operator fun FileInfo.SQL.get(hash: String): List<FileInfo> = useSessio
 
 internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession { session ->
     session.withCriteria<FileInfo> { criteria ->
-        val file = criteria.from(FileInfo::class.java)
+        val file = criteria.from<FileInfo>()
         criteria.select(file)
             .where(equal(file.get<FileIndex>("id").get<Long>("pid"), pid))
     }.list()
@@ -640,7 +544,7 @@ internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
 internal operator fun StatisticTaskInfo.SQL.contains(pair: Pair<String, Long>): Boolean = useSession { session ->
     session.withCriteria<Long> { criteria ->
         val (name, pid) = pair
-        val task = criteria.from(StatisticTaskInfo::class.java)
+        val task = criteria.from<StatisticTaskInfo>()
         criteria.select(count(task))
             .where(
                 equal(task.get<Long>("pid"), pid),
@@ -651,7 +555,7 @@ internal operator fun StatisticTaskInfo.SQL.contains(pair: Pair<String, Long>): 
 
 internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useSession { session ->
     session.withCriteria<StatisticTaskInfo> { criteria ->
-        val task = criteria.from(StatisticTaskInfo::class.java)
+        val task = criteria.from<StatisticTaskInfo>()
         criteria.select(task)
             .where(like(task.get("task"), name))
             .orderBy(desc(task.get<Long>("timestamp")))
@@ -660,7 +564,7 @@ internal fun StatisticTaskInfo.SQL.last(name: String): StatisticTaskInfo? = useS
 
 internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSession { session ->
     session.withCriteria<StatisticTagInfo> { criteria ->
-        val tag = criteria.from(StatisticTagInfo::class.java)
+        val tag = criteria.from<StatisticTagInfo>()
         criteria.select(tag)
             .where(equal(tag.get<Long>("sender"), id))
     }.list()
@@ -668,7 +572,7 @@ internal fun StatisticTagInfo.SQL.user(id: Long): List<StatisticTagInfo> = useSe
 
 internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useSession { session ->
     session.withCriteria<StatisticTagInfo> { criteria ->
-        val tag = criteria.from(StatisticTagInfo::class.java)
+        val tag = criteria.from<StatisticTagInfo>()
         criteria.select(tag)
             .where(equal(tag.get<Long>("group"), id))
     }.list()
@@ -677,7 +581,7 @@ internal fun StatisticTagInfo.SQL.group(id: Long): List<StatisticTagInfo> = useS
 @Suppress("UNCHECKED_CAST")
 internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = useSession { session ->
     session.withCriteria<Pair<*, *>> { criteria ->
-        val tag = criteria.from(StatisticTagInfo::class.java)
+        val tag = criteria.from<StatisticTagInfo>()
         criteria.select(construct(Pair::class.java, tag.get<String>("tag"), count(tag)))
             .groupBy(tag.get<String>("tag"))
             .orderBy(desc(count(tag)))
@@ -686,7 +590,7 @@ internal fun StatisticTagInfo.SQL.top(limit: Int): List<Pair<String, Int>> = use
 
 internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSession { session ->
     session.withCriteria<StatisticEroInfo> { criteria ->
-        val ero = criteria.from(StatisticEroInfo::class.java)
+        val ero = criteria.from<StatisticEroInfo>()
         criteria.select(ero)
             .where(equal(ero.get<Long>("sender"), id))
     }.list()
@@ -694,7 +598,7 @@ internal fun StatisticEroInfo.SQL.user(id: Long): List<StatisticEroInfo> = useSe
 
 internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useSession { session ->
     session.withCriteria<StatisticEroInfo> { criteria ->
-        val ero = criteria.from(StatisticEroInfo::class.java)
+        val ero = criteria.from<StatisticEroInfo>()
         criteria.select(ero)
             .where(equal(ero.get<Long>("group"), id))
     }.list()
@@ -702,7 +606,7 @@ internal fun StatisticEroInfo.SQL.group(id: Long): List<StatisticEroInfo> = useS
 
 internal fun StatisticUserInfo.SQL.list(range: LongRange): List<StatisticUserInfo> = useSession { session ->
     session.withCriteria<StatisticUserInfo> { criteria ->
-        val record = criteria.from(StatisticUserInfo::class.java)
+        val record = criteria.from<StatisticUserInfo>()
         criteria.select(record)
             .where(
                 gt(record.get<Long>("ero"), range.first),
@@ -725,7 +629,7 @@ internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSett
 
 internal fun AliasSetting.SQL.all(): List<AliasSetting> = useSession { session ->
     session.withCriteria<AliasSetting> { criteria ->
-        val alias = criteria.from(AliasSetting::class.java)
+        val alias = criteria.from<AliasSetting>()
         criteria.select(alias)
     }.list()
 }
@@ -757,7 +661,7 @@ internal operator fun PixivSearchResult.SQL.get(hash: String): PixivSearchResult
 
 internal fun PixivSearchResult.SQL.noCached(): List<PixivSearchResult> = useSession { session ->
     session.withCriteria<PixivSearchResult> { criteria ->
-        val search = criteria.from(PixivSearchResult::class.java)
+        val search = criteria.from<PixivSearchResult>()
         val artwork = search.join<PixivSearchResult, ArtWorkInfo?>("artwork", JoinType.LEFT)
         criteria.select(search)
             .where(artwork.isNull)

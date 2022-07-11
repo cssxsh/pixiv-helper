@@ -93,7 +93,6 @@ internal fun initConfiguration() {
 
     factory.openSession().use { session ->
         create(session)
-        tag(session)
     }
     val count = ArtWorkInfo.count()
     if (count < EroChunk) {
