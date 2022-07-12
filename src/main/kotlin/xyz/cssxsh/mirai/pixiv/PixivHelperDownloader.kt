@@ -43,21 +43,13 @@ public object PixivHelperDownloader : PixivDownloader(host = PIXIV_HOST, async =
         }
     }
 
-    override suspend fun <R> downloadImageUrls(
-        urls: List<Url>,
-        block: suspend (url: Url, deferred: Deferred<ByteArray>) -> R
-    ): List<R> {
-        val downloads = if (ProxyMirror.isNotBlank()) {
-            urls.map { url ->
-                if (url.host == "i.pximg.net") {
-                    URLBuilder(url).apply { host = ProxyMirror }.build()
-                } else {
-                    url
-                }
+    override suspend fun download(url: Url): ByteArray {
+        return super.download(
+            if (url.host == "i.pximg.net" && ProxyMirror.isNotEmpty()) {
+                URLBuilder(url).apply { host = ProxyMirror }.build()
+            } else {
+                url
             }
-        } else {
-            urls
-        }
-        return super.downloadImageUrls(downloads, block)
+        )
     }
 }
