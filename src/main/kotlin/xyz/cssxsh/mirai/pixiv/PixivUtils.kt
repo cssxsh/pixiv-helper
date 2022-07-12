@@ -451,7 +451,8 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
 
     val folder = images(pid).apply { mkdirs() }
     return supervisorScope {
-        getOriginImageUrls().mapIndexed { index, url ->
+        val files: MutableList<FileInfo> = ArrayList()
+        val list = getOriginImageUrls().mapIndexed { index, url ->
             async {
                 val file = folder.resolve(url.filename).apply {
                     if (exists().not()) {
@@ -463,18 +464,7 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
                             url = url.toString(),
                             size = bytes.size
                         )
-                        try {
-                            info.merge()
-                        } catch (cause: RuntimeException) {
-                            useSession { session ->
-                                session.transaction.begin()
-                                session.remove(info)
-                                session.transaction.commit()
-                                session.transaction.begin()
-                                session.persist(info)
-                                session.transaction.commit()
-                            }
-                        }
+                        files.add(info)
                         folder.resolve(url.filename).writeBytes(bytes)
                     }
                 }
@@ -482,6 +472,12 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
                 file.toExternalResource().use { resource -> block(index, resource) }
             }
         }.awaitAll()
+
+        launch {
+            files.merge()
+        }
+
+        list
     }
 }
 

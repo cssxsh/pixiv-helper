@@ -521,15 +521,19 @@ internal operator fun FileInfo.SQL.get(pid: Long): List<FileInfo> = useSession {
 internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
     session.transaction.begin()
     try {
-        for (item in this) session.remove(item)
-        session.transaction.commit()
-    } catch (cause: Throwable) {
-        session.transaction.rollback()
-        throw cause
-    }
-    session.transaction.begin()
-    try {
-        for (item in this) session.persist(item)
+        for (item in this) {
+            val updated = session.withCriteriaUpdate<FileInfo> { criteria ->
+                val file = criteria.from()
+                criteria
+                    .where(equal(file.get<FileIndex>("id"), item.id))
+                    .set("md5", item.md5)
+                    .set("url", item.url)
+                    .set("size", item.size)
+            }.executeUpdate() > 0
+            if (!updated) {
+                session.persist(item)
+            }
+        }
         session.transaction.commit()
     } catch (cause: Throwable) {
         session.transaction.rollback()
