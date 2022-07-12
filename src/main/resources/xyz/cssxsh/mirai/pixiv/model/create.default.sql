@@ -30,14 +30,6 @@ CREATE TABLE IF NOT EXISTS artworks
     PRIMARY KEY (`pid`),
     FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS tags
-(
-    `pid`             INTEGER      NOT NULL,
-    `name`            NVARCHAR(30) NOT NULL,
-    `translated_name` TEXT DEFAULT NULL,
-    PRIMARY KEY (`pid`, `name`),
-    FOREIGN KEY (`pid`) REFERENCES artworks (`pid`) ON UPDATE CASCADE ON DELETE CASCADE
-);
 CREATE TABLE `tag`
 (
     `name`            VARCHAR(30)      NOT NULL,

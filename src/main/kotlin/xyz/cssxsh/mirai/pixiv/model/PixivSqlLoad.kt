@@ -91,6 +91,7 @@ internal fun create(session: Session) {
             name.contains(other = "MariaDB", ignoreCase = true) ||
                 name.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
             name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
+            name.contains(other = "PostgreSQL", ignoreCase = true) -> "create.postgresql.sql"
             else -> "create.default.sql"
         }
         logger.info { "Create Table by $sql with $name" }

@@ -31,16 +31,6 @@ CREATE TABLE IF NOT EXISTS `artworks`
     FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON UPDATE CASCADE ON DELETE CASCADE,
     INDEX (`uid`)
 ) DEFAULT CHARACTER SET 'utf8mb4';
-CREATE TABLE IF NOT EXISTS `tags`
-(
-    `pid`             INTEGER UNSIGNED NOT NULL,
-    `name`            VARCHAR(30)      NOT NULL COLLATE 'utf8mb4_bin',
-    `translated_name` VARCHAR(64) DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-    PRIMARY KEY (`pid`, `name`),
-    FOREIGN KEY (`pid`) REFERENCES `artworks` (`pid`) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX (`name`),
-    INDEX (`translated_name`)
-) DEFAULT CHARACTER SET 'utf8mb4';
 CREATE TABLE IF NOT EXISTS `tag`
 (
     `name`            VARCHAR(50)      NOT NULL COLLATE 'utf8mb4_bin',

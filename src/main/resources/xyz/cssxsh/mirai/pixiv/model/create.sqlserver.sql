@@ -39,19 +39,6 @@ CREATE TABLE [artworks]
 );
 IF NOT EXISTS(SELECT [name]
               FROM sys.tables
-              WHERE [name] = 'tags')
-CREATE TABLE [tags]
-(
-    [pid]             INTEGER      NOT NULL,
-    [name]            NVARCHAR(30) NOT NULL COLLATE LATIN1_100_BIN,
-    [translated_name] VARCHAR(MAX) DEFAULT NULL COLLATE LATIN1_100_CI_AI_UTF8,
-    PRIMARY KEY ([pid], [name]),
-    FOREIGN KEY ([pid]) REFERENCES [artworks] ([pid]) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX [tag_name] ([name]),
-    INDEX [tag_translated_name] ([translated_name])
-);
-IF NOT EXISTS(SELECT [name]
-              FROM sys.tables
               WHERE [name] = 'tag')
 CREATE TABLE [tag]
 (
