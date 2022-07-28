@@ -44,7 +44,7 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
     @Synchronized
     public fun shake(): Boolean {
         val current = System.currentTimeMillis()
-        return if (record + 1000 < current) {
+        return if (current - record > 3000) {
             record = current
             false
         } else {
