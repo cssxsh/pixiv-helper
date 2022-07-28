@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS "statistic_task"
 
 -- view
 CREATE OR REPLACE VIEW "statistic_user" AS
-SELECT "uid", COUNT(*) AS "count", COUNT(is_ero OR null) AS "ero"
+SELECT "uid", COUNT(*) AS "count", COUNT("is_ero" OR null) AS "ero"
 FROM "artworks"
 WHERE NOT "deleted"
 GROUP BY "uid";

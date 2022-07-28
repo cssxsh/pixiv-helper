@@ -12,6 +12,7 @@ import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.fanbox.*
 import java.io.*
 import java.sql.*
+import java.util.*
 import kotlin.reflect.full.*
 
 // region SqlConfiguration
@@ -90,9 +91,11 @@ internal fun create(session: Session) {
             name.contains(other = "SQLite", ignoreCase = true) -> "create.sqlite.sql"
             name.contains(other = "MariaDB", ignoreCase = true) ||
                 name.contains(other = "MySql", ignoreCase = true) -> "create.mysql.sql"
+
             name.contains(other = "SQL Server", ignoreCase = true) -> "create.sqlserver.sql"
             name.contains(other = "PostgreSQL", ignoreCase = true) -> "create.postgresql.sql"
-            else -> "create.default.sql"
+            name.contains(other = "H2", ignoreCase = true) -> "create.h2.sql"
+            else -> throw UnsupportedOperationException(name)
         }
         logger.info { "Create Table by $sql with $name" }
         requireNotNull(PixivEntity::class.java.getResourceAsStream(sql)) { "Read Create Sql 失败" }
@@ -172,7 +175,7 @@ internal fun ArtWorkInfo.SQL.list(ids: List<Long>): List<ArtWorkInfo> = useSessi
         val artwork = criteria.from<ArtWorkInfo>()
         criteria.select(artwork)
             .where(artwork.get<Long>("pid").`in`(ids))
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun ArtWorkInfo.SQL.interval(
@@ -189,7 +192,7 @@ internal fun ArtWorkInfo.SQL.interval(
                 lt(artwork.get("bookmarks"), marks),
                 gt(artwork.get("pages"), pages)
             )
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useSession { session ->
@@ -200,7 +203,7 @@ internal fun ArtWorkInfo.SQL.deleted(range: LongRange): List<ArtWorkInfo> = useS
                 isTrue(artwork.get("deleted")),
                 between(artwork.get("pid"), range.first, range.last)
             )
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List<ArtWorkInfo> = useSession { session ->
@@ -212,7 +215,7 @@ internal fun ArtWorkInfo.SQL.type(range: LongRange, type: WorkContentType): List
                 between(artwork.get("pid"), range.first, range.last),
                 equal(artwork.get<Int>("type"), type.ordinal)
             )
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useSession { session ->
@@ -232,7 +235,7 @@ internal fun ArtWorkInfo.SQL.nocache(range: LongRange): List<ArtWorkInfo> = useS
                 between(artwork.get("pid"), range.first, range.last),
                 exists(files).not()
             )
-    }.list().orEmpty()
+    }.list()
 }
 
 internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { session ->
@@ -243,8 +246,10 @@ internal fun ArtWorkInfo.SQL.user(uid: Long): List<ArtWorkInfo> = useSession { s
                 isFalse(artwork.get("deleted")),
                 equal(artwork.get<UserBaseInfo>("author").get<Long>("uid"), uid)
             )
-    }.list().orEmpty()
+    }.list()
 }
+
+private val cache: MutableMap<String, List<TagRecord>> = WeakHashMap()
 
 internal fun ArtWorkInfo.SQL.tag(
     word: String,
@@ -254,9 +259,30 @@ internal fun ArtWorkInfo.SQL.tag(
     limit: Int
 ): List<ArtWorkInfo> = useSession { session ->
     val names = word.split(delimiters = TAG_DELIMITERS.toCharArray()).filter { it.isNotBlank() }
+    val records = buildList {
+        for (name in names) {
+            val pattern = if (fuzzy) "%$name%" else name
+            val result = cache.getOrPut(pattern) {
+                session.withCriteria<TagRecord> { criteria ->
+                    val root = criteria.from<TagRecord>()
+                    criteria.select(root)
+                        .where(
+                            or(
+                                like(root.get("name"), pattern),
+                                like(root.get("translated"), pattern)
+                            )
+                        )
+                }.list()
+            }
+
+            logger.info { "tag: $pattern - ${result.map { it.name }}" }
+            add(result)
+        }
+    }
+
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from<ArtWorkInfo>()
-        val records = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
+        val join = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
         val max = criteria.subquery<Long>().also { sub ->
             sub.select(max(sub.from<ArtWorkInfo>().get("pid")))
         }
@@ -267,15 +293,11 @@ internal fun ArtWorkInfo.SQL.tag(
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
                 le(artwork.get<Long>("pid"), dice(max)),
-                or(
-                    *buildList(names.size * 2) {
-                        for (name in names) {
-                            val pattern = if (fuzzy) "%$name%" else name
-                            add(like(records.get("name"), pattern))
-                            add(like(records.get("translated"), pattern))
-                        }
-                    }.toTypedArray()
-                )
+                *records.mapToArray { tags ->
+                    or(*tags.mapToArray { tag ->
+                        equal(join.get<Long>("tid"), tag.tid)
+                    })
+                }
             )
             .distinct(true)
             .orderBy(desc(artwork.get<Long>("pid")))
