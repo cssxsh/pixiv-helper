@@ -86,6 +86,7 @@ public object PixivScheduler : CoroutineScope {
             while (this.size < count) {
                 val illust = illusts.removeFirstOrNull() ?: break
                 if (illust.age != AgeLimit.ALL) continue
+                if (any { it.pid == illust.pid }) continue
                 if ((id to illust.pid) in StatisticTaskInfo) continue
 
                 add(illust)
