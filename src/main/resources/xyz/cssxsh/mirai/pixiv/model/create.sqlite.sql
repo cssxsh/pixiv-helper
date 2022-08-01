@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS artworks
     FOREIGN KEY (`uid`) REFERENCES users (`uid`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS user_id ON users (`uid`);
-CREATE INDEX IF NOT EXISTS tag_translated_name ON tags (`translated_name`);
 CREATE TABLE IF NOT EXISTS tag
 (
     `name`            TEXT                              NOT NULL COLLATE RTRIM,
