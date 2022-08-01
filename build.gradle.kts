@@ -1,13 +1,13 @@
 plugins {
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.serialization") version "1.6.21"
-    kotlin("plugin.jpa") version "1.6.21"
+    kotlin("jvm") version "1.7.0"
+    kotlin("plugin.serialization") version "1.7.0"
+    kotlin("plugin.jpa") version "1.7.0"
 
-    id("net.mamoe.mirai-console") version "2.12.0"
+    id("net.mamoe.mirai-console") version "2.12.1"
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "2.0.0-M6"
+version = "2.0.0-M7"
 
 repositories {
     mavenLocal()
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     implementation("org.jsoup:jsoup:1.14.3")
-    implementation("xyz.cssxsh.pixiv:pixiv-client:1.2.3") {
+    implementation("xyz.cssxsh.pixiv:pixiv-client:1.2.4") {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
@@ -28,27 +28,22 @@ dependencies {
         exclude(group = "org.javassist")
     }
     compileOnly("javax.validation:validation-api:2.0.1.Final")
-    compileOnly("net.mamoe:mirai-core:2.12.0")
-    compileOnly("net.mamoe:mirai-core-utils:2.12.0")
+    compileOnly("net.mamoe:mirai-core:2.12.1")
+    compileOnly("net.mamoe:mirai-core-utils:2.12.1")
     // dependsOn
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.3.5")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.0")
-    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.4")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.2")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.1")
+    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.6")
 
     testImplementation(kotlin("test", "1.6.21"))
     testImplementation("net.mamoe:mirai-slf4j-bridge:1.2.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.3.5")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.4")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.2")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.1")
+    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.6")
 }
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
-}
-
-noArg {
-    annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.Embeddable")
 }
 
 kotlin {
