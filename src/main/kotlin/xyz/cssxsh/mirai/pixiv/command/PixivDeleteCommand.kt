@@ -54,16 +54,14 @@ public object PixivDeleteCommand : CompositeCommand(
     public suspend fun CommandSender.bookmarks(min: Long, record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
-            logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, min, 0)
             if (artworks.isEmpty()) continue
+            logger.info { "开始检查[$range]" }
             sendMessage("{$min}(${range})共${artworks.size}个作品需要删除")
+            val comment = "command delete bookmarks $min in ${OffsetDateTime.now()}"
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
-                if (record) ArtWorkInfo.delete(
-                    pid = artwork.pid,
-                    comment = "command delete bookmarks $min in ${OffsetDateTime.now()}"
-                )
+                logger.verbose { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
+                if (record) ArtWorkInfo.delete(pid = artwork.pid, comment = comment)
                 delete(artwork)
             }
             sendMessage("删除完毕")
@@ -75,16 +73,14 @@ public object PixivDeleteCommand : CompositeCommand(
     public suspend fun CommandSender.page(max: Int, record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
-            logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.interval(range, Long.MAX_VALUE, max)
             if (artworks.isEmpty()) continue
+            logger.info { "开始检查[$range]" }
             sendMessage("[$max](${range})共${artworks.size}个作品需要删除")
+            val comment = "command delete page_count $max in ${OffsetDateTime.now()}"
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
-                if (record) ArtWorkInfo.delete(
-                    pid = artwork.pid,
-                    comment = "command delete page_count $max in ${OffsetDateTime.now()}"
-                )
+                logger.verbose { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
+                if (record) ArtWorkInfo.delete(pid = artwork.pid, comment = comment)
                 delete(artwork)
             }
             sendMessage("删除完毕")
@@ -96,16 +92,14 @@ public object PixivDeleteCommand : CompositeCommand(
     public suspend fun CommandSender.manga(record: Boolean = false) {
         for (range in ALL_RANGE) {
             if (isActive.not()) break
-            logger.verbose { "开始检查[$range]" }
             val artworks = ArtWorkInfo.type(range, WorkContentType.MANGA)
             if (artworks.isEmpty()) continue
+            logger.info { "开始检查[$range]" }
             sendMessage("[manga](${range})共${artworks.size}个作品需要删除")
+            val comment = "command delete manga in ${OffsetDateTime.now()}"
             for (artwork in artworks) {
-                logger.info { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
-                if (record) ArtWorkInfo.delete(
-                    pid = artwork.pid,
-                    comment = "command delete manga in ${OffsetDateTime.now()}"
-                )
+                logger.verbose { "作品(${artwork.pid})[${artwork.author.uid}]信息将从缓存移除" }
+                if (record) ArtWorkInfo.delete(pid = artwork.pid, comment = comment)
                 delete(artwork)
             }
             sendMessage("删除完毕")
