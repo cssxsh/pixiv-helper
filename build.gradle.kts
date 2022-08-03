@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.7.0"
-    kotlin("plugin.serialization") version "1.7.0"
-    kotlin("plugin.jpa") version "1.7.0"
+    kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
+    kotlin("plugin.jpa") version "1.7.10"
 
     id("net.mamoe.mirai-console") version "2.12.1"
 }
@@ -31,19 +31,24 @@ dependencies {
     compileOnly("net.mamoe:mirai-core:2.12.1")
     compileOnly("net.mamoe:mirai-core-utils:2.12.1")
     // dependsOn
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.2")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.1")
-    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.6")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.3")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.2")
+    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.7")
 
-    testImplementation(kotlin("test", "1.6.21"))
+    testImplementation(kotlin("test"))
     testImplementation("net.mamoe:mirai-slf4j-bridge:1.2.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.2")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.1")
-    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.6")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.3")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.2")
+    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.7")
 }
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
+}
+
+noArg {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.Embeddable")
 }
 
 kotlin {
