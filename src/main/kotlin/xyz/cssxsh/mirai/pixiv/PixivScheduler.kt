@@ -2,7 +2,6 @@ package xyz.cssxsh.mirai.pixiv
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.command.descriptor.*
@@ -14,7 +13,7 @@ import xyz.cssxsh.mirai.pixiv.command.*
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.task.*
-import xyz.cssxsh.pixiv.AgeLimit
+import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.apps.*
 import java.time.*
 import kotlin.coroutines.*
@@ -105,13 +104,17 @@ public object PixivScheduler : CoroutineScope {
                     is PixivTimerTask.Follow -> {
                         if (task.illusts.isEmpty() && task.mutex.tryLock()) {
                             val client = client()
-                            task.mutex.withLock {
-                                PixivCacheLoader.cache(task = buildPixivCacheTask {
-                                    name = task.id
-                                    flow = client.follow().onEach { task.illusts.addAll(it) }
-                                }) { _, _ ->
-                                    task.mutex.unlock()
+                            PixivCacheLoader.cache(task = buildPixivCacheTask {
+                                name = task.id
+                                flow = client.follow().onEach { page ->
+                                    for (illust in page) {
+                                        if (illust.type != WorkContentType.MANGA) {
+                                            task.illusts.add(illust)
+                                        }
+                                    }
                                 }
+                            }) { _, _ ->
+                                task.mutex.unlock()
                             }
                         }
                     }
@@ -120,7 +123,13 @@ public object PixivScheduler : CoroutineScope {
                             val client = client()
                             PixivCacheLoader.cache(task = buildPixivCacheTask {
                                 name = task.id
-                                flow = client.rank(task.mode).onEach { task.illusts.addAll(it) }
+                                flow = client.rank(task.mode).onEach { page ->
+                                    for (illust in page) {
+                                        if (illust.type != WorkContentType.MANGA) {
+                                            task.illusts.add(illust)
+                                        }
+                                    }
+                                }
                             }) { _, _ ->
                                 task.mutex.unlock()
                             }
@@ -131,21 +140,35 @@ public object PixivScheduler : CoroutineScope {
                             val client = client()
                             PixivCacheLoader.cache(task = buildPixivCacheTask {
                                 name = task.id
-                                flow = client.recommended().onEach { task.illusts.addAll(it) }
+                                flow = client.recommended().onEach { page ->
+                                    for (illust in page) {
+                                        if (illust.type != WorkContentType.MANGA) {
+                                            task.illusts.add(illust)
+                                        }
+                                    }
+                                }
                             }) { _, _ ->
                                 task.mutex.unlock()
                             }
                         }
                     }
+
                     is PixivTimerTask.Trending -> { /* TODO */
                     }
+
                     is PixivTimerTask.User -> {
                         if (task.illusts.isEmpty() && task.mutex.tryLock()) {
                             val client = client()
                             val detail = client.userDetail(uid = task.uid)
                             PixivCacheLoader.cache(task = buildPixivCacheTask {
                                 name = task.id
-                                flow = client.user(detail).onEach { task.illusts.addAll(it) }
+                                flow = client.user(detail).onEach { page ->
+                                    for (illust in page) {
+                                        if (illust.type != WorkContentType.MANGA) {
+                                            task.illusts.add(illust)
+                                        }
+                                    }
+                                }
                             }) { _, _ ->
                                 task.mutex.unlock()
                             }
