@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "2.0.0-M7"
+version = "2.0.0-M8"
 
 repositories {
     mavenLocal()
@@ -16,13 +16,13 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jsoup:jsoup:1.14.3")
+    implementation("org.jsoup:jsoup:1.15.2")
     implementation("xyz.cssxsh.pixiv:pixiv-client:1.2.4") {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
     }
-    implementation("com.cronutils:cron-utils:9.1.6") {
+    implementation("com.cronutils:cron-utils:9.2.0") {
         exclude(group = "org.slf4j")
         exclude(group = "org.glassfish")
         exclude(group = "org.javassist")
