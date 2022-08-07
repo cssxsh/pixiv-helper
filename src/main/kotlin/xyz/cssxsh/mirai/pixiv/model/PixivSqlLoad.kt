@@ -275,28 +275,34 @@ internal fun ArtWorkInfo.SQL.tag(
                 }.list()
             }
 
-            logger.info { "tag: $pattern - ${result.map { it.name }}" }
+            if (!fuzzy) logger.info { "tag: $pattern - ${result.map { it.name }}" }
             add(result)
         }
     }
 
+    val max = session.withCriteria<Long> { criteria ->
+        criteria.select(max(criteria.from<ArtWorkInfo>().get("pid")))
+    }.singleResult
+
     session.withCriteria<ArtWorkInfo> { criteria ->
         val artwork = criteria.from<ArtWorkInfo>()
-        val join = artwork.joinList<ArtWorkInfo, TagRecord>("tags")
-        val max = criteria.subquery<Long>().also { sub ->
-            sub.select(max(sub.from<ArtWorkInfo>().get("pid")))
-        }
 
         criteria.select(artwork)
             .where(
                 isFalse(artwork.get("deleted")),
                 le(artwork.get<Int>("age"), age.ordinal),
                 gt(artwork.get<Long>("bookmarks"), marks),
-                le(artwork.get<Long>("pid"), dice(max)),
+                le(artwork.get<Long>("pid"), dice(literal(max))),
                 *records.mapToArray { tags ->
-                    or(*tags.mapToArray { tag ->
-                        equal(join.get<Long>("tid"), tag.tid)
-                    })
+                    val subquery = criteria.subquery<ArtWorkInfo>().also { sub ->
+                        val root = sub.from<ArtWorkInfo>()
+                        val join = root.joinList<ArtWorkInfo, TagRecord>("tags")
+                        val clause = `in`(join.get<Long>("tid"))
+                        for (tag in tags) clause.value(tag.tid)
+                        sub.select(root)
+                            .where(clause)
+                    }
+                    exists(subquery)
                 }
             )
             .distinct(true)
