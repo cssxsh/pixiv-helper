@@ -300,7 +300,7 @@ internal fun ArtWorkInfo.SQL.tag(
                         val clause = `in`(join.get<Long>("tid"))
                         for (tag in tags) clause.value(tag.tid)
                         sub.select(root)
-                            .where(clause)
+                            .where(equal(artwork.get<Long>("pid"), root.get<Long>("pid")), clause)
                     }
                     exists(subquery)
                 }

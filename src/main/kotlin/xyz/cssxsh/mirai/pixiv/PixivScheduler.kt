@@ -38,17 +38,19 @@ public object PixivScheduler : CoroutineScope {
         ).persist()
     }
 
-    private suspend fun UserCommandSender.push(id: String, name: String, list: IllustPage) {
-        if (list.isEmpty()) return
+    private suspend fun UserCommandSender.push(id: String, name: String, task: PixivTimerTask, count: Int) {
         val nodes = mutableListOf<ForwardMessage.Node>()
+        var index = 0
 
-        for ((index, illust) in list.withIndex()) {
+        while (index++ < count) {
+            val illust = task.push() ?: break
 
             val message = try {
                 buildIllustMessage(illust = illust, contact = subject)
             } catch (cause: CancellationException) {
                 break
             } catch (cause: Throwable) {
+                logger.warning({ "push ${illust.pid} fail." }, cause)
                 continue
             }
 
@@ -64,7 +66,7 @@ public object PixivScheduler : CoroutineScope {
                 )
             } else {
                 delay(TaskSendInterval * 1000L)
-                sendMessage("Task: $name (${index + 1}/${list.size})\n".toPlainText() + message)
+                sendMessage("Task: $name (${index}/${count})\n".toPlainText() + message)
             }
 
             launch(SupervisorJob()) {
@@ -72,7 +74,7 @@ public object PixivScheduler : CoroutineScope {
             }
         }
 
-        if (TaskForward) {
+        if (TaskForward && nodes.isNotEmpty()) {
             sendMessage(RawForwardMessage(nodes).render {
                 title = name
                 summary = "查看推送的${nodes.size}个作品"
@@ -80,17 +82,15 @@ public object PixivScheduler : CoroutineScope {
         }
     }
 
-    private fun PixivTimerTask.take(count: Int): List<IllustInfo> {
-        return buildList {
-            while (this.size < count) {
-                val illust = illusts.removeFirstOrNull() ?: break
-                if (illust.age != AgeLimit.ALL) continue
-                if (any { it.pid == illust.pid }) continue
-                if ((id to illust.pid) in StatisticTaskInfo) continue
+    private fun PixivTimerTask.push(): IllustInfo? {
+        while (illusts.isNotEmpty()) {
+            val illust = illusts.removeFirstOrNull() ?: break
+            if (illust.age != AgeLimit.ALL) continue
+            if ((id to illust.pid) in StatisticTaskInfo) continue
 
-                add(illust)
-            }
+            return illust
         }
+        return null
     }
 
     /**
@@ -203,18 +203,18 @@ public object PixivScheduler : CoroutineScope {
                         }
                     }
                     is PixivTimerTask.Follow -> {
-                        push(id = task.id, name = "Follow", list = task.take(TaskConut))
+                        push(id = task.id, name = "Follow", task = task, count = TaskConut)
                     }
                     is PixivTimerTask.Rank -> {
-                        push(id = task.id, name = "Rank", list = task.take(TaskConut))
+                        push(id = task.id, name = "Rank", task = task, count = TaskConut)
                     }
                     is PixivTimerTask.Recommended -> {
-                        push(id = task.id, name = "Recommended", list = task.take(TaskConut))
+                        push(id = task.id, name = "Recommended", task = task, count = TaskConut)
                     }
                     is PixivTimerTask.Trending -> { /* TODO */
                     }
                     is PixivTimerTask.User -> {
-                        push(id = task.id, name = "User", list = task.take(TaskConut))
+                        push(id = task.id, name = "User", task = task, count = TaskConut)
                     }
                 }
             }
