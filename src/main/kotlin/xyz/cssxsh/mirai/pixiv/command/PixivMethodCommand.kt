@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.serialization.*
 import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.util.ContactUtils.render
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
@@ -110,12 +111,8 @@ public object PixivMethodCommand : CompositeCommand(
     @SubCommand
     @Description("绑定 Pixiv 账户 作为上下文")
     public suspend fun CommandSender.bind(uid: Long, contact: Contact? = subject) {
-        if (contact == null) {
-            sendMessage("需要指定绑定的 用户/群")
-            return
-        }
-        PixivClientPool.bind(uid = uid, subject = contact.id)
-        sendMessage("绑定已添加")
+        PixivClientPool.bind(uid = uid, subject = contact?.id)
+        sendMessage("对 ${contact?.render() ?: "Console"} 绑定已添加")
     }
 
     @SubCommand

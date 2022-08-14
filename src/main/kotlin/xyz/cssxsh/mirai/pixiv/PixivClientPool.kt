@@ -32,7 +32,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
     private val authed: Set<Long> get() = PixivAuthData.results.keys
 
-    internal val default: Long get() = PixivAuthData.default
+    internal var default: Long by PixivAuthData::default
 
     override fun getValue(thisRef: PixivHelper, property: KProperty<*>): PixivAuthClient {
         return get(id = thisRef.id) ?: free()
@@ -56,8 +56,12 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
         return user(uid = binded[id] ?: return null)
     }
 
-    public fun bind(uid: Long, subject: Long) {
-        binded[subject] = uid
+    public fun bind(uid: Long, subject: Long?) {
+        if (subject == null) {
+            default = uid
+        } else {
+            binded[subject] = uid
+        }
     }
 
     public suspend fun auth(block: suspend (PixivAuthClient) -> Unit) {

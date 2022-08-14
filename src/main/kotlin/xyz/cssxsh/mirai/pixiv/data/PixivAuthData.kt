@@ -28,7 +28,7 @@ public object PixivAuthData : AutoSavePluginData("PixivAuthData"),
     public val binded: MutableMap<Long, Long> by value()
 
     @ValueName("default")
-    public val default: Long by value()
+    public var default: Long by value()
 
     public operator fun plusAssign(auth: AuthResult) {
         results[auth.user.uid] = auth
