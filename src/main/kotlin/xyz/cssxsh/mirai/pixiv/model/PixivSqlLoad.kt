@@ -294,10 +294,9 @@ internal fun ArtWorkInfo.SQL.tag(
                 gt(artwork.get<Long>("bookmarks"), marks),
                 le(artwork.get<Long>("pid"), dice(literal(max))),
                 *records.mapToArray { tags ->
-                    val subquery = criteria.subquery<ArtWorkInfo>().also { sub ->
-                        val root = sub.from<ArtWorkInfo>()
-                        val join = root.joinList<ArtWorkInfo, TagRecord>("tags")
-                        val clause = `in`(join.get<Long>("tid"))
+                    val subquery = criteria.subquery<ArtWorkTag>().also { sub ->
+                        val root = sub.from<ArtWorkTag>()
+                        val clause = `in`(root.get<Long>("tid"))
                         for (tag in tags) clause.value(tag.tid)
                         sub.select(root)
                             .where(equal(artwork.get<Long>("pid"), root.get<Long>("pid")), clause)
