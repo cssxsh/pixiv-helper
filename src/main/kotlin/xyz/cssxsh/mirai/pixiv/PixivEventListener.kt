@@ -22,6 +22,7 @@ public object PixivEventListener : SimpleListenerHost() {
 
     @EventHandler
     public suspend fun MessageEvent.handle() {
+        if (this is MessageSyncEvent) return
         val context = toCommandSender() as UserCommandSender
         if (paserPermission.testPermission(context).not()) return
         val content = message.contentToString()
