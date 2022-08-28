@@ -8,7 +8,6 @@ import xyz.cssxsh.mirai.pixiv.event.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.task.*
 import xyz.cssxsh.pixiv.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
 
 /**
@@ -20,7 +19,8 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
 
     private val logger by lazy { MiraiLogger.Factory.create(this::class, identity = "pixiv-helper-${id}") }
 
-    override val coroutineContext: CoroutineContext = parentCoroutineContext.childScopeContext("pixiv-helper-${id}")
+    override val coroutineContext: CoroutineContext =
+        parentCoroutineContext + CoroutineName(name = "pixiv-helper-${id}")
 
     public val client: PixivAuthClient by PixivClientPool
 
@@ -52,7 +52,7 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
         }
     }
 
-    private val eros: MutableMap<Long, ArtWorkInfo> = ConcurrentHashMap()
+    private val eros: MutableMap<Long, ArtWorkInfo> = java.util.concurrent.ConcurrentHashMap()
 
     /**'
      * 随机一份色图

@@ -3,7 +3,6 @@ package xyz.cssxsh.mirai.pixiv
 import kotlinx.coroutines.*
 import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.utils.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.properties.*
 import kotlin.reflect.*
@@ -16,7 +15,7 @@ public object PixivHelperPool : ReadOnlyProperty<Contact, PixivHelper>, Coroutin
             logger.warning({ "$throwable in $context" }, throwable)
         }
 
-    private val helpers: MutableMap<Long, PixivHelper> = ConcurrentHashMap()
+    private val helpers: MutableMap<Long, PixivHelper> = java.util.concurrent.ConcurrentHashMap()
 
     override fun getValue(thisRef: Contact, property: KProperty<*>): PixivHelper {
         return helper(contact = thisRef)

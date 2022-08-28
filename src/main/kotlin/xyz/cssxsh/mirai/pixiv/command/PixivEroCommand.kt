@@ -9,7 +9,6 @@ import net.mamoe.mirai.event.events.*
 import net.mamoe.mirai.message.data.*
 import xyz.cssxsh.mirai.pixiv.*
 import xyz.cssxsh.mirai.pixiv.model.*
-import java.util.concurrent.*
 
 public object PixivEroCommand : SimpleCommand(
     owner = PixivHelperPlugin,
@@ -28,7 +27,7 @@ public object PixivEroCommand : SimpleCommand(
 
     private val History.expire get() = (System.currentTimeMillis() - last) > EroUpExpire
 
-    private val histories: MutableMap<Long, History> = ConcurrentHashMap()
+    private val histories: MutableMap<Long, History> = java.util.concurrent.ConcurrentHashMap()
 
     private fun record(pid: Long, event: MessageEvent) {
         StatisticEroInfo(

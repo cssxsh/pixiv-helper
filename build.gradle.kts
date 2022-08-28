@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization") version "1.7.10"
     kotlin("plugin.jpa") version "1.7.10"
 
-    id("net.mamoe.mirai-console") version "2.12.1"
+    id("net.mamoe.mirai-console") version "2.13.0-M1"
 }
 
 group = "xyz.cssxsh.mirai.plugin"
@@ -28,8 +28,8 @@ dependencies {
         exclude(group = "org.javassist")
     }
     compileOnly("javax.validation:validation-api:2.0.1.Final")
-    compileOnly("net.mamoe:mirai-core:2.12.1")
-    compileOnly("net.mamoe:mirai-core-utils:2.12.1")
+    compileOnly("net.mamoe:mirai-core:2.13.0-M1")
+    compileOnly("net.mamoe:mirai-core-utils:2.13.0-M1")
     // dependsOn
     compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.3")
     compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.2")

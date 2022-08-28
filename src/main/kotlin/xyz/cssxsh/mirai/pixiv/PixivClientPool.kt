@@ -10,7 +10,6 @@ import xyz.cssxsh.pixiv.*
 import xyz.cssxsh.pixiv.auth.*
 import xyz.cssxsh.pixiv.exception.*
 import java.io.IOException
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.properties.*
 import kotlin.reflect.*
@@ -26,7 +25,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
             logger.warning({ "$throwable in $context" }, throwable)
         }
 
-    internal val clients: MutableMap<Long, AuthClient> = ConcurrentHashMap()
+    internal val clients: MutableMap<Long, AuthClient> = java.util.concurrent.ConcurrentHashMap()
 
     internal val binded: MutableMap<Long, Long> get() = PixivAuthData.binded
 
@@ -116,7 +115,8 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
         public override var auth: AuthResult? = null
 
-        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "temp-client")
+        override val coroutineContext: CoroutineContext =
+            PixivClientPool.coroutineContext + CoroutineName(name = "temp-client")
 
         override val ignore: suspend (Throwable) -> Boolean get() = { handle(it) }
     }
@@ -127,7 +127,8 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
         public override var auth: AuthResult? by PixivAuthData
 
-        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "auth-client-$uid")
+        override val coroutineContext: CoroutineContext =
+            PixivClientPool.coroutineContext + CoroutineName(name = "auth-client-$uid")
 
         override val ignore: suspend (Throwable) -> Boolean = { handle(it) }
     }
@@ -138,7 +139,8 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
 
         override var auth: AuthResult? by delegate::auth
 
-        override val coroutineContext: CoroutineContext = PixivClientPool.childScopeContext(name = "free-client")
+        override val coroutineContext: CoroutineContext =
+            PixivClientPool.coroutineContext + CoroutineName(name = "free-client")
 
         override val ignore: suspend (Throwable) -> Boolean = { handle(it) }
     }
