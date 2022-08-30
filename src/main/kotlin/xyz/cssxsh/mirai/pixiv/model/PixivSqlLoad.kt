@@ -262,8 +262,11 @@ internal fun ArtWorkInfo.SQL.tag(
     val records = buildList {
         for (name in names) {
             val pattern = if (fuzzy) "%$name%" else name
-            val result = cache.getOrPut(pattern) {
-                session.withCriteria<TagRecord> { criteria ->
+
+            val result = kotlin.run {
+                val value = cache[pattern]
+                if (value != null) return@run value
+                val list = session.withCriteria<TagRecord> { criteria ->
                     val root = criteria.from<TagRecord>()
                     criteria.select(root)
                         .where(
@@ -273,6 +276,11 @@ internal fun ArtWorkInfo.SQL.tag(
                             )
                         )
                 }.list()
+                if (list.isEmpty()) {
+                    return@useSession emptyList()
+                }
+                cache[pattern] = list
+                list
             }
 
             if (!fuzzy) logger.info { "tag: $pattern - ${result.map { it.name }}" }
