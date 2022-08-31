@@ -61,10 +61,11 @@ public class PixivTaskBuilder {
     }
 
     public fun PixivAppClient.illusts(targets: Set<Long>, flush: Boolean = false): IllustFlow = flow {
-        val list = mutableListOf<IllustInfo>()
+        val cache = mutableListOf<IllustInfo>()
         for (pid in targets) {
             try {
-                list.add(loadIllustInfo(pid = pid, flush = flush, client = this@illusts))
+                cache.clear()
+                cache.add(loadIllustInfo(pid = pid, flush = flush, client = this@illusts))
             } catch (cause: AppApiException) {
                 if (DELETE_REGEX in cause.message) {
                     ArtWorkInfo(pid = pid, caption = cause.message).merge()
@@ -73,38 +74,43 @@ public class PixivTaskBuilder {
                 }
             } catch (cause: RestrictException) {
                 cause.illust.toArtWorkInfo().copy(pid = pid, caption = cause.message).merge()
+            } catch (_: CancellationException) {
+                break
             }
 
-            if (list.size > PAGE_SIZE) {
-                emit(list)
-                list.clear()
-            }
+            if (cache.size > PAGE_SIZE) emit(cache)
         }
-        if (list.isNotEmpty()) emit(list)
+        if (cache.isNotEmpty()) emit(cache)
     }
 
     public fun PixivClientPool.AuthClient.follow(): IllustFlow = flow {
-        (0 until FOLLOW_LIMIT step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        for (offset in 0 until FOLLOW_LIMIT step PAGE_SIZE) {
             try {
                 val illusts = illustFollow(offset = offset).illusts
-                if (illusts.isEmpty()) return@flow
+                if (illusts.isEmpty()) break
                 emit(illusts)
-                logger.verbose { "加载用户(${uid})关注用户作品时间线第${page}页{${illusts.size}}成功" }
+                logger.verbose { "加载用户(${uid})关注用户作品时间线第${page++}页{${illusts.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载用户(${uid})关注用户作品时间线第${page}页失败" }, cause)
+                logger.warning({ "加载用户(${uid})关注用户作品时间线第${page++}页失败" }, cause)
             }
         }
     }
 
     public fun PixivAppClient.rank(mode: RankMode, date: LocalDate? = null): IllustFlow = flow {
-        (0 until LOAD_LIMIT step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        for (offset in 0 until LOAD_LIMIT step PAGE_SIZE) {
             try {
                 val illusts = illustRanking(mode = mode, date = date, offset = offset).illusts
-                if (illusts.isEmpty()) return@flow
+                if (illusts.isEmpty()) break
                 emit(illusts)
-                logger.verbose { "加载排行榜[${mode}](${date ?: "new"})第${page}页{${illusts.size}}成功" }
+                logger.verbose { "加载排行榜[${mode}](${date ?: "new"})第${page++}页{${illusts.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载排行榜[${mode}](${date ?: "new"})第${page}页失败" }, cause)
+                logger.warning({ "加载排行榜[${mode}](${date ?: "new"})第${page++}页失败" }, cause)
             }
         }
     }
@@ -123,6 +129,8 @@ public class PixivTaskBuilder {
                 }
                 emitAll(illusts(targets = targets, flush = true))
                 logger.verbose { "加载 NaviRank[$month]{${targets.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
                 logger.warning({ "加载 NaviRank[$month]失败" }, cause)
             }
@@ -130,58 +138,72 @@ public class PixivTaskBuilder {
     }
 
     public fun PixivClientPool.AuthClient.recommended(): IllustFlow = flow {
-        (0 until RECOMMENDED_LIMIT step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        val cache = HashMap<Long, IllustInfo>()
+        for (offset in 0 until RECOMMENDED_LIMIT step PAGE_SIZE) {
             try {
-                val illusts = illustRecommended(offset = offset)
-                    .let { it.illusts + it.rankingIllusts }.distinctBy { it.pid }
-                if (illusts.isEmpty()) return@flow
-                emit(illusts)
-                logger.verbose { "加载用户(${uid})推荐作品第${page}页{${illusts.size}}成功" }
+                cache.clear()
+                val data = illustRecommended(offset = offset)
+                data.illusts.associateByTo(cache) { it.pid }
+                data.rankingIllusts.associateByTo(cache) { it.pid }
+                if (cache.isEmpty()) break
+                emit(cache.values.toList())
+                logger.verbose { "加载用户(${uid})推荐作品第${page++}页{${cache.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载用户(${uid})推荐作品第${page}页失败" }, cause)
+                logger.warning({ "加载用户(${uid})推荐作品第${page++}页失败" }, cause)
             }
         }
     }
 
     public fun PixivAppClient.bookmarks(uid: Long, tag: String? = null): IllustFlow = flow {
-        (0 until LOAD_LIMIT step PAGE_SIZE).fold(initial = USER_BOOKMARKS_ILLUST) { url, _ ->
+        var url = USER_BOOKMARKS_ILLUST
+        for (offest in 0 until LOAD_LIMIT step PAGE_SIZE) {
             try {
                 val (illusts, nextUrl) = userBookmarksIllust(uid = uid, tag = tag, url = url)
-                if (nextUrl == null) return@flow
+                url = nextUrl ?: break
                 emit(illusts)
                 logger.verbose { "加载用户(${uid})收藏页{${illusts.size}} ${url}成功" }
-                nextUrl
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
                 logger.warning({ "加载用户(${uid})收藏页${url}失败" }, cause)
-                return@flow
+                break
             }
         }
     }
 
     public fun PixivAppClient.user(detail: UserDetail): IllustFlow = flow {
         logger.verbose { "画师[${detail.user.name}]有${detail.profile.totalArtwork}个作品需要缓存" }
-        (0 until detail.profile.totalArtwork step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        for (offset in 0 until detail.profile.totalArtwork step PAGE_SIZE) {
             try {
                 val illusts = userIllusts(uid = detail.user.id, offset = offset).illusts
-                if (illusts.isEmpty()) return@flow
+                if (illusts.isEmpty()) break
                 emit(illusts)
-                logger.verbose { "加载用户(${detail.user.id})作品第${page}页{${illusts.size}}成功" }
+                logger.verbose { "加载用户(${detail.user.id})作品第${page++}页{${illusts.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载用户(${detail.user.id})作品第${page}页失败" }, cause)
+                logger.warning({ "加载用户(${detail.user.id})作品第${page++}页失败" }, cause)
             }
         }
     }
 
     public fun PixivAppClient.search(tag: String): IllustFlow = flow {
         val word = tag.split(delimiters = TAG_DELIMITERS.toCharArray()).joinToString(" ")
-        (0 until SEARCH_LIMIT step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        for (offset in 0 until SEARCH_LIMIT step PAGE_SIZE) {
             try {
                 val illusts = searchIllust(word = word, offset = offset).illusts
-                if (illusts.isEmpty()) return@flow
+                if (illusts.isEmpty()) break
                 emit(illusts)
-                logger.verbose { "加载'${tag}'搜索列表第${page}页{${illusts.size}}成功" }
+                logger.verbose { "加载'${tag}'搜索列表第${page++}页{${illusts.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载'${tag}'搜索列表第${page}页失败" }, cause)
+                logger.warning({ "加载'${tag}'搜索列表第${page++}页失败" }, cause)
             }
         }
     }
@@ -195,6 +217,8 @@ public class PixivTaskBuilder {
             try {
                 val author = userDetail(uid = record.uid).apply { twitter() }
                 emit(record to author)
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
                 logger.warning({ "${record}加载失败" }, cause)
             }
@@ -203,14 +227,17 @@ public class PixivTaskBuilder {
 
     public fun PixivAppClient.preview(detail: UserDetail, start: Long = 0): Flow<List<UserPreview>> = flow {
         logger.info { "关注中共有 ${detail.profile.totalFollowUsers} 个画师" }
-        (start until detail.profile.totalFollowUsers step PAGE_SIZE).forEachIndexed { page, offset ->
+        var page = 0
+        for (offset in start until detail.profile.totalFollowUsers step PAGE_SIZE) {
             try {
                 val previews = userFollowing(uid = detail.user.id, offset = offset).previews
-                if (previews.isEmpty()) return@flow
+                if (previews.isEmpty()) break
                 emit(previews)
-                logger.verbose { "加载用户(${detail.user.id})关注用户第${page}页{${previews.size}}成功" }
+                logger.verbose { "加载用户(${detail.user.id})关注用户第${page++}页{${previews.size}}成功" }
+            } catch (_: CancellationException) {
+                break
             } catch (cause: Exception) {
-                logger.warning({ "加载用户(${detail.user.id})关注用户第${page}页失败" }, cause)
+                logger.warning({ "加载用户(${detail.user.id})关注用户第${page++}页失败" }, cause)
             }
         }
     }
