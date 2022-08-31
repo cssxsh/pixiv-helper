@@ -34,7 +34,7 @@ public object PixivCacheCommand : CompositeCommand(
                 }
             }
             sendMessage("任务 ${task.name} 已添加")
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             sendMessage("任务添加失败, ${cause.message}")
         }
     }
@@ -44,8 +44,8 @@ public object PixivCacheCommand : CompositeCommand(
     public suspend fun CommandSender.follow(): Unit = cache {
         val client = client()
         name = "FOLLOW(${client.uid})"
-        flow = client.follow()
         write = false
+        flow = client.follow()
     }
 
     @SubCommand
@@ -61,6 +61,7 @@ public object PixivCacheCommand : CompositeCommand(
     public suspend fun CommandSender.month(start: LocalDate, end: LocalDate): Unit = cache {
         check(start <= end) { "start 要在 end 之前" }
         name = "MONTH(${start}~${end})"
+        write = false
         flow = flow {
             for (date in start..end) {
                 val client = PixivClientPool.free()
@@ -91,45 +92,48 @@ public object PixivCacheCommand : CompositeCommand(
         flow = PixivClientPool.free().bookmarks(uid = uid)
     }
 
-//    @SubCommand
-//    @Description("缓存别名画师列表作品")
-//    public suspend fun CommandSender.alias() {
-//        val list = AliasSetting.all()
-//
-//        cache(name = "ALIAS") {
-//            //
-//            //            getAliasUserIllusts(list = list).sendOnCompletion { total ->
-//            //                "${name}处理完成, 共${total}"
-//            //            }
-//        }
-//
-//        // "别名列表中共${list.size}个画师需要缓存"
-//    }
-
     @SubCommand
     @Description("将关注画师列表检查，缓存所有作品")
     public suspend fun CommandSender.following(flush: Boolean = false): Unit = cache {
         val client = client()
         val detail = client.userDetail(uid = client.uid)
+        var index = 0
         name = "FOLLOW_ALL(${detail.user.id})"
-        // TODO
-        //            getUserFollowing(detail = detail, flush = flush).sendOnCompletion { total ->
-        //                "${name}处理完成, 共${total}"
-        //            }
-        //  "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师需要缓存"
+        write = false
+        flow = client.preview(detail = detail).transform { previews ->
+            for (preview in previews) {
+                index++
+                if (flush || Twitter[preview.user.id].isEmpty()) {
+                    val author = client.userDetail(uid = preview.user.id).apply { twitter() }
+                    val total = author.profile.totalArtwork
+                    val count = author.user.count()
+                    if (total - count > preview.illusts.size || flush) {
+                        logger.info { "${index}.FOLLOW_ALL(${author.user.id})[${total}]尝试缓存作品" }
+                        emitAll(PixivClientPool.free().user(detail = author))
+                    } else {
+                        logger.info { "${index}.FOLLOW_ALL(${author.user.id})[${total}]有${preview.illusts.size}个作品尝试缓存" }
+                        emit(preview.illusts)
+                    }
+                }
+            }
+        }
     }
 
-    @SubCommand("fms")
+    @SubCommand("fwm")
     @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-    public suspend fun CommandSender.followingWithMarks(): Unit = cache {
+    public suspend fun CommandSender.followingWithMarks(jump: Long = 0): Unit = cache {
         val client = client()
         val detail = client.userDetail(uid = client.uid)
+        var index = 0
         name = "FOLLOW_MARKS(${detail.user.id})"
-        // TODO
-        //            getUserFollowingMark(detail = detail, jump = jump).sendOnCompletion { total ->
-        //                "${name}处理完成, 共${total}"
-        //            }
-        //            "@${detail.user.name}关注列表中共${detail.profile.totalFollowUsers}个画师的收藏需要缓存"
+        write = false
+        flow = client.preview(detail = detail, start = jump).transform { previews ->
+            for (preview in previews) {
+                index++
+                logger.info { "${index}.FOLLOW_MARKS(${preview.user.id})尝试缓存收藏" }
+                emitAll(PixivClientPool.free().bookmarks(uid = preview.user.id))
+            }
+        }
     }
 
     @SubCommand
@@ -139,7 +143,6 @@ public object PixivCacheCommand : CompositeCommand(
         val detail = client.userDetail(uid = uid).apply { twitter() }
         name = "USER(${uid})"
         flow = client.user(detail = detail)
-        // "画师[${detail.user.name}]有${detail.profile.totalArtwork}个作品需要缓存"
     }
 
     @SubCommand
@@ -180,7 +183,7 @@ public object PixivCacheCommand : CompositeCommand(
                 } catch (cause: RestrictException) {
                     ArtWorkInfo.delete(pid = artwork.pid, comment = cause.message)
                     logger.warning { "NOCACHE 加载作品失败 ${cause.illust}" }
-                } catch (cause: Throwable) {
+                } catch (cause: Exception) {
                     logger.warning({ "NOCACHE 加载作品(${artwork.pid})失败" }, cause)
                 }
             }
@@ -199,30 +202,33 @@ public object PixivCacheCommand : CompositeCommand(
 
     @SubCommand
     @Description("加载缓存中有色图作品的用户的其他作品")
-    public suspend fun CommandSender.count(range: LongRange = 3..PAGE_SIZE): Unit = cache {
-        val records = runInterruptible(Dispatchers.IO) {
-            StatisticUserInfo.list(range = range)
+    public suspend fun CommandSender.ero(range: LongRange = 3..PAGE_SIZE): Unit = cache {
+        var index = 0
+        name = "ERO"
+        write = false
+        flow = PixivClientPool.free().ero(range = range).transform { (record, author) ->
+            val total = author.profile.totalArtwork
+            index++
+            if (total > record.count) {
+                logger.info { "${index}.ERO(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
+                emitAll(PixivClientPool.free().user(detail = author))
+            }
         }
-        name = "USER_ERO_COUNT"
-        // TODO
-        //                getCacheUser(records = records).sendOnCompletion { total ->
-        //                    "${name}处理完成, 共${total}"
-        //                }
-        //  "开始加载${records.size}个缓存用户"
     }
 
-    @SubCommand("cms")
-    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
-    public suspend fun CommandSender.countWithMarks(range: LongRange = PAGE_SIZE..Int.MAX_VALUE): Unit = cache {
-        val records = runInterruptible(Dispatchers.IO) {
-            StatisticUserInfo.list(range = range)
+    @SubCommand("ewm")
+    @Description("将关注画师列表检查，缓存所有画师收藏作品")
+    public suspend fun CommandSender.eroWithMarks(range: LongRange = PAGE_SIZE..Int.MAX_VALUE): Unit = cache {
+        var index = 0
+        name = "ERO_WITH_MARKS"
+        write = false
+        flow = PixivClientPool.free().ero(range = range).transform { (_, author) ->
+            val total = author.profile.totalIllustBookmarksPublic
+            index++
+            logger.info { "${index}.ERO_WITH_MARKS(${author.user.id})[${author.user.name}]有${total}个收藏尝试缓存" }
+            emitAll(PixivClientPool.free().bookmarks(uid = author.user.id))
+            delay(total.coerceAtLeast(15_000))
         }
-        name = "USER_ERO_COUNT_MARKS"
-        // TODO
-        //                getCacheUserMarks(records = records).sendOnCompletion { total ->
-        //                    "${name}处理完成, 共${total}"
-        //                }
-        //  "开始加载${records.size}个缓存用户的收藏"
     }
 
     @SubCommand
@@ -248,7 +254,7 @@ public object PixivCacheCommand : CompositeCommand(
         val message = try {
             PixivCacheLoader.stop(name = name)
             "任务 $name 将终止"
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             cause.message ?: cause.toString()
         }
 
