@@ -312,7 +312,6 @@ internal fun ArtWorkInfo.SQL.tag(
                     exists(subquery)
                 }
             )
-            .distinct(true)
             .orderBy(desc(artwork.get<Long>("pid")))
     }.setMaxResults(limit).list()
 }
