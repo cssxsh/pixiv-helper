@@ -21,8 +21,6 @@ import java.io.*
 
 // region Send Message
 
-internal val SendLimit = """本群每分钟只能发\d+条消息""".toRegex()
-
 internal suspend fun UserCommandSender.quoteReply(message: Message): MessageReceipt<Contact>? {
     return if (this is CommandSenderOnMessage<*>) {
         sendMessage(message = fromEvent.message.quote() + message)
@@ -59,33 +57,23 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
             is ArtWorkInfo -> sendArtwork(message)
             else -> quoteReply(message.toString())
         }
-    } catch (cause: Throwable) {
-        logger.warning({ "消息回复失败" }, cause)
-        when {
-            cause is AppApiException -> {
-                quoteReply("ApiException, ${cause.json}")
-            }
-            cause is RestrictException -> {
-                launch(SupervisorJob()) {
-                    if (cause.illust.pid in ArtWorkInfo) {
-                        ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
-                    } else {
-                        cause.illust.toArtWorkInfo().copy(caption = cause.message).merge()
-                    }
-                }
-                quoteReply("RestrictException, ${cause.illust}")
-            }
-            cause is TimeoutCancellationException -> {
-                quoteReply(cause.message!!)
-            }
-            SendLimit in cause.message.orEmpty() -> {
-                delay(60 * 1000L)
-                quoteReply(SendLimit.find(cause.message!!)!!.value)
-            }
-            else -> {
-                quoteReply(cause.toString())
+    } catch (exception: CancellationException) {
+        return
+    } catch (exception: SendMessageFailedException) {
+        logger.warning({ "发送异常" }, exception)
+    } catch (cause: AppApiException) {
+        quoteReply("ApiException, ${cause.json}")
+    } catch (cause: RestrictException) {
+        launch(SupervisorJob()) {
+            if (cause.illust.pid in ArtWorkInfo) {
+                ArtWorkInfo.delete(pid = cause.illust.pid, comment = cause.message)
+            } else {
+                cause.illust.toArtWorkInfo().copy(caption = cause.message).merge()
             }
         }
+        quoteReply("RestrictException, ${cause.illust}")
+    } catch (cause: Exception) {
+        logger.warning({ "消息回复失败" }, cause)
     }
 }
 
