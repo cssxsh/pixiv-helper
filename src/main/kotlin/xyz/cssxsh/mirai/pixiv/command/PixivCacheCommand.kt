@@ -131,7 +131,17 @@ public object PixivCacheCommand : CompositeCommand(
             for (preview in previews) {
                 index++
                 logger.info { "${index}.FOLLOW_MARKS(${preview.user.id})尝试缓存收藏" }
-                emitAll(PixivClientPool.free().bookmarks(uid = preview.user.id))
+                try {
+                    var cached = 0
+                    PixivClientPool.free().bookmarks(uid = preview.user.id).collect { page ->
+                        if (page.all { illust(pid = it.pid).exists() }) cached++ else cached = 0
+                        emit(page)
+
+                        if (cached >= 3) throw IllegalStateException("${index}.FOLLOW_MARKS(${preview.user.id}) cached")
+                    }
+                } catch (_: IllegalStateException) {
+                    logger.info { "${index}.FOLLOW_MARKS(${preview.user.id}) 跳过" }
+                }
             }
         }
     }
@@ -162,7 +172,7 @@ public object PixivCacheCommand : CompositeCommand(
             if (artworks.isEmpty()) continue
             logger.info { "NOCACHE(${range})共${artworks.size}个ArtWork需要Cache" }
 
-            val jobs = ArrayList<Deferred<*>>()
+            val jobs = ArrayList<Deferred<*>>(artworks.size)
             for (artwork in artworks) {
                 if (!ugoira && artwork.type == WorkContentType.UGOIRA.ordinal) continue
                 try {
@@ -170,7 +180,7 @@ public object PixivCacheCommand : CompositeCommand(
                     jobs.add(async {
                         when (illust.type) {
                             WorkContentType.ILLUST -> PixivCacheLoader.images(illust = illust)
-                            WorkContentType.UGOIRA -> illust.getUgoira()
+                            WorkContentType.UGOIRA -> PixivCacheLoader.ugoira(illust = illust)
                             WorkContentType.MANGA -> Unit
                         }
                     })
@@ -212,6 +222,7 @@ public object PixivCacheCommand : CompositeCommand(
             if (total > record.count) {
                 logger.info { "${index}.ERO(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
                 emitAll(PixivClientPool.free().user(detail = author))
+                delay(total.coerceAtLeast(15_000))
             }
         }
     }
@@ -226,7 +237,17 @@ public object PixivCacheCommand : CompositeCommand(
             val total = author.profile.totalIllustBookmarksPublic
             index++
             logger.info { "${index}.ERO_WITH_MARKS(${author.user.id})[${author.user.name}]有${total}个收藏尝试缓存" }
-            emitAll(PixivClientPool.free().bookmarks(uid = author.user.id))
+            try {
+                var cached = 0
+                PixivClientPool.free().bookmarks(uid = author.user.id).collect { page ->
+                    if (page.all { illust(pid = it.pid).exists() }) cached++ else cached = 0
+                    emit(page)
+
+                    if (cached >= 3) throw IllegalStateException("${index}.ERO_WITH_MARKS(${author.user.id}) cached")
+                }
+            } catch (_: IllegalStateException) {
+                logger.info { "${index}.ERO_WITH_MARKS(${author.user.id}) 跳过" }
+            }
             delay(total.coerceAtLeast(15_000))
         }
     }

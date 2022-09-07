@@ -434,7 +434,7 @@ internal suspend fun UserInfo.getProfileImage(): File {
 
 internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, ExternalResource) -> T): List<T> {
     if (type == WorkContentType.UGOIRA) {
-        return listOf(getUgoira().toExternalResource().use { block(0, it) })
+        return listOf(PixivCacheLoader.ugoira(illust = this).toExternalResource().use { block(0, it) })
     }
 
     val folder = images(pid).apply { mkdirs() }
@@ -466,17 +466,6 @@ internal suspend fun <T> IllustInfo.useImageResources(block: suspend (Int, Exter
         }
 
         list
-    }
-}
-
-internal suspend fun IllustInfo.getUgoira(flush: Boolean = false): File {
-    val json = ugoira(pid)
-    val metadata = json.takeIf { it.exists() }?.readUgoiraMetadata()
-        ?: PixivClientPool.free().ugoiraMetadata(pid).ugoira.also { it.write(json) }
-    return try {
-        PixivSkikoGifEncoder.build(illust = this, metadata = metadata, flush = flush)
-    } catch (_: NoClassDefFoundError) {
-        PixivHelperGifEncoder.build(illust = this, metadata = metadata, flush = flush)
     }
 }
 

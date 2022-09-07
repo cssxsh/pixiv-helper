@@ -27,10 +27,10 @@ public object PixivCacheLoader : CoroutineScope {
         try {
             when (type) {
                 WorkContentType.ILLUST -> images(illust = this)
-                WorkContentType.UGOIRA -> getUgoira()
+                WorkContentType.UGOIRA -> ugoira(illust = this)
                 WorkContentType.MANGA -> Unit
             }
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             logger.warning({ "作品(${pid})<${createAt}>[${user.id}]下载失败" }, cause)
         }
     }
@@ -94,14 +94,14 @@ public object PixivCacheLoader : CoroutineScope {
                     TempFolder.resolve(url.filename).writeBytes(bytes)
                     size += bytes.size
                     results += FileInfo(url = url, bytes = bytes)
-                } catch (e: Throwable) {
-                    logger.warning({ "[$url]下载失败" }, e)
+                } catch (cause: Exception) {
+                    logger.warning({ "[$url]下载失败" }, cause)
                 }
             }
 
             try {
                 results.merge()
-            } catch (cause: Throwable) {
+            } catch (cause: Exception) {
                 logger.warning({ "记录数据失败" }, cause)
             }
 
@@ -121,17 +121,35 @@ public object PixivCacheLoader : CoroutineScope {
         return files
     }
 
+    public suspend fun ugoira(illust: IllustInfo, flush: Boolean = false): File {
+        val json = ugoira(pid = illust.pid)
+        val metadata: UgoiraMetadata
+        if (flush || !json.exists()) {
+            metadata = PixivClientPool.free().ugoiraMetadata(pid = illust.pid).ugoira
+            metadata.write(json)
+        } else {
+            metadata = json.readUgoiraMetadata()
+        }
+        return try {
+            PixivSkikoGifEncoder.build(illust = illust, metadata = metadata, flush = flush)
+        } catch (_: NoClassDefFoundError) {
+            PixivHelperGifEncoder.build(illust = illust, metadata = metadata, flush = flush)
+        }
+    }
+
     public fun cache(task: PixivCacheTask, handler: TaskCompletionHandler = { _, _ -> }) {
         if (jobs[task.name]?.isActive == true) throw IllegalArgumentException("${task.name} 任务已存在")
 
         jobs[task.name] = launch {
             var cause: Throwable? = null
+            val users: MutableMap<Long, UserBaseInfo> = HashMap()
             try {
                 task.flow.collect { page ->
-                    page.merge()
+                    val artworks = page.merge(users = users)
 
                     val downloads: MutableList<Deferred<*>> = ArrayList()
                     for (illust in page) {
+                        if (artworks[illust.pid]?.deleted == true) continue
                         if (!illust.isEro()) continue
                         if (task.write) write.withLock {
                             illust.write()
@@ -143,9 +161,9 @@ public object PixivCacheLoader : CoroutineScope {
                 }
             } catch (exception: CancellationException) {
                 cause = exception
-            } catch (throwable: Throwable) {
-                logger.warning({ "缓存加载错误" }, throwable)
-                cause = throwable
+            } catch (exception: Exception) {
+                logger.warning({ "缓存加载错误" }, exception)
+                cause = exception
             } finally {
                 jobs.remove(task.name)
                 handler.invoke(task, cause)

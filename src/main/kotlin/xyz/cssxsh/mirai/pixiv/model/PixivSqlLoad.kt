@@ -413,15 +413,16 @@ internal fun IllustInfo.mergeTagRecords() {
     }
 }
 
-internal fun IllustInfo.merge() {
-    if (pid == 0L) return
+internal fun IllustInfo.merge(): ArtWorkInfo? {
+    if (pid == 0L) return null
     mergeTagRecords()
+    lateinit var artwork: ArtWorkInfo
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
         try {
-            val artwork = toArtWorkInfo()
+            artwork = toArtWorkInfo()
             tags.mapNotNullTo(artwork.tags) { session.get(TagRecord::class.java, it.name) }
-            session.merge(artwork)
+            artwork = session.merge(artwork)
             session.transaction.commit()
             logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
         } catch (cause: Throwable) {
@@ -430,26 +431,25 @@ internal fun IllustInfo.merge() {
             throw cause
         }
     }
+    return artwork
 }
 
-internal fun Collection<IllustInfo>.merge() {
-    if (isEmpty()) return
+internal fun Collection<IllustInfo>.merge(users: MutableMap<Long, UserBaseInfo> = HashMap()): Map<Long, ArtWorkInfo> {
+    if (isEmpty()) return emptyMap()
     for (info in this) {
         info.mergeTagRecords()
     }
     logger.verbose { "作品(${first().pid..last().pid})[${size}]信息即将更新" }
+    val artworks = HashMap<Long, ArtWorkInfo>(size)
     useSession(ArtWorkInfo) { session ->
         session.transaction.begin()
         try {
-            val users = HashMap<Long, UserBaseInfo>()
-            val record = HashSet<Long>()
-
             for (info in this@merge) {
-                if (info.user.account.isEmpty() || !record.add(info.pid)) continue
+                if (info.user.account.isEmpty() || info.pid in artworks) continue
                 val author = users.getOrPut(info.user.id) { info.user.toUserBaseInfo() }
                 val artwork = info.toArtWorkInfo(author)
                 info.tags.mapNotNullTo(artwork.tags) { session.get(TagRecord::class.java, it.name) }
-                session.merge(artwork)
+                artworks[artwork.pid] = session.merge(artwork)
             }
             session.transaction.commit()
             logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
@@ -465,6 +465,8 @@ internal fun Collection<IllustInfo>.merge() {
             throw cause
         }
     }
+
+    return artworks
 }
 
 // endregion
