@@ -93,7 +93,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
                         logger.warning { "PIXIV API OAuth 错误, 将刷新 Token $url with $request" }
                         try {
                             refresh()
-                        } catch (cause: Throwable) {
+                        } catch (cause: Exception) {
                             logger.warning { "刷新 Token 失败 $cause" }
                         }
                         true

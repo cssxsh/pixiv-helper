@@ -60,7 +60,7 @@ internal fun PixivEntity.persist() {
         try {
             session.persist(entity)
             session.transaction.commit()
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             session.transaction.rollback()
             throw cause
         }
@@ -74,7 +74,7 @@ internal fun PixivEntity.merge() {
         try {
             session.merge(entity)
             session.transaction.commit()
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             session.transaction.rollback()
             throw cause
         }
@@ -104,7 +104,7 @@ internal fun create(session: Session) {
             .forEach { session.createNativeQuery(it, Any::class.java).executeUpdate() }
         session.transaction.commit()
         logger.info { "数据库 ${meta.url} by ${meta.driverName} 初始化完成" }
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
         logger.error({ "数据库初始化失败" }, cause.findSQLException() ?: cause)
         throw cause
@@ -354,7 +354,7 @@ internal fun ArtWorkInfo.SQL.delete(pid: Long, comment: String): Int = useSessio
         }.executeUpdate()
         session.transaction.commit()
         total
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
         throw cause
     }
@@ -373,7 +373,7 @@ internal fun ArtWorkInfo.SQL.deleteUser(uid: Long, comment: String): Int = useSe
         }.executeUpdate()
         session.transaction.commit()
         total
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
         throw cause
     }
@@ -425,7 +425,7 @@ internal fun IllustInfo.merge(): ArtWorkInfo? {
             artwork = session.merge(artwork)
             session.transaction.commit()
             logger.info { "作品(${pid})<${createAt}>[${user.id}][${type}][${title}][${pageCount}]{${totalBookmarks}}信息已记录" }
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             session.transaction.rollback()
             logger.warning({ "作品(${pid})信息记录失败" }, cause)
             throw cause
@@ -453,13 +453,13 @@ internal fun Collection<IllustInfo>.merge(users: MutableMap<Long, UserBaseInfo> 
             }
             session.transaction.commit()
             logger.verbose { "作品{${first().pid..last().pid}}[${size}]信息已更新" }
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             session.transaction.rollback()
             logger.warning({ "作品{${map { it.pid }}[${size}]信息记录失败" }, cause)
             try {
                 File("replicate.error.${System.currentTimeMillis()}.json")
                     .writeText(Json.encodeToString(ListSerializer(IllustInfo.serializer()), toList()))
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 //
             }
             throw cause
@@ -572,7 +572,7 @@ internal fun List<FileInfo>.merge(): Unit = useSession(FileInfo) { session ->
             }
         }
         session.transaction.commit()
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
         throw cause
     }
@@ -663,7 +663,7 @@ internal fun AliasSetting.SQL.delete(alias: String): Unit = useSession(AliasSett
     try {
         session.remove(record)
         session.transaction.commit()
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
     }
 }
@@ -690,7 +690,7 @@ internal fun PixivSearchResult.associate(): Unit = useSession(PixivSearchResult)
         }
         session.merge(this@associate)
         session.transaction.commit()
-    } catch (cause: Throwable) {
+    } catch (cause: Exception) {
         session.transaction.rollback()
         throw cause
     }

@@ -53,7 +53,7 @@ internal const val UPLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.upload"
 internal val logger by lazy {
     try {
         PixivHelperPlugin.logger
-    } catch (_: Throwable) {
+    } catch (_: ExceptionInInitializerError) {
         MiraiLogger.Factory.create(PixivHelper::class)
     }
 }

@@ -47,7 +47,7 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
                 try {
                     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
                     sendMessage(message + net.mamoe.mirai.internal.message.flags.IgnoreLengthCheck)
-                } catch (_: Throwable) {
+                } catch (_: NoClassDefFoundError) {
                     sendMessage(message)
                 }
             }
@@ -213,7 +213,7 @@ public suspend fun SearchResult.getContent(contact: Contact): MessageChain = bui
                     if (illust.age > AgeLimit.ALL || illust.pageCount > 3 || illust.type == WorkContentType.MANGA) return@launch
                     val message = buildIllustMessage(illust = illust, contact = contact)
                     contact.sendMessage(message)
-                } catch (cause: Throwable) {
+                } catch (cause: Exception) {
                     logger.warning({ "搜索结果自动发送失败" }, cause)
                 }
             }
@@ -290,7 +290,7 @@ public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): Mes
                     add(
                         try {
                             resource.uploadAsImage(contact)
-                        } catch (cause: Throwable) {
+                        } catch (cause: Exception) {
                             "${(resource.origin as? File)?.name}上传失败, $cause\n".toPlainText()
                         }
                     )
@@ -409,9 +409,9 @@ public suspend fun loadIllustInfo(
     return if (!flush && file.exists()) {
         try {
             file.readIllustInfo()
-        } catch (e: Throwable) {
-            logger.warning({ "文件${file.absolutePath}读取存在问题" }, e)
-            throw e
+        } catch (cause: Exception) {
+            logger.warning({ "文件${file.absolutePath}读取存在问题" }, cause)
+            throw cause
         }
     } else {
         client.load(pid, file)

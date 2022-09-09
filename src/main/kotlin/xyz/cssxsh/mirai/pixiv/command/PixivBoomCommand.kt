@@ -78,13 +78,13 @@ public object PixivBoomCommand : SimpleCommand(
                         time = illust.createAt.toEpochSecond().toInt(),
                         message = buildIllustMessage(illust = illust, contact = subject)
                     )
-                } catch (e: Throwable) {
-                    logger.warning({ "BOOM BUILD 错误" }, e)
+                } catch (cause: Exception) {
+                    logger.warning({ "BOOM BUILD 错误" }, cause)
                     ForwardMessage.Node(
                         senderId = sender.id,
                         senderName = sender.nameCardOrNick,
                         time = artwork.created.toInt(),
-                        message = "[${artwork.pid}]构建失败 ${e.message}".toPlainText()
+                        message = "[${artwork.pid}]构建失败 ${cause.message}".toPlainText()
                     )
                 }
             }

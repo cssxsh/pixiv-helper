@@ -32,7 +32,7 @@ public object PixivMethodCommand : CompositeCommand(
                         pixiv.useHttpClient { it.get(url).readBytes() }
                             .toExternalResource()
                             .use { it.uploadAsImage(subject) }
-                    } catch (cause: Throwable) {
+                    } catch (cause: Exception) {
                         logger.warning({ "微博二维码下载失败" }, cause)
                         url.toString().toPlainText()
                     }

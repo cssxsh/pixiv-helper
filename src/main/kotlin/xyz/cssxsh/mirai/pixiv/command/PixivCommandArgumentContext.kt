@@ -12,8 +12,8 @@ public class RawValueArgumentParser<T : Any>(private val kClass: KClass<T>, publ
     override fun parse(raw: String, sender: CommandSender): T {
         return try {
             parse(raw)
-        } catch (e: Throwable) {
-            illegalArgument("无法解析 $raw 为${kClass.simpleName}", e)
+        } catch (cause: Exception) {
+            illegalArgument("无法解析 $raw 为${kClass.simpleName}", cause)
         }
     }
 }
@@ -33,7 +33,7 @@ public val PixivCommandArgumentContext: CommandArgumentContext = buildCommandArg
     Cron::class with { text ->
         try {
             DefaultCronParser.parse(text)
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             throw CommandArgumentParserException(
                 message = cause.message ?: "Cron 表达式读取错误，建议找在线表达式生成器生成",
                 cause = cause
@@ -43,7 +43,7 @@ public val PixivCommandArgumentContext: CommandArgumentContext = buildCommandArg
     Duration::class with { text ->
         try {
             Duration.parse(text)
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             throw CommandArgumentParserException(
                 message = cause.message ?: "Duration 表达式格式为 PnDTnHnMn.nS",
                 cause = cause

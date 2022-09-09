@@ -48,8 +48,8 @@ public object PixivScheduler : CoroutineScope {
             val message = try {
                 buildIllustMessage(illust = illust, contact = subject)
             } catch (cause: CancellationException) {
-                break
-            } catch (cause: Throwable) {
+                throw cause
+            } catch (cause: Exception) {
                 logger.warning({ "push ${illust.pid} fail." }, cause)
                 continue
             }

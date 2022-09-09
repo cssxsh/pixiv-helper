@@ -25,7 +25,7 @@ public object PixivHibernateConfiguration :
         get() {
             return try {
                 PixivHelperPlugin.configFolder.resolve("hibernate.properties")
-            } catch (_: Throwable) {
+            } catch (_: ExceptionInInitializerError) {
                 File("hibernate.properties")
             }
         }

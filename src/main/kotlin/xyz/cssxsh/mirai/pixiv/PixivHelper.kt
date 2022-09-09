@@ -104,7 +104,7 @@ public class PixivHelper internal constructor(public val id: Long, parentCorouti
                     name = "TAG[${word}]"
                     flow = client.search(tag = word)
                 })
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 //
             }
         }

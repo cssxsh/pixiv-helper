@@ -19,7 +19,7 @@ public object PixivTaskCommand : CompositeCommand(
             val task = block()
             PixivScheduler += task
             "任务 ${task.id} 已设置"
-        } catch (casue: Throwable) {
+        } catch (casue: Exception) {
             "任务设置出错"
         }
         sendMessage(message = message)
@@ -112,7 +112,7 @@ public object PixivTaskCommand : CompositeCommand(
                     "定时任务${task.id}已设置 corn 为 ${task.cron}"
                 }
             }
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             "定时任务${id}删除失败，${cause.message}"
         }
 
@@ -127,7 +127,7 @@ public object PixivTaskCommand : CompositeCommand(
                 null -> "任务不存在"
                 else -> "定时任务${task.id}已删除"
             }
-        } catch (cause: Throwable) {
+        } catch (cause: Exception) {
             "定时任务${id}删除失败，${cause.message}"
         }
 

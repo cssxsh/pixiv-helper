@@ -76,8 +76,8 @@ public object PixivSearchCommand : SimpleCommand(
     private suspend fun saucenao(url: String): List<SearchResult> {
         return try {
             ImageSearcher.saucenao(url = url)
-        } catch (e: Throwable) {
-            logger.warning({ "saucenao 搜索 $url 失败" }, e)
+        } catch (cause: Exception) {
+            logger.warning({ "saucenao 搜索 $url 失败" }, cause)
             emptyList()
         }
     }
@@ -85,8 +85,8 @@ public object PixivSearchCommand : SimpleCommand(
     private suspend fun ascii2d(url: String): List<SearchResult> {
         return try {
             ImageSearcher.ascii2d(url = url, bovw = ImageSearchConfig.bovw)
-        } catch (e: Throwable) {
-            logger.warning({ "ascii2d 搜索 $url 失败" }, e)
+        } catch (cause: Exception) {
+            logger.warning({ "ascii2d 搜索 $url 失败" }, cause)
             emptyList()
         }
     }

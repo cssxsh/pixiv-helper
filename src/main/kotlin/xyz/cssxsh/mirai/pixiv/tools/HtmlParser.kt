@@ -52,18 +52,19 @@ public abstract class HtmlParser(public val name: String) {
     protected fun Element.href(): String = attr("href")
 
     protected suspend fun <R> http(block: suspend (HttpClient) -> R): R = supervisorScope {
+        var cause: Throwable? = null
         while (isActive) {
             try {
                 return@supervisorScope block(client)
             } catch (throwable: Throwable) {
                 if (ignore(throwable)) {
-                    // html(transform = transform, block = block)
+                    cause = throwable
                 } else {
                     throw throwable
                 }
             }
         }
-        throw CancellationException()
+        throw CancellationException(null, cause)
     }
 
     public suspend fun <T> html(transform: (Document) -> T, block: HttpRequestBuilder.() -> Unit): T = http {
