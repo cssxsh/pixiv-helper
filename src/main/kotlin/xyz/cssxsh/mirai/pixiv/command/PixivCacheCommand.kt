@@ -64,8 +64,12 @@ public object PixivCacheCommand : CompositeCommand(
         write = false
         flow = flow {
             for (date in start..end) {
-                val client = PixivClientPool.free()
-                emitAll(client.rank(RankMode.MONTH, date))
+                val free = try {
+                    PixivClientPool.free()
+                } catch (cause: NoSuchElementException) {
+                    throw CancellationException("MONTH(${date})任务终止", cause)
+                }
+                emitAll(free.rank(RankMode.MONTH, date))
             }
         }
     }
@@ -104,12 +108,22 @@ public object PixivCacheCommand : CompositeCommand(
             for (preview in previews) {
                 index++
                 if (flush || Twitter[preview.user.id].isEmpty()) {
-                    val author = client.userDetail(uid = preview.user.id).apply { twitter() }
+                    val author = try {
+                        client.userDetail(uid = preview.user.id).apply { twitter() }
+                    } catch (cause: AppApiException) {
+                        logger.warning({ "${index}.FOLLOW_ALL(${preview.user.id})加载失败" }, cause)
+                        continue
+                    }
                     val total = author.profile.totalArtwork
                     val count = author.user.count()
                     if (total - count > preview.illusts.size || flush) {
+                        val free = try {
+                            PixivClientPool.free()
+                        } catch (cause: NoSuchElementException) {
+                            throw CancellationException("FOLLOW_ALL(${author.user.id})任务终止", cause)
+                        }
                         logger.info { "${index}.FOLLOW_ALL(${author.user.id})[${total}]尝试缓存作品" }
-                        emitAll(PixivClientPool.free().user(detail = author))
+                        emitAll(free.user(detail = author))
                     } else {
                         logger.info { "${index}.FOLLOW_ALL(${author.user.id})[${total}]有${preview.illusts.size}个作品尝试缓存" }
                         emit(preview.illusts)
@@ -130,10 +144,15 @@ public object PixivCacheCommand : CompositeCommand(
         flow = client.preview(detail = detail, start = jump).transform { previews ->
             for (preview in previews) {
                 index++
+                val free = try {
+                    PixivClientPool.free()
+                } catch (cause: NoSuchElementException) {
+                    throw CancellationException("FOLLOW_MARKS(${preview.user.id})任务终止", cause)
+                }
                 logger.info { "${index}.FOLLOW_MARKS(${preview.user.id})尝试缓存收藏" }
                 try {
                     var cached = 0
-                    PixivClientPool.free().bookmarks(uid = preview.user.id).collect { page ->
+                    free.bookmarks(uid = preview.user.id).collect { page ->
                         if (page.all { illust(pid = it.pid).exists() }) cached++ else cached = 0
                         emit(page)
 
@@ -217,11 +236,16 @@ public object PixivCacheCommand : CompositeCommand(
         name = "ERO"
         write = false
         flow = PixivClientPool.free().ero(range = range).transform { (record, author) ->
-            val total = author.profile.totalArtwork
             index++
+            val total = author.profile.totalArtwork
+            val free = try {
+                PixivClientPool.free()
+            } catch (cause: NoSuchElementException) {
+                throw CancellationException("${index}.ERO(${author.user.id})任务终止", cause)
+            }
             if (total > record.count) {
                 logger.info { "${index}.ERO(${author.user.id})[${author.user.name}]有${total}个作品尝试缓存" }
-                emitAll(PixivClientPool.free().user(detail = author))
+                emitAll(free.user(detail = author))
                 delay(total.coerceAtLeast(15_000))
             }
         }
@@ -247,6 +271,8 @@ public object PixivCacheCommand : CompositeCommand(
                 }
             } catch (_: IllegalStateException) {
                 logger.info { "${index}.ERO_WITH_MARKS(${author.user.id}) 跳过" }
+            } catch (cause: NoSuchElementException) {
+                throw CancellationException("${index}.ERO_WITH_MARKS(${author.user.id})任务终止", cause)
             }
             delay(total.coerceAtLeast(15_000))
         }
