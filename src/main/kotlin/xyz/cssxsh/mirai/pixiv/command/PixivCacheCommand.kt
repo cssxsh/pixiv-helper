@@ -115,6 +115,7 @@ public object PixivCacheCommand : CompositeCommand(
                         continue
                     }
                     val total = author.profile.totalArtwork
+                    if (total == 0L) continue
                     val count = author.user.count()
                     if (total - count > preview.illusts.size || flush) {
                         val free = try {
@@ -238,6 +239,7 @@ public object PixivCacheCommand : CompositeCommand(
         flow = PixivClientPool.free().ero(range = range).transform { (record, author) ->
             index++
             val total = author.profile.totalArtwork
+            if (total == 0L) return@transform
             val free = try {
                 PixivClientPool.free()
             } catch (cause: NoSuchElementException) {
@@ -258,12 +260,18 @@ public object PixivCacheCommand : CompositeCommand(
         name = "ERO_WITH_MARKS"
         write = false
         flow = PixivClientPool.free().ero(range = range).transform { (_, author) ->
-            val total = author.profile.totalIllustBookmarksPublic
             index++
+            val total = author.profile.totalIllustBookmarksPublic
+            if (total == 0L) return@transform
+            val free = try {
+                PixivClientPool.free()
+            } catch (cause: NoSuchElementException) {
+                throw CancellationException("${index}.ERO_WITH_MARKS(${author.user.id})任务终止", cause)
+            }
             logger.info { "${index}.ERO_WITH_MARKS(${author.user.id})[${author.user.name}]有${total}个收藏尝试缓存" }
             try {
                 var cached = 0
-                PixivClientPool.free().bookmarks(uid = author.user.id).collect { page ->
+                free.bookmarks(uid = author.user.id).collect { page ->
                     if (page.all { illust(pid = it.pid).exists() }) cached++ else cached = 0
                     emit(page)
 
@@ -271,8 +279,6 @@ public object PixivCacheCommand : CompositeCommand(
                 }
             } catch (_: IllegalStateException) {
                 logger.info { "${index}.ERO_WITH_MARKS(${author.user.id}) 跳过" }
-            } catch (cause: NoSuchElementException) {
-                throw CancellationException("${index}.ERO_WITH_MARKS(${author.user.id})任务终止", cause)
             }
             delay(total.coerceAtLeast(15_000))
         }

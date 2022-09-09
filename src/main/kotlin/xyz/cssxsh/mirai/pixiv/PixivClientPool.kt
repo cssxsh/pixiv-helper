@@ -38,7 +38,7 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
     }
 
     public fun free(): PixivAuthClient {
-        val uid = authed.randomOrNull() ?: throw IllegalStateException("账号池为空，请登录 Pixiv 账号")
+        val uid = authed.randomOrNull() ?: throw NoSuchElementException("账号池为空，请登录 Pixiv 账号")
         return FreeClient(delegate = user(uid = uid))
     }
 
