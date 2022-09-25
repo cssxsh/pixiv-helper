@@ -32,9 +32,6 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 **打开浏览器，登录PIXIV** 需要 [Mirai Selenium Plugin](https://github.com/cssxsh/mirai-selenium-plugin) 做前置插件
 并且需要代理配置（可以打开浏览器后，在浏览器中配置），浏览器登录只是其中一种登录方法，不必要安装 Selenium 插件
 
-**百度云上传功能** 需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 做前置插件  
-但**不必要**，如果不使用上传功能请忽略，上传功能 在 Pixiv Helper 2 重构计划中，暂时不可用
-
 群聊默认输出最少作品信息，需要增加请使用 `/setting` 指令修改
 
 发送模式可以使用 `/setting` 指令修改为闪照或撤销或转发  
@@ -66,6 +63,7 @@ MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin 
 | `/<pixiv> <selenium>`                   | 打开浏览器，登录PIXIV              |
 | `/<pixiv> <refresh> [token]`            | 登录 通过 refresh token        |
 | `/<pixiv> <bind> [uid] [contact]?`      | 绑定 Pixiv 账户                |
+| `/<pixiv> <pool>`                       | 账户池详情                      |
 | `/<follow> <user> {uid}`                | 为当前助手关注指定用户                |
 | `/<follow> <copy> [uid]`                | 关注指定用户的关注                  |
 | `/<mark bookmark> <add> [uid] {words}?` | 添加指定作品收藏                   |
@@ -129,19 +127,21 @@ boom指令使用时
 
 ### 缓存指令
 
-| 指令                                      | 描述                 |
-|:----------------------------------------|:-------------------|
-| `/<cache> <follow>`                     | 缓存关注推送             |
-| `/<cache> <rank> [mode] [date]?`        | 缓存指定排行榜信息          |
-| `/<cache> <recommended>`                | 缓存推荐作品，ERO过滤       |
-| `/<cache> <bookmarks> [uid]?`           | 缓存用户的收藏中缓存色图作品     |
-| `/<cache> <following> [fluhsh]? [uid]?` | 缓存关注画师作品           |
-| `/<cache> <fms> [jump]? [uid]?`         | 缓存关注画师收藏的作品        |
-| `/<cache> <user> [uid]`                 | 缓存指定画师作品           |
-| `/<cache> <tag> [tag]`                  | 缓存搜索tag得到的作品，ERO过滤 |
-| `/<cache> <search>`                     | 缓存搜索记录             |
-| `/<cache> <stop>`                       | 停止当前助手缓存任务         |
-| `/<cache> <reply> [open]?`              | 是否回复缓存细节，默认为否      |
+| 指令                               | 描述             |
+|:---------------------------------|:---------------|
+| `/<cache> <follow>`              | 缓存关注推送         |
+| `/<cache> <rank> [mode] [date]?` | 缓存指定排行榜信息      |
+| `/<cache> <recommended>`         | 缓存推荐作品         |
+| `/<cache> <bookmarks> [uid]`     | 缓存用户的收藏中缓存色图作品 |
+| `/<cache> <following> [fluhsh]?` | 缓存关注画师作品       |
+| `/<cache> <fwm> [jump]?`         | 缓存关注画师收藏       |
+| `/<cache> <user> [uid]`          | 缓存指定画师作品       |
+| `/<cache> <tag> [word]`          | 缓存搜索tag得到的作品   |
+| `/<cache> <ero> [range]?`        | 缓存色图画师的作品      |
+| `/<cache> <ewm> [range]?`        | 缓存色图画师的收藏      |
+| `/<cache> <search>`              | 缓存搜索记录         |
+| `/<cache> <stop> [name]`         | 停止缓存任务         |
+| `/<cache> <detail>`              | 缓存任务详情         |
 
 **Pixiv helper 2 重构中，部分缓存指令 暂不可用**
 
@@ -151,18 +151,17 @@ boom指令使用时
 
 ### 任务指令
 
-| 指令                                           | 描述          |
-|:---------------------------------------------|:------------|
-| `/<task> <user> [uid] [duration]?`           | 推送用户新作品     |
-| `/<task> <rank> [mode]`                      | 推送排行榜新作品    |
-| `/<task> <follow> [duration]?`               | 推送关注用户作品    |
-| `/<task> <recommended> [duration]?`          | 推送推荐作品      |
-| `/<task> <backup> [duration]?`               | 数据自动备份      |
-| `/<task> <cache> {args}`                     | 数据自动缓存      |
-| `/<task> <web> [pattern] [link] [duration]?` | 推送，从url链接获取 |
-| `/<task> <trending> [duration]? [times]?`    | 推送热门标签      |
-| `/<task> <detail>`                           | 查看任务详情      |
-| `/<task> <delete> [name]`                    | 删除任务        |
+| 指令                                       | 描述       |
+|:-----------------------------------------|:---------|
+| `/<task> <user> [uid] [cron] [target]?`  | 推送用户新作品  |
+| `/<task> <rank> [mode] [cron] [target]?` | 推送排行榜新作品 |
+| `/<task> <follow> [cron] [target]?`      | 推送关注用户作品 |
+| `/<task> <recommended> [cron] [target]?` | 推送推荐作品   |
+| `/<task> <trending> [cron]? [target]?`   | 推送热门标签   |
+| `/<task> <cache> [uid] [cron] {args}`    | 数据自动缓存   |
+| `/<task> <cron> [id] [cron]`             | 查看任务详情   |
+| `/<task> <detail>`                       | 查看任务详情   |
+| `/<task> <delete> [id]`                  | 删除任务     |
 
 **Pixiv helper 2 重构中，部分任务指令 暂不可用**
 
@@ -189,53 +188,14 @@ duration 单位分钟，默认3小时
 注意：`FLASH, RECALL` 这两种模式 并不会降低 `机器人被封禁` 的风险  
 `forward`, `link`, `tag`, `attr` 使用指令后会对当前值取反
 
-### 备份指令
-
-| 指令                                          | 描述               |
-|:--------------------------------------------|:-----------------|
-| `/<backup> <user> [uid]`                    | 备份指定用户的作品        |
-| `/<backup> <alias> [mode] [date]?`          | 备份已设定别名用户的作品     |
-| `/<backup> <tag> [tag] [marks]? [fuzzy]?`   | 备份指定标签的作品        |
-| `/<backup> <data>`                          | 备份插件数据           |
-| `/<backup> <list>`                          | 列出备份目录           |
-| `/<backup> <get> [filename]`                | 获取备份文件，发送文件消息    |
-| `/<backup> <upload> [filename]`             | 上传文件到百度云         |
-| `/<backup> <auth>`                          | 百度云用户认证          |
-| `/<backup> <reload> [path] [mode] [chunk]?` | 从 sqlite 备份中导入数据 |
-
-**Pixiv helper 2 重构中，备份指令 暂不可用**
-
-reload 的 mode 可选 有以下几种 `EXCEPTION, IGNORE, OVERWRITE, LATEST_VERSION`  
-reload 的 chunk 为分段提交数量的大小, 默认 `8196`   
-使用百度云服务需要的准备详见配置
-
 ### 统计信息指令
 
 | 指令                           | 描述          |
 |:-----------------------------|:------------|
-| `/<info> <helper> [target]?` | 获取助手信息      |
 | `/<info> <user> [target]?`   | 获取用户信息      |
 | `/<info> <group> [target]?`  | 获取群组信息      |
 | `/<info> <top> [limit]?`     | 获取TAG指令统计信息 |
 | `/<info> <cache>`            | 获取缓存信息      |
-
-### 播放指令
-
-| 指令                                          | 描述                  |
-|:--------------------------------------------|:--------------------|
-| `(/)<play 播放> <interval 间隔>`                | 设置间隔                |
-| `(/)<play 播放> <ranking 排行榜> [mode] [date]?` | 播放官方排行榜             |
-| `(/)<play 播放> <rank 排行> {words}`            | 根据 words 播放NaviRank |
-| `(/)<play 播放> <recommended 推荐>`             | 根据 系统推荐 播放图集        |
-| `(/)<play 播放> <mark 收藏> [tag]?`             | 播放收藏                |
-| `(/)<play 播放> <article 特辑> [aid]`           | 播放特辑                |
-| `(/)<article 特辑>`                           | 随机播放特辑              |
-| `(/)<rank 排行> <year 年 年榜> {words}`          | 随机播放NaviRank 年榜     |
-| `(/)<rank 排行> <month 月 月榜> {words}`         | 随机播放NaviRank 月榜     |
-| `(/)<rank 排行> <tag标签> {words}`              | 随机播放NaviRank 标签榜    |
-| `(/)<play 播放> <stop 停止>`                    | 停止播放当前列表            |
-
-**Pixiv helper 2 重构中，播放指令 暂不可用**
 
 ### 删除指令
 

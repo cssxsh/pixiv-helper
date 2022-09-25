@@ -97,7 +97,7 @@ public object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("将关注画师列表检查，缓存所有作品")
+    @Description("缓存关注画师作品")
     public suspend fun CommandSender.following(flush: Boolean = false): Unit = cache {
         val client = client()
         val detail = client.userDetail(uid = client.uid)
@@ -135,7 +135,7 @@ public object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand("fwm")
-    @Description("将关注画师列表检查，缓存所有画师收藏作品，ERO过滤")
+    @Description("缓存关注画师收藏")
     public suspend fun CommandSender.followingWithMarks(jump: Long = 0): Unit = cache {
         val client = client()
         val detail = client.userDetail(uid = client.uid)
@@ -231,7 +231,7 @@ public object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("加载缓存中有色图作品的用户的其他作品")
+    @Description("缓存色图画师的作品")
     public suspend fun CommandSender.ero(range: LongRange = 3..PAGE_SIZE): Unit = cache {
         var index = 0
         name = "ERO"
@@ -254,7 +254,7 @@ public object PixivCacheCommand : CompositeCommand(
     }
 
     @SubCommand("ewm")
-    @Description("将关注画师列表检查，缓存所有画师收藏作品")
+    @Description("缓存色图画师的收藏")
     public suspend fun CommandSender.eroWithMarks(range: LongRange = PAGE_SIZE..Int.MAX_VALUE): Unit = cache {
         var index = 0
         name = "ERO_WITH_MARKS"
