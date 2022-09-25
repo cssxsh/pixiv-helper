@@ -105,7 +105,11 @@ public object PixivSearchCommand : SimpleCommand(
         val cache = PixivSearchResult[hash]
         if (cache != null) return cache
         val file = FileInfo[hash].firstOrNull()
-        if (file != null) return PixivSearchResult(md5 = hash, similarity = 1.0, pid = file.pid)
+        if (file != null) {
+            val resutlt = PixivSearchResult(md5 = hash, similarity = 1.0, pid = file.pid)
+            resutlt.associate()
+            return resutlt
+        }
         return null
     }
 
@@ -127,7 +131,7 @@ public object PixivSearchCommand : SimpleCommand(
         val hash = origin.md5.toUHexString("")
 
         val record = record(hash)
-        if (record != null) return@withHelper record.getContent(contact = fromEvent.subject)
+        if (record != null) return@withHelper record.toMessage() + record.toIllustMessage(contact = fromEvent.subject)
 
         val saucenao = saucenao(url).similarity(MIN_SIMILARITY).translate(hash)
 
@@ -137,6 +141,6 @@ public object PixivSearchCommand : SimpleCommand(
             saucenao
         }
 
-        records.getContent(sender = fromEvent.sender)
+        buildSearchMessage(results = records, sender = fromEvent.sender)
     }
 }

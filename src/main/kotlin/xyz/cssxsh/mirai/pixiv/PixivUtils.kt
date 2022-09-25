@@ -164,59 +164,25 @@ internal fun RawForwardMessage.render(display: DisplayStrategyBuilder.() -> Unit
 
 internal val Url.filename get() = encodedPath.substringAfterLast('/')
 
-internal fun IllustInfo.getContent(link: Boolean, tag: Boolean, attr: Boolean) = buildMessageChain {
-    appendLine("作者: ${user.name} ")
-    appendLine("UID: ${user.id} ")
-    if (attr) appendLine("已关注: ${user.isFollowed ?: false}")
-    appendLine("标题: $title ")
-    appendLine("PID: $pid ")
-    if (attr) appendLine("已收藏: $isBookmarked")
-    if (attr) appendLine("收藏数: $totalBookmarks ")
-    if (attr) appendLine("SAN值: $sanityLevel ")
-    if (attr) appendLine("创作于: $createAt ")
-    if (attr) appendLine("共: $pageCount 张图片 ")
-    if (tag) appendLine("标签：${tags.map { it.getContent() }}")
-    if (link) add(getMirror())
-}
-
-internal fun TagInfo.getContent() = name + (translatedName?.let { " -> $it" } ?: "")
-
-internal fun IllustInfo.getMirror() = buildMessageChain {
-    appendLine("原图连接: ")
-    for (url in getMirrorUrls()) {
-        appendLine(url.toString())
-    }
-}
+internal val TagInfo.content get() = translatedName ?: name
 
 internal fun IllustInfo.toDisplayStrategy() = object : ForwardMessage.DisplayStrategy {
 
     override fun generateTitle(forward: RawForwardMessage): String = "${user.name} - $title"
 
-    override fun generatePreview(forward: RawForwardMessage): List<String> = tags.map { it.getContent() }
+    override fun generatePreview(forward: RawForwardMessage): List<String> = tags.map { it.content }
 
     override fun generateSummary(forward: RawForwardMessage): String = "查看${user.name}的作品"
 }
 
-public suspend fun SearchResult.getContent(contact: Contact): MessageChain = buildMessageChain {
+public fun SearchResult.toMessage(): MessageChain = buildMessageChain {
     appendLine("相似度: ${similarity * 100}%")
-    when (this@getContent) {
+    when (this@toMessage) {
         is PixivSearchResult -> {
-            if (similarity > MIN_SIMILARITY) associate()
             appendLine("作者: $name ")
             appendLine("UID: $uid ")
             appendLine("标题: $title ")
             appendLine("PID: $pid ")
-
-            contact.launch {
-                try {
-                    val illust = loadIllustInfo(pid = pid, flush = true, client = contact.helper.client)
-                    if (illust.age > AgeLimit.ALL || illust.pageCount > 3 || illust.type == WorkContentType.MANGA) return@launch
-                    val message = buildIllustMessage(illust = illust, contact = contact)
-                    contact.sendMessage(message)
-                } catch (cause: Exception) {
-                    logger.warning({ "搜索结果自动发送失败" }, cause)
-                }
-            }
         }
         is TwitterSearchResult -> {
             val screen = URL_TWITTER_SCREEN.find(tweet)?.value.orEmpty()
@@ -232,24 +198,52 @@ public suspend fun SearchResult.getContent(contact: Contact): MessageChain = bui
     }
 }
 
-public suspend fun List<SearchResult>.getContent(sender: User): Message {
-    if (isEmpty()) return "结果为空".toPlainText()
+public suspend fun SearchResult.toIllustMessage(contact: Contact): Message {
+    if (this !is PixivSearchResult) return emptyMessageChain()
+    val illust = loadIllustInfo(pid = pid, flush = true, client = contact.helper.client)
+    if (illust.age > AgeLimit.ALL || illust.pageCount > 3 || illust.type == WorkContentType.MANGA) return emptyMessageChain()
+    return buildIllustMessage(illust = illust, contact = contact)
+}
+
+public suspend fun buildSearchMessage(results: List<SearchResult>, sender: User): Message {
+    if (results.isEmpty()) return "结果为空".toPlainText()
     val contact = (sender as? Member)?.group ?: sender
+    val sended = HashSet<Long>()
+
+    for (result in results) {
+        if (result !is PixivSearchResult) continue
+        if (!sended.add(result.pid)) continue
+        contact.launch {
+            try {
+                val message = result.toIllustMessage(contact = contact)
+                if (message.isContentEmpty()) return@launch
+                contact.sendMessage(message)
+            } catch (cause: Exception) {
+                logger.warning({ "搜索结果自动发送失败" }, cause)
+            }
+            if (result.similarity > MIN_SIMILARITY) result.associate()
+        }
+    }
 
     return if (ImageSearchConfig.forward) {
-        RawForwardMessage(map { result ->
+        RawForwardMessage(results.map { result ->
             ForwardMessage.Node(
                 senderId = sender.id,
                 time = (System.currentTimeMillis() / 1000).toInt(),
                 senderName = sender.nameCardOrNick,
-                messageChain = result.getContent(contact)
+                messageChain = result.toMessage()
             )
         }).render {
             title = "搜图结果"
-            summary = "查看${size}条搜图结果"
+            summary = "查看${results.size}条搜图结果"
         }
     } else {
-        map { "<=============>\n".toPlainText() + it.getContent(contact) }.toMessageChain()
+        buildMessageChain {
+            results.forEach { result ->
+                appendLine("<=============>")
+                add(result.toMessage())
+            }
+        }
     }
 }
 
@@ -275,7 +269,29 @@ public suspend fun List<SearchResult>.getContent(sender: User): Message {
 public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): MessageChain {
     val helper = contact.helper
     return buildMessageChain {
-        add(illust.getContent(helper.link, helper.tag, helper.attr))
+        appendLine("作者: ${illust.user.name} ")
+        appendLine("UID: ${illust.user.id} ")
+        if (helper.attr) {
+            appendLine("已关注: ${illust.user.isFollowed ?: false}")
+        }
+        appendLine("标题: ${illust.title} ")
+        appendLine("PID: ${illust.pid} ")
+        if (helper.attr) {
+            appendLine("已收藏: ${illust.isBookmarked}")
+            appendLine("收藏数: ${illust.totalBookmarks} ")
+            appendLine("SAN值: ${illust.sanityLevel} ")
+            appendLine("创作于: ${illust.createAt} ")
+            appendLine("共: ${illust.pageCount} 张图片 ")
+        }
+        if (helper.tag) {
+            appendLine("标签：${illust.tags.joinToString { it.content }}")
+        }
+        if (helper.link) {
+            appendLine("原图连接: ")
+            for (url in illust.getMirrorUrls()) {
+                appendLine(url.toString())
+            }
+        }
         if (illust.age != AgeLimit.ALL) {
             add("R18禁止！".toPlainText())
             return@buildMessageChain
