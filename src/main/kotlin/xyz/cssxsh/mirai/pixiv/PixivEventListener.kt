@@ -1,13 +1,18 @@
 package xyz.cssxsh.mirai.pixiv
 
+import io.ktor.client.request.*
+import io.ktor.http.*
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.command.UserCommandSender
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.event.*
 import net.mamoe.mirai.event.events.*
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.event.*
+import xyz.cssxsh.mirai.pixiv.model.*
+import xyz.cssxsh.pixiv.apps.*
 
 public object PixivEventListener : SimpleListenerHost() {
     private val logger by lazy { MiraiLogger.Factory.create(this::class, identity = "pixiv-event-listener") }
@@ -15,17 +20,17 @@ public object PixivEventListener : SimpleListenerHost() {
     @EventHandler
     public fun PixivEvent.handle() {
         helper
-        // TODO()
+        // TODO: stop send
     }
 
     public var paserPermission: Permission = Permission.getRootPermission()
 
     @EventHandler
     public suspend fun MessageEvent.handle() {
+        val content = message.findIsInstance<PlainText>()?.content ?: return
         if (this is MessageSyncEvent) return
         val context = toCommandSender() as UserCommandSender
         if (paserPermission.testPermission(context).not()) return
-        val content = message.contentToString()
         URL_ARTWORK_REGEX.find(content)?.let { match ->
             logger.info { "匹配ARTWORK(${match.value})" }
             context.withHelper {
@@ -34,23 +39,38 @@ public object PixivEventListener : SimpleListenerHost() {
         }
         URL_USER_REGEX.find(content)?.let { match ->
             logger.info { "匹配USER(${match.value})" }
-            // TODO("paser URL_USER_REGEX")
+            context.withHelper {
+                client.userDetail(uid = match.value.toLong())
+            }
         }
         URL_PIXIV_ME_REGEX.find(content)?.let { match ->
             logger.info { "匹配USER(${match.value})" }
-            // TODO("paser URL_PIXIV_ME_REGEX")
+            context.withHelper {
+                val uid = UserBaseInfo.get(account = match.value)?.uid ?: client.useHttpClient { http ->
+                    http.head("https://pixiv.me/${match.value}")
+                        .headers[HttpHeaders.Location]
+                        ?.let { URL_USER_REGEX.find(it) }
+                        ?.value
+                        ?.toLong()
+                }
+                if (uid != null) {
+                    client.userDetail(uid = uid)
+                } else {
+                    null
+                }
+            }
         }
         URL_PIXIVISION_ARTICLE.find(content)?.let { match ->
             logger.info { "匹配ARTICLE(${match.value})" }
-            // TODO("paser URL_PIXIVISION_ARTICLE")
+            // TODO: paser URL_PIXIVISION_ARTICLE
         }
         URL_FANBOX_CREATOR_REGEX.find(content)?.let { match ->
             logger.info { "匹配FANBOX(${match.value})" }
-            // TODO("paser URL_FANBOX_CREATOR_REGEX")
+            // TODO: paser URL_FANBOX_CREATOR_REGEX
         }
         URL_FANBOX_ID_REGEX.find(content)?.let { match ->
             logger.info { "匹配FANBOX(${match.value})" }
-            // TODO("paser URL_FANBOX_ID_REGEX")
+            // TODO: paser URL_FANBOX_ID_REGEX
         }
     }
 }
@@ -90,20 +110,6 @@ public object PixivEventListener : SimpleListenerHost() {
 //                logger.info { "匹配FANBOX(${result.value})" }
 //                toCommandSender().takeIf { permission.testPermission(it) }?.sendCreatorInfo(uid = result.value.toLong())
 //            }
-//        }
-//        "InitHelper" with subscribeAlways<BotOnlineEvent> {
-//            if (PixivConfigData.default.isNotBlank()) {
-//                bot.groups.maxByOrNull { it.members.size }?.helper?.info()
-//            }
-//            for ((id, _) in PixivConfigData.tokens) {
-//                try {
-//                    @OptIn(ConsoleExperimentalApi::class)
-//                    bot.getContactOrNull(id)?.helper?.info()
-//                } catch (e: Throwable) {
-//                    logger.warning { "init $id $e" }
-//                }
-//            }
-//            // logger.info { "abilities: ${abilities.mapNotNull { it.uid }}" }
 //        }
 //    }
 //

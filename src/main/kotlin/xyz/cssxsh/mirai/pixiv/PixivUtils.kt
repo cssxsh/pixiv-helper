@@ -55,6 +55,8 @@ internal suspend fun UserCommandSender.withHelper(block: suspend PixivHelper.() 
             is String -> quoteReply(message)
             is IllustInfo -> sendIllust(message)
             is ArtWorkInfo -> sendArtwork(message)
+            is UserPreview -> quoteReply(buildUserPreviewMessage(message, subject))
+            is UserDetail -> quoteReply(buildUserDetailMessage(message, subject))
             else -> quoteReply(message.toString())
         }
     } catch (exception: CancellationException) {
@@ -317,46 +319,37 @@ public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): Mes
     }
 }
 
-//
-//internal suspend fun PixivHelper.buildMessageByUser(preview: UserPreview) = buildMessageChain {
-//    appendLine("NAME: ${preview.user.name}")
-//    appendLine("UID: ${preview.user.id}")
-//    appendLine("ACCOUNT: ${preview.user.account}")
-//    appendLine("FOLLOWED: ${preview.user.isFollowed}")
-//    appendLine("TWITTER: ${Twitter[preview.user.id].joinToString { it.screen }}")
-//    try {
-//        append(preview.user.getProfileImage().uploadAsImage(contact))
-//    } catch (e: Throwable) {
-//        logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, e)
-//    }
-//    for (illust in preview.illusts.apply { replicate() }.write()) {
-//        if (illust.isEro().not()) continue
-//        try {
-//            if (illust.age == AgeLimit.ALL) {
-//                illust.useImageResources { index, resource ->
-//                    if (index < 1) add(resource.uploadAsImage(contact))
-//                }
-//            }
-//        } catch (e: Throwable) {
-//            logger.warning({ "User(${preview.user.id}) PreviewImage 下载失败" }, e)
-//        }
-//    }
-//}
-//
-//internal suspend fun PixivHelper.buildMessageByUser(detail: UserDetail) = buildMessageChain {
-//    appendLine("NAME: ${detail.user.name}")
-//    appendLine("UID: ${detail.user.id}")
-//    appendLine("ACCOUNT: ${detail.user.account}")
-//    appendLine("FOLLOWED: ${detail.user.isFollowed}")
-//    appendLine("TOTAL: ${detail.profile.totalArtwork}")
-//    appendLine("TWITTER: ${detail.twitter()}")
-//    try {
-//        append(detail.user.getProfileImage().uploadAsImage(contact))
-//    } catch (e: Throwable) {
-//        logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, e)
-//    }
-//}
-//
+public suspend fun buildUserPreviewMessage(preview: UserPreview, contact: Contact): MessageChain {
+    return buildMessageChain {
+        appendLine("NAME: ${preview.user.name}")
+        appendLine("UID: ${preview.user.id}")
+        appendLine("ACCOUNT: ${preview.user.account}")
+        appendLine("FOLLOWED: ${preview.user.isFollowed}")
+        appendLine("TWITTER: ${Twitter[preview.user.id].joinToString { it.screen }}")
+        try {
+            append(preview.user.profile().uploadAsImage(contact))
+        } catch (cause: Exception) {
+            logger.warning({ "User(${preview.user.id}) ProfileImage 下载失败" }, cause)
+        }
+    }
+}
+
+public suspend fun buildUserDetailMessage(detail: UserDetail, contact: Contact): MessageChain {
+    return buildMessageChain {
+        appendLine("NAME: ${detail.user.name}")
+        appendLine("UID: ${detail.user.id}")
+        appendLine("ACCOUNT: ${detail.user.account}")
+        appendLine("FOLLOWED: ${detail.user.isFollowed}")
+        appendLine("TOTAL: ${detail.profile.totalArtwork}")
+        appendLine("TWITTER: ${detail.twitter()}")
+        try {
+            append(detail.user.profile().uploadAsImage(contact))
+        } catch (cause: Exception) {
+            logger.warning({ "User(${detail.user.id}) ProfileImage 下载失败" }, cause)
+        }
+    }
+}
+
 //internal suspend fun PixivHelper.buildMessageByUser(uid: Long) = buildMessageByUser(detail = userDetail(uid))
 //
 //internal suspend fun PixivHelper.buildMessageByCreator(creator: CreatorDetail) = buildMessageChain {
@@ -438,7 +431,7 @@ public suspend fun loadIllustInfo(
 
 // region Download Image
 
-internal suspend fun UserInfo.getProfileImage(): File {
+internal suspend fun UserInfo.profile(): File {
     val image = Url(profileImageUrls.values.lastOrNull() ?: NO_PROFILE_IMAGE)
     return ProfileFolder.resolve(image.filename).apply {
         if (exists().not()) {
