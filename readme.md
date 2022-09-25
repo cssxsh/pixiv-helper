@@ -240,24 +240,14 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 * `pximg` 反向代理, 若非特殊情况不要修改这个配置，保持留空，可选代理 `i.pixiv.re, i.pixiv.cat`
 * `proxy` API代理
 * `proxy_download` DOWNLOAD代理 `图片下载器会对代理产生很大的负荷`，请十分谨慎的开启这个功能
-* `timeout_api` API超时时间, 单位ms
+* ~~timeout_api~~ API超时时间, 单位ms
 * `timeout_download` DOWNLOAD超时时间, 单位ms
 * `block_size` DOWNLOAD分块大小, 单位B, 默认 523264, 为零时, 不会分块下载
 * `tag_sfw` tag 是否过滤r18 依旧不会放出图片
 * `ero_sfw` ero 是否过滤r18 依旧不会放出图片
-* `cache_capacity` 下载缓存容量，同时下载的任务上限
-* `cache_jump` 缓存是否跳过下载
-* `upload` 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
-
-### ~~NetdiskOauthConfig.yml~~
-
-从 1.7.2 开始 百度云上传功能需要 [Netdisk FileSync Plugin](https://github.com/gnuf0rce/Netdisk-FileSync-Plugin) 作前置插件  
-该配置作废，改由前置插件配置，并且需要重新验证  
-或者将 `PixivConfig.yml` 中的 token 手动迁移 到 前置插件的 `user.yml`
-
-插件上传文件功能需要百度网盘API支持，但这个配置(备份文件)是可选的，不影响其他功能的使用。  
-请到 <https://pan.baidu.com/union/main/application/personal> 申请应用，并将获得的APP信息填入  
-信息只在启动时读取，修改后需重启，并使用 /backup auth 认证百度账号
+* ~~cache_capacity~~ 下载缓存容量，同时下载的任务上限
+* ~~cache_jump~~ 缓存是否跳过下载
+* ~~upload~~ 压缩完成后是否上传百度云，不上传百度云则会尝试发送文件
 
 ### ImageSearchConfig.yml
 
@@ -301,7 +291,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 如果不是特殊需要，使用默认的 SQLite 配置就好  
 配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
 ~~下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/)
-, 然后放进 `plugins` 文件夹~~ (1.8.3+，`mirai-hibernate-plugin` 自带 `mysql` 此步骤不再需要)  
+, 然后放进 `plugins` 文件夹~~ (`mirai-hibernate-plugin` 1.8.3+ 自带 `mysql` 此步骤不再需要)  
 配置 文件
 
 ```
