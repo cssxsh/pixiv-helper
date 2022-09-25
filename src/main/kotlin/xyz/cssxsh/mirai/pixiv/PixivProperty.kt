@@ -23,8 +23,6 @@ internal const val ERO_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.sfw"
 
 internal const val ERO_STANDARD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.standard"
 
-internal const val TAG_COOLING_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.cooling"
-
 internal const val TAG_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.sfw"
 
 internal const val CACHE_CAPACITY_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.capacity"
@@ -281,8 +279,14 @@ internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")
  */
 internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
 
+/**
+ * 从 [Contact] 上下文得到 [PixivHelper]
+ */
 public val Contact.helper: PixivHelper by PixivHelperPool
 
+/**
+ * 从 [CommandSender] 上下文得到 [PixivClientPool.AuthClient]
+ */
 public fun CommandSender.client(): PixivClientPool.AuthClient {
     return when {
         isUser() -> PixivClientPool.get(id = subject.id)

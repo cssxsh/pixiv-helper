@@ -102,7 +102,7 @@ public object PixivTaskCommand : CompositeCommand(
     }
 
     @SubCommand
-    @Description("定时任务，删除")
+    @Description("任务定时")
     public suspend fun CommandSender.cron(id: String, cron: Cron) {
         val message = try {
             when (val task = PixivScheduler[id]) {
@@ -113,14 +113,14 @@ public object PixivTaskCommand : CompositeCommand(
                 }
             }
         } catch (cause: Exception) {
-            "定时任务${id}删除失败，${cause.message}"
+            "任务${id}定时失败，${cause.message}"
         }
 
         sendMessage(message)
     }
 
     @SubCommand
-    @Description("定时任务，删除")
+    @Description("删除任务")
     public suspend fun CommandSender.delete(id: String) {
         val message = try {
             when (val task = PixivScheduler.remove(id)) {

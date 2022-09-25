@@ -1,20 +1,11 @@
 package xyz.cssxsh.mirai.pixiv.tools
 
-import io.ktor.client.features.*
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.*
-import java.io.*
 
 internal class ImageSearcherTest {
 
     private val picUrl = ""
-
-    init {
-        ImageSearcher.ignore = {
-            println(it)
-            it is IOException || it is HttpRequestTimeoutException
-        }
-    }
 
     @Test
     fun json(): Unit = runBlocking {

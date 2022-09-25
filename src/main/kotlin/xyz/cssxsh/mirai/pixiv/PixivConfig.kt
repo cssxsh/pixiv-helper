@@ -46,7 +46,7 @@ internal fun initConfiguration() {
     ProfileFolder.mkdirs()
     ArticleFolder.mkdirs()
     UgoiraImagesFolder.mkdirs()
-    ExistsImagesFolder.mkdirs()
+    OtherImagesFolder.mkdirs()
     ExistsImagesFolder.mkdirs()
     logger.info { "CacheFolder: ${CacheFolder.absolutePath}" }
     logger.info { "BackupFolder: ${BackupFolder.absolutePath}" }

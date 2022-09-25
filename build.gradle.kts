@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "xyz.cssxsh.mirai.plugin"
-version = "2.0.0-M8"
+version = "2.0.0-RC"
 
 repositories {
     mavenLocal()
@@ -16,8 +16,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jsoup:jsoup:1.15.2")
-    implementation("xyz.cssxsh.pixiv:pixiv-client:1.2.4") {
+    implementation("org.jsoup:jsoup:1.15.3")
+    implementation("xyz.cssxsh.pixiv:pixiv-client:1.2.6") {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.jetbrains.kotlinx")
         exclude(group = "org.slf4j")
@@ -31,15 +31,16 @@ dependencies {
     compileOnly("net.mamoe:mirai-core:2.13.0-M1")
     compileOnly("net.mamoe:mirai-core-utils:2.13.0-M1")
     // dependsOn
-    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.3")
-    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.2")
-    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.7")
+    compileOnly("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.4")
+    compileOnly("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.3")
+    compileOnly("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.9")
 
     testImplementation(kotlin("test"))
-    testImplementation("net.mamoe:mirai-slf4j-bridge:1.2.0")
-    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.3")
-    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.2")
-    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.7")
+    testImplementation("org.slf4j:slf4j-simple:2.0.0")
+    testImplementation("net.mamoe:mirai-logging-slf4j:2.13.0-M1")
+    testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.4.4")
+    testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.2.3")
+    testImplementation("xyz.cssxsh.mirai:mirai-skia-plugin:1.1.9")
 }
 
 mirai {

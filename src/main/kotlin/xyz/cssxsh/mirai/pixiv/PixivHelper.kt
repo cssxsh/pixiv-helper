@@ -14,13 +14,12 @@ import kotlin.coroutines.*
  * Pixiv 助手
  * @see PixivHelperPool.helper
  */
-public class PixivHelper internal constructor(public val id: Long, parentCoroutineContext: CoroutineContext) :
+public class PixivHelper internal constructor(public val id: Long, parentContext: CoroutineContext) :
     CoroutineScope {
 
-    private val logger by lazy { MiraiLogger.Factory.create(this::class, identity = "pixiv-helper-${id}") }
+    private val logger = MiraiLogger.Factory.create(this::class, identity = "pixiv-helper-${id}")
 
-    override val coroutineContext: CoroutineContext =
-        parentCoroutineContext + CoroutineName(name = "pixiv-helper-${id}")
+    override val coroutineContext: CoroutineContext = parentContext + CoroutineName(name = "pixiv-helper-${id}")
 
     public val client: PixivAuthClient by PixivClientPool
 

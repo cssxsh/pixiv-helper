@@ -59,7 +59,6 @@ public object PixivMethodCommand : CompositeCommand(
         val json = File("cookie.json")
         sendMessage("加载 cookie 从 ${json.absolutePath}")
         val auth = pixiv.cookie {
-            @OptIn(ExperimentalSerializationApi::class)
             PixivJson.decodeFromString<List<EditThisCookie>>(json.readText()).map { it.toCookie() }
         }
 

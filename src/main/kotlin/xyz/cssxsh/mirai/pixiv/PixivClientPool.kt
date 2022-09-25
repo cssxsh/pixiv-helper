@@ -80,6 +80,8 @@ public object PixivClientPool : ReadOnlyProperty<PixivHelper, PixivAuthClient>, 
                 logger.warning { "Api 超时, 已忽略: ${throwable.message}" }
                 true
             }
+            is java.net.UnknownHostException,
+            is java.net.NoRouteToHostException -> false
             is IOException -> {
                 logger.warning { "Api 错误, 已忽略: $throwable" }
                 true

@@ -24,7 +24,7 @@ public object PixivHelperPool : ReadOnlyProperty<Contact, PixivHelper>, Coroutin
     @Synchronized
     public fun helper(contact: Contact): PixivHelper {
         return helpers.getOrPut(contact.id) {
-            PixivHelper(id = contact.id, parentCoroutineContext = coroutineContext)
+            PixivHelper(id = contact.id, parentContext = coroutineContext)
         }
     }
 }
