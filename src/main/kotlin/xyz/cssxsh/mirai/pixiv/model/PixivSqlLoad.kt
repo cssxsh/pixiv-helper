@@ -13,6 +13,7 @@ import xyz.cssxsh.pixiv.fanbox.*
 import java.io.*
 import java.sql.*
 import java.util.*
+import kotlin.collections.*
 import kotlin.reflect.full.*
 
 // region SqlConfiguration
@@ -44,12 +45,6 @@ internal fun <R> useSession(lock: Any? = null, block: (session: Session) -> R): 
         synchronized(lock) {
             factory.openSession().use(block)
         }
-    }
-}
-
-internal fun sqlite(): String {
-    return useSession { session ->
-        session.getDatabaseMetaData().url.substringAfter("jdbc:sqlite:", "")
     }
 }
 
@@ -259,33 +254,29 @@ internal fun ArtWorkInfo.SQL.tag(
     limit: Int
 ): List<ArtWorkInfo> = useSession { session ->
     val names = word.split(delimiters = TAG_DELIMITERS.toCharArray()).filter { it.isNotBlank() }
-    val records = buildList {
-        for (name in names) {
-            val pattern = if (fuzzy) "%$name%" else name
+    val records = ArrayList<List<TagRecord>>(names.size)
+    for (name in names) {
+        val pattern = if (fuzzy) "%$name%" else name
 
-            val result = kotlin.run {
-                val value = cache[pattern]
-                if (value != null) return@run value
-                val list = session.withCriteria<TagRecord> { criteria ->
-                    val root = criteria.from<TagRecord>()
-                    criteria.select(root)
-                        .where(
-                            or(
-                                like(root.get("name"), pattern),
-                                like(root.get("translated"), pattern)
-                            )
+        val result = cache.getOrPut(pattern) {
+            val list = session.withCriteria<TagRecord> { criteria ->
+                val root = criteria.from<TagRecord>()
+                criteria.select(root)
+                    .where(
+                        or(
+                            like(root.get("name"), pattern),
+                            like(root.get("translated"), pattern)
                         )
-                }.list()
-                if (list.isEmpty()) {
-                    return@useSession emptyList()
-                }
-                cache[pattern] = list
-                list
+                    )
+            }.list()
+            if (list.isEmpty()) {
+                return@useSession emptyList()
             }
-
-            if (!fuzzy) logger.info { "tag: $pattern - ${result.map { it.name }}" }
-            add(result)
+            list
         }
+
+        if (!fuzzy) logger.info { "tag: $pattern - ${result.map { it.name }}" }
+        records.add(result)
     }
 
     val max = session.withCriteria<Long> { criteria ->

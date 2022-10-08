@@ -157,6 +157,40 @@ public class PixivTaskBuilder {
         }
     }
 
+    public fun PixivClientPool.AuthClient.trending(times: Int = 1): Flow<List<TrendIllust>> = flow {
+        val cache = HashMap<Long, IllustInfo>()
+        for (page in 0 until times) {
+            try {
+                cache.clear()
+                val trends = trendingTagsIllust().trends
+                if (trends.isEmpty()) break
+                emit(trends)
+                logger.verbose { "加载第${page}次 Trending 成功" }
+            } catch (_: CancellationException) {
+                break
+            } catch (cause: Exception) {
+                logger.warning({ "加载第${page}次 Trending 失败" }, cause)
+            }
+        }
+    }
+
+    public fun PixivClientPool.AuthClient.walkthrough(times: Int = 1): IllustFlow = flow {
+        val cache = HashMap<Long, IllustInfo>()
+        for (page in 0 until times) {
+            try {
+                cache.clear()
+                val illusts = illustWalkThrough().illusts
+                if (illusts.isEmpty()) break
+                emit(illusts)
+                logger.verbose { "加载第${page}次 WalkThrough 成功" }
+            } catch (_: CancellationException) {
+                break
+            } catch (cause: Exception) {
+                logger.warning({ "加载第${page}次 WalkThrough 失败" }, cause)
+            }
+        }
+    }
+
     public fun PixivAppClient.bookmarks(uid: Long, tag: String? = null): IllustFlow = flow {
         var url = USER_BOOKMARKS_ILLUST
         for (offest in 0 until LOAD_LIMIT step PAGE_SIZE) {
@@ -311,20 +345,6 @@ public class PixivTaskBuilder {
 //    }
 //}
 //
-//internal fun PixivHelper.getWalkThrough(times: Int = 1) = flow {
-//    for (page in 0 until times) {
-//        if (active().not()) break
-//        runCatching {
-//            illustWalkThrough().illusts
-//        }.onSuccess { list ->
-//            emit(list)
-//            logger.verbose { "加载第${page}次WalkThrough成功" }
-//        }.onFailure {
-//            logger.warning({ "加载第${page}次WalkThrough失败" }, it)
-//        }
-//    }
-//}
-//
 //internal fun PixivHelper.getSearchUser(name: String, limit: Long = SEARCH_LIMIT) = flow {
 //    (0 until limit step PAGE_SIZE).forEachIndexed { page, offset ->
 //        if (active().not()) return@flow
@@ -335,26 +355,6 @@ public class PixivTaskBuilder {
 //            logger.verbose { "加载搜索用户(${name})第${page}页{${it.size}}成功" }
 //        }.onFailure {
 //            logger.warning({ "加载搜索用户(${name})第${page}页失败" }, it)
-//        }
-//    }
-//}
-//
-//internal suspend fun PixivHelper.loadWeb(url: Url, regex: Regex): Set<Long> {
-//    val text: String = useHttpClient { it.get(url) }
-//    val result = regex.findAll(text)
-//    return result.mapTo(HashSet()) { it.value.toLong() }
-//}
-//
-//internal fun PixivHelper.getTrending(times: Int = 1) = flow {
-//    for (page in 0 until times) {
-//        if (active().not()) break
-//        runCatching {
-//            trendingTagsIllust().trends
-//        }.onSuccess { list ->
-//            emit(list)
-//            logger.verbose { "加载第${page}次WalkThrough成功" }
-//        }.onFailure {
-//            logger.warning({ "加载第${page}次WalkThrough失败" }, it)
 //        }
 //    }
 //}
