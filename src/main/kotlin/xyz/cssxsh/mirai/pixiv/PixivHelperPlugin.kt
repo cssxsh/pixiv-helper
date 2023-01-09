@@ -17,6 +17,7 @@ public object PixivHelperPlugin : KotlinPlugin(
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-hibernate-plugin", ">= 2.3.3", false)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-selenium-plugin", true)
         dependsOn("xyz.cssxsh.mirai.plugin.mirai-skia-plugin", true)
+        dependsOn("xyz.cssxsh.mirai.plugin.arknights-helper", true)
     }
 ) {
 
@@ -43,6 +44,13 @@ public object PixivHelperPlugin : KotlinPlugin(
             command.register()
         }
 
+        try {
+            xyz.cssxsh.mirai.arknights.ArknightsHelperPlugin.logger
+            ArknightsEroCommand.register()
+        } catch (_: NoClassDefFoundError) {
+            //
+        }
+
         initConfiguration()
 
         PixivEventListener.paserPermission = registerPermission("url", "PIXIV URL 解析")
@@ -52,6 +60,13 @@ public object PixivHelperPlugin : KotlinPlugin(
     override fun onDisable() {
         for (command in PixivHelperCommand) {
             command.unregister()
+        }
+
+        try {
+            xyz.cssxsh.mirai.arknights.ArknightsHelperPlugin.logger
+            ArknightsEroCommand.unregister()
+        } catch (_: NoClassDefFoundError) {
+            //
         }
 
         PixivEventListener.cancelAll()
