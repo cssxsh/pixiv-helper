@@ -7,7 +7,7 @@ import jakarta.persistence.*
 public data class ArtWorkTag(
     @Id
     @Column(name = "pid", nullable = false, updatable = false)
-    val pid: String,
+    val pid: Long,
     @Column(name = "tid", nullable = false, updatable = false)
     val tid: Long = 0
 ) : PixivEntity {
