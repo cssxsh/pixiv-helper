@@ -271,7 +271,7 @@ public suspend fun buildSearchMessage(results: List<SearchResult>, sender: User)
 public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): MessageChain {
     val helper = contact.helper
     return buildMessageChain {
-        appendLine("作者: ${illust.user.name} ")
+        appendLine("作者: ${illust.user.name} ${if (illust.ai != 1) "by AI" else ""}")
         appendLine("UID: ${illust.user.id} ")
         if (helper.attr) {
             appendLine("已关注: ${illust.user.isFollowed ?: false}")
@@ -375,7 +375,8 @@ internal fun IllustInfo.getMirrorUrls(): List<Url> {
 }
 
 internal fun IllustInfo.isEro(mark: Boolean = true): Boolean = with(EroStandard) {
-    (types.isEmpty() || type in types) &&
+    ai == 1 &&
+        (types.isEmpty() || type in types) &&
         (mark.not() || (totalBookmarks ?: 0) > marks) &&
         (pageCount < pages) &&
         (tags.none { tagExclude in it.name || tagExclude in it.translatedName.orEmpty() }) &&
@@ -400,7 +401,7 @@ internal fun UgoiraMetadata.write(file: File) {
     file.writeText(PixivJson.encodeToString(UgoiraMetadata.serializer(), this))
 }
 
-private val FlushIllustInfo: suspend PixivAppClient.(Long, File) -> IllustInfo = { pid, file ->
+private val flushIllustInfo: suspend PixivAppClient.(Long, File) -> IllustInfo = { pid, file ->
     val illust = illustDetail(pid = pid).illust
     if (illust.user.id == 0L) throw RestrictException(illust = illust)
     illust.merge()
@@ -412,7 +413,7 @@ public suspend fun loadIllustInfo(
     pid: Long,
     flush: Boolean = false,
     client: PixivAppClient = PixivClientPool.free(),
-    load: suspend PixivAppClient.(Long, File) -> IllustInfo = FlushIllustInfo,
+    load: suspend PixivAppClient.(Long, File) -> IllustInfo = flushIllustInfo,
 ): IllustInfo {
     val file = illust(pid)
     return if (!flush && file.exists()) {
@@ -520,34 +521,5 @@ internal val bytes: (Long) -> String = {
         else -> throw IllegalStateException("Too Big")
     }
 }
-
-/**
- * 备份文件
- */
-internal fun backups(): Map<String, File> {
-    val map = hashMapOf<String, File>()
-    if (PixivHelperPlugin.dataFolder.list().isNullOrEmpty().not()) {
-        map["DATA"] = PixivHelperPlugin.dataFolder
-    }
-    if (PixivHelperPlugin.configFolder.list().isNullOrEmpty().not()) {
-        map["CONFIG"] = PixivHelperPlugin.configFolder
-    }
-    val sqlite: String = sqlite()
-    if (sqlite.isNotBlank()) {
-        map["DATABASE"] = File(sqlite)
-    }
-
-    return map
-}
-
-/**
- * pixiv.me 跳转
- */
-//internal suspend fun PixivHelper.redirect(account: String): Long {
-//    UserBaseInfo[account]?.let { return@redirect it.uid }
-//    val url = Url("https://pixiv.me/$account")
-//    val location = location(url = url)
-//    return requireNotNull(URL_USER_REGEX.find(location)) { "跳转失败, $url -> $location" }.value.toLong()
-//}
 
 // endregion

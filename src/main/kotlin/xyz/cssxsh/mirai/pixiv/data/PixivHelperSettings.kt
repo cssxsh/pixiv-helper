@@ -27,7 +27,7 @@ public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"),
     private val tempPath: String by value(System.getenv("PIXIV_TEMP").orEmpty())
 
     @ValueName("ero_chunk")
-    @ValueDescription("色图分块大小")
+    @ValueDescription("涩图防重复间隔")
     public val eroChunk: Int by value(ERO_CHUNK)
 
     @ValueName("ero_up_expire")
@@ -66,9 +66,9 @@ public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"),
     @ValueDescription("DOWNLOAD代理 格式 http://127.0.0.1:8080 or socks://127.0.0.1:1080")
     public val proxyDownload: String by value("")
 
-    @ValueName("timeout_api")
-    @ValueDescription("API超时时间, 单位ms")
-    public val timeoutApi: Long by value(15_000L)
+//    @ValueName("timeout_api")
+//    @ValueDescription("API超时时间, 单位ms")
+//    public val timeoutApi: Long by value(15_000L)
 
     @ValueName("timeout_download")
     @ValueDescription("DOWNLOAD超时时间, 单位ms")
@@ -86,23 +86,23 @@ public object PixivHelperSettings : ReadOnlyPluginConfig("PixivHelperSettings"),
     @ValueDescription("ero 是否过滤r18 依旧不会放出图片")
     public val eroSFW: Boolean by value(true)
 
-    @ValueName("cache_capacity")
-    @ValueDescription("下载缓存容量，同时下载的图片上限")
-    public val cacheCapacity: Int by value(3)
+//    @ValueName("cache_capacity")
+//    @ValueDescription("下载缓存容量，同时下载的图片上限")
+//    public val cacheCapacity: Int by value(3)
 
-    @ValueName("cache_jump")
-    @ValueDescription("缓存是否跳过下载")
-    public val cacheJump: Boolean by value(false)
+//    @ValueName("cache_jump")
+//    @ValueDescription("缓存是否跳过下载")
+//    public val cacheJump: Boolean by value(false)
 
-    @ValueName("upload")
-    @ValueDescription("压缩完成后是否上传百度云，不上传百度云则会尝试发送文件")
-    public val upload: Boolean by value(false)
+//    @ValueName("upload")
+//    @ValueDescription("压缩完成后是否上传百度云，不上传百度云则会尝试发送文件")
+//    public val upload: Boolean by value(false)
 
-    private lateinit var plugin: AbstractJvmPlugin
+    private lateinit var plugin: JvmPlugin
 
     @OptIn(ConsoleExperimentalApi::class)
     override fun onInit(owner: PluginDataHolder, storage: PluginDataStorage) {
-        plugin = owner as AbstractJvmPlugin
+        plugin = owner as JvmPlugin
     }
 
     private fun dir(path: String, default: String) = if (path.isEmpty()) plugin.resolveDataFile(default) else File(path)

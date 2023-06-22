@@ -69,7 +69,7 @@ public object PixivScheduler : CoroutineScope {
                 sendMessage("Task: $name (${index}/${count})\n".toPlainText() + message)
             }
 
-            launch(SupervisorJob()) {
+            launch {
                 record(id, illust)
             }
         }
@@ -97,7 +97,7 @@ public object PixivScheduler : CoroutineScope {
      * 准备任务
      */
     private fun prepare(task: PixivTimerTask) {
-        launch {
+        launch(CoroutineName(name = task.id)) {
             task.subscribe {
                 when (task) {
                     is PixivTimerTask.Cache -> {}
@@ -152,10 +152,9 @@ public object PixivScheduler : CoroutineScope {
                             }
                         }
                     }
-
-                    is PixivTimerTask.Trending -> { /* TODO */
+                    is PixivTimerTask.Trending -> {
+                        // TODO PixivTimerTask.Trending
                     }
-
                     is PixivTimerTask.User -> {
                         if (task.illusts.isEmpty() && task.mutex.tryLock()) {
                             val client = client()
@@ -176,10 +175,6 @@ public object PixivScheduler : CoroutineScope {
                     }
                 }
             }
-        }.invokeOnCompletion { cause ->
-            if (cause != null) {
-                logger.warning({ "${task.id} prepare fail" }, cause)
-            }
         }
     }
 
@@ -189,7 +184,7 @@ public object PixivScheduler : CoroutineScope {
     @Suppress("EXPERIMENTAL_API_USAGE")
     @OptIn(ConsoleExperimentalApi::class, ExperimentalCommandDescriptors::class)
     private fun run(task: PixivTimerTask) {
-        launch {
+        launch(CoroutineName(name = task.id)) {
             task.subscribe {
                 when (task) {
                     is PixivTimerTask.Cache -> {
@@ -211,16 +206,13 @@ public object PixivScheduler : CoroutineScope {
                     is PixivTimerTask.Recommended -> {
                         push(id = task.id, name = "Recommended", task = task, count = TaskConut)
                     }
-                    is PixivTimerTask.Trending -> { /* TODO */
+                    is PixivTimerTask.Trending -> {
+                        // TODO PixivTimerTask.Trending
                     }
                     is PixivTimerTask.User -> {
                         push(id = task.id, name = "User", task = task, count = TaskConut)
                     }
                 }
-            }
-        }.invokeOnCompletion { cause ->
-            if (cause != null) {
-                logger.warning({ "${task.id} run fail" }, cause)
             }
         }
     }

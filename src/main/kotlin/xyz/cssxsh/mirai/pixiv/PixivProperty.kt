@@ -25,12 +25,6 @@ internal const val ERO_STANDARD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.ero.st
 
 internal const val TAG_SFW_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.tag.sfw"
 
-internal const val CACHE_CAPACITY_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.capacity"
-
-internal const val CACHE_JUMP_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.cache.jump"
-
-internal const val TIMEOUT_API_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.timeout.api"
-
 internal const val TIMEOUT_DOWNLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.timeout.download"
 
 internal const val PROXY_API_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.api"
@@ -40,8 +34,6 @@ internal const val PROXY_DOWNLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.prox
 internal const val PROXY_MIRROR_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.proxy.mirror"
 
 internal const val BLOCK_SIZE_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.block"
-
-internal const val UPLOAD_PROPERTY = "xyz.cssxsh.mirai.plugin.pixiv.upload"
 
 // endregion
 
@@ -98,7 +90,7 @@ internal val TaskForward by PixivConfigData::forward
 /**
  * TODO TaskConut by PixivConfigData
  */
-internal val TaskConut = 10
+internal const val TaskConut = 10
 
 /**
  * 涩图防重复间隔
@@ -155,41 +147,6 @@ internal val EroAgeLimit by lazy {
 }
 
 /**
- * 下载缓存容量，同时下载的图片任务上限
- * 1. [CACHE_CAPACITY_PROPERTY]
- * 2. [PixivHelperSettings.cacheCapacity]
- */
-internal val CacheCapacity by lazy {
-    System.getProperty(CACHE_CAPACITY_PROPERTY)?.toInt() ?: PixivHelperSettings.cacheCapacity
-}
-
-/**
- * 缓存是否跳过下载
- * 1. [CACHE_JUMP_PROPERTY]
- * 2. [PixivHelperSettings.cacheJump]
- */
-internal val CacheJump by lazy {
-    System.getProperty(CACHE_JUMP_PROPERTY)?.toBoolean() ?: PixivHelperSettings.cacheJump
-}
-
-/**
- * 1. [BACKUP_FOLDER_PROPERTY]
- * 2. [PixivHelperSettings.backupFolder]
- */
-internal val BackupUpload by lazy {
-    System.getProperty(UPLOAD_PROPERTY)?.toBoolean() ?: PixivHelperSettings.upload
-}
-
-/**
- * API超时时间, 单位ms
- * 1. [TIMEOUT_API_PROPERTY]
- * 2. [PixivHelperSettings.timeoutApi]
- */
-internal val TimeoutApi by lazy {
-    System.getProperty(TIMEOUT_API_PROPERTY)?.toLong() ?: PixivHelperSettings.timeoutApi
-}
-
-/**
  * DOWNLOAD超时时间, 单位ms
  * 1. [TIMEOUT_DOWNLOAD_PROPERTY]
  * 2. [PixivHelperSettings.timeoutDownload]
@@ -233,6 +190,8 @@ internal val ProxyMirror by lazy {
 internal val BlockSize by lazy {
     System.getProperty(BLOCK_SIZE_PROPERTY)?.toInt() ?: PixivHelperSettings.blockSize
 }
+
+// region FOLDER
 
 /**
  * 用户文件保存目录
@@ -278,6 +237,8 @@ internal fun illust(pid: Long) = images(pid).resolve("${pid}.json")
  * 动图 JSON
  */
 internal fun ugoira(pid: Long) = images(pid).resolve("${pid}.ugoira.json")
+
+// endregion
 
 /**
  * 从 [Contact] 上下文得到 [PixivHelper]

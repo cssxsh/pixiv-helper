@@ -246,7 +246,7 @@ public class PixivTaskBuilder {
         val records = runInterruptible(Dispatchers.IO) {
             StatisticUserInfo.list(range = range)
         }
-        logger.info { "关注中共缓存中 ${records.size} 个色图画师" }
+        logger.info { "缓存中共有 ${records.size} 个色图画师" }
         for (record in records) {
             try {
                 val author = userDetail(uid = record.uid).apply { twitter() }

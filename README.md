@@ -27,7 +27,7 @@ Gif图片需要由机器人自己合成，如果设备性能不足，请调整�
 自 `1.9.0` 起将数据库部分功能拆分  
 需要 [Mirai Hibernate Plugin](https://github.com/cssxsh/mirai-hibernate-plugin) 做前置插件  
 这是**必要**的  
-MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel stable --type plugin`
+MCL安装指令 `./mcl --update-package xyz.cssxsh.mirai:mirai-hibernate-plugin --channel maven-stable --type plugins`
 
 **打开浏览器，登录PIXIV** 需要 [Mirai Selenium Plugin](https://github.com/cssxsh/mirai-selenium-plugin) 做前置插件
 并且需要代理配置（可以打开浏览器后，在浏览器中配置），浏览器登录只是其中一种登录方法，不必要安装 Selenium 插件
@@ -289,9 +289,7 @@ val URL_PIXIV_ME_REGEX = """(?<=pixiv\.me/)[\w-]{3,32}""".toRegex()
 ### hibernate.properties
 
 如果不是特殊需要，使用默认的 SQLite 配置就好  
-配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推  
-~~下载 [mysql-connector-java](https://repo1.maven.org/maven2/mysql/mysql-connector-java/)
-, 然后放进 `plugins` 文件夹~~ (`mirai-hibernate-plugin` 1.8.3+ 自带 `mysql` 此步骤不再需要)  
+配置 mysql 举例 (字符集要设置为utf8mb4_bin)，其他数据库类推
 配置 文件
 
 ```
