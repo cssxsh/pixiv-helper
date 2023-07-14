@@ -271,7 +271,7 @@ public suspend fun buildSearchMessage(results: List<SearchResult>, sender: User)
 public suspend fun buildIllustMessage(illust: IllustInfo, contact: Contact): MessageChain {
     val helper = contact.helper
     return buildMessageChain {
-        appendLine("作者: ${illust.user.name} ${if (illust.ai != 1) "by AI" else ""}")
+        appendLine("作者: ${illust.user.name} ${if (illust.ai == 2) "by AI" else ""}")
         appendLine("UID: ${illust.user.id} ")
         if (helper.attr) {
             appendLine("已关注: ${illust.user.isFollowed ?: false}")
