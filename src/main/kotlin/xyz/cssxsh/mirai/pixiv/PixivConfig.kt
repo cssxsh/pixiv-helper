@@ -1,13 +1,10 @@
 package xyz.cssxsh.mirai.pixiv
 
-// import io.github.gnuf0rce.mirai.netdisk.*
-import kotlinx.coroutines.*
 import net.mamoe.mirai.utils.*
 import xyz.cssxsh.mirai.pixiv.data.*
 import xyz.cssxsh.mirai.pixiv.model.*
 import xyz.cssxsh.mirai.pixiv.tools.*
 import xyz.cssxsh.pixiv.*
-import xyz.cssxsh.pixiv.apps.*
 import xyz.cssxsh.pixiv.fanbox.*
 import xyz.cssxsh.pixiv.tool.*
 import kotlin.math.*
@@ -48,9 +45,9 @@ internal fun initConfiguration() {
     UgoiraImagesFolder.mkdirs()
     OtherImagesFolder.mkdirs()
     ExistsImagesFolder.mkdirs()
-    logger.info { "CacheFolder: ${CacheFolder.absolutePath}" }
-    logger.info { "BackupFolder: ${BackupFolder.absolutePath}" }
-    logger.info { "TempFolder: ${TempFolder.absolutePath}" }
+    logger.info { "CacheFolder: ${CacheFolder.toPath().toUri()}" }
+    logger.info { "BackupFolder: ${BackupFolder.toPath().toUri()}" }
+    logger.info { "TempFolder: ${TempFolder.toPath().toUri()}" }
     if (ProxyMirror.isNotBlank()) {
         logger.warning { "镜像代理已开启 i.pximg.net -> $ProxyMirror 不推荐修改这个配置，建议保持留空" }
     }
@@ -65,13 +62,6 @@ internal fun initConfiguration() {
     } else if (BlockSize < HTTP_KILO) {
         logger.warning { "下载分块过小" }
     }
-//    if (BackupUpload) {
-//        try {
-//            NetDisk
-//        } catch (exception: NoClassDefFoundError) {
-//            logger.warning { "相关类加载失败，请安装 https://github.com/gnuf0rce/Netdisk-FileSync-Plugin $exception" }
-//        }
-//    }
 
     ImageSearcher.key = ImageSearchConfig.key
 
@@ -164,13 +154,9 @@ internal val ERO_TAG_EXCLUDE = """([hH]olo|僕のヒーローアカデミア)"""
 
 internal const val LOAD_LIMIT = 5_000L
 
-internal const val TASK_LOAD = PAGE_SIZE * 3
-
 internal const val TAG_TOP_LIMIT = 10
 
 internal const val TAG_DELIMITERS = """_-&+|/\,()，、—（）"""
-
-internal val CompletedJob: Job = Job().apply { complete() }
 
 internal val MAX_RANGE = 0..999_999_999L
 
