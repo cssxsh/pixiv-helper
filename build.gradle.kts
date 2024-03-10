@@ -21,6 +21,8 @@ dependencies {
     implementation("org.jsoup:jsoup:1.16.1")
     implementation("xyz.cssxsh.pixiv:pixiv-client:1.3.1")
     implementation("com.cronutils:cron-utils:9.2.1")
+    implementation("org.jcodec:jcodec:0.2.5")
+    implementation("org.jcodec:jcodec-javase:0.2.5")
     testImplementation(kotlin("test"))
     testImplementation("xyz.cssxsh.mirai:mirai-hibernate-plugin:2.7.1")
     testImplementation("xyz.cssxsh.mirai:mirai-selenium-plugin:2.3.0")
